@@ -1,0 +1,219 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.sixsq.slipstream</groupId>
+  <artifactId>SlipStreamClientAll</artifactId>
+  <packaging>pom</packaging>
+  <name>SlipStreamClientAll</name>
+  <url>http://sixsq.com/</url>
+
+  <parent>
+    <groupId>com.sixsq.slipstream</groupId>
+    <artifactId>SlipStreamClient</artifactId>
+    <version>1.5-SNAPSHOT</version>
+  </parent>
+
+  <build>
+    <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/assembly/bundle.xml</descriptor>
+          </descriptors>
+        </configuration>
+
+        <executions>
+
+          <execution>
+            <id>bundle</id>
+            <goals>
+              <goal>single</goal>
+            </goals>
+            <phase>package</phase>
+          </execution>
+
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+
+          <execution>
+            <id>copy-and-rename-files</id>
+            <phase>process-resources</phase>
+            <configuration>
+              <target>
+
+                <property name="using.maven" value="true" />
+                <property name="maven.src.python" value="${basedir}/src/main/python" />
+                <property name="maven.src.scripts" value="${basedir}/src/main/scripts" />
+                <property name="maven.target.python" value="${project.build.directory}/main/python" />
+                <property name="maven.target.scripts" value="${project.build.directory}/main/scripts" />
+                <property name="maven.test.python" value="${basedir}/src/test/python" />
+                <property name="maven.target.test.python" value="${project.build.directory}/test/python" />
+
+                <ant antfile="${basedir}/build.xml" dir="${basedir}" inheritAll="true" inheritRefs="false">
+                  <propertyset>
+                    <propertyref name="using.maven" />
+                    <propertyref name="maven.src.python" />
+                    <propertyref name="maven.src.scripts" />
+                    <propertyref name="maven.target.python" />
+                    <propertyref name="maven.target.scripts" />
+                    <propertyref name="maven.test.python" />
+                    <propertyref name="maven.target.test.python" />
+                  </propertyset>
+                  <target name="copy.and.rename.files" />
+                </ant>
+
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>get-libcloud</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.sixsq.slipstream</groupId>
+                  <artifactId>Libcloud-SixSq-zip</artifactId>
+                  <type>tar.gz</type>
+                  <classifier>bundle</classifier>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>get-stratuslab</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>eu.stratuslab.client</groupId>
+                  <artifactId>stratuslab-cli-user-pkg</artifactId>
+                  <version>${stratuslab.version.zip}</version>
+                  <type>tar.gz</type>
+                </artifactItem>
+              </artifactItems>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>
+        </executions>
+
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unpack-stratuslab</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <workingDirectory>${project.build.directory}/dependencies</workingDirectory>
+              <executable>tar</executable>
+              <arguments>
+                <argument>--strip-components</argument>
+                <argument>3</argument>
+                <argument>-zxvf</argument>
+                <argument>stratuslab-cli-user-pkg.tar.gz</argument>
+                <argument>lib/stratuslab/python/stratuslab</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>unittests</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>test</phase>
+            <configuration>
+              <executable>nosetests</executable>
+              <environmentVariables>
+                <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./target/dependencies</PYTHONPATH>
+              </environmentVariables>
+              <arguments>
+                <argument>-v</argument>
+                <argument>--where=target/test/python</argument>
+                <argument>--ignore-files=.*Live.py</argument>
+                <argument>--with-xunit</argument>
+                <argument>--xunit-file=${project.build.directory}/nosetests.xml</argument>
+                <argument>--with-coverage</argument>
+                <argument>--cover-xml</argument>
+                <argument>--cover-xml-file=${project.build.directory}/coverage.xml</argument>
+                <argument>--cover-package=slipstream</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.1.1</version><!-- outputFile doesn't work in 1.2 -->
+        <executions>
+          <execution>
+            <id>pylint</id>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <phase>test</phase>
+            <configuration>
+              <workingDirectory>${project.build.directory}/main/python</workingDirectory>
+              <outputFile>${project.build.directory}/pylint.out</outputFile>
+              <successCodes>
+                <successCode>0</successCode>
+                <successCode>31</successCode>
+              </successCodes>
+              <executable>pylint</executable>
+              <arguments>
+                <argument>-f</argument>
+                <argument>parseable</argument>
+                <argument>slipstream</argument>
+              </arguments>
+            </configuration>
+          </execution>
+        </executions>
+        
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+</project>

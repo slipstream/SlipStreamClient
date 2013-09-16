@@ -1,0 +1,9 @@
+*~
+target
+*.pyc
+*.log
+.idea/
+.settings/
+.project
+.pydevproject
+pyunit.credentials.properties

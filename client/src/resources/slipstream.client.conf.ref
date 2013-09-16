@@ -1,0 +1,7 @@
+[System]
+contextualizer = DummyContextutalizer
+cloudconnector = DummyCloudConnector
+#computingconnector = @computingconnector@
+#storageconnector = @storageconnector@
+#runtimeconnector = @runtimeconnector@
+#server = @server@

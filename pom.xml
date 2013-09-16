@@ -1,0 +1,57 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.sixsq.slipstream</groupId>
+  <artifactId>SlipStreamClient</artifactId>
+  <packaging>pom</packaging>
+  <version>1.5-SNAPSHOT</version>
+  <name>SlipStreamClient</name>
+  <url>http://sixsq.com/</url>
+
+  <parent>
+    <groupId>com.sixsq.slipstream</groupId>
+    <artifactId>SlipStream</artifactId>
+    <version>1.8-SNAPSHOT</version>
+  </parent>
+
+  <modules>
+    <module>client</module>
+    <module>pypi</module>
+  </modules>
+
+  <profiles>
+    <profile>
+      <id>build-client-rpm</id>
+      <activation>
+        <file>
+          <exists>/usr/bin/rpmbuild</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>rpm</module>
+      </modules>
+    </profile>
+  </profiles>
+
+  <build>
+    <plugins>
+
+      <plugin>
+       <artifactId>maven-release-plugin</artifactId>
+       <configuration>
+          <releaseProfiles>release</releaseProfiles>
+          <preparationGoals>clean install</preparationGoals>
+       </configuration>
+      </plugin>
+
+    </plugins>
+
+  </build>
+
+  <scm>
+     <connection>scm:git:ssh://git@github.com/SixSq/SlipStreamClient.git</connection>
+     <developerConnection>scm:git:ssh://git@github.com/SixSq/SlipStreamClient.git</developerConnection>
+    <tag>HEAD</tag>
+  </scm>
+
+</project>

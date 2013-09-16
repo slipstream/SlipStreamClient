@@ -1,0 +1,227 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.sixsq.slipstream</groupId>
+	<artifactId>SlipStreamClientRPM</artifactId>
+	<name>SlipStream API and CLI RPM</name>
+	<packaging>pom</packaging>
+	<url>http://sixsq.com/</url>
+
+	<parent>
+		<groupId>com.sixsq.slipstream</groupId>
+		<artifactId>SlipStreamClient</artifactId>
+		<version>1.5-SNAPSHOT</version>
+	</parent>
+
+	<build>
+
+		<plugins>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+
+				<executions>
+
+					<execution>
+						<id>copy-client</id>
+						<goals>
+							<goal>copy</goal>
+						</goals>
+						<configuration>
+							<artifactItems>
+								<artifactItem>
+									<groupId>com.sixsq.slipstream</groupId>
+									<artifactId>SlipStreamClientAll</artifactId>
+									<version>${project.version}</version>
+									<classifier>bundle</classifier>
+									<type>tar.gz</type>
+								</artifactItem>
+							</artifactItems>
+							<stripVersion>true</stripVersion>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>unpack-client</id>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/client/</outputDirectory>
+							<artifactItems>
+								<artifactItem>
+									<groupId>com.sixsq.slipstream</groupId>
+									<artifactId>SlipStreamClientAll</artifactId>
+									<version>${project.version}</version>
+									<classifier>bundle</classifier>
+									<type>tar.gz</type>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+
+				</executions>
+
+			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>rpm-maven-plugin</artifactId>
+				<extensions>true</extensions>
+				<configuration>
+					<classifier>${package.os}</classifier>
+					<release>${BUILD_NUMBER}.${package.os}</release>
+					<summary>SlipStream Client API and CLI</summary>
+					<name>slipstream-client</name>
+					<group>Applications/Engineering</group>
+					<vendor>SixSq</vendor>
+					<packager>SixSq</packager>
+					<copyright>Apache License, Version 2.0</copyright>
+					<url>http://sixsq.com</url>
+					<needarch>noarch</needarch>
+					<description>
+						SlipStream Client API and CLI. 
+					</description>
+					<requires>
+						<require>python &gt;= 2.6</require>
+						<require>python-httplib2</require>
+					</requires>
+
+					<mappings>
+
+						<mapping>
+							<directory>/opt/slipstream/downloads</directory>
+							<filemode>644</filemode>
+							<username>root</username>
+							<groupname>root</groupname>
+							<directoryIncluded>false</directoryIncluded>
+							<sources>
+								<source>
+									<location>${project.build.directory}/dependency/SlipStreamClientAll-bundle.tar.gz</location>
+									<destination>slipstreamclient.tgz</destination>
+								</source>
+							</sources>
+						</mapping>
+						
+						<mapping>
+							<directory>/opt/slipstream/downloads</directory>
+							<filemode>755</filemode>
+							<username>root</username>
+							<groupname>root</groupname>
+							<directoryIncluded>false</directoryIncluded>
+							<sources>
+								<source>
+									<location>${project.build.directory}/client/sbin/slipstream.bootstrap</location>
+									<destination>slipstream.bootstrap</destination>
+								</source>
+							</sources>
+						</mapping>
+
+						<mapping>
+							<directory>/usr/lib/python2.6/site-packages</directory>
+							<filemode>644</filemode>
+							<username>root</username>
+							<groupname>root</groupname>
+							<directoryIncluded>false</directoryIncluded>
+							<sources>
+								<source>
+									<location>target/client/lib</location>
+									<includes>
+									  <include>slipstream/**/*</include>
+									</includes>
+									<excludes>
+										<exclude>**/*.pyc</exclude>
+									</excludes>
+								</source>
+							</sources>
+						</mapping>
+
+					</mappings>
+
+          <postinstallScriptlet>
+            <!-- fixing a bug in client -->
+            <script>
+/bin/touch /usr/bin/slipstream.client.conf
+            </script>
+          </postinstallScriptlet>
+
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-rpm</id>
+						<phase>package</phase>
+						<goals>
+							<goal>attached-rpm</goal>
+						</goals>
+					</execution>
+				</executions>
+
+			</plugin>
+		</plugins>
+
+	</build>
+
+  <profiles>
+    <profile>
+      <id>nexus-yum-repo-gen-snapshots</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>nexus-yum-repo-gen-snapshots</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>curl</executable>
+                  <arguments>
+                    <argument>-sSf</argument>
+                    <argument>-u</argument>
+                    <argument>${nexus.yum.repo.gen.username}:${nexus.yum.repo.gen.password}</argument> <!-- defined in settings.xml -->
+                    <argument>${nexus.yum.repo.gen.snapshots.uri}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>nexus-yum-repo-gen-releases</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>nexus-yum-repo-gen-releases</id>
+                <phase>deploy</phase>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <configuration>
+                  <executable>curl</executable>
+                  <arguments>
+                    <argument>-sSf</argument>
+                    <argument>-u</argument>
+                    <argument>${nexus.yum.repo.gen.username}:${nexus.yum.repo.gen.password}</argument> <!-- defined in settings.xml -->
+                    <argument>${nexus.yum.repo.gen.releases.uri}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
+</project>

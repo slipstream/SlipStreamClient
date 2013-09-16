@@ -1,0 +1,14 @@
+The repository contains 3rd-party code in the following locations and
+under the following licenses:
+
+- Apache License, Version 2.0
+  src/external/scpclient.py  Copyright 2011, True Blade Systems, Inc.
+
+- BSD
+  src/external/isodate       Copyright 2009, Gerhard Weis
+  src/external/mock          Michael Foord (michael@voidspace.org.uk)
+  src/external/xmlwitch.py   Jonas Galvez <http://jonasgalvez.com.br/>
+
+- MIT
+  src/external/httplib2      Copyright 2006, Joe Gregorio (joe@bitworking.org)
+  src/external/winrm         Copyright (c) 2013, Alexey Diyan

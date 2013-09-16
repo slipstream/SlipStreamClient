@@ -1,0 +1,266 @@
+<project name="SlipStreamClientPy" default="all" basedir=".">
+
+    <description>SlipStream Python Client</description>
+
+    <!-- Allow configuration properties to be overridden via an external file.
+	     See the section below for the properties that can be defined in the 
+	     local.properties file. -->
+    <property file="${basedir}/slipstream.conf" />
+
+    <!-- Locations for sources and builds. -->
+    <property name="target" location="${basedir}/target" />
+    <property name="src" location="${target}/main/python" />
+    <property name="test.location" location="${target}/test/python" />
+    <property name="external" location="${basedir}/src/external" />
+    <property name="ec2.external" location="${external}/ec2-python" />
+    <property name="s3.external" location="${external}/s3-python" />
+    <property name="pyunit.credentials.properties"
+              value="pyunit.credentials.properties" />
+    <property name="pyunit.credentials.properties.ref.location"
+              location="${basedir}/src/test/resources/${pyunit.credentials.properties}.ref" />
+    <property name="test.credentials.properties"
+              value="test.credentials.properties" />
+    <property name="test.credentials.properties.location"
+              location="${basedir}/${test.credentials.properties}" />
+    <property name="config.properties" value="slipstream.client.conf" />
+    <property name="config.properties.ref" location="${basedir}/src/resources/${config.properties}.ref" />
+    <property name="client.connector.ec2"
+              value="slipstream.EC2Connector" />
+    <property name="client.connector.ec2.runtime"
+              value="slipstream.EC2RuntimeConnector" />
+    <property name="client.connector.s3"
+              value="slipstream.S3Connector" />
+    <property name="restlet.base.url" value="http://localhost:8182" />
+    <property name="server" value="${restlet.base.url}" />
+    <property name="test.reports" location="reports" />
+
+    <!-- Macro will generate a client config file, from tokens. -->
+    <macrodef name="generate.client.config.file">
+        <attribute name="computingconnector" />
+        <attribute name="storageconnector" />
+        <attribute name="runtimeconnector" />
+
+        <sequential>
+            <copy file="${config.properties.ref}"
+                  tofile="${src}/${config.properties}"
+                  overwrite="true">
+                <filterset>
+                    <filter token="computingconnector"
+                            value="@{computingconnector}" />
+                    <filter token="storageconnector"
+                            value="@{storageconnector}" />
+                    <filter token="runtimeconnector"
+                            value="@{runtimeconnector}" />
+                </filterset>
+            </copy>
+        </sequential>
+
+    </macrodef>
+
+
+    <target name="init" depends="copy.and.rename.files">
+        <copy file="${test.credentials.properties.location}" todir="." />
+        <property file="test.credentials.properties" />
+        <copy file="${pyunit.credentials.properties.ref.location}"
+              tofile="${test.location}/${pyunit.credentials.properties}"
+              overwrite="true">
+            <filterset>
+                <filter token="user.username" value="${user.username}" />
+                <filter token="user.password" value="${user.password}" />
+                <filter token="user.AWS_Access_Id"
+                        value="${user.AWS_Access_Id}" />
+                <filter token="user.AWS_Secret_Key"
+                        value="${user.AWS_Secret_Key}" />
+            </filterset>
+        </copy>
+        <copy file="${config.properties.ref}"
+              tofile="${src}/${config.properties}"
+              overwrite="true">
+            <filterset>
+                <filter token="computingconnector"
+                        value="${client.connector.ec2}" />
+                <filter token="runtimeconnector"
+                        value="${client.connector.ec2.runtime}" />
+                <filter token="storageconnector"
+                        value="${client.connector.s3}" />
+                <filter token="server" value="${server}" />
+            </filterset>
+        </copy>
+        <copy file="${src}/${config.properties}"
+              todir="${test.location}"
+              overwrite="true" />
+    </target>
+
+    <!-- clean: remove all generated files -->
+    <target name="clean" description="remove generated files">
+        <delete dir="${target}" />
+    </target>
+
+    <target name="test" depends="init">
+        <!-- NOTE:  The standard python socket library does not appear to do 
+                    any verification of certificates.  Hence there is no reason
+                    to configure the client SSL parameters. -->
+
+        <!-- Reset the client config file -->
+        <generate.client.config.file computingconnector="${client.connector.ec2}"
+                                     storageconnector="${client.connector.ec2.runtime}"
+                                     runtimeconnector="${client.connector.s3}" />
+
+        <!-- Backup the config file, such that we can copy it back later -->
+        <copy file="${src}/${config.properties}"
+              tofile="${src}/${config.properties}.sav"
+              overwrite="true" />
+
+        <exec executable="python" dir="${test.location}" failonerror="false">
+            <env key="PYTHONPATH"
+                 path="${src}:${ec2.external}:${s3.external}" />
+            <arg value="xunittest.py" />
+            <arg value="--verbose" />
+            <arg value="TestRestClient" />
+        </exec>
+
+        <exec executable="python" dir="${test.location}" failonerror="false">
+            <env key="PYTHONPATH"
+                 path="${src}:${ec2.external}:${s3.external}" />
+            <arg value="xunittest.py" />
+            <arg value="--verbose" />
+            <arg value="TestCommands" />
+        </exec>
+
+        <exec executable="python" dir="${test.location}" failonerror="false">
+            <env key="PYTHONPATH"
+                 path="${src}:${ec2.external}:${s3.external}" />
+            <arg value="xunittest.py" />
+            <arg value="--verbose" />
+            <arg value="TestStress" />
+        </exec>
+
+        <!-- This test requires a special client config file, so we generate it
+    	     before executing the test -->
+        <generate.client.config.file computingconnector="EC2AllOkMock"
+                                     storageconnector="S3Mock"
+                                     runtimeconnector="EC2RuntimeTextMock" />
+
+        <exec executable="python" dir="${test.location}" failonerror="false">
+            <env key="PYTHONPATH"
+                 path="${src}:${ec2.external}:${s3.external}" />
+            <arg value="xunittest.py" />
+            <arg value="--verbose" />
+            <arg value="TestExecutions" />
+        </exec>
+
+        <!-- Copy the old config file back, such that unit tests can be run
+    	     manually, with the standard mock configuration -->
+        <copy file="${src}/${config.properties}.sav"
+              tofile="${src}/${config.properties}"
+              overwrite="true" />
+
+        <exec executable="python" dir="${test.location}" failonerror="false">
+            <env key="PYTHONPATH"
+                 path="${src}:${ec2.external}:${s3.external}" />
+            <arg value="xunittest.py" />
+            <arg value="--verbose" />
+            <arg value="Test-ss-config-file-replace" />
+        </exec>
+
+        <exec executable="python" dir="${test.location}" failonerror="false">
+            <env key="PYTHONPATH"
+                 path="${src}:${ec2.external}:${s3.external}" />
+            <arg value="xunittest.py" />
+            <arg value="--verbose" />
+            <arg value="TestCredentials" />
+        </exec>
+
+    </target>
+
+    <!-- Generate HTML test report -->
+    <!-- This target is useful when running the Python test standalone -->
+    <target name="test.report" depends="test" unless="using.maven">
+        <mkdir dir="${test.reports}" />
+        <copy todir="${test.reports}">
+            <fileset dir="${test.location}">
+                <include name="TEST-*.xml" />
+            </fileset>
+        </copy>
+        <junitreport>
+            <fileset dir="${test.reports}">
+                <include name="TEST-*.xml" />
+            </fileset>
+            <report todir="${test.reports}" />
+        </junitreport>
+    </target>
+
+    <!-- TODO: generate pydoc documentation -->
+    <target name="docs" />
+
+    <!-- Copy and rename files for maven build. -->
+    <target name="copy.and.rename.files">
+
+        <property name="maven.src.python" value="${basedir}/src/main/python" />
+        <property name="maven.target.python"
+                  value="${target}/main/python" />
+        <property name="maven.src.scripts"
+                  value="${basedir}/src/main/scripts" />
+        <property name="maven.target.scripts"
+                  value="${target}/main/scripts" />
+        <property name="maven.test.python"
+                  value="${basedir}/src/test/python" />
+        <property name="maven.target.test.python"
+                  value="${target}/test/python" />
+        
+        <!-- standard python sources; rename only ss-*.py files -->
+        <copy todir="${maven.target.python}">
+            <fileset dir="${maven.src.python}">
+                <include name="**/*" />
+                <exclude name="**/*.pyc" />
+                <exclude name="**/slipstream*conf*" />
+                <exclude name="**/*.log" />
+                <exclude name="**/ss-*.py" />
+            </fileset>
+        </copy>
+        <copy todir="${maven.target.python}">
+            <fileset dir="${maven.src.python}">
+                <include name="**/ss-*" />
+                <exclude name="**/slipstream*conf*" />
+                <exclude name="**/*.log" />
+                <exclude name="**/*.pyc" />
+            </fileset>
+            <mapper type="glob" from="*.py" to="*" />
+        </copy>
+
+        <!-- scripts; rename all python files -->
+        <copy todir="${maven.target.scripts}">
+            <fileset dir="${maven.src.scripts}">
+                <include name="**/*.py" />
+                <exclude name="**/*.pyc" />
+                <exclude name="**/slipstream*conf*" />
+                <exclude name="**/*.log" />
+            </fileset>
+            <mapper type="glob" from="*.py" to="*" />
+        </copy>
+        <copy todir="${maven.target.scripts}">
+            <fileset dir="${maven.src.scripts}">
+                <exclude name="**/*.pyc" />
+                <exclude name="**/*.py" />
+                <exclude name="**/*.pyc" />
+                <exclude name="**/slipstream*conf*" />
+                <exclude name="**/*.log" />
+            </fileset>
+        </copy>
+
+        <!-- test code -->
+        <copy todir="${maven.target.test.python}">
+            <fileset dir="${maven.test.python}">
+                <include name="**/*" />
+                <exclude name="**/*.pyc" />
+            </fileset>
+        </copy>
+
+    </target>
+
+    <target name="all" depends="init" description="build all" />
+
+    <target name="all.force"
+            depends="init, clean"
+            description="build all from scratch" />
+</project>

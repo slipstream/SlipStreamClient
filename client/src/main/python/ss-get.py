@@ -1,0 +1,77 @@
+#!/usr/bin/env python
+"""
+ SlipStream Client
+ =====
+ Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ =====
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+ 
+      http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+"""
+
+import sys
+from optparse import OptionParser
+
+from slipstream.CommandBase import CommandBase
+from slipstream.Client import Client   
+from slipstream.ConfigHolder import ConfigHolder
+
+
+class MainProgram(CommandBase):
+    '''A command-line program to get key/value pairs from info sys restlet.'''
+    
+    def __init__(self, argv=None):
+        super(MainProgram, self).__init__(argv)
+        self.key = None
+
+    def parse(self):
+        usage = '''usage: %prog [options] <key>
+
+<key>    Key from which to retrieve the value'''
+
+        self.parser.usage = usage
+
+        self.parser.add_option('--timeout', dest='timeout',
+                               help='timeout in seconds for blocking call',
+                               metavar='SECONDS',
+                               default=60, type='int')
+
+        self.addIgnoreAbortOption()
+        
+        self.parser.add_option('--noblock', dest='noBlock',
+                               help='return immediately even if the parameter has no value',
+                               default=False, action='store_true')
+
+        self.options, self.args = self.parser.parse_args()
+        
+        self._checkArgs()
+
+        self.key = self.args[0]
+
+    def _checkArgs(self):
+        if len(self.args) < 1:
+            self.parser.error('Missing key')
+        if len(self.args) > 1:
+            self.usageExitTooManyArguments()
+
+    def doWork(self):
+        configHolder = ConfigHolder(self.options)
+        client = Client(configHolder)
+        value = client.getRuntimeParameter(self.key)
+        print value
+
+if __name__ == "__main__":
+    try:
+        MainProgram()
+    except KeyboardInterrupt:
+        print '\n\nExecution interrupted by the user... goodbye!'
+        sys.exit(-1)
+

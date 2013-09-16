@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "****************************************************"
+echo "*** Downloading the latest version of the client ***"
+echo "****************************************************"
+
+# Wait until the network is up
+for i in `seq 1 20`;
+do
+   url="http://sixsq--slipstream--release--latest.s3.amazonaws.com/slipstream-client.tgz"
+   echo "Retrieving the latest version of the scripts from: $url"
+   wget $url -O /opt/slipstream/client/slipstream-client.tgz --no-check-certificate
+   error=$?
+   if [ $error == 0 ]; then
+      break;
+   fi
+   echo "Failed reaching SlipStream server, sleeping..."
+   sleep 10
+done
+if [ $error != 0 ]; then
+   echo "Failed to reach SlipStream Server (or network is down)... shutting down"
+   shutdown now
+   exit -1
+fi
+tar zxvf /opt/slipstream/client/slipstream-client.tgz -C /opt/slipstream/client/
