@@ -1,7 +1,7 @@
 SlipStream Client
 =================
 
-This project contains SlipStream deployments orchestration library (Python)
+This project contains the SlipStream deployments orchestration library (Python)
 for provisioning distributed applications on clouds and command line client 
 for accessing SlipStream server.
 
