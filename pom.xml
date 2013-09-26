@@ -49,8 +49,8 @@
   </build>
 
   <scm>
-     <connection>scm:git:ssh://git@github.com/SixSq/SlipStreamClient.git</connection>
-     <developerConnection>scm:git:ssh://git@github.com/SixSq/SlipStreamClient.git</developerConnection>
+     <connection>scm:git:ssh://git@github.com/slipstream/SlipStreamClient.git</connection>
+     <developerConnection>scm:git:ssh://git@github.com/slipstream/SlipStreamClient.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
 
