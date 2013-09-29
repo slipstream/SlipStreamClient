@@ -124,13 +124,7 @@ class HttpClient(object):
                 # ... or maybe not.
                 errorMsg = xmlContent
 
-            errorSplit = errorMsg.split('-')
-            if len(errorSplit) > 1:
-                error = '-'.join(errorSplit[1:]).strip()
-            else:
-                error = errorMsg
-
-            return error
+            return errorMsg
 
         def _buildHeaders():
             headers = {}
