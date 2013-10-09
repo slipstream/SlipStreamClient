@@ -4,6 +4,7 @@
   <artifactId>SlipStreamClient</artifactId>
   <packaging>pom</packaging>
   <name>SlipStreamClient</name>
+  <version>2.0.4-SNAPSHOT</version>
   <url>http://sixsq.com/</url>
 
   <parent>
