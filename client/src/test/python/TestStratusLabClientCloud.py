@@ -29,7 +29,7 @@ from slipstream.ConfigHolder import ConfigHolder as SlipstreamConfigHolder
 from slipstream.exceptions import Exceptions
 
 from stratuslab.ConfigHolder import ConfigHolder as StratusLabConfigHolder
-from stratuslab.Runner import Runner
+from stratuslab.vm_manager.Runner import Runner
 
 class TestStratusLabClientCloud(unittest.TestCase):
     

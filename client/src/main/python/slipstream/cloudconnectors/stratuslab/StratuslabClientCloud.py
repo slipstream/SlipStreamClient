@@ -26,7 +26,7 @@ from stratuslab.ConfigHolder import ConfigHolder as StratuslabConfigHolder
 from stratuslab.marketplace.ManifestDownloader import ManifestDownloader
 from stratuslab.Creator import Creator
 from stratuslab.Creator import CreatorBaseListener
-from stratuslab.Runner import Runner
+from stratuslab.vm_manager.Runner import Runner
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 import slipstream.exceptions.Exceptions as Exceptions
