@@ -56,4 +56,4 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
         super(OrchestratorDeploymentExecutor, self).onTerminal()
 
-        self._killItself()
+        self._killItself(force=True)

@@ -116,16 +116,16 @@ class MachineExecutor(object):
         if res:
             raise ExecutionException('Failed executing: %s' % cmd)
 
-    def _killItself(self):
+    def _killItself(self, force=False):
         if self.isTerminateRunServerSide():
-            self._killItselfServerSide()
+            self._killItselfServerSide(force)
         else:
             _id = self._getMyCloudInstanceId()
             util.printDetail('Machine stops itself: %s' % _id)
-            self.wrapper.stopImages([_id])
+            self.wrapper.stopImages([_id], force)
 
-    def _killItselfServerSide(self):
-        self.wrapper.terminateRunServerSide()
+    def _killItselfServerSide(self, force=False):
+        self.wrapper.terminateRunServerSide(force)
 
     def _getMyCloudInstanceId(self):
         return self.wrapper.getMachineCloudInstanceId()
