@@ -128,6 +128,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
+        <version>1.1.1</version><!-- outputFile doesn't work in 1.2, needed for pylint below -->
         <executions>
           <execution>
             <id>unpack-stratuslab</id>
@@ -147,13 +148,7 @@
               </arguments>
             </configuration>
           </execution>
-        </executions>
-      </plugin>
 
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
           <execution>
             <id>unittests</id>
             <goals>
@@ -178,14 +173,7 @@
               </arguments>
             </configuration>
           </execution>
-        </executions>
-      </plugin>
 
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <version>1.1.1</version><!-- outputFile doesn't work in 1.2 -->
-        <executions>
           <execution>
             <id>pylint</id>
             <goals>
@@ -207,8 +195,8 @@
               </arguments>
             </configuration>
           </execution>
+
         </executions>
-        
       </plugin>
 
     </plugins>
