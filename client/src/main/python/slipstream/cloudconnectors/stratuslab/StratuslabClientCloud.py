@@ -101,7 +101,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
         msg_endpoint = os.environ.get('SLIPSTREAM_MESSAGING_ENDPOINT', None)
 
-        if msg_type && msg_endpoint:
+        if msg_type and msg_endpoint:
             if msg_type == 'pdisk':
 
                 diid = "SlipStream-%s" % os.environ.get('SLIPSTREAM_DIID', None)
