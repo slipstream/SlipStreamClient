@@ -27,6 +27,7 @@ from stratuslab.marketplace.ManifestDownloader import ManifestDownloader
 from stratuslab.Creator import Creator
 from stratuslab.Creator import CreatorBaseListener
 from stratuslab.vm_manager.Runner import Runner
+from stratuslab.volume_manager.volume_manager_factory import VolumeManagerFactory
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 import slipstream.exceptions.Exceptions as Exceptions
@@ -85,9 +86,45 @@ class StratuslabClientCloud(BaseCloudConnector):
         creator._getCreateImageTemplateDict = ourCreateTemplateDict
 
         creator.create()
-        # StratusLab >= 1.2 doesn't give us new image ID.
-        # It will be provided to respective SlipStream image module asynchronously.
-        self._newImageId = ''
+
+        # 
+        # if messaging is set to 'pdisk', then try polling for the new image
+        # identifier from the storage system; otherwise will just return empty
+        # string
+        #
+        self._newImageId = self._pollStorageForNewImage(imageInfo)
+
+    def _pollStorageForNewImage(slConfigHolder):
+
+        newImageId = ''
+
+        msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
+        msg_endpoint = os.environ.get('SLIPSTREAM_MESSAGING_ENDPOINT', None)
+
+        if msg_type && msg_endpoint:
+            if msg_type == 'pdisk':
+
+                diid = "SlipStream-%s" % os.environ.get('SLIPSTREAM_DIID', None)
+                if diid:
+                    tag = "SlipStream-%s" % diid
+                    filters = {'tag': [tag,]}
+
+                    slConfigHolder.set('pdiskEndpoint', msg_endpoint)
+
+                    pdisk = VolumeManagerFactory.create(slConfigHolder)
+
+                    # hardcoded polling for 30' at 1' intervals
+                    for i in range(30):
+                        volumes = pdisk.describeVolumes(filters)
+                        if len(volumes) > 0:
+                            try:
+                                newImageId = volumes[0]['identifier']
+                            except:
+                                pass
+                            break;
+                        time.sleep(60)
+
+        return newImageId
 
     @staticmethod
     def _getCreateImageTemplateMessaging(imageInfo):
@@ -103,6 +140,8 @@ class StratuslabClientCloud(BaseCloudConnector):
                 msgData.update({Runner.CREATE_IMAGE_KEY_MSG_QUEUE: os.environ['SLIPSTREAM_MESSAGING_QUEUE']})
             elif msg_type == 'rest':
                 msgData.update({Runner.CREATE_IMAGE_KEY_MSG_QUEUE: imageResourceUri})
+            elif msg_type == 'pdisk':
+                msgData = {}
             else:
                 raise Exceptions.ExecutionException('Unsupported messaging type: %s' % msg_type)
         else:
