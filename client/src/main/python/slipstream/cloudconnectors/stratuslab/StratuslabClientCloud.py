@@ -92,9 +92,9 @@ class StratuslabClientCloud(BaseCloudConnector):
         # identifier from the storage system; otherwise will just return empty
         # string
         #
-        self._newImageId = self._pollStorageForNewImage(imageInfo)
+        self._newImageId = self._pollStorageForNewImage(self.slConfigHolder)
 
-    def _pollStorageForNewImage(slConfigHolder):
+    def _pollStorageForNewImage(self, slConfigHolder):
 
         newImageId = ''
 
