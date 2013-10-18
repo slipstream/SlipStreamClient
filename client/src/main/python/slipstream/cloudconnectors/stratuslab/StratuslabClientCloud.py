@@ -242,6 +242,9 @@ class StratuslabClientCloud(BaseCloudConnector):
 
         self.slConfigHolder.set('comment', '')
 
+        title = "SlipStream-%s" % os.environ.get('SLIPSTREAM_DIID', 'undefined diid')
+        self.slConfigHolder.set('title', title)
+
         self._setUserInfoOnStratuslabConfigHolder(userInfo, buildImage=True)
         self._setImageInfoOnStratuslabConfigHolder(imageInfo)
 
