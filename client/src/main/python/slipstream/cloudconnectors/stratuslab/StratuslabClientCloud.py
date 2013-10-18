@@ -104,7 +104,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         if msg_type and msg_endpoint:
             if msg_type == 'pdisk':
 
-                diid = "SlipStream-%s" % os.environ.get('SLIPSTREAM_DIID', None)
+                diid = os.environ.get('SLIPSTREAM_DIID', None)
                 if diid:
                     tag = "SlipStream-%s" % diid
                     filters = {'tag': [tag,]}
@@ -128,7 +128,7 @@ class StratuslabClientCloud(BaseCloudConnector):
                             break;
                         time.sleep(60)
 
-        print "Returning new image ID value: " % newImageId
+        print "Returning new image ID value: %s" % newImageId
         return newImageId
 
     @staticmethod
