@@ -128,6 +128,7 @@ class StratuslabClientCloud(BaseCloudConnector):
                             break;
                         time.sleep(60)
 
+        print "Returning new image ID value: " % newImageId
         return newImageId
 
     @staticmethod
