@@ -113,13 +113,17 @@ class StratuslabClientCloud(BaseCloudConnector):
 
                     pdisk = VolumeManagerFactory.create(slConfigHolder)
 
+                    print "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+
                     # hardcoded polling for 30' at 1' intervals
                     for i in range(30):
+                        print "Search iteration %d" % i
                         volumes = pdisk.describeVolumes(filters)
                         if len(volumes) > 0:
                             try:
                                 newImageId = volumes[0]['identifier']
-                            except:
+                            except Exception as e:
+                                print "Exception occurred looking for volume: %s" % e
                                 pass
                             break;
                         time.sleep(60)

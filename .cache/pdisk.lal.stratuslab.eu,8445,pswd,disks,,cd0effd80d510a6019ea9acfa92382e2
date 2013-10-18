@@ -1,0 +1,146 @@
+status: 200
+content-location: https://pdisk.lal.stratuslab.eu:8445/pswd/disks/
+accept-ranges: bytes
+vary: Accept-Charset, Accept-Encoding, Accept-Language, Accept
+server: Restlet-Framework/2.1.0
+date: Fri, 18 Oct 2013 16:09:47 GMT, Fri, 18 Oct 2013 16:09:47 GMT
+content-type: application/json; charset=UTF-8
+-varied-accept-encoding: gzip, deflate
+-varied-accept: application/json
+
+[
+    {
+    "uuid": "a2a9592b-b786-4cfd-84e1-96d17419faf3",
+    "tag": "SlipStream-c0384117-e70f-477a-bece-75f00f0a82d2",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "A6eRGYXy0GDSjgrUDoVf2WbToc9",
+    "size": "6"
+  },
+  {
+    "uuid": "4b619773-8e3b-4dc2-86db-9e6fd9786639",
+    "tag": "",
+    "count": "0",
+    "owner": "cal",
+    "identifier": "B9HqozdBCDE3uM_7ok05L6geSmK",
+    "size": "6"
+  },
+  {
+    "uuid": "1e55f2c3-1c4a-4925-97ed-a3aee57a70c3",
+    "tag": "",
+    "count": "1",
+    "owner": "cal",
+    "identifier": "snapshot:7622c45b-f21a-4320-a8e0-e07fea6e6e5d",
+    "size": "6"
+  },
+  {
+    "uuid": "e6a9f2bf-bb9b-46ef-b4df-a7f56cd3766b",
+    "tag": "",
+    "count": "1",
+    "owner": "cal",
+    "identifier": "snapshot:b3a965ff-a890-4441-ab2a-bebf33377fe8",
+    "size": "1"
+  },
+  {
+    "uuid": "28025dc8-e338-49e3-b818-375a8e4a4a4e",
+    "tag": "",
+    "count": "1",
+    "owner": "cal",
+    "identifier": "snapshot:7622c45b-f21a-4320-a8e0-e07fea6e6e5d",
+    "size": "6"
+  },
+  {
+    "uuid": "ac1a25fc-feba-40e2-a8da-daf68da56871",
+    "tag": "",
+    "count": "1",
+    "owner": "cal",
+    "identifier": "snapshot:7622c45b-f21a-4320-a8e0-e07fea6e6e5d",
+    "size": "6"
+  },
+  {
+    "uuid": "ab8b5b8f-3430-4f7f-8437-972e82835c11",
+    "tag": "",
+    "count": "1",
+    "owner": "cal",
+    "identifier": "snapshot:7622c45b-f21a-4320-a8e0-e07fea6e6e5d",
+    "size": "6"
+  },
+  {
+    "uuid": "6a99961e-01a4-4656-a1ff-a21d3544e37f",
+    "tag": "jenkins",
+        "count": "1",
+    "owner": "cal",
+    "size": "20"
+  },
+  {
+    "uuid": "0a71cc26-0f2c-469b-a57a-e63371072912",
+    "tag": "lc_vol_4",
+        "count": "0",
+    "owner": "cal",
+    "size": "8"
+  },
+  {
+    "uuid": "2ab8e698-b658-42e4-a8e2-0060843f4793",
+    "tag": "test-9538.82876226",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "ExWFbHCl1ZmQMrTySNEvA0oooFI",
+    "size": "6"
+  },
+  {
+    "uuid": "af0e877e-98da-4793-b941-db2deeec7361",
+    "tag": "test-3041.07533147",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "KWtaWCWHE7qaXoGYdwnTBxe-us4",
+    "size": "6"
+  },
+  {
+    "uuid": "c5c0072c-eb6f-4b94-9221-d75688c6d509",
+    "tag": "test-3377.56748941",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "M1qpC_gpP4d77vVx3AbjZB9arqh",
+    "size": "6"
+  },
+  {
+    "uuid": "96e2a7b8-453b-4869-9f28-99a6bbfd7789",
+    "tag": "test-8634.27841241",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "E8feHyqBBFtdrpHUtKf0KvAl6b1",
+    "size": "6"
+  },
+  {
+    "uuid": "077fe146-16a9-4ad7-bf03-3773f6c822bb",
+    "tag": "test-6952.18903832",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "NRoSFreNKiVKQdm8FHWkJ7QKF1n",
+    "size": "6"
+  },
+  {
+    "uuid": "17c304df-72a4-4c74-9e28-88fd15e8d5e9",
+    "tag": "TITLE",
+        "count": "0",
+    "owner": "cal",
+    "identifier": "NfulkN0PMRc2qhj81jkpvF8eSYs",
+    "size": "6"
+  },
+  {
+    "uuid": "d6732166-debb-418c-877b-0c8e8345fb2a",
+    "tag": "",
+    "count": "0",
+    "owner": "cal",
+    "identifier": "J-zVxEV5vfFscoKPLOHjtubmrJF",
+    "size": "6"
+  },
+  {
+    "uuid": "8c00da97-ff4a-4c5d-a7fe-6006d8871dd1",
+    "tag": "",
+    "count": "0",
+    "owner": "cal",
+    "identifier": "FPTYtjokkKb82LaW3O4BN72IXx2",
+    "size": "6"
+  }
+]
