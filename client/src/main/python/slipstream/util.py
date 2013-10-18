@@ -25,6 +25,8 @@ import urllib2
 import subprocess
 import tempfile
 import pkgutil
+import cStringIO
+import contextlib
 
 import uuid as uuidModule
 import slipstream.exceptions.Exceptions as Exceptions
@@ -534,3 +536,33 @@ def appendSshPubkeyToAuthorizedKeys(pubkey):
         pass
     fileAppendContent(dot_ssh_path + '/authorized_keys',
                       '\n' + pubkey)
+
+class NullFile(object):
+    def write(self, x): pass
+    def flush(self): pass
+
+@contextlib.contextmanager
+def nostdout():
+    save_stdout = sys.stdout
+    sys.stdout = NullFile()
+    yield
+    sys.stdout = save_stdout
+    
+@contextlib.contextmanager
+def nostderr():
+    save_stderr = sys.stderr
+    sys.stderr = NullFile()
+    yield
+    sys.stderr = save_stderr
+    
+@contextlib.contextmanager
+def nostdouterr():
+    save_stdout = sys.stdout
+    save_stderr = sys.stderr
+    sys.stdout = NullFile()
+    sys.stderr = NullFile()
+    yield
+    sys.stdout = save_stdout
+    sys.stderr = save_stderr
+
+
