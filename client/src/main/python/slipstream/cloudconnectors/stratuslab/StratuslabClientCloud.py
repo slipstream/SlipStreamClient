@@ -92,9 +92,9 @@ class StratuslabClientCloud(BaseCloudConnector):
         # identifier from the storage system; otherwise will just return empty
         # string
         #
-        self._newImageId = self._pollStorageForNewImage(imageInfo)
+        self._newImageId = self._pollStorageForNewImage(self.slConfigHolder)
 
-    def _pollStorageForNewImage(slConfigHolder):
+    def _pollStorageForNewImage(self, slConfigHolder):
 
         newImageId = ''
 
@@ -104,7 +104,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         if msg_type and msg_endpoint:
             if msg_type == 'pdisk':
 
-                diid = "SlipStream-%s" % os.environ.get('SLIPSTREAM_DIID', None)
+                diid = os.environ.get('SLIPSTREAM_DIID', None)
                 if diid:
                     tag = "SlipStream-%s" % diid
                     filters = {'tag': [tag,]}
@@ -113,17 +113,22 @@ class StratuslabClientCloud(BaseCloudConnector):
 
                     pdisk = VolumeManagerFactory.create(slConfigHolder)
 
+                    print "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+
                     # hardcoded polling for 30' at 1' intervals
                     for i in range(30):
+                        print "Search iteration %d" % i
                         volumes = pdisk.describeVolumes(filters)
                         if len(volumes) > 0:
                             try:
                                 newImageId = volumes[0]['identifier']
-                            except:
+                            except Exception as e:
+                                print "Exception occurred looking for volume: %s" % e
                                 pass
                             break;
                         time.sleep(60)
 
+        print "Returning new image ID value: %s" % newImageId
         return newImageId
 
     @staticmethod

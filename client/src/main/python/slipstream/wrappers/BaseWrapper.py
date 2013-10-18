@@ -61,7 +61,7 @@ class BaseWrapper(object):
         self.clientSlipStream.reset()
 
     def fail(self, message):
-        util.printError('Failling... %s' % message)
+        util.printError('Failing... %s' % message)
         traceback.print_exc()
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
         self.clientSlipStream.setRuntimeParameter(abort, message)
