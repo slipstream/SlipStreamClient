@@ -76,17 +76,17 @@ class CloudWrapper(BaseWrapper):
     def _getUserAndNodesInfo(self):
         return self.getUserInfo(self.cloudProxy.cloud), self.getNodesInfo()
 
-    def stopImages(self, ids=[], force=False):
+    def stopImages(self, ids=[]):
 
-        if self._needToStopImages() or force:
+        if self._needToStopImages():
             if ids:
                 self.cloudProxy.stopImagesByIds(ids)
             else:
                 self.cloudProxy.stopImages()
             self.imagesStopped = True
 
-    def terminateRunServerSide(self, force=False):
-        if self._needToStopImages() or force:
+    def terminateRunServerSide(self):
+        if self._needToStopImages():
             self._deleteRunResource()
 
     def _needToStopImages(self):
