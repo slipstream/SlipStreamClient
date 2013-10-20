@@ -2,6 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>SlipStreamClient</artifactId>
+  <version>2.0.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>SlipStreamClient</name>
   <url>http://sixsq.com/</url>
