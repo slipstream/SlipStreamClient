@@ -544,25 +544,30 @@ class NullFile(object):
 @contextlib.contextmanager
 def nostdout():
     save_stdout = sys.stdout
-    sys.stdout = NullFile()
-    yield
-    sys.stdout = save_stdout
+    try:
+        sys.stdout = NullFile()
+        yield
+    finally:
+        sys.stdout = save_stdout
     
 @contextlib.contextmanager
 def nostderr():
     save_stderr = sys.stderr
-    sys.stderr = NullFile()
-    yield
-    sys.stderr = save_stderr
+    try:
+        sys.stderr = NullFile()
+        yield
+    finally:
+        sys.stderr = save_stderr
     
 @contextlib.contextmanager
 def nostdouterr():
     save_stdout = sys.stdout
     save_stderr = sys.stderr
-    sys.stdout = NullFile()
-    sys.stderr = NullFile()
-    yield
-    sys.stdout = save_stdout
-    sys.stderr = save_stderr
-
+    try:
+        sys.stdout = NullFile()
+        sys.stderr = NullFile()
+        yield
+    finally:
+        sys.stdout = save_stdout
+        sys.stderr = save_stderr
 
