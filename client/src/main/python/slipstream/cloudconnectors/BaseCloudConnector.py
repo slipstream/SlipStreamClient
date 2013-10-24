@@ -180,19 +180,25 @@ class BaseCloudConnector(object):
 
         self.initialization(user_info)
 
-        vm = self._startImage(user_info, image_info, name)
-        self.addVm(name, vm)
-
-        if self.needWaitIp():
-            vm = self._waitAndGetInstanceIpAddress(vm)
+        try:
+            vm = self._startImage(user_info, image_info, name)
             self.addVm(name, vm)
+    
+            if self.needWaitIp():
+                vm = self._waitAndGetInstanceIpAddress(vm)
+                self.addVm(name, vm)
+        finally:
+            self.finalization(user_info)
 
         return self.getVmsDetails()
 
     def startNodesAndClients(self, user_info, nodes_info):
         self.initialization(user_info)
-
-        self._startNodeInstantiationTasksWaitFinished(user_info, nodes_info)
+        
+        try:
+            self._startNodeInstantiationTasksWaitFinished(user_info, nodes_info)
+        finally:
+            self.finalization(user_info)
 
         return self.getVmsDetails()
 
@@ -245,6 +251,11 @@ class BaseCloudConnector(object):
         raise NotImplementedError()
 
     def initialization(self, user_info):
+        pass
+    
+    def finalization(self, user_info):
+        """This method is called once when all instances have been started or
+        if an exception has occurred."""
         pass
 
     def _getCloudSpecificData(self, node_info, node_number, nodename):

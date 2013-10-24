@@ -164,6 +164,22 @@
 							</sources>
 						</mapping>
 
+                        <mapping>
+                            <directory>/usr/bin</directory>
+                            <filemode>755</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.build.directory}/client/sbin/</location>
+                                    <includes>
+                                        <include>cloudstack-*</include>
+                                    </includes>
+                                </source>
+                            </sources>
+                        </mapping>
+
 					</mappings>
 
           <postinstallScriptlet>
