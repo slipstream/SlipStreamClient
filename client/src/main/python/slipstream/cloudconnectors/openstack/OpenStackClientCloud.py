@@ -59,13 +59,21 @@ class OpenStackClientCloud(BaseCloudConnector):
         self._thread_local.driver = self._getDriver(user_info)
         self.flavors = self._thread_local.driver.list_sizes()
         self.images = self._thread_local.driver.list_images()
-        #self._getDriver(user_info)
+        
+        if self.run_category == RUN_CATEGORY_DEPLOYMENT:
+            self._importKeypair(user_info)
+        elif self.run_category == RUN_CATEGORY_IMAGE:
+            self._createKeypairAndSetOnUserInfo(user_info)
+
+    def finalization(self, user_info):
+        try:
+            kp_name = self._userInfoGetKeypairName(user_info)
+            self._deleteKeypair(kp_name)
+        except:
+            pass
 
     def _buildImage(self, userInfo, imageInfo):
-        try:
-            self._buildImageOnOpenStack(userInfo, imageInfo)
-        finally:
-            self._deleteKeypair(self._userInfoGetKeypairName(userInfo))
+        self._buildImageOnOpenStack(userInfo, imageInfo)
 
     def _buildImageOnOpenStack(self, userInfo, imageInfo):
         self._thread_local.driver = self._getDriver(userInfo)
@@ -93,30 +101,19 @@ class OpenStackClientCloud(BaseCloudConnector):
         self._newImageId = newImg.id
 
     def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
-        self._thread_local.driver = self._getDriver(user_info)
-
-        if self.run_category == RUN_CATEGORY_DEPLOYMENT:
-            return self._startImageOnOpenStack(user_info, image_info, instance_name, cloudSpecificData)
-
-        elif self.run_category == RUN_CATEGORY_IMAGE:
-            self._createKeypairAndSetOnUserInfo(user_info)
-            try:
-                return self._startImageOnOpenStack(user_info, image_info, instance_name, cloudSpecificData)
-            except:
-                self._deleteKeypair(self._userInfoGetKeypairName(user_info))
-                raise
+        self._thread_local.driver = self._getDriver(user_info)        
+        return self._startImageOnOpenStack(user_info, image_info, instance_name, cloudSpecificData)
 
     def _startImageOnOpenStack(self, user_info, image_info, instance_name, cloudSpecificData=None):
         imageId = self.getImageId(image_info)
         instanceType = self._getInstanceType(image_info)
         keypair = user_info.get_cloud('keypair.name')
-        securityGroups = [x.strip() for x in self._getCloudParameter(image_info, 'security.group').split(',') if x]
+        securityGroups = [x.strip() for x in self._getCloudParameter(image_info, 'security.groups').split(',') if x]
         flavor = self._searchInObjectList(self.flavors, 'name', instanceType)
         image = self._searchInObjectList(self.images, 'id', imageId)
         contextualizationScript = cloudSpecificData or ''
 
-        if flavor == None: raise Exceptions.ParameterNotFoundException(
-            "Couldn't find the specified flavor: %s" % instanceType)
+        if flavor == None: raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instanceType)
         if image == None: raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
 
         instance = self._thread_local.driver.create_node(name=instance_name,
@@ -242,6 +239,17 @@ class OpenStackClientCloud(BaseCloudConnector):
             time.sleep(1)
             images = self._thread_local.driver.list_images()
             imgState = self._searchInObjectList(images, 'id', imageId)
+
+    def _importKeypair(self, user_info):
+        kp_name = 'ss-key-%i'  % int(time.time())
+        public_key = self._getPublicSshKey(user_info)
+        try:
+            kp = self._thread_local.driver.ex_import_keypair_from_string(kp_name, public_key)
+        except Exception as e:
+            raise Exceptions.ExecutionException('Cannot import the public key. Reason: %s' % e)
+        kp_name = kp.name
+        self._userInfoSetKeypairName(user_info, kp_name)
+        return kp_name
 
     def _createKeypairAndSetOnUserInfo(self, user_info):
         kp_name = 'ss-build-image-%i' % int(time.time())

@@ -63,20 +63,20 @@ class TestOpenStackClientCloud(unittest.TestCase):
         self.client = OpenStackClientCloud(self.ch)
         
         self.user_info = UserInfo('openstack')
-        self.user_info['openstack.keystone.url'] = self.ch.config['openstack.keystone.url']
+        self.user_info['openstack.endpoint'] = self.ch.config['openstack.endpoint']
         self.user_info['openstack.tenant.name'] = self.ch.config['openstack.tenant.name']
         self.user_info['openstack.username'] = self.ch.config['openstack.username']
         self.user_info['openstack.password'] = self.ch.config['openstack.password']
-        self.user_info['openstack.keypair.name'] = self.ch.config['openstack.keypair.name']
-        self.user_info['openstack.security.group'] = self.ch.config['openstack.security.group']
-#        self.user_info['openstack.private.key'] = self.ch.config['openstack.private.key']
+        self.user_info['General.ssh.public.key'] = self.ch.config['General.ssh.public.key']
 
+        security_groups = self.ch.config['openstack.security.groups']
         image_id = self.ch.config['openstack.imageid']
         self.multiplicity = 2
         self.node_info = {'multiplicity' : self.multiplicity,
                           'nodename' : 'test_node',
                           'image' : {'cloud_parameters' : {'openstack':{
-                                                                        'openstack.instance.type': 'm1.tiny'
+                                                                        'openstack.instance.type': 'm1.tiny',
+                                                                        'openstack.security.groups': security_groups
                                                                          },
                                                            'Cloud':{ 'network' : 'private' }
                                                            },
