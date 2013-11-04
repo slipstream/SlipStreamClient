@@ -21,7 +21,7 @@ import os
 import unittest
 from slipstream.LocalCache import LocalCache
 
-class RestClientTestCase(unittest.TestCase):
+class LocalCacheTestCase(unittest.TestCase):
 
     def setUp(self):
         pass
