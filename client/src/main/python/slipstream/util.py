@@ -138,12 +138,12 @@ def execute(commandAndArgsList, **kwargs):
     process = subprocess.Popen(commandAndArgsList, **kwargs)
 
     if wait:
-        process.wait()
+        output, errors = process.communicate()
 
     if withStderr:
-        return process.returncode, process.stderr.read()
+        return process.returncode, errors
     elif withStdOutErr:
-        return process.returncode, process.stdout.read()
+        return process.returncode, output
     else:
         return process.returncode
 

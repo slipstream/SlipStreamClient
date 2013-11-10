@@ -156,6 +156,7 @@
 									<location>target/client/lib</location>
 									<includes>
 									  <include>slipstream/**/*</include>
+									  <include>winrm/**/*</include>
 									</includes>
 									<excludes>
 										<exclude>**/*.pyc</exclude>
