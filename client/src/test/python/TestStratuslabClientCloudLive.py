@@ -24,7 +24,6 @@ from mock import Mock
 from slipstream.cloudconnectors.stratuslab.StratuslabClientCloud import StratuslabClientCloud
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
-from slipstream.NodeDecorator import NodeDecorator
 from slipstream import util
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__), 

@@ -271,7 +271,7 @@ USERPARAMETRS_XML = """<user deleted="false" resourceUri="user/test" name="test"
 </user>
 """
 
-class RestClientTestCase(unittest.TestCase):
+class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def setUp(self):
         self.context = {}
