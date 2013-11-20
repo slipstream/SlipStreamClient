@@ -22,6 +22,8 @@ import httplib
 
 import httplib2
 
+import socket
+
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
 
@@ -138,15 +140,28 @@ class HttpClient(object):
             return headers
 
         def _request(headers):
-            try:
-                if len(headers):
-                    resp, content = h.request(url, method, body, headers=headers)
-                else:
-                    resp, content = h.request(url, method, body)
-            except httplib.BadStatusLine:
-                raise Exceptions.NetworkError('Error: BadStatusLine contacting: ' + url)
-            except httplib2.RelativeURIError, ex:
-                raise Exceptions.ClientError('%s' % ex)
+            if retry:
+                retry_number = 2 
+            else:
+                retry_number = 0
+            
+            while(True):
+                try:
+                    if len(headers):
+                        resp, content = h.request(url, method, body, headers=headers)
+                    else:
+                        resp, content = h.request(url, method, body)
+                    break
+                except httplib.BadStatusLine:
+                    raise Exceptions.NetworkError('Error: BadStatusLine contacting: ' + url)
+                except httplib2.RelativeURIError, ex:
+                    raise Exceptions.ClientError('%s' % ex)
+                except socket.error, ex:
+                    if retry_number > 0:
+                        self._printDetail('Error: %s \nRetrying ...' % ex)
+                        retry_number = retry_number - 1
+                    else:
+                        raise
             return resp, content
 
         def _handleResponse(resp, content):
@@ -176,7 +191,7 @@ class HttpClient(object):
         return resp, content
 
     def _getHttpObject(self):
-        h = httplib2.Http(".cache", timeout=180,
+        h = httplib2.Http(".cache", timeout=300,
                           disable_ssl_certificate_validation=self.disableSslCertificateValidation)
         h.force_exception_to_status_code = False
         return h

@@ -53,6 +53,9 @@ class OpenStackClientCloud(BaseCloudConnector):
         libcloud.security.VERIFY_SSL_CERT = False
 
         super(OpenStackClientCloud, self).__init__(configHolder)
+        
+        self.setCapabilities(contextualization=True,
+                             orchestrator_can_kill_itself_or_its_vapp=True)
 
     def initialization(self, user_info):
         util.printStep('Initialize the OpenStack connector.')
@@ -132,11 +135,11 @@ class OpenStackClientCloud(BaseCloudConnector):
     def _getCloudSpecificData(self, node_info, node_number, nodename):
         return self._getBootstrapScript(nodename)
 
-    def stopImages(self):
+    def stopDeployment(self):
         for _, vm in self.getVms().items():
             vm['instance'].destroy()
 
-    def stopImagesByIds(self, ids):
+    def stopVmsByIds(self, ids):
         for node in self._thread_local.driver.list_nodes():
             if node.id in ids:
                 node.destroy()

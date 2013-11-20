@@ -70,13 +70,10 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         super(OrchestratorImageBuildExecutor, self).onFinalizing()
         self._advanceMachine()
         self._killCreator()
-        self._killItself()
+        self._killItself(True)
 
     def _killCreator(self):
-        creatorVmId = self.wrapper.getCreatorVmId()
-        if creatorVmId:
-            util.printDetail('Stop creator: %s' % creatorVmId)
-            self.wrapper.stopImages([creatorVmId])
+        self.wrapper.stopCreator()
 
     def _advanceMachine(self):
         self.wrapper.clientSlipStream.advance(NodeDecorator.MACHINE_NAME)

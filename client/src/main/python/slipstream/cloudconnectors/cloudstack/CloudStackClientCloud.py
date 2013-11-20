@@ -26,13 +26,16 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     cloudName = 'cloudstack'
 
-    def __init__(self, configHolder):        
-        self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
+    def __init__(self, configHolder):                
         libcloud.security.VERIFY_SSL_CERT = False
-        
         patchLibcloud()
         
         super(CloudStackClientCloud, self).__init__(configHolder)
+        self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
+        
+        self.setCapabilities(contextualization=True, 
+                             direct_ip_assignment=True,
+                             orchestrator_can_kill_itself_or_its_vapp=True)   
 
     def initialization(self, user_info):
         util.printStep('Initialize the CloudStack connector.')
@@ -109,11 +112,11 @@ class CloudStackClientCloud(BaseCloudConnector):
             tasksRunnner.run_task(driver.destroy_node, (instance,))
         tasksRunnner.wait_tasks_finished()
 
-    def stopImages(self):
+    def stopDeployment(self):
         instances = [vm['instance'] for vm in self.getVms().itervalues()]
         self._stopInstances(instances)
     
-    def stopImagesByIds(self, ids):
+    def stopVmsByIds(self, ids):
         instances = [i for i in self.listInstances() if i.id in ids]
         self._stopInstances(instances)
     

@@ -30,7 +30,7 @@ class MainProgram(CloudStackCommand):
         cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel':0}, 
                                                 context={'foo':'bar'}))
         cc.initialization(self.userInfo)
-        cc.stopImagesByIds(ids)
+        cc.stopVmsByIds(ids)
 
 if __name__ == "__main__":
     try:

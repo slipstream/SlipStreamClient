@@ -135,7 +135,7 @@ lvs
         assert len(vms) == 3
 
         # You need to put a breakpoint on the next line and manually check /tmp/slipstream* on the two nodes 
-        self.client.stopImages()
+        self.client.stopDeployment()
 
 
 if __name__ == '__main__':

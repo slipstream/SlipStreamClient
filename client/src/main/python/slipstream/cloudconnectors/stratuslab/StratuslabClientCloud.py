@@ -53,8 +53,11 @@ class StratuslabClientCloud(BaseCloudConnector):
 
         self.slConfigHolder = StratuslabConfigHolder(slipstreamConfigHolder.options,
                                                      slipstreamConfigHolder.config)
-
         self.listener = CreatorBaseListener(verbose=(self.verboseLevel > 1))
+        
+        self.setCapabilities(contextualization=True, 
+                             direct_ip_assignment=True,
+                             orchestrator_can_kill_itself_or_its_vapp=True)
 
     def startImage(self, user_info, image_info):
         return self.getVmsDetails()
@@ -265,7 +268,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         return "sleep 15; " + \
                super(StratuslabClientCloud, self)._buildSlipStreamBootstrapCommand(nodename)
 
-    def stopImages(self):
+    def stopDeployment(self):
         errors = []
         for nodename, runner in self.getVms().items():
             try:
@@ -275,7 +278,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         if errors:
             raise Exceptions.CloudError('Failed stopping following instances. Details: %s' % '\n   -> '.join(errors))
 
-    def stopImagesByIds(self, ids):
+    def stopVmsByIds(self, ids):
         configHolder = self.slConfigHolder.copy()
         runner = Runner(None, configHolder)
         runner.killInstances(map(int, ids))
