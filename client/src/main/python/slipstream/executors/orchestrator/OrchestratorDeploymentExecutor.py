@@ -42,9 +42,10 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
     def onTerminal(self):
         util.printAction('Terminating')
-        util.printStep('Stopping instances')
+        util.printStep('Stopping instances')            
+        
         try:
-            self.wrapper.stopImages()
+            self.wrapper.stopNodes()
         except Exceptions.AbortException:
             pass
         except Exception, ex:

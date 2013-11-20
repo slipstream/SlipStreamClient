@@ -121,7 +121,7 @@ lvs
         vms = self.client.getVms()
         assert len(vms) == self.multiplicity
 
-        self.client.stopImages()
+        self.client.stopDeployment()
 
     def test_2_buildImage(self):
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)

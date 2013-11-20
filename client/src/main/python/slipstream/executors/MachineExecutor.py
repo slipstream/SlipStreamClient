@@ -25,6 +25,7 @@ from slipstream.exceptions.Exceptions import TimeoutException, \
     AbortException, TerminalStateException, ExecutionException
 from slipstream import util
 from slipstream.Client import Client
+from slipstream.util import deprecated
 
 
 class MachineExecutor(object):
@@ -116,13 +117,8 @@ class MachineExecutor(object):
         if res:
             raise ExecutionException('Failed executing: %s' % cmd)
 
-    def _killItself(self):
-        if self.isTerminateRunServerSide():
-            self._killItselfServerSide()
-        else:
-            _id = self._getMyCloudInstanceId()
-            util.printDetail('Machine stops itself: %s' % _id)
-            self.wrapper.stopImages([_id])
+    def _killItself(self, is_build_image=False):
+        self.wrapper.stopOrchestrator(is_build_image)
 
     def _killItselfServerSide(self):
         self.wrapper.terminateRunServerSide()
@@ -130,5 +126,6 @@ class MachineExecutor(object):
     def _getMyCloudInstanceId(self):
         return self.wrapper.getMachineCloudInstanceId()
 
+    @deprecated
     def isTerminateRunServerSide(self):
         return self.wrapper.isTerminateRunServerSide()

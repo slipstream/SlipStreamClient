@@ -36,6 +36,10 @@ class PhysicalHostClientCloud(BaseCloudConnector):
 
     def __init__(self, configHolder):
         super(PhysicalHostClientCloud, self).__init__(configHolder)
+        
+        self.setCapabilities(contextualization=True, 
+                             direct_ip_assignment=True,
+                             orchestrator_can_kill_itself_or_its_vapp=True)
 
     def initialization(self, user_info):
     #        for node_info in nodes_info:
@@ -74,12 +78,12 @@ class PhysicalHostClientCloud(BaseCloudConnector):
     def vmGetId(self, host):
         return host['id']
 
-    def stopImages(self):
+    def stopDeployment(self):
         for nodename, node in self.getVms().items():
             if not nodename == 'orchestrator-physicalhost':
                 self._stopImages(node['username'], node['privateKey'], node['password'], node['host'])
 
-    def stopImagesByIds(self, ids):
+    def stopVmsByIds(self, ids):
         util.printAndFlush("Stop ids: %s" % ids)
         for _, node in self.getVms().items():
             util.printAndFlush("   Node: %s" % node['host'])

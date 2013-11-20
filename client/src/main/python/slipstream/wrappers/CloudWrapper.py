@@ -19,6 +19,7 @@
 from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.cloudconnectors.CloudConnectorFactory import CloudConnectorFactory
 from slipstream import util
+from slipstream.util import deprecated
 
 
 class CloudWrapper(BaseWrapper):
@@ -35,12 +36,6 @@ class CloudWrapper(BaseWrapper):
         self.cloudProxy = CloudConnectorFactory. \
             createConnector(configHolder or self.configHolder)
 
-    # REMARK:
-    #     LS: I think it's better to use a structure like the following
-    #         {'noeudA': {'ip': 'ipA', 'id': 'idA'}, 'noeudB': {'ip': 'ipB', 'id': 'idB'}}
-    #     instead of
-    #         [{'noeudA': {'ip': 'ipA', 'id': 'idA'}}, {'noeudB': {'ip': 'ipB', 'id': 'idB'}}]
-    #     so we can remove the first for loop
     def publishDeploymentInitializationInfo(self):
         for instanceDetail in self.instancesDetail:
             for nodename, parameters in instanceDetail.items():
@@ -76,6 +71,7 @@ class CloudWrapper(BaseWrapper):
     def _getUserAndNodesInfo(self):
         return self.getUserInfo(self.cloudProxy.cloud), self.getNodesInfo()
 
+    @deprecated
     def stopImages(self, ids=[]):
 
         if self._needToStopImages():
@@ -85,11 +81,60 @@ class CloudWrapper(BaseWrapper):
                 self.cloudProxy.stopImages()
             self.imagesStopped = True
 
-    def terminateRunServerSide(self):
-        if self._needToStopImages():
-            self._deleteRunResource()
+    def stopCreator(self):
+        if self._needToStopImages(True):
+            creator_id = self.getCreatorVmId()
+            if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
+                self.cloudProxy.stopVmsByIds([creator_id])
+            elif not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
+                self.cloudProxy.stopVappsByIds([creator_id])
 
-    def _needToStopImages(self):
+    def stopNodes(self):
+        if self._needToStopImages():
+            if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):                
+                self.cloudProxy.stopDeployment()
+            self.imagesStopped = True
+    
+    def stopOrchestrator(self, is_build_image=False):
+        if is_build_image:
+            self.stopOrchestratorBuild()
+        else:
+            self.stopOrchestratorDeployment()
+    
+    def stopOrchestratorBuild(self):
+        if self._needToStopImages(True):
+            orch_id = self.getMachineCloudInstanceId()
+            
+            if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
+                if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+                    if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
+                        self.cloudProxy.stopDeployment()
+                    else:
+                        self.cloudProxy.stopVappsByIds([orch_id])
+                else:
+                    self.terminateRunServerSide()
+            else:
+                if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+                    self.cloudProxy.stopVmsByIds([orch_id])
+                else:
+                    self.terminateRunServerSide()
+    
+    def stopOrchestratorDeployment(self):
+        if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP) and self._needToStopImages():
+            if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+                self.cloudProxy.stopDeployment()
+            else:
+                self.terminateRunServerSide()
+        elif self._needToStopImages() and not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+            self.terminateRunServerSide()
+        else:
+            orch_id = self.getMachineCloudInstanceId()
+            self.cloudProxy.stopVmsByIds([orch_id])
+
+    def terminateRunServerSide(self):
+        self._deleteRunResource()
+
+    def _needToStopImages(self, ignore_on_success_run_forever=False):
         userInfo = self.getUserInfo(self.cloudProxy.cloud)
 
         try:
@@ -105,7 +150,7 @@ class CloudWrapper(BaseWrapper):
         if self.isAbort():
             if onErrorRunForever == 'true':
                 stop = False
-        elif onSuccessRunForever == 'true':
+        elif onSuccessRunForever == 'true' and not ignore_on_success_run_forever:
             stop = False
 
         return stop
@@ -147,5 +192,6 @@ class CloudWrapper(BaseWrapper):
     def getCloudInstanceName(self):
         return self.cloudProxy.cloud
 
+    @deprecated
     def isTerminateRunServerSide(self):
         return self.cloudProxy.isTerminateRunServerSide()

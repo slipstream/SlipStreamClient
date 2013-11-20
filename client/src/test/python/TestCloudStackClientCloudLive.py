@@ -117,7 +117,7 @@ lvs
         vms = self.client.getVms()
         assert len(vms) == self.multiplicity
 
-        self.client.stopImages()
+        self.client.stopDeployment()
 
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE
