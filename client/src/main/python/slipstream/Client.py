@@ -73,6 +73,16 @@ class Client(object):
                 timer += sleepTime
         return value
 
+    def launchDeployment(self, params):
+        """
+        @return: Run location
+        @rtype: {str}
+        """
+        return self.httpClient.launchDeployment(params)
+
+    def getRunState(self, uuid, ignoreAbort=True):
+        return self.httpClient.getRunState(uuid, ignoreAbort=ignoreAbort)
+
     def _qualifyKey(self, key):
         """Qualify the key, if not already done, with the right nodename"""
 
