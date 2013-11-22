@@ -6,10 +6,10 @@ from optparse import OptionParser
 import subprocess
 import xml.etree.ElementTree as ET
 
-from com.sixsq.slipstream.CommandBase import CommandBase
-from com.sixsq.slipstream.HttpClient import HttpClient   
-from com.sixsq.slipstream.ConfigHolder import ConfigHolder
-import com.sixsq.slipstream.util as util
+from slipstream.CommandBase import CommandBase
+from slipstream.HttpClient import HttpClient   
+from slipstream.ConfigHolder import ConfigHolder
+import slipstream.util as util
 
 class MainProgram(CommandBase):
     '''Recursively download SlipStream modules as XML from server.'''

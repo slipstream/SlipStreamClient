@@ -5,10 +5,10 @@ import os
 import glob
 from optparse import OptionParser
 
-from com.sixsq.slipstream.CommandBase import CommandBase
-from com.sixsq.slipstream.HttpClient import HttpClient   
-import com.sixsq.slipstream.util as util
-import com.sixsq.slipstream.SlipStreamHttpClient as SlipStreamHttpClient
+from slipstream.CommandBase import CommandBase
+from slipstream.HttpClient import HttpClient   
+import slipstream.util as util
+import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 etree = util.importETree()
 
