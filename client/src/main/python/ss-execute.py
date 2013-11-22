@@ -17,13 +17,15 @@
  limitations under the License.
 """
 
-import sys
 import os
+import sys
+import time
 from optparse import OptionParser
 
 from slipstream.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient   
 from slipstream.ConfigHolder import ConfigHolder
+from slipstream.Client import Client
+from slipstream.exceptions import Exceptions
 import slipstream.util as util
 
 
@@ -31,6 +33,10 @@ class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
     
     REF_QNAME = 'refqname'
+    DEAFULT_WAIT = 0 # minutes
+    DEFAULT_SLEEP = 30 # seconds
+    INITIAL_SLEEP = 10  # seconds
+    INITIAL_STATE = 'Inactive'
 
     def __init__(self, argv=None):
         self.moduleUri = None
@@ -70,6 +76,14 @@ class MainProgram(CommandBase):
                                metavar="KEY1=VALUE1,KEY2=VALUE2",
                                default='')
 
+        self.parser.add_option('-w', '--wait', dest='wait',
+                               help='Wait MINUTES for the deployment to finish.',
+                               type='int', metavar='MINUTES', default=self.DEAFULT_WAIT)
+
+        self.parser.add_option('--nagios', dest='nagios',
+                               help='Behave like Nagios check.',
+                               default=False, action='store_true')
+
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
@@ -82,6 +96,8 @@ class MainProgram(CommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
         self.parameters = self._parseParameters()
+        if self.options.nagios:
+            self.options.verboseLevel = 0
 
     def _parseParameters(self):
         parameters = {}
@@ -95,16 +111,23 @@ class MainProgram(CommandBase):
             parameters[key]=value
         return parameters
 
+    def _init_client(self):
+        configHolder = ConfigHolder(self.options, context={'empty':None}, 
+                                    config={'empty':None})
+        configHolder.set('serviceurl', self.options.endpoint)
+        self.client = Client(configHolder)
+
+    def _launch_deployment(self):
+        params = self._assembleData()
+        return self.client.launchDeployment(params)
+
     def doWork(self):
-        configHolder = ConfigHolder(self.options, context={'empty':None}, config={'empty':None})
-        client = HttpClient(self.options.username, self.options.password, configHolder=configHolder)
-
-        url = self.options.endpoint + util.RUN_URL_PATH
-
-        data = self._assembleData()
-
-        resp, _ = client.post(url, '&'.join(data), contentType='text/plain', accept='text/plain')
-        print resp['location']
+        self._init_client()
+        run_url = self._launch_deployment()
+        if self._need_to_wait():
+            self._wait_run_in_final_state(run_url)
+        else:
+            print run_url
 
     def _assembleData(self):
         self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
@@ -118,6 +141,46 @@ class MainProgram(CommandBase):
             self.parser.error('Invalid key format: ' + key)
         nodename, key = parts
         return 'parameter--node--' + nodename + '--' + key
+
+    def _wait_run_in_final_state(self, run_url):
+        def _sleep():
+            time_sleep = self.DEFAULT_SLEEP
+            if _sleep.ncycle <= 2:
+                if _sleep.ncycle == 1:
+                    time_sleep = self.INITIAL_SLEEP
+                elif _sleep.ncycle == 2:
+                    time_sleep = self.DEFAULT_SLEEP - self.INITIAL_SLEEP
+                _sleep.ncycle += 1
+            time.sleep(time_sleep)
+        _sleep.ncycle = 1
+
+        run_uuid = run_url.rsplit('/',1)[-1]
+        time_end = time.time() + self.options.wait * 60
+        state = self.INITIAL_STATE
+        CRITICAL = self.options.nagios and 2 or 1
+        while time.time() <= time_end:
+            _sleep()
+            try:
+                state = self.client.getRunState(run_uuid, ignoreAbort=False)
+            except Exceptions.AbortException as ex:
+                if self.options.nagios:
+                    print 'CRITICAL - %s. State: %s. Run: %s' % \
+                            (str(ex).split('\n')[0], state, run_url)
+                    sys.exit(CRITICAL)
+                else:
+                    raise ex
+            if state == 'Terminal':
+                print 'OK - Terminal. Run: %s' % run_url
+                sys.exit(0)
+            curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
+            if not self.options.nagios:
+                print "[%s] State: %s" % (curr_time, state)
+        print "CRITICAL - Timed out after %i min. State: %s. Run: %s" % \
+                (self.options.wait, state, run_url)
+        sys.exit(CRITICAL)
+
+    def _need_to_wait(self):
+        return self.options.wait > self.DEAFULT_WAIT
 
 if __name__ == "__main__":
     try:
