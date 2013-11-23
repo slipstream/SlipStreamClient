@@ -181,6 +181,19 @@
                             </sources>
                         </mapping>
 
+                        <mapping>
+                            <directory>/usr/share/doc/slipstream</directory>
+                            <filemode>744</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.build.directory}/client/share/doc</location>
+                                </source>
+                            </sources>
+                        </mapping>
+
 					</mappings>
 
           <postinstallScriptlet>

@@ -48,6 +48,11 @@
 			</excludes>
 		</fileSet>
 
+		<fileSet>
+			<directory>src/main/resources/doc</directory>
+			<outputDirectory>share/doc</outputDirectory>
+		</fileSet>
+
 	</fileSets>
 
 	<files>
