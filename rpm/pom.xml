@@ -178,6 +178,15 @@
                                         <include>cloudstack-*</include>
                                     </includes>
                                 </source>
+                                <source>
+                                    <location>${project.build.directory}/client/bin/</location>
+                                    <includes>
+                                        <include>ss-*</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>*.bat</exclude>
+                                    </excludes>
+                                </source>
                             </sources>
                         </mapping>
 
