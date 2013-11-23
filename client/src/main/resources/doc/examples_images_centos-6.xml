@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-11-15 10:47:49.930 CET" deleted="false" description="Minimal installation of the CentOS 6.3 operating system." imageId="" isBase="true" lastModified="2013-11-16 08:33:38.949 CET" loginUser="root" parentUri="module/examples/images" platform="redhat" shortName="centos-6.3" version="288">
+<imageModule category="Image" creation="2013-11-15 10:47:49.930 CET" deleted="false" description="Minimal installation of the CentOS 6 operating system." imageId="" isBase="true" lastModified="2013-11-16 08:33:38.949 CET" loginUser="root" parentUri="module/examples/images" platform="redhat" shortName="centos-6" version="288">
    <parameters class="org.hibernate.collection.PersistentMap">
       <entry>
          <string>extra.disk.volatile</string>
