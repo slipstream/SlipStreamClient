@@ -69,6 +69,7 @@ class MainProgram(CommandBase):
         # read all files once to determine the upload URL for each file
         # the URL is used to sort the files into an order that puts 
         # parents before children
+        uploads = {}
         for file in self.args:
 
             self._check_file(file)
@@ -97,7 +98,7 @@ class MainProgram(CommandBase):
         # now actually do the uploads in the correct order
         for url in sorted(uploads):
             file = uploads[url]
-            print 'Uploading %s to %s' % (file, url)
+            print 'Uploading: %s' % file
             with open(file) as f:
                 client.put(url, f.read())
 
