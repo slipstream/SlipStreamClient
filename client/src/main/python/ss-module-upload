@@ -69,7 +69,9 @@ class MainProgram(CommandBase):
         # read all files once to determine the upload URL for each file
         # the URL is used to sort the files into an order that puts 
         # parents before children
-        uploads = {}
+        projects = {}
+        images = {}
+        deployments = {}
         for file in self.args:
 
             self._check_file(file)
@@ -93,12 +95,31 @@ class MainProgram(CommandBase):
         
                 url = self.options.endpoint + uri
 
-                uploads[url] = file
+                if dom.tag == 'projectModule':
+                    projects[url] = file
+                elif dom.tag == 'imageModule':
+                    images[url] = file
+                elif dom.tag == 'deploymentModule':
+                    deployments[url] = file
 
         # now actually do the uploads in the correct order
-        for url in sorted(uploads):
-            file = uploads[url]
-            print 'Uploading: %s' % file
+        # projects must be done first to get the structure, then
+        # images, and finally the deployments
+        for url in sorted(projects):
+            file = projects[url]
+            print 'Uploading project: %s' % file
+            with open(file) as f:
+                client.put(url, f.read())
+
+        for url in sorted(images):
+            file = images[url]
+            print 'Uploading image: %s' % file
+            with open(file) as f:
+                client.put(url, f.read())
+
+        for url in sorted(deployments):
+            file = deployments[url]
+            print 'Uploading deployment: %s' % file
             with open(file) as f:
                 client.put(url, f.read())
 
