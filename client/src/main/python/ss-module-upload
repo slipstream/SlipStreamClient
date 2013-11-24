@@ -44,15 +44,14 @@ class MainProgram(CommandBase):
         self._checkArgs()
         
     def _checkArgs(self):
-        if len(self.args) > 0:
-            self.usageExitTooManyArguments()
+        if len(self.args) == 0:
+            self.usageExit("You must provide at least one file to upload.")
 
-    def _read_file(self, file):
+    def _check_file(self, file):
         if not os.path.exists(file):
             self.usageExit("Unknown filename: " + file)
         if not os.path.isfile(file):
             self.usageExit("Input is not a file: " + file)
-        return open(file).read()
 
     def _read_module_as_xml(self, contents):
         try:
@@ -67,28 +66,40 @@ class MainProgram(CommandBase):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        os.chdir('.')
-        for file in sorted(glob.glob('*.xml')):
-            print 'PROCESSING: ', file
+        # read all files once to determine the upload URL for each file
+        # the URL is used to sort the files into an order that puts 
+        # parents before children
+        for file in self.args:
 
-            contents = self._read_file(file)
-            dom = self._read_module_as_xml(contents)
-            attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+            self._check_file(file)
 
-            root_node_name = dom.tag
-            if root_node_name == 'list':
-                sys.stderr.write('Cannot update root project\n')
-                sys.exit(-1)
-            if not dom.tag in ('imageModule', 'projectModule', 'deploymentModule'):
-                sys.stderr.write('Invalid xml\n')
-                sys.exit(-1)
+            with open(file) as f:
+                contents = f.read()
 
-            parts = [attrs['parentUri'], attrs['shortName']]
-            uri = '/' + '/'.join([part.strip('/') for part in parts])
+                dom = self._read_module_as_xml(contents)
+                attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+
+                root_node_name = dom.tag
+                if root_node_name == 'list':
+                    sys.stderr.write('Cannot update root project\n')
+                    sys.exit(-1)
+                if not dom.tag in ('imageModule', 'projectModule', 'deploymentModule'):
+                    sys.stderr.write('Invalid xml\n')
+                    sys.exit(-1)
+
+                parts = [attrs['parentUri'], attrs['shortName']]
+                uri = '/' + '/'.join([part.strip('/') for part in parts])
         
-            url = self.options.endpoint + uri
+                url = self.options.endpoint + uri
 
-            client.put(url, contents)
+                uploads[url] = file
+
+        # now actually do the uploads in the correct order
+        for url in sorted(uploads):
+            file = uploads[url]
+            print 'Uploading %s to %s' % (file, url)
+            with open(file) as f:
+                client.put(url, f.read())
 
 if __name__ == "__main__":
     try:
