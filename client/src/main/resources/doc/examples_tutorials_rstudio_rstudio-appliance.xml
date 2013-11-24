@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-11-16 08:39:51.627 CET" deleted="false" description="RStudio analysis server" imageId="KBhcU87Wm5IZNOXZYGHrczGekwp" isBase="false" lastModified="2013-11-16 08:39:51.645 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/rstudio" platform="ubuntu" shortName="rstudio-appliance" version="307">
+<imageModule category="Image" creation="2013-11-16 08:39:51.627 CET" deleted="false" description="RStudio analysis server" imageId="MwetUnCvDFNFA1CyHrqTb6c5kQk" isBase="false" lastModified="2013-11-24 11:46:54.739 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/rstudio" platform="ubuntu" shortName="rstudio-appliance" version="76">
    <parameters class="org.hibernate.collection.PersistentMap">
       <entry>
          <string>extra.disk.volatile</string>
@@ -125,11 +125,11 @@
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers class="java.util.ArrayList" />
    </authz>
-   <commit author="sixsq" />
-   <cloudNames length="4">
+   <commit author="sixsq">
+      <comment />
+   </commit>
+   <cloudNames length="2">
       <string>stratuslab</string>
-      <string>LLR</string>
-      <string>CC-IN2P3</string>
       <string>default</string>
    </cloudNames>
    <runs />
@@ -201,7 +201,6 @@ ss-set statecustom 'RStudio Ready!'</target>
    <packages class="org.hibernate.collection.PersistentBag" />
    <prerecipe />
    <recipe />
-   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
-      </cloudImageIdentifiers>
+   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
    <extraDisks class="org.hibernate.collection.PersistentBag" />
 </imageModule>

@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-11-15 10:47:49.930 CET" deleted="false" description="Minimal installation of the CentOS 6 operating system." imageId="" isBase="true" lastModified="2013-11-16 08:33:38.949 CET" loginUser="root" parentUri="module/examples/images" platform="redhat" shortName="centos-6" version="288">
+<imageModule category="Image" creation="2013-11-24 11:49:37.156 CET" deleted="false" description="Minimal installation of the CentOS 6 operating system." imageId="EAUwgt432O1CsZguppdec_KA5f5" isBase="true" lastModified="2013-11-24 11:49:37.163 CET" loginUser="root" parentUri="module/examples/images" platform="redhat" shortName="centos-6" version="86">
    <parameters class="org.hibernate.collection.PersistentMap">
       <entry>
          <string>extra.disk.volatile</string>
@@ -17,7 +17,7 @@
       </entry>
       <entry>
          <string>CC-IN2P3.instance.type</string>
-         <parameter category="CC-IN2P3" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Instance type (flavor)" isSet="false" mandatory="true" name="CC-IN2P3.instance.type" readonly="false" type="String" />
+         <parameter category="CC-IN2P3" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Instance type (flavor)" isSet="false" mandatory="false" name="CC-IN2P3.instance.type" readonly="false" type="String" />
       </entry>
       <entry>
          <string>stratuslab.instance.type</string>
@@ -37,7 +37,7 @@
       </entry>
       <entry>
          <string>LLR.cpu</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested CPUs" isSet="false" mandatory="true" name="LLR.cpu" readonly="false" type="String" />
+         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested CPUs" isSet="false" mandatory="false" name="LLR.cpu" readonly="false" type="String" />
       </entry>
       <entry>
          <string>hostname</string>
@@ -45,7 +45,7 @@
       </entry>
       <entry>
          <string>LLR.ram</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested RAM (in GB)" isSet="false" mandatory="true" name="LLR.ram" readonly="false" type="String" />
+         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested RAM (in GB)" isSet="false" mandatory="false" name="LLR.ram" readonly="false" type="String" />
       </entry>
       <entry>
          <string>stratuslab.ram</string>
@@ -64,34 +64,21 @@
       </entry>
       <entry>
          <string>LLR.instance.type</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
-            <enumValues length="7">
-               <string>m1.small</string>
-               <string>c1.medium</string>
-               <string>m1.large</string>
-               <string>m1.xlarge</string>
-               <string>c1.xlarge</string>
-               <string>t1.micro</string>
-               <string>standard.xsmall</string>
-            </enumValues>
+         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="true" mandatory="false" name="LLR.instance.type" readonly="false" type="Enum">
             <value>m1.small</value>
             <defaultValue>m1.small</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>CC-IN2P3.security.groups</string>
-         <parameter category="CC-IN2P3" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Security Groups (comma separated list)" isSet="true" mandatory="true" name="CC-IN2P3.security.groups" readonly="false" type="String">
+         <parameter category="CC-IN2P3" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Security Groups (comma separated list)" isSet="true" mandatory="false" name="CC-IN2P3.security.groups" readonly="false" type="String">
             <value>default</value>
             <defaultValue>default</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>LLR.disks.bus.type</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="true" mandatory="true" name="LLR.disks.bus.type" readonly="false" type="Enum">
-            <enumValues length="2">
-               <string>virtio</string>
-               <string>scsi</string>
-            </enumValues>
+         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="true" mandatory="false" name="LLR.disks.bus.type" readonly="false" type="Enum">
             <value>virtio</value>
             <defaultValue>virtio</defaultValue>
          </parameter>
@@ -108,13 +95,9 @@
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers class="java.util.ArrayList" />
    </authz>
-   <commit author="sixsq">
-      <comment />
-   </commit>
-   <cloudNames length="4">
+   <commit author="sixsq" />
+   <cloudNames length="2">
       <string>stratuslab</string>
-      <string>LLR</string>
-      <string>CC-IN2P3</string>
       <string>default</string>
    </cloudNames>
    <runs />
@@ -122,6 +105,7 @@
    <packages class="org.hibernate.collection.PersistentBag" />
    <prerecipe />
    <recipe />
-   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
+   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
+      </cloudImageIdentifiers>
    <extraDisks class="org.hibernate.collection.PersistentBag" />
 </imageModule>

@@ -1,4 +1,4 @@
-<deploymentModule category="Deployment" creation="2013-10-30 10:54:53.989 CET" deleted="false" description="Deployment binding the apache server and the test client node(s)." lastModified="2013-11-16 08:33:40.862 CET" parentUri="module/examples/tutorials/service-testing" shortName="system" version="297">
+<deploymentModule category="Deployment" creation="2013-10-30 10:54:53.989 CET" deleted="false" description="Deployment binding the apache server and the test client node(s)." lastModified="2013-11-24 11:46:56.111 CET" parentUri="module/examples/tutorials/service-testing" shortName="system" version="83">
    <parameters class="org.hibernate.collection.PersistentMap" />
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers class="java.util.ArrayList" />
@@ -6,10 +6,8 @@
    <commit author="sixsq">
       <comment />
    </commit>
-   <cloudNames length="4">
+   <cloudNames length="2">
       <string>stratuslab</string>
-      <string>LLR</string>
-      <string>CC-IN2P3</string>
       <string>default</string>
    </cloudNames>
    <runs />
@@ -57,7 +55,7 @@
                   </nodeParameter>
                </entry>
             </parameterMappings>
-            <image category="Image" creation="2013-11-16 08:44:17.872 CET" deleted="false" description="Web client tests server connectivity and verifies content." imageId="KBhcU87Wm5IZNOXZYGHrczGekwp" isBase="false" lastModified="2013-11-16 08:44:17.889 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/service-testing/client" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="client" version="317">
+            <image category="Image" creation="2013-11-16 08:44:17.872 CET" deleted="false" description="Web client tests server connectivity and verifies content." isBase="false" lastModified="2013-11-24 11:46:55.79 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/service-testing/client" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="client" version="78">
                <parameters class="org.hibernate.collection.PersistentMap">
                   <entry>
                      <string>extra.disk.volatile</string>
@@ -182,7 +180,9 @@
                <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
                   <groupMembers class="java.util.ArrayList" />
                </authz>
-               <commit author="sixsq" />
+               <commit author="sixsq">
+                  <comment />
+               </commit>
                <targets class="org.hibernate.collection.PersistentBag">
                   <target name="execute" runInBackground="false">#!/bin/sh -xe
 # Wait for the metadata to be resolved
@@ -201,9 +201,7 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
                <packages class="org.hibernate.collection.PersistentBag" />
                <prerecipe />
                <recipe />
-               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
-                  <cloudImageIdentifier cloudImageIdentifier="KBhcU87Wm5IZNOXZYGHrczGekwp" cloudServiceName="stratuslab" />
-               </cloudImageIdentifiers>
+               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
                <extraDisks class="org.hibernate.collection.PersistentBag" />
             </image>
          </node>
@@ -213,7 +211,7 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
          <node cloudService="default" creation="2013-11-16 08:15:35.934 CET" deleted="false" imageUri="module/examples/tutorials/service-testing/apache" multiplicity="1" name="apache" network="Public">
             <parameters class="org.hibernate.collection.PersistentMap" />
             <parameterMappings class="org.hibernate.collection.PersistentMap" />
-            <image category="Image" creation="2013-11-16 08:43:51.658 CET" deleted="false" description="Apache web server appliance with custom landing page." imageId="KBhcU87Wm5IZNOXZYGHrczGekwp" isBase="false" lastModified="2013-11-16 08:43:51.679 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/service-testing/apache" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="315">
+            <image category="Image" creation="2013-11-16 08:43:51.658 CET" deleted="false" description="Apache web server appliance with custom landing page." isBase="false" lastModified="2013-11-24 11:46:54.916 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/service-testing/apache" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="77">
                <parameters class="org.hibernate.collection.PersistentMap">
                   <entry>
                      <string>port</string>
@@ -337,7 +335,9 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
                <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
                   <groupMembers class="java.util.ArrayList" />
                </authz>
-               <commit author="sixsq" />
+               <commit author="sixsq">
+                  <comment />
+               </commit>
                <targets class="org.hibernate.collection.PersistentBag">
                   <target name="execute" runInBackground="false">#!/bin/sh -xe
 apt-get update -y
@@ -359,9 +359,7 @@ cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR</target>
                <packages class="org.hibernate.collection.PersistentBag" />
                <prerecipe />
                <recipe />
-               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
-                  <cloudImageIdentifier cloudImageIdentifier="KBhcU87Wm5IZNOXZYGHrczGekwp" cloudServiceName="stratuslab" />
-               </cloudImageIdentifiers>
+               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
                <extraDisks class="org.hibernate.collection.PersistentBag" />
             </image>
          </node>

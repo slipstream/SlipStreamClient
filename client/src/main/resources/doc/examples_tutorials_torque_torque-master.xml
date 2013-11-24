@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-11-16 11:03:32.474 CET" deleted="false" description="master node for torque cluster" imageId="KBhcU87Wm5IZNOXZYGHrczGekwp" isBase="false" lastModified="2013-11-16 11:03:32.495 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-master" version="321">
+<imageModule category="Image" creation="2013-11-16 11:03:32.474 CET" deleted="false" description="master node for torque cluster" imageId="MwetUnCvDFNFA1CyHrqTb6c5kQk" isBase="false" lastModified="2013-11-24 11:46:55.238 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-master" version="79">
    <parameters class="org.hibernate.collection.PersistentMap">
       <entry>
          <string>extra.disk.volatile</string>
@@ -66,10 +66,6 @@
          </parameter>
       </entry>
       <entry>
-         <string>master_hostname</string>
-         <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="hostname as name, not IP address" isSet="false" mandatory="false" name="master_hostname" readonly="false" type="String" />
-      </entry>
-      <entry>
          <string>LLR.instance.type</string>
          <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
             <enumValues length="7">
@@ -95,6 +91,10 @@
             <value>Public</value>
             <defaultValue>Public</defaultValue>
          </parameter>
+      </entry>
+      <entry>
+         <string>master_hostname</string>
+         <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="hostname as name, not IP address" isSet="false" mandatory="false" name="master_hostname" readonly="false" type="String" />
       </entry>
       <entry>
          <string>CC-IN2P3.security.groups</string>
@@ -129,11 +129,11 @@
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers class="java.util.ArrayList" />
    </authz>
-   <commit author="sixsq" />
-   <cloudNames length="4">
+   <commit author="sixsq">
+      <comment />
+   </commit>
+   <cloudNames length="2">
       <string>stratuslab</string>
-      <string>LLR</string>
-      <string>CC-IN2P3</string>
       <string>default</string>
    </cloudNames>
    <runs />
@@ -252,7 +252,6 @@ ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`</target>
    <packages class="org.hibernate.collection.PersistentBag" />
    <prerecipe />
    <recipe />
-   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
-      </cloudImageIdentifiers>
+   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
    <extraDisks class="org.hibernate.collection.PersistentBag" />
 </imageModule>

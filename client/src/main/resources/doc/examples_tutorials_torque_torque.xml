@@ -1,4 +1,4 @@
-<deploymentModule category="Deployment" creation="2013-10-30 10:54:54.242 CET" deleted="false" description="Torque Batch Cluster" lastModified="2013-11-16 08:33:41.820 CET" parentUri="module/examples/tutorials/torque" shortName="torque" version="301">
+<deploymentModule category="Deployment" creation="2013-10-30 10:54:54.242 CET" deleted="false" description="Torque Batch Cluster" lastModified="2013-11-24 11:46:56.254 CET" parentUri="module/examples/tutorials/torque" shortName="torque" version="84">
    <parameters class="org.hibernate.collection.PersistentMap" />
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers class="java.util.ArrayList" />
@@ -6,21 +6,18 @@
    <commit author="">
       <comment />
    </commit>
-   <cloudNames length="4">
+   <cloudNames length="2">
       <string>stratuslab</string>
-      <string>LLR</string>
-      <string>CC-IN2P3</string>
       <string>default</string>
    </cloudNames>
-   <runs>
-      </runs>
+   <runs />
    <nodes class="org.hibernate.collection.PersistentMap">
       <entry>
          <string>worker</string>
          <node cloudService="default" creation="2013-10-30 10:54:54.242 CET" deleted="false" imageUri="module/examples/tutorials/torque/torque-worker" multiplicity="2" name="worker" network="Public">
             <parameters class="org.hibernate.collection.PersistentMap" />
             <parameterMappings class="org.hibernate.collection.PersistentMap" />
-            <image category="Image" creation="2013-11-16 09:03:03.212 CET" deleted="false" description="worker node for torque cluster" imageId="KBhcU87Wm5IZNOXZYGHrczGekwp" isBase="false" lastModified="2013-11-16 09:03:03.232 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/torque/torque-worker" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-worker" version="318">
+            <image category="Image" creation="2013-11-16 09:03:03.212 CET" deleted="false" description="worker node for torque cluster" isBase="false" lastModified="2013-11-24 11:46:55.456 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/torque/torque-worker" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-worker" version="80">
                <parameters class="org.hibernate.collection.PersistentMap">
                   <entry>
                      <string>extra.disk.volatile</string>
@@ -139,7 +136,9 @@
                <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
                   <groupMembers class="java.util.ArrayList" />
                </authz>
-               <commit author="sixsq" />
+               <commit author="sixsq">
+                  <comment />
+               </commit>
                <targets class="org.hibernate.collection.PersistentBag">
                   <target name="execute" runInBackground="false">#!/bin/bash -x
 
@@ -208,9 +207,7 @@ ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_ho
                <packages class="org.hibernate.collection.PersistentBag" />
                <prerecipe />
                <recipe />
-               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
-                  <cloudImageIdentifier cloudImageIdentifier="KBhcU87Wm5IZNOXZYGHrczGekwp" cloudServiceName="stratuslab" />
-               </cloudImageIdentifiers>
+               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
                <extraDisks class="org.hibernate.collection.PersistentBag" />
             </image>
          </node>
@@ -220,7 +217,7 @@ ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_ho
          <node cloudService="default" creation="2013-10-30 10:54:54.242 CET" deleted="false" imageUri="module/examples/tutorials/torque/torque-master" multiplicity="1" name="master" network="Public">
             <parameters class="org.hibernate.collection.PersistentMap" />
             <parameterMappings class="org.hibernate.collection.PersistentMap" />
-            <image category="Image" creation="2013-11-16 11:03:32.474 CET" deleted="false" description="master node for torque cluster" imageId="KBhcU87Wm5IZNOXZYGHrczGekwp" isBase="false" lastModified="2013-11-16 11:03:32.495 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/torque/torque-master" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-master" version="321">
+            <image category="Image" creation="2013-11-16 11:03:32.474 CET" deleted="false" description="master node for torque cluster" isBase="false" lastModified="2013-11-24 11:46:55.238 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/torque/torque-master" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-master" version="79">
                <parameters class="org.hibernate.collection.PersistentMap">
                   <entry>
                      <string>extra.disk.volatile</string>
@@ -288,10 +285,6 @@ ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_ho
                      </parameter>
                   </entry>
                   <entry>
-                     <string>master_hostname</string>
-                     <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="hostname as name, not IP address" isSet="false" mandatory="false" name="master_hostname" readonly="false" type="String" />
-                  </entry>
-                  <entry>
                      <string>LLR.instance.type</string>
                      <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
                         <enumValues length="7">
@@ -317,6 +310,10 @@ ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_ho
                         <value>Public</value>
                         <defaultValue>Public</defaultValue>
                      </parameter>
+                  </entry>
+                  <entry>
+                     <string>master_hostname</string>
+                     <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="hostname as name, not IP address" isSet="false" mandatory="false" name="master_hostname" readonly="false" type="String" />
                   </entry>
                   <entry>
                      <string>CC-IN2P3.security.groups</string>
@@ -351,7 +348,9 @@ ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_ho
                <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
                   <groupMembers class="java.util.ArrayList" />
                </authz>
-               <commit author="sixsq" />
+               <commit author="sixsq">
+                  <comment />
+               </commit>
                <targets class="org.hibernate.collection.PersistentBag">
                   <target name="execute" runInBackground="false">#!/bin/bash -x
 
@@ -467,9 +466,7 @@ ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`</target>
                <packages class="org.hibernate.collection.PersistentBag" />
                <prerecipe />
                <recipe />
-               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag">
-                  <cloudImageIdentifier cloudImageIdentifier="KBhcU87Wm5IZNOXZYGHrczGekwp" cloudServiceName="stratuslab" />
-               </cloudImageIdentifiers>
+               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
                <extraDisks class="org.hibernate.collection.PersistentBag" />
             </image>
          </node>
