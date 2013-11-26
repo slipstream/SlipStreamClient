@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,7 @@ from slipstream import __version__
 import slipstream.util as util
 from slipstream.exceptions.Exceptions import NotYetSetException
 
-
-if os.environ.has_key('SLIPSTREAM_HOME'):
+if 'SLIPSTREAM_HOME' in os.environ:
     slipstreamHome = os.environ['SLIPSTREAM_HOME']
 else:
     slipstreamHome = os.path.dirname(__file__)
@@ -107,7 +106,6 @@ class CommandBase(object):
                                call will return with an error. With this option values \
                                can be queried even if the abort flag is raised',
                                default=False, action='store_true')
-
 
     def _callAndHandleErrorsForCommands(self, methodName, *args, **kw):
         res = 0

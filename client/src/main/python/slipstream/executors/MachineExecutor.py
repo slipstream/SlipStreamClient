@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ from slipstream.util import deprecated
 class MachineExecutor(object):
     def __init__(self, wrapper, configHolder=ConfigHolder()):
         self.wrapper = wrapper
-        self.timeout = 30 * 60 # 30 minutes
+        self.timeout = 30 * 60  # 30 minutes
         self.ssLogDir = Client.REPORTSDIR
         self.verboseLevel = 0
         configHolder.assign(self)
@@ -47,7 +47,7 @@ class MachineExecutor(object):
             raise ExecutionException('Machine executor: No state to execute specified.')
         try:
             getattr(self, 'on' + state)()
-        except AbortException, ex:
+        except AbortException as ex:
             util.printError('Abort flag raised: %s' % ex)
         except TerminalStateException:
             return
@@ -63,7 +63,8 @@ class MachineExecutor(object):
         self._execute(state)
 
     def _fail(self, exception):
-        self.wrapper.fail("Exception %s with detail %s" % (exception.__class__, str(exception)))
+        self.wrapper.fail("Exception %s with detail %s" % (exception.__class__,
+                                                           str(exception)))
 
     def _waitForNextState(self, state):
         timeSleep = 5
@@ -89,7 +90,8 @@ class MachineExecutor(object):
 
     def onSendingFinalReport(self):
         util.printAction('Sending report')
-        reportFileName = '%s_report_%s.tgz' % (self._nodename(), util.toTimeInIso8601NoColon(time.time()))
+        reportFileName = '%s_report_%s.tgz' % (
+            self._nodename(), util.toTimeInIso8601NoColon(time.time()))
         try:
             archive = tarfile.open(reportFileName, 'w:gz')
             for element in self.reportFilesAndDirsList:

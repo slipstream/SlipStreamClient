@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -75,7 +75,6 @@ class HttpClient(object):
                     self._saveCookie()
             return resp, content
 
-
         def _handle3xx():
             if resp.status == 302:
                 # Redirected
@@ -118,7 +117,6 @@ class HttpClient(object):
             if xmlContent == '':
                 return xmlContent
 
-            error = ''
             try:
                 # This is an XML
                 errorMsg = etree.fromstring(xmlContent).text
@@ -141,10 +139,10 @@ class HttpClient(object):
 
         def _request(headers):
             if retry:
-                retry_number = 2 
+                retry_number = 2
             else:
                 retry_number = 0
-            
+
             while(True):
                 try:
                     if len(headers):
@@ -154,9 +152,9 @@ class HttpClient(object):
                     break
                 except httplib.BadStatusLine:
                     raise Exceptions.NetworkError('Error: BadStatusLine contacting: ' + url)
-                except httplib2.RelativeURIError, ex:
+                except httplib2.RelativeURIError as ex:
                     raise Exceptions.ClientError('%s' % ex)
-                except socket.error, ex:
+                except socket.error as ex:
                     if retry_number > 0:
                         self._printDetail('Error: %s \nRetrying ...' % ex)
                         retry_number = retry_number - 1
@@ -165,9 +163,8 @@ class HttpClient(object):
             return resp, content
 
         def _handleResponse(resp, content):
-            self._printDetail('Received response: %s' % resp + \
-                              '\nwith content:\n %s' % \
-                              _convertContent(content))
+            self._printDetail('Received response: %s\nwith content:\n %s' % (
+                resp, _convertContent(content)))
 
             if str(resp.status).startswith('2'):
                 return _handle2xx()
@@ -240,4 +237,3 @@ class HttpClient(object):
 
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)
-

@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,7 +24,8 @@ from slipstream import util
 
 class OrchestratorImageBuildExecutor(MachineExecutor):
     def __init__(self, wrapper, configHolder):
-        super(OrchestratorImageBuildExecutor, self).__init__(wrapper, configHolder)
+        super(OrchestratorImageBuildExecutor, self).__init__(wrapper,
+                                                             configHolder)
 
     def onInitializing(self):
         super(OrchestratorImageBuildExecutor, self).onInitializing()
@@ -34,7 +35,7 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
             self.wrapper.startImage()
         except Exceptions.AbortException:
             pass
-        except Exception, ex:
+        except Exception as ex:
             util.printError('Error starting instance with error: %s' % ex)
             raise
         finally:
@@ -57,7 +58,7 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
             self.wrapper.updateSlipStreamImage()
         except KeyboardInterrupt:
             raise
-        except Exception, ex:
+        except Exception as ex:
             self.wrapper.fail(str(ex))
         finally:
             self._advanceMachine()

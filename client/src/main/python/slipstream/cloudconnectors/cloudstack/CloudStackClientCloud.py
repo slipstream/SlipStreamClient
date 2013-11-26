@@ -16,26 +16,29 @@ from slipstream.cloudconnectors.cloudstack.libcloudPatch import patchLibcloud
 
 import libcloud.security
 
+
 def getConnector(configHolder):
     return getConnectorClass()(configHolder)
 
+
 def getConnectorClass():
     return CloudStackClientCloud
+
 
 class CloudStackClientCloud(BaseCloudConnector):
 
     cloudName = 'cloudstack'
 
-    def __init__(self, configHolder):                
+    def __init__(self, configHolder):
         libcloud.security.VERIFY_SSL_CERT = False
         patchLibcloud()
-        
+
         super(CloudStackClientCloud, self).__init__(configHolder)
         self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
-        
-        self.setCapabilities(contextualization=True, 
+
+        self.setCapabilities(contextualization=True,
                              direct_ip_assignment=True,
-                             orchestrator_can_kill_itself_or_its_vapp=True)   
+                             orchestrator_can_kill_itself_or_its_vapp=True)
 
     def initialization(self, user_info):
         util.printStep('Initialize the CloudStack connector.')
@@ -43,7 +46,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         self.sizes = self._thread_local.driver.list_sizes()
         self.images = self._thread_local.driver.list_images()
         self.user_info = user_info
-        
+
         if self.run_category == RUN_CATEGORY_DEPLOYMENT:
             self._importKeypair(user_info)
         elif self.run_category == RUN_CATEGORY_IMAGE:
@@ -58,9 +61,9 @@ class CloudStackClientCloud(BaseCloudConnector):
             pass
 
     def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
-        self._thread_local.driver = self._getDriver(user_info)        
+        self._thread_local.driver = self._getDriver(user_info)
         return self._startImageOnCloudStack(user_info, image_info, instance_name, cloudSpecificData)
-    
+
     def _startImageOnCloudStack(self, user_info, image_info, instance_name, cloudSpecificData=None):
         imageId = self.getImageId(image_info)
         instance_name = self.formatInstanceName(instance_name)
@@ -77,36 +80,39 @@ class CloudStackClientCloud(BaseCloudConnector):
         except IndexError:
             raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
         contextualizationScript = cloudSpecificData or None
-        
-        if size == None: raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instanceType)
-        if image == None: raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
-        
-        instance = self._thread_local.driver.create_node(name = instance_name,
-                                           size = size, 
-                                           image = image, 
-                                           ex_keyname = keypair, 
-                                           ex_userdata = contextualizationScript,
-                                           ex_security_groups = securityGroups)
-        
+
+        if size is None:
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instanceType)
+        if image is None:
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
+
+        instance = self._thread_local.driver.create_node(
+            name=instance_name,
+            size=size,
+            image=image,
+            ex_keyname=keypair,
+            ex_userdata=contextualizationScript,
+            ex_security_groups=securityGroups)
+
         ip = self._getInstanceIpAddress(instance, ipType)
         if not ip:
             raise Exceptions.ExecutionException("Couldn't find a '%s' IP" % ipType)
-        
-        vm = dict(networkType = ipType,
-                  instance=instance, 
-                  ip=ip, 
+
+        vm = dict(networkType=ipType,
+                  instance=instance,
+                  ip=ip,
                   id=instance.id)
         return vm
-    
+
     def _getCloudSpecificData(self, node_info, node_number, nodename):
         return self._getBootstrapScript(nodename)
 
     def listInstances(self):
-        return self._thread_local.driver.list_nodes()   
+        return self._thread_local.driver.list_nodes()
 
     def _stopInstances(self, instances):
         tasksRunnner = TasksRunner()
-        
+
         for instance in instances:
             driver = self._getDriver(self.user_info)
             tasksRunnner.run_task(driver.destroy_node, (instance,))
@@ -115,19 +121,19 @@ class CloudStackClientCloud(BaseCloudConnector):
     def stopDeployment(self):
         instances = [vm['instance'] for vm in self.getVms().itervalues()]
         self._stopInstances(instances)
-    
+
     def stopVmsByIds(self, ids):
         instances = [i for i in self.listInstances() if i.id in ids]
         self._stopInstances(instances)
-    
+
     def _getDriver(self, userInfo):
         CloudStack = get_driver(Provider.CLOUDSTACK)
-        
+
         url = urlparse(userInfo.get_cloud('endpoint'))
         secure = (url.scheme == 'https')
-        
-        return CloudStack(userInfo.get_cloud('username'), 
-                          userInfo.get_cloud('password'), 
+
+        return CloudStack(userInfo.get_cloud('username'),
+                          userInfo.get_cloud('password'),
                           secure=secure,
                           host=url.hostname,
                           port=url.port,
@@ -139,15 +145,15 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     def vmGetId(self, vm):
         return vm['id']
-    
+
     def _getInstanceIpAddress(self, instance, ipType):
-        if ipType.lower() == 'private': 
+        if ipType.lower() == 'private':
             return (len(instance.private_ip) != 0) and instance.private_ip[0] or ''
         else:
             return (len(instance.public_ip) != 0) and instance.public_ip[0] or ''
-            
+
     def _importKeypair(self, user_info):
-        kp_name = 'ss-key-%i'  % int(time.time())
+        kp_name = 'ss-key-%i' % int(time.time())
         public_key = self._getPublicSshKey(user_info)
         try:
             kp = self._thread_local.driver.ex_import_keypair_from_string(kp_name, public_key)
@@ -156,7 +162,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         kp_name = kp.get('keyName', None)
         self._userInfoSetKeypairName(user_info, kp_name)
         return kp_name
-            
+
     def _createKeypairAndSetOnUserInfo(self, user_info):
         kp_name = 'ss-build-image-%i' % int(time.time())
         kp = self._thread_local.driver.ex_create_keypair(kp_name)
@@ -179,11 +185,8 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     def removeBadCharInInstanceName(self, name):
         try:
-            newname = re.sub(r'[^a-zA-Z0-9-]','', name)
+            newname = re.sub(r'[^a-zA-Z0-9-]', '', name)
             m = re.search('[a-zA-Z]([a-zA-Z0-9-]*[a-zA-Z0-9]+)?', newname)
             return m.string[m.start():m.end()]
         except:
             raise Exceptions.ExecutionException('Cannot handle the instance name "%s". Instance name can contain ASCII letters "a" through "z", the digits "0" through "9", and the hyphen ("-"), must be between 1 and 63 characters long, and can\'t start or end with "-" and can\'t start with digit' % name)
-        
-    
-

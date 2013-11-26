@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,8 +54,8 @@ class StratuslabClientCloud(BaseCloudConnector):
         self.slConfigHolder = StratuslabConfigHolder(slipstreamConfigHolder.options,
                                                      slipstreamConfigHolder.config)
         self.listener = CreatorBaseListener(verbose=(self.verboseLevel > 1))
-        
-        self.setCapabilities(contextualization=True, 
+
+        self.setCapabilities(contextualization=True,
                              direct_ip_assignment=True,
                              orchestrator_can_kill_itself_or_its_vapp=True)
 
@@ -90,7 +90,7 @@ class StratuslabClientCloud(BaseCloudConnector):
 
         creator.create()
 
-        # 
+        #
         # if messaging is set to 'pdisk', then try polling for the new image
         # identifier from the storage system; otherwise will just return empty
         # string
@@ -110,7 +110,7 @@ class StratuslabClientCloud(BaseCloudConnector):
                 diid = os.environ.get('SLIPSTREAM_DIID', None)
                 if diid:
                     tag = "SlipStream-%s" % diid
-                    filters = {'tag': [tag,]}
+                    filters = {'tag': [tag, ]}
 
                     slConfigHolder.set('pdiskEndpoint', msg_endpoint)
 
@@ -128,7 +128,7 @@ class StratuslabClientCloud(BaseCloudConnector):
                             except Exception as e:
                                 print "Exception occurred looking for volume: %s" % e
                                 pass
-                            break;
+                            break
                         time.sleep(60)
 
         print "Returning new image ID value: %s" % newImageId

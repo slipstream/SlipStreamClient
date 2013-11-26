@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -59,11 +59,15 @@ class CloudWrapper(BaseWrapper):
         defaultCloud = self.clientSlipStream.getDefaultCloudServiceName()
         nodesForThisOrchestrator = []
         for node in nodes:
-            if (node['cloudService'] == self.cloudProxy.cloud or ((node['cloudService'] == 'default' or node[
-                'cloudService'] == '' or node['cloudService'] == None) and self.cloudProxy.cloud == defaultCloud) ):
+            if (node['cloudService'] == self.cloudProxy.cloud
+                    or ((node['cloudService'] == 'default'
+                         or node['cloudService'] == ''
+                         or node['cloudService'] is None)
+                    and self.cloudProxy.cloud == defaultCloud)):
                 nodesForThisOrchestrator.append(node)
 
-        self.instancesDetail = self.cloudProxy.startNodesAndClients(userInfo, nodesForThisOrchestrator)
+        self.instancesDetail = self.cloudProxy.startNodesAndClients(
+            userInfo, nodesForThisOrchestrator)
 
     def _getUserAndImageInfo(self):
         return self.getUserInfo(self.cloudProxy.cloud), self.getImageInfo()
@@ -91,20 +95,20 @@ class CloudWrapper(BaseWrapper):
 
     def stopNodes(self):
         if self._needToStopImages():
-            if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):                
+            if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
                 self.cloudProxy.stopDeployment()
             self.imagesStopped = True
-    
+
     def stopOrchestrator(self, is_build_image=False):
         if is_build_image:
             self.stopOrchestratorBuild()
         else:
             self.stopOrchestratorDeployment()
-    
+
     def stopOrchestratorBuild(self):
         if self._needToStopImages(True):
             orch_id = self.getMachineCloudInstanceId()
-            
+
             if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
                 if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
                     if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
@@ -118,7 +122,7 @@ class CloudWrapper(BaseWrapper):
                     self.cloudProxy.stopVmsByIds([orch_id])
                 else:
                     self.terminateRunServerSide()
-    
+
     def stopOrchestratorDeployment(self):
         if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP) and self._needToStopImages():
             if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):

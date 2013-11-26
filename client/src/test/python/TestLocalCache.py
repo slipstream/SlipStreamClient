@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,9 @@
 
 import os
 import unittest
+
 from slipstream.LocalCache import LocalCache
+
 
 class LocalCacheTestCase(unittest.TestCase):
 
@@ -28,22 +30,20 @@ class LocalCacheTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
+
     def testSetGet(self):
-        
+
         if(os.path.exists(LocalCache.CACHE_FILENAME)):
             os.remove(LocalCache.CACHE_FILENAME)
-        
-        cache = LocalCache()
-        
-        cache.set('key', 'value')
-        self.assertEquals('value',cache.get('key'))
 
         cache = LocalCache()
-        self.assertEquals('value',cache.get('key'))
-        
+
+        cache.set('key', 'value')
+        self.assertEquals('value', cache.get('key'))
+
+        cache = LocalCache()
+        self.assertEquals('value', cache.get('key'))
 
 
 if __name__ == '__main__':
     unittest.main()
-    

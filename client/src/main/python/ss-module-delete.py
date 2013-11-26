@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,17 @@
  limitations under the License.
 """
 
-import sys
 import os
-from optparse import OptionParser
+import sys
 
 from slipstream.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient   
-from slipstream.ConfigHolder import ConfigHolder
+from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 
 
 class MainProgram(CommandBase):
     '''A command-line program to delete module definition(s).'''
-    
+
     def __init__(self, argv=None):
         self.module = ''
         self.username = None
@@ -41,7 +39,7 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] [<module-url>]
 
-<module-uri>    Name of the module to delete. For example 
+<module-uri>    Name of the module to delete. For example
                 Public/Tutorials/HelloWorld/client_server/1. If a version
                 is provided (at the end of the module name) this specific
                 version will be deleted, otherwise that last version will
@@ -49,17 +47,17 @@ class MainProgram(CommandBase):
                 be called repeatedly.'''
 
         self.parser.usage = usage
-        
-        self.parser.add_option('-u','--username', dest='username',
+
+        self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p','--password', dest='password',
+        self.parser.add_option('-p', '--password', dest='password',
                                help='SlipStream password', metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
         self.parser.add_option('--cookie', dest='cookieFilename',
                                help='SlipStream cookie', metavar='FILE',
-                               default=os.environ.get('SLIPSTREAM_COOKIEFILE', 
+                               default=os.environ.get('SLIPSTREAM_COOKIEFILE',
                                                       os.path.join(util.TMPDIR, 'cookie')))
 
         self.parser.add_option('--endpoint', dest='endpoint',
@@ -75,7 +73,7 @@ class MainProgram(CommandBase):
             self.module = self.args[0]
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
-            
+
     def doWork(self):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
