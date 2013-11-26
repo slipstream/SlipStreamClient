@@ -1,0 +1,26 @@
+<projectModule category="Project" creation="2013-06-17 14:01:04.186 CEST" deleted="false" description="WordPress demo highlighting installation with Puppet." lastModified="2013-11-24 11:46:54.202 CET" parentUri="module/examples/tutorials" shortName="wordpress" version="73">
+   <parameters class="org.hibernate.collection.PersistentMap" />
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
+      <groupMembers class="java.util.ArrayList" />
+   </authz>
+   <commit author="sixsq">
+      <comment />
+   </commit>
+   <cloudNames length="2">
+      <string>stratuslab</string>
+      <string>default</string>
+   </cloudNames>
+   <runs />
+   <children class="java.util.ArrayList">
+      <item category="Image" description="installs and configures WordPress using Puppet" name="wordpress-appliance" version="81">
+         <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
+            <groupMembers class="java.util.ArrayList" />
+         </authz>
+      </item>
+      <item category="Deployment" description="simple, single node deployment of WordPress" name="wordpress" version="85">
+         <authz groupCreateChildren="false" groupDelete="false" groupGet="false" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
+            <groupMembers class="java.util.ArrayList" />
+         </authz>
+      </item>
+   </children>
+</projectModule>

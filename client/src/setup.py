@@ -74,5 +74,5 @@ setup(name=NAME,
       classifiers=CLASSIFIERS,
       packages=packages,
       package_dir={'slipstream': 'lib/slipstream'},
-      requires=['httplib2', 'boto']
+      requires=['httplib2']
       )

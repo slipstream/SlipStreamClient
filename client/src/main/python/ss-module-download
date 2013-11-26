@@ -1,0 +1,117 @@
+#!/usr/bin/python
+
+import sys
+import os
+from optparse import OptionParser
+import subprocess
+import xml.etree.ElementTree as ET
+
+from slipstream.CommandBase import CommandBase
+from slipstream.HttpClient import HttpClient   
+from slipstream.ConfigHolder import ConfigHolder
+import slipstream.util as util
+
+class MainProgram(CommandBase):
+    '''Recursively download SlipStream modules as XML from server.'''
+    
+    def __init__(self, argv=None):
+        self.module = ''
+        self.username = None
+        self.password = None
+        self.cookie = None
+        self.endpoint = None
+        super(MainProgram, self).__init__(argv)
+
+    def parse(self):
+        usage = '''usage: %prog [options] [<module-url>]
+
+<module-uri>    Name of the root module.'''
+
+        self.parser.usage = usage
+        
+        self.parser.add_option('-u','--username', dest='username',
+                               help='SlipStream username', metavar='USERNAME',
+                               default=os.environ.get('SLIPSTREAM_USERNAME'))
+        self.parser.add_option('-p','--password', dest='password',
+                               help='SlipStream password', metavar='PASSWORD',
+                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
+
+        self.parser.add_option('--endpoint', dest='endpoint',
+                               help='SlipStream server endpoint', metavar='URL',
+                               default=os.environ.get('SLIPSTREAM_ENDPOINT', 'http://slipstream.sixsq.com'))
+
+        self.options, self.args = self.parser.parse_args()
+
+        self._checkArgs()
+
+    def _checkArgs(self):
+        if len(self.args) == 1:
+            self.module = self.args[0]
+        if len(self.args) > 1:
+            self.usageExitTooManyArguments()
+
+    def _removeRuns(self, root):
+        """Remove the run elements from the given document.
+           The runs are dynamic and cannot be pushed back
+           into the server.  This modified the given XML
+           document!"""
+        runs = root.find('runs')
+        if runs is not None:
+            for run in runs.findall('*'):
+                runs.remove(run)
+
+    def _removeCloudImageIdentifiers(self, root):
+        """Remove the cloudImageIdentifiers element from 
+           the given document.  These identifiers are not
+           portable between SlipStream deployments."""
+
+        ids = root.find('cloudImageIdentifiers')
+        if ids is not None:
+            for id in ids.findall('*'):
+                ids.remove(id)
+
+    def _retrieveModuleAsXml(self, client, module):
+        uri = util.MODULE_URL_PATH
+        uri += '/' + module
+
+        url = self.options.endpoint + uri
+
+        _, xml = client.get(url)
+
+        return ET.fromstring(xml)
+
+    def _writeModuleAsXml(self, root_element, module):
+        ET.ElementTree(root_element).write('%s.xml' % module.replace('/', '_'))
+
+    def _getModuleChildren(self, module, root_element):
+        children = []
+        for child in root_element.findall('children/item'):
+            module_name = child.attrib['name']
+            module_path = '%s/%s' % (module, module_name)
+            children.append(module_path)
+        return children
+
+    def doWork(self):
+        client = HttpClient(self.options.username, self.options.password)
+        client.verboseLevel = self.verboseLevel
+
+        queue = [self.module]
+
+        while len(queue) > 0:
+            module = queue.pop(0)
+            print 'PROCESSING: %s' % module
+
+            root = self._retrieveModuleAsXml(client, module)
+            self._removeRuns(root)
+            self._removeCloudImageIdentifiers(root)
+            self._writeModuleAsXml(root, module)
+
+            for child in self._getModuleChildren(module, root):
+                queue.append(child)
+
+if __name__ == "__main__":
+    try:
+        MainProgram()
+    except KeyboardInterrupt:
+        print '\n\nExecution interrupted by the user... goodbye!'
+        sys.exit(-1)

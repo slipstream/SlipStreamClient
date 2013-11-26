@@ -178,6 +178,28 @@
                                         <include>cloudstack-*</include>
                                     </includes>
                                 </source>
+                                <source>
+                                    <location>${project.build.directory}/client/bin/</location>
+                                    <includes>
+                                        <include>ss-*</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>*.bat</exclude>
+                                    </excludes>
+                                </source>
+                            </sources>
+                        </mapping>
+
+                        <mapping>
+                            <directory>/usr/share/doc/slipstream</directory>
+                            <filemode>744</filemode>
+                            <username>root</username>
+                            <groupname>root</groupname>
+                            <directoryIncluded>false</directoryIncluded>
+                            <sources>
+                                <source>
+                                    <location>${project.build.directory}/client/share/doc</location>
+                                </source>
                             </sources>
                         </mapping>
 

@@ -261,6 +261,18 @@ class SlipStreamHttpClient(object):
         self._printDetail('Set new image id: %s %s' % (url, imageId))
         self._httpPut(url, imageId)
 
+    def launchDeployment(self, params):
+        body = '&'.join(params)
+        resp,_ = self._httpPost(self.runEndpoint, body, contentType='text/plain')
+        return resp['location']
+
+    def getRunState(self, uuid=None, ignoreAbort=True):
+        if not uuid and not self.diid:
+            raise Exceptions.ExecutionException("Run ID should be provided to get state.")
+        state_key = NodeDecorator.globalNamspacePrefix + NodeDecorator.STATE_KEY
+        self.runInstanceEndpoint = self.runEndpoint + '/' + (uuid or self.diid)
+        return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
+
 
 class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
