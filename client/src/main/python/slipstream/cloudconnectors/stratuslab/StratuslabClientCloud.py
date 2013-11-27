@@ -80,7 +80,8 @@ class StratuslabClientCloud(BaseCloudConnector):
         creator.setListener(self.listener)
 
         createImageTemplateDict = creator._getCreateImageTemplateDict()
-        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo)
+        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo,
+                                                      self._getCloudInstanceName())
 
         def ourCreateTemplateDict():
             createImageTemplateDict.update(msgData)
@@ -135,11 +136,11 @@ class StratuslabClientCloud(BaseCloudConnector):
         return newImageId
 
     @staticmethod
-    def _getCreateImageTemplateMessaging(imageInfo):
+    def _getCreateImageTemplateMessaging(imageInfo, cloud_instance_name):
         msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
 
         if msg_type:
-            imageResourceUri = BaseCloudConnector.getResourceUri(imageInfo) + '/stratuslab'
+            imageResourceUri = BaseCloudConnector.getResourceUri(imageInfo) + '/' + cloud_instance_name
             message = StratuslabClientCloud._getCreateImageMessagingMessage(imageResourceUri)
             msgData = {Runner.CREATE_IMAGE_KEY_MSG_TYPE: msg_type,
                        Runner.CREATE_IMAGE_KEY_MSG_ENDPOINT: os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'],

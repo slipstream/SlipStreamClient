@@ -48,7 +48,8 @@ class TestStratusLabClientCloud(unittest.TestCase):
     def test__getCreateImageTemplateMessaging(self):
         # no messaging type set
         imageInfo = {'attributes': {'resourceUri':''}}
-        assert {} == StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo)
+        assert {} == StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo, 
+                                                                            'stratuslab')
         
         resourceUri = '/resource/uri'
         imageInfo = {'attributes': {'resourceUri':resourceUri}}
@@ -57,7 +58,8 @@ class TestStratusLabClientCloud(unittest.TestCase):
         os.environ['SLIPSTREAM_MESSAGING_TYPE'] = 'amazonsqs'
         os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = 'http://amazon.com'
         os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = '/123/queue'
-        tmpl = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo)
+        tmpl = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo,
+                                                                      'stratuslab')
         assert tmpl['MSG_TYPE'] == 'amazonsqs'
         assert tmpl['MSG_ENDPOINT'] == 'http://amazon.com'
         assert tmpl['MSG_QUEUE'] == '/123/queue'
@@ -67,7 +69,8 @@ class TestStratusLabClientCloud(unittest.TestCase):
         os.environ['SLIPSTREAM_MESSAGING_TYPE'] = 'rest'
         os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = 'http://slipstream.sixsq.com'
         os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = '/123/queue'
-        tmpl = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo)
+        tmpl = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo,
+                                                                      'stratuslab')
         assert tmpl['MSG_TYPE'] == 'rest'
         assert tmpl['MSG_ENDPOINT'] == 'http://slipstream.sixsq.com'
         assert tmpl['MSG_QUEUE'] == resourceUri + '/stratuslab'
