@@ -20,6 +20,7 @@ import base64
 import commands
 import os
 import socket
+import sys
 import time
 
 from stratuslab.ConfigHolder import ConfigHolder as StratuslabConfigHolder
@@ -117,11 +118,13 @@ class StratuslabClientCloud(BaseCloudConnector):
 
                     pdisk = VolumeManagerFactory.create(slConfigHolder)
 
-                    print "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                    print >> sys.stdout, "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                    sys.stdout.flush()
 
                     # hardcoded polling for 30' at 1' intervals
                     for i in range(30):
-                        print "Search iteration %d" % i
+                        print >> sys.stdout, "Search iteration %d" % i
+                        sys.stdout.flush()
                         volumes = pdisk.describeVolumes(filters)
                         if len(volumes) > 0:
                             try:
