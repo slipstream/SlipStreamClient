@@ -130,6 +130,10 @@ class BaseCloudConnector(object):
         return imageInfo['attributes']
 
     @staticmethod
+    def getImageUser(imageInfo):
+        return imageInfo['attributes']['loginUser']
+
+    @staticmethod
     def getCloudParameters(image):
         return image['cloud_parameters']['Cloud']
 
