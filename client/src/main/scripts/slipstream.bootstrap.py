@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,7 +19,6 @@
 
 import sys
 import os
-import time
 import tarfile
 import urllib2
 import shutil
@@ -34,18 +33,22 @@ INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
 
+
 def _setPythonpathSlipStream():
     ss_lib = os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib')
     __pythonpathPrepend(ss_lib)
     sys.path.append(ss_lib)
 
+
 def _setPathSlipStream():
     for p in ['bin', 'sbin']:
         __pathPrepend(os.path.join(SLIPSTREAM_CLIENT_HOME, p))
 
+
 def _buildContextAndConfigSlipStream(cloud, orchestration):
-     _persistSlipStreamContext(cloud)
-     _persistSlipStreamConfig(cloud, orchestration)
+    _persistSlipStreamContext(cloud)
+    _persistSlipStreamConfig(cloud, orchestration)
+
 
 def _persistSlipStreamContext(cloud):
     contextFile = os.path.join(tempfile.gettempdir(), 'slipstream.context')
@@ -62,7 +65,8 @@ nodename = %s
        os.environ['SLIPSTREAM_NODENAME'])
     file(contextFile, 'w').write(slipstreamContext)
 
-def _persistSlipStreamConfig(cloud, orchestration):    
+
+def _persistSlipStreamConfig(cloud, orchestration):
     cloudConnector = os.environ.get('CLOUDCONNECTOR_PYTHON_MODULENAME', '')
     # cloud connector module name is only required for orchestration
     if not cloudConnector and orchestration:
@@ -77,24 +81,28 @@ contextualizationconnector = slipstream.connectors.LocalContextualizer
         clientConfigFile = os.path.join(SLIPSTREAM_CLIENT_HOME, _dir, 'slipstream.client.conf')
         file(clientConfigFile, 'w').write(clientConfig)
 
+
 def __pythonpathPrepend(path):
     __envPathPrepend('PYTHONPATH', path)
 
+
 def __pathPrepend(path):
     __envPathPrepend('PATH', path)
+
 
 def __envPathPrepend(envvar, path):
     pathList = os.environ.get(envvar, '').split(os.pathsep)
     pathList.insert(0, path)
     os.environ[envvar] = os.pathsep.join(pathList)
 
+
 def _downloadAndExtractTarball(tarbalUrl, targetDir):
     try:
         remoteFile = urllib2.urlopen(tarbalUrl)
-    except Exception, ex:
+    except Exception as ex:
         print 'Failed contacting:', tarbalUrl, ' with error:"', ex, '" retrying...'
         remoteFile = urllib2.urlopen(tarbalUrl)
-        
+
     try:
         shutil.rmtree(targetDir, ignore_errors=True)
         os.makedirs(targetDir)
@@ -102,7 +110,7 @@ def _downloadAndExtractTarball(tarbalUrl, targetDir):
         pass
 
     localTarBall = os.path.join(targetDir, os.path.basename(tarbalUrl))
-    targetFile = open(localTarBall,'wb')
+    targetFile = open(localTarBall, 'wb')
     while True:
         data = remoteFile.read()
         if not data:
@@ -110,23 +118,25 @@ def _downloadAndExtractTarball(tarbalUrl, targetDir):
         targetFile.write(data)
     remoteFile.close()
     targetFile.close()
-    
+
     print 'Expanding tarball:', localTarBall
-    tarfile.open(localTarBall,'r:gz').extractall(targetDir)
+    tarfile.open(localTarBall, 'r:gz').extractall(targetDir)
+
 
 def _deployRemoteTarball(url, extract_to, name):
     print 'Retrieving %s library from %s' % (name, url)
     _downloadAndExtractTarball(url, extract_to)
     __pythonpathPrepend(extract_to)
 
+
 def _setInstallCommandAndDistro():
     global INSTALL_CMD, DISTRO
-    
-    if not INSTALL_CMD or not DISTRO: 
+
+    if not INSTALL_CMD or not DISTRO:
         for pkgmngr in ['apt-get', 'yum']:
             try:
                 subprocess.check_call([pkgmngr, '-h'], stdout=subprocess.PIPE)
-            except subprocess.CalledProcessError as ex:
+            except subprocess.CalledProcessError:
                 pass
             else:
                 # TODO: on Ubuntu 10.04 there is no subprocess.check_output()!!!
@@ -134,10 +144,11 @@ def _setInstallCommandAndDistro():
                 INSTALL_CMD = ['sudo', install_cmd, '-y', 'install']
                 DISTRO = (pkgmngr == 'apt-get') and 'ubuntu' or 'redhat'
                 if DISTRO == 'ubuntu':
-                    subprocess.check_call([install_cmd, '-y', 'update'], 
+                    subprocess.check_call([install_cmd, '-y', 'update'],
                                           stdout=subprocess.PIPE)
                 return
         raise Exception("Coulnd't obtain package manager")
+
 
 def _installPip():
     global PIP_INSTALLED
@@ -147,14 +158,17 @@ def _installPip():
         subprocess.check_call(['sudo', 'easy_install', 'pip'], stdout=subprocess.PIPE)
         PIP_INSTALLED = True
 
+
 def _installPycryptoDependencies():
     deps = ['gcc', (DISTRO == 'ubuntu') and 'python-dev' or 'python-devel']
     subprocess.check_call(INSTALL_CMD + deps, stdout=subprocess.PIPE)
 
+
 def _pipInstall(package):
     _installPip()
-    subprocess.check_call(['sudo', 'pip', 'install', '-I', package], 
+    subprocess.check_call(['sudo', 'pip', 'install', '-I', package],
                           stdout=subprocess.PIPE)
+
 
 def _pipInstallParamiko(pycrypto=True):
     if pycrypto:
@@ -162,48 +176,55 @@ def _pipInstallParamiko(pycrypto=True):
 
     _pipInstall('paramiko==1.9.0')
 
+
 def _pipInstallScpclient():
     _pipInstall('scpclient==0.4')
-    
+
+
 def _pipInstallParamikoScpclinet(pycrypto=False):
     _pipInstallParamiko(pycrypto=False)
     _pipInstallScpclient()
+
 
 def _installPycryptoParamikoScpclient():
     _setInstallCommandAndDistro()
 
     _installPip()
-    
+
     _pipInstallParamiko()
     _pipInstallScpclient()
+
 
 def _installParamikoScpclient():
     _pipInstallParamikoScpclinet()
 
+
 def _installScpclient():
     _pipInstallScpclient()
-        
+
+
 def _paramikoSetup():
     try:
         import Crypto
     except ImportError:
         _installPycryptoParamikoScpclient()
-        import Crypto
-        import paramiko
-        import scpclient
+        import Crypto  # noqa
+        import paramiko  # noqa
+        import scpclient  # noqa
         return
     try:
-        import paramiko
+        import paramiko  # noqa
     except ImportError:
         _installParamikoScpclient()
-        import paramiko
-        import scpclient
+        import paramiko  # noqa
+        import scpclient  # noqa
         return
     try:
-        import scpclient
+        import scpclient  # noqa
     except ImportError:
         _installScpclient()
-        import scpclient
+        import scpclient  # noqa
+
 
 def _getVerbosity():
     verbosity = ''
@@ -222,12 +243,14 @@ def _getVerbosity():
 
     return verbosity
 
+
 def getCloudName():
     envCloud = 'SLIPSTREAM_CLOUD'
     try:
         return os.environ[envCloud]
     except KeyError:
         raise RuntimeError('%s environment variable is not defined.' % envCloud)
+
 
 def _getTargetScriptCommand(targetScript):
     custom_python_bin = os.path.join(os.sep, 'opt', 'python', 'bin')
@@ -239,6 +262,7 @@ def _getTargetScriptCommand(targetScript):
         cmd = 'C:\\Python27\\python ' + cmd
     return cmd + ' ' + _getVerbosity()
 
+
 def runTargetScript(cmd):
     print 'Calling target script:', cmd
     subprocess.call(cmd, shell=True)
@@ -246,10 +270,11 @@ def runTargetScript(cmd):
     sys.stderr.flush()
     sys.exit(0)
 
+
 def getAndSetupCloudConnector(cloud_name):
     bundle_url = os.environ.get('CLOUDCONNECTOR_BUNDLE_URL')
     if not bundle_url:
-        msg = (bundle_url == None) and 'NOT DEFINED' or 'NOT INITIALIZED'
+        msg = (bundle_url is None) and 'NOT DEFINED' or 'NOT INITIALIZED'
         print '[WARNING]: CLOUDCONNECTOR_BUNDLE_URL is %s for cloud %s' % (msg, cloud_name)
         print '[WARNING]: Skipping downloading of the bundle for %s' % cloud_name
         return
@@ -257,7 +282,8 @@ def getAndSetupCloudConnector(cloud_name):
     _deployRemoteTarball(bundle_url,
                          os.path.join(os.sep, 'opt', cloud_name.lower()),
                          cloud_name.lower())
-            
+
+
 def getAndSetupSlipStream(cloud, orchestration):
     slipstreamTarballUrl = os.environ['SLIPSTREAM_BUNDLE_URL']
 
@@ -269,9 +295,10 @@ def getAndSetupSlipStream(cloud, orchestration):
     if orchestration:
         _paramikoSetup()
 
+
 def createReportsDirectory():
-    reportsDir = os.environ.get('SLIPSTREAM_REPORT_DIR', 
-                                os.path.join(tempfile.gettempdir(), 
+    reportsDir = os.environ.get('SLIPSTREAM_REPORT_DIR',
+                                os.path.join(tempfile.gettempdir(),
                                              'slipstream', 'reports'))
     print 'Creating reports directory: %s' % reportsDir
     try:
@@ -279,11 +306,13 @@ def createReportsDirectory():
     except OSError:
         pass
 
-def setupSlipStreamAndCloudConnector(is_orchestration):    
+
+def setupSlipStreamAndCloudConnector(is_orchestration):
     cloud = getCloudName()
     getAndSetupSlipStream(cloud, is_orchestration)
     if is_orchestration:
         getAndSetupCloudConnector(cloud)
+
 
 def _formatException(exc_info):
     "exc_info - three-element list as returned by sys.exc_info()"
@@ -293,10 +322,12 @@ def _formatException(exc_info):
         msg_list = traceback.format_exception_only(*exc_info[:2])
     return ''.join(msg_list).strip()
 
+
 def publishFailureToSlipStreamRun(exc_info):
     "exc_info - three-element list as returned by sys.exc_info()"
-    AbortPublisher().publish('Bootstrap failed: %s' % 
-                                _formatException(exc_info))
+    AbortPublisher().publish('Bootstrap failed: %s' %
+                             _formatException(exc_info))
+
 
 def main():
     try:
@@ -304,14 +335,14 @@ def main():
         if len(sys.argv) > 1:
             targetScript = sys.argv[1]
         is_orchestration = targetScript != 'slipstream-node-execution'
-        
+
         msg = "=== %s bootstrap script ===" % os.path.basename(targetScript)
-        print '{sep}\n{msg}\n{sep}'.format(sep=len(msg)*'=', msg=msg)
-    
-        setupSlipStreamAndCloudConnector(is_orchestration)    
-    
-        createReportsDirectory()            
-    
+        print '{sep}\n{msg}\n{sep}'.format(sep=len(msg) * '=', msg=msg)
+
+        setupSlipStreamAndCloudConnector(is_orchestration)
+
+        createReportsDirectory()
+
         print 'PYTHONPATH environment variable set to:', os.environ['PYTHONPATH']
         print 'Done bootstrapping!\n'
         sys.stdout.flush()
@@ -323,6 +354,7 @@ def main():
         raise
 
     runTargetScript(cmd)
+
 
 class AbortPublisher(object):
     def __init__(self):
@@ -339,32 +371,32 @@ class AbortPublisher(object):
     def _get_service_url_in_parts(self):
         from urlparse import urlsplit
         url_split = urlsplit(os.environ['SLIPSTREAM_SERVICEURL'])
-        return url_split.scheme, url_split.hostname, url_split.port 
+        return url_split.scheme, url_split.hostname, url_split.port
 
     def publish(self, message):
         self._process_response(self._publish(message))
 
     def _publish(self, message):
         try:
-            self.c.request('PUT', self._get_request_url(), 
+            self.c.request('PUT', self._get_request_url(),
                            body=message, headers=self._get_headers())
             return self.c.getresponse()
         finally:
             self.c.close()
 
     def _get_request_url(self):
-        return  '/run/%s/ss:abort' % os.environ['SLIPSTREAM_DIID']
+        return '/run/%s/ss:abort' % os.environ['SLIPSTREAM_DIID']
 
     def _get_headers(self):
-        return {'user-agent':'slipstream-bootstrap',
-                'accept':'application/xml',
-                'content-type':'text/plain',
-                'cookie':os.environ['SLIPSTREAM_COOKIE'].strip('"')}
+        return {'user-agent': 'slipstream-bootstrap',
+                'accept': 'application/xml',
+                'content-type': 'text/plain',
+                'cookie': os.environ['SLIPSTREAM_COOKIE'].strip('"')}
 
     def _process_response(self, response):
-        uri = '%s://%s:%s%s' % (self._get_service_url_in_parts()[0], 
-                                 self.c.host, str(self.c.port), 
-                                 self._get_request_url())
+        uri = '%s://%s:%s%s' % (self._get_service_url_in_parts()[0],
+                                self.c.host, str(self.c.port),
+                                self._get_request_url())
         if response.status != 200:
             print 'Failed to publish abort message to %s' % uri
             print response.status, response.reason
@@ -377,5 +409,5 @@ if __name__ == "__main__":
         main()
     except Exception, e:
         fullFilePath = tempfile.gettempdir() + os.sep + 'slipstream.bootstrap.error'
-        file(fullFilePath,'w').write(str(e))
+        file(fullFilePath, 'w').write(str(e))
         raise

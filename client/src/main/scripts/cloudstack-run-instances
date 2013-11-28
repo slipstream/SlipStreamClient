@@ -1,11 +1,7 @@
 #!/usr/bin/env python
 
-import os
-import re
-import time
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import sys
 
 from slipstream.util import nostdouterr
 from slipstream.ConfigHolder import ConfigHolder
@@ -13,62 +9,70 @@ from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.cloudconnectors.cloudstack.CloudStackCommand import CloudStackCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 
+
 class MainProgram(CloudStackCommand):
+
     def __init__(self):
         super(MainProgram, self).__init__()
 
     def setProgramOptions(self):
         self.parser.add_option('--image-id', dest='imageId',
-                help='Image ID. Mandatory.',
-                default='', metavar='ID')
+                               help='Image ID. Mandatory.',
+                               default='', metavar='ID')
 
         self.parser.add_option('--instance-name', dest='instance_name',
-                help='Name of the instance',
-                default='', metavar='NAME')
+                               help='Name of the instance',
+                               default='', metavar='NAME')
 
         self.parser.add_option('--instance-type', dest='instance_type',
-                help='Instance Type',
-                default=None, metavar='TYPE')
+                               help='Instance Type',
+                               default=None, metavar='TYPE')
 
         self.parser.add_option('--network', dest='network',
-                help='Network (public or private)', 
-                default='public', metavar='NETWORK')
-        
+                               help='Network (public or private)',
+                               default='public', metavar='NETWORK')
+
         self.parser.add_option('--public-key', dest='public_key',
-                help='Public key in the OpenSSH format',
-                default='', metavar='PUBKEY')
-        
+                               help='Public key in the OpenSSH format',
+                               default='', metavar='PUBKEY')
+
         self.parser.add_option('--security-groups', dest='security_groups',
-                help='Comma separated security groups',
-                default='', metavar='SECGROUP')
-        
+                               help='Comma separated security groups',
+                               default='', metavar='SECGROUP')
+
         self.parser.add_option('--context-script', dest='context_script',
-                 help='Context script',
-                 default=None, metavar='SCRIPT')
+                               help='Context script',
+                               default=None, metavar='SCRIPT')
 
     def checkOptions(self):
-        if not all((self.options.imageId, self.options.instance_name, 
+        if not all((self.options.imageId, self.options.instance_name,
                     self.options.instance_type, self.options.public_key)):
-            self.parser.error('Some options were not given values. ' + \
-                              'All options are mandatory.')
-            
+            self.parser.error("Some options were not given values. "
+                              "All options are mandatory.")
+
     def _setUserInfo(self):
         super(MainProgram, self)._setUserInfo()
         self.userInfo['General.ssh.public.key'] = self.options.public_key
 
     def doWork(self):
-        ss_node = {'nodename' : self.options.instance_name,
-                   'image' : {'attributes' : {'imageId' : self.options.imageId},
-                              'cloud_parameters' : {'cloudstack':{
-                                                        'cloudstack.instance.type':   self.options.instance_type,
-                                                        'cloudstack.security.groups': self.options.security_groups
-                                                                         
-                                                    }
-                                                    ,'Cloud': {'network' : self.options.network} 
-                                                    },
-                               'extra_disks' : {}
-                             },
-                   }
+        ss_node = {
+            'nodename': self.options.instance_name,
+            'image': {
+                'attributes': {
+                    'imageId': self.options.imageId
+                },
+                'cloud_parameters': {
+                    'cloudstack': {
+                        'cloudstack.instance.type': self.options.instance_type,
+                        'cloudstack.security.groups': self.options.security_groups
+                    },
+                    'Cloud': {
+                        'network': self.options.network
+                    }
+                },
+                'extra_disks': {}
+            },
+        }
         with nostdouterr():
             node = self._startImage(ss_node)
         print '%s, %s' % (node['id'], node['ip'])
@@ -76,18 +80,18 @@ class MainProgram(CloudStackCommand):
     def _startImage(self, ss_node):
         nodename = ss_node['nodename']
 
-        cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel':0,
-                                                         KEY_RUN_CATEGORY:RUN_CATEGORY_DEPLOYMENT}, 
-                                                context={'foo':'bar'}))
+        cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0,
+                                                         KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
+                                                context={'foo': 'bar'}))
         cc.initialization(self.userInfo)
         try:
-            node = cc._startImage(self.userInfo, 
-                                  cc._extractImageInfoFromNodeInfo(ss_node), 
+            node = cc._startImage(self.userInfo,
+                                  cc._extractImageInfoFromNodeInfo(ss_node),
                                   nodename, self.options.context_script)
         finally:
             cc.finalization(self.userInfo)
 
-        return {'id' : cc.vmGetId(node), 'ip' : cc.vmGetIp(node)}
+        return {'id': cc.vmGetId(node), 'ip': cc.vmGetIp(node)}
 
 
 if __name__ == "__main__":
@@ -98,4 +102,3 @@ if __name__ == "__main__":
     except Exception as e:
         print e
         exit(1)
-    

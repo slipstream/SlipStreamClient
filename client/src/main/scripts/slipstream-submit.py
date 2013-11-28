@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,20 +17,18 @@
  limitations under the License.
 """
 
-import os
 import sys
-import time
 import getopt
-import urllib2
+
 import CommandBase
 from slipstream import RestClient
-import slipstream.exceptions.Exceptions as Exceptions   
-from slipstream import LocalRuntimeConnector   
+import slipstream.exceptions.Exceptions as Exceptions
+from slipstream import LocalRuntimeConnector
 
 
 class MainProgram(CommandBase.CommandBase):
     ''' Trigger execution or build on SlipStream server.'''
-    
+
     USAGE = '''\
 Usage: %(progName)s <module> <username> <password>
 
@@ -43,21 +41,21 @@ options:
   --verbose      Prints additional information (default)
   -h, --help     Show this message
 '''
+
     def __init__(self, argv=None):
         self.module = None
         self.username = None
         self.password = None
-        self.timeout = 30*60 # 30 minutes
-        super(MainProgram,self).__init__(argv)
-        return
+        self.timeout = 30 * 60  # 30 minutes
+        super(MainProgram, self).__init__(argv)
 
     def parseArgs(self, argv):
         try:
             options, args = getopt.getopt(argv[1:], 'h',
-                                          ['help','quiet',
-                                           'verbose','help'])
-        except getopt.GetoptError, err:
-            msg=err.__str__()
+                                          ['help', 'quiet',
+                                           'verbose', 'help'])
+        except getopt.GetoptError as err:
+            msg = err.__str__()
             self.usageExit(msg)
         for opt, value in options:
             if opt in ('--verbose',):
@@ -73,12 +71,12 @@ options:
 
     def doWork(self):
         LocalRuntimeConnector.LocalRuntimeConnector.instanceDataDict = {}
-        cloudConnectorModules = {'runtime':'slipstream.LocalRuntimeConnector'}
-        client = RestClient.RestClient(self.verbose,cloudConnectorModules)
+        cloudConnectorModules = {'runtime': 'slipstream.LocalRuntimeConnector'}
+        client = RestClient.RestClient(self.verbose, cloudConnectorModules)
         print >> sys.stderr, 'Executing/building module:', self.module
         try:
             uuid = client.submit(self.module, self.username, self.password)
-        except Exceptions.ClientError, ex:
+        except Exceptions.ClientError as ex:
             print 'Client error: %s' % ex
             sys.exit(-1)
         print >> sys.stderr, 'Submitted with execution id:'

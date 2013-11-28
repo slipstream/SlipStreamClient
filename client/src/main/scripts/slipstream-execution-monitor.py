@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,20 +17,18 @@
  limitations under the License.
 """
 
-import os
 import sys
 import time
 import getopt
-import urllib2
 import CommandBase
 from slipstream import RestClient
-import slipstream.exceptions.Exceptions as Exceptions   
-from slipstream import LocalRuntimeConnector   
+import slipstream.exceptions.Exceptions as Exceptions
+from slipstream import LocalRuntimeConnector
 
 
 class MainProgram(CommandBase.CommandBase):
     ''' Monitor execution or build on SlipStream server.'''
-    
+
     USAGE = '''\
 Usage: %(progName)s <diid> <username> <password>
 
@@ -39,26 +37,26 @@ Usage: %(progName)s <diid> <username> <password>
 <password>       Corresponding SlipStream password
 
 options:
-  --timeout      Timeout before command fails.  Default 30 minutes. 
+  --timeout      Timeout before command fails.  Default 30 minutes.
   --quiet        Only prints minimum information
   --verbose      Prints additional information (default)
   -h, --help     Show this message
 '''
+
     def __init__(self, argv=None):
         self.diid = None
         self.username = None
         self.password = None
-        self.timeout = 30*60 # 30 minutes
-        super(MainProgram,self).__init__(argv)
-        return
+        self.timeout = 30 * 60  # 30 minutes
+        super(MainProgram, self).__init__(argv)
 
     def parseArgs(self, argv):
         try:
             options, args = getopt.getopt(argv[1:], 'h',
-                                          ['help','quiet',
-                                           'verbose','help'])
-        except getopt.GetoptError, err:
-            msg=err.__str__()
+                                          ['help', 'quiet',
+                                           'verbose', 'help'])
+        except getopt.GetoptError as err:
+            msg = err.__str__()
             self.usageExit(msg)
         for opt, value in options:
             if opt in ('--verbose',):
@@ -74,11 +72,11 @@ options:
 
     def doWork(self):
         LocalRuntimeConnector.LocalRuntimeConnector.instanceDataDict = {}
-        cloudConnectorModules = {'runtime':'slipstream.LocalRuntimeConnector'}
-        client = RestClient.RestClient(self.verbose,cloudConnectorModules)
-        client._authenticate(self.username,self.password)
+        cloudConnectorModules = {'runtime': 'slipstream.LocalRuntimeConnector'}
+        client = RestClient.RestClient(self.verbose, cloudConnectorModules)
+        client._authenticate(self.username, self.password)
         print 'Monitoring execution/build:', self.diid
-        timer = 0;
+        timer = 0
         status = 'Unknown'
         while True:
             try:
