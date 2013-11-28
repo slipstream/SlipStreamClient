@@ -1,13 +1,12 @@
 #!/usr/bin/python
 
 import os
-import glob
 import sys
 
-from com.sixsq.slipstream.CommandBase import CommandBase
-from com.sixsq.slipstream.HttpClient import HttpClient
-import com.sixsq.slipstream.util as util
-import com.sixsq.slipstream.SlipStreamHttpClient as SlipStreamHttpClient
+from slipstream.CommandBase import CommandBase
+from slipstream.HttpClient import HttpClient
+import slipstream.util as util
+import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 etree = util.importETree()
 
@@ -44,15 +43,14 @@ class MainProgram(CommandBase):
         self._checkArgs()
 
     def _checkArgs(self):
-        if len(self.args) > 0:
-            self.usageExitTooManyArguments()
+        if len(self.args) == 0:
+            self.usageExit("You must provide at least one file to upload.")
 
-    def _read_file(self, file):
+    def _check_file(self, file):
         if not os.path.exists(file):
             self.usageExit("Unknown filename: " + file)
         if not os.path.isfile(file):
             self.usageExit("Input is not a file: " + file)
-        return open(file).read()
 
     def _read_module_as_xml(self, contents):
         try:
@@ -67,28 +65,62 @@ class MainProgram(CommandBase):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        os.chdir('.')
-        for file in glob.glob('*.xml'):
-            print 'PROCESSING: ', file
+        # read all files once to determine the upload URL for each file
+        # the URL is used to sort the files into an order that puts
+        # parents before children
+        projects = {}
+        images = {}
+        deployments = {}
+        for file in self.args:
 
-            contents = self._read_file(file)
-            dom = self._read_module_as_xml(contents)
-            attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+            self._check_file(file)
 
-            root_node_name = dom.tag
-            if root_node_name == 'list':
-                sys.stderr.write('Cannot update root project\n')
-                sys.exit(-1)
-            if not dom.tag in ('imageModule', 'projectModule', 'deploymentModule'):
-                sys.stderr.write('Invalid xml\n')
-                sys.exit(-1)
+            with open(file) as f:
+                contents = f.read()
 
-            parts = [attrs['parentUri'], attrs['shortName']]
-            uri = '/' + '/'.join([part.strip('/') for part in parts])
+                dom = self._read_module_as_xml(contents)
+                attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
 
-            url = self.options.endpoint + uri
+                root_node_name = dom.tag
+                if root_node_name == 'list':
+                    sys.stderr.write('Cannot update root project\n')
+                    sys.exit(-1)
+                if not dom.tag in ('imageModule', 'projectModule', 'deploymentModule'):
+                    sys.stderr.write('Invalid xml\n')
+                    sys.exit(-1)
 
-            client.put(url, contents)
+                parts = [attrs['parentUri'], attrs['shortName']]
+                uri = '/' + '/'.join([part.strip('/') for part in parts])
+
+                url = self.options.endpoint + uri
+
+                if dom.tag == 'projectModule':
+                    projects[url] = file
+                elif dom.tag == 'imageModule':
+                    images[url] = file
+                elif dom.tag == 'deploymentModule':
+                    deployments[url] = file
+
+        # now actually do the uploads in the correct order
+        # projects must be done first to get the structure, then
+        # images, and finally the deployments
+        for url in sorted(projects):
+            file = projects[url]
+            print 'Uploading project: %s' % file
+            with open(file) as f:
+                client.put(url, f.read())
+
+        for url in sorted(images):
+            file = images[url]
+            print 'Uploading image: %s' % file
+            with open(file) as f:
+                client.put(url, f.read())
+
+        for url in sorted(deployments):
+            file = deployments[url]
+            print 'Uploading deployment: %s' % file
+            with open(file) as f:
+                client.put(url, f.read())
 
 if __name__ == "__main__":
     try:

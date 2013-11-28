@@ -88,10 +88,11 @@ class CloudWrapper(BaseWrapper):
     def stopCreator(self):
         if self._needToStopImages(True):
             creator_id = self.getCreatorVmId()
-            if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
-                self.cloudProxy.stopVmsByIds([creator_id])
-            elif not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
-                self.cloudProxy.stopVappsByIds([creator_id])
+            if creator_id:
+                if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
+                    self.cloudProxy.stopVmsByIds([creator_id])
+                elif not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
+                    self.cloudProxy.stopVappsByIds([creator_id])
 
     def stopNodes(self):
         if self._needToStopImages():

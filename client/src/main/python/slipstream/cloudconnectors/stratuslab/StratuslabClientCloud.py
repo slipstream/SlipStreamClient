@@ -20,6 +20,7 @@ import base64
 import commands
 import os
 import socket
+import sys
 import time
 
 from stratuslab.ConfigHolder import ConfigHolder as StratuslabConfigHolder
@@ -80,7 +81,8 @@ class StratuslabClientCloud(BaseCloudConnector):
         creator.setListener(self.listener)
 
         createImageTemplateDict = creator._getCreateImageTemplateDict()
-        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo)
+        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo,
+                                                      self._getCloudInstanceName())
 
         def ourCreateTemplateDict():
             createImageTemplateDict.update(msgData)
@@ -116,11 +118,13 @@ class StratuslabClientCloud(BaseCloudConnector):
 
                     pdisk = VolumeManagerFactory.create(slConfigHolder)
 
-                    print "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                    print >> sys.stdout, "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                    sys.stdout.flush()
 
                     # hardcoded polling for 30' at 1' intervals
                     for i in range(30):
-                        print "Search iteration %d" % i
+                        print >> sys.stdout, "Search iteration %d" % i
+                        sys.stdout.flush()
                         volumes = pdisk.describeVolumes(filters)
                         if len(volumes) > 0:
                             try:
@@ -135,11 +139,11 @@ class StratuslabClientCloud(BaseCloudConnector):
         return newImageId
 
     @staticmethod
-    def _getCreateImageTemplateMessaging(imageInfo):
+    def _getCreateImageTemplateMessaging(imageInfo, cloud_instance_name):
         msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
 
         if msg_type:
-            imageResourceUri = BaseCloudConnector.getResourceUri(imageInfo) + '/stratuslab'
+            imageResourceUri = BaseCloudConnector.getResourceUri(imageInfo) + '/' + cloud_instance_name
             message = StratuslabClientCloud._getCreateImageMessagingMessage(imageResourceUri)
             msgData = {Runner.CREATE_IMAGE_KEY_MSG_TYPE: msg_type,
                        Runner.CREATE_IMAGE_KEY_MSG_ENDPOINT: os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'],

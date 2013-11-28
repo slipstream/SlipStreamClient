@@ -131,6 +131,10 @@ class BaseCloudConnector(object):
         return imageInfo['attributes']
 
     @staticmethod
+    def getImageUser(imageInfo):
+        return imageInfo['attributes']['loginUser']
+
+    @staticmethod
     def getCloudParameters(image):
         return image['cloud_parameters']['Cloud']
 
@@ -446,6 +450,9 @@ class BaseCloudConnector(object):
             except:
                 pass
 
+    def _getCloudInstanceName(self):
+        return self.cloud
+    
     def _getSshCredentials(self, imageInfo, user_info, vm_name=None):
         username, password = self._getSshUsernamePassword(imageInfo, vm_name)
         if password:
