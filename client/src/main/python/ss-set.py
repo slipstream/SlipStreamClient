@@ -38,6 +38,8 @@ class MainProgram(CommandBase):
                  --decrement option is uses, in which case this parameter is
                  ignores'''
 
+        self.parser.usage = usage
+
         self.addIgnoreAbortOption()
 
         self.options, self.args = self.parser.parse_args()
