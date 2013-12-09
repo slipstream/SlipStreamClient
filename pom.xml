@@ -7,6 +7,7 @@
   <name>SlipStreamClient</name>
   <url>http://sixsq.com/</url>
 
+  <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStream</artifactId>
     <version>2.0.16</version>
