@@ -17,8 +17,8 @@
  limitations under the License.
 """
 
-import os
 import sys
+import os
 
 from slipstream.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
@@ -26,10 +26,10 @@ import slipstream.util as util
 import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 class MainProgram(CommandBase):
-    '''A command-line program to show/list module definition(s).'''
+    '''A command-line program to create/update user definition(s).'''
 
     def __init__(self, argv=None):
-        self.module = ''
+        self.user = None
         self.username = None
         self.password = None
         self.cookie = None
@@ -37,17 +37,16 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''usage: %prog [options] [<module-xml>]
+        usage = '''usage: %prog [options] <user>
 
-<module-xml>    XML rendering of the module to update (e.g. as produced by ss-module-get).
-                For example: ./ss-module-put "`cat module.xml`"'''
+<user>    user to create/update. For example joe.'''
 
         self.parser.usage = usage
 
-        self.parser.add_option('-u','--username', dest='username',
+        self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p','--password', dest='password',
+        self.parser.add_option('-p', '--password', dest='password',
                                help='SlipStream password', metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
@@ -60,45 +59,35 @@ class MainProgram(CommandBase):
                                help='SlipStream server endpoint', metavar='URL',
                                default=os.environ.get('SLIPSTREAM_ENDPOINT', 'http://slipstream.sixsq.com'))
 
-        self.parser.add_option('-i','--ifile', dest='ifile',
-                               help='Optional input file. Replaces <module-xml> argument', metavar='FILE')
-
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
 
     def _checkArgs(self):
-        if self.options.ifile:
-            file = self.options.ifile
+
+        if len(self.args) == 1:
+            self.user = self.read_input_file(self.args[0])
         else:
-            if len(self.args) < 1:
-                self.parser.error('Missing module-xml')
-            if len(self.args) > 1:
-                self.usageExitTooManyArguments()
-            file = self.args[0]
-        self.module = self.read_input_file(file)
+            self.usageExitWrongNumberOfArguments()
 
     def doWork(self):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        dom = self.read_xml_and_exit_on_error(self.module)
-        attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
-
-        root_node_name = dom.tag
-        if root_node_name == 'list':
-            sys.stderr.write('Cannot update root project\n')
-            sys.exit(-1)
-        if not dom.tag in ('imageModule', 'projectModule', 'deploymentModule'):
+        dom = self.read_xml_and_exit_on_error(self.user)
+        if not dom.tag in ('user'):
             sys.stderr.write('Invalid xml\n')
             sys.exit(-1)
 
-        parts = [attrs['parentUri'], attrs['shortName']]
-        uri = '/' + '/'.join([part.strip('/') for part in parts])
+        dom = self.read_xml_and_exit_on_error(self.user)
+        attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+
+        user = attrs['name']
+        uri = util.USER_URL_PATH + '/' + user
 
         url = self.options.endpoint + uri
 
-        client.put(url, self.module)
+        client.put(url, self.user)
 
 if __name__ == "__main__":
     try:
