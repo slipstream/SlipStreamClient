@@ -104,13 +104,13 @@ class OpenStackClientCloud(BaseCloudConnector):
         self._newImageId = newImg.id
 
     def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
-        self._thread_local.driver = self._getDriver(user_info)        
+        self._thread_local.driver = self._getDriver(user_info)
         return self._startImageOnOpenStack(user_info, image_info, instance_name, cloudSpecificData)
 
     def _startImageOnOpenStack(self, user_info, image_info, instance_name, cloudSpecificData=None):
         imageId = self.getImageId(image_info)
         instanceType = self._getInstanceType(image_info)
-        keypair = user_info.get_cloud('keypair.name')
+        keypair = self._userInfoGetKeypairName(user_info)
         securityGroups = [x.strip() for x in self._getCloudParameter(image_info, 'security.groups').split(',') if x]
         flavor = self._searchInObjectList(self.flavors, 'name', instanceType)
         image = self._searchInObjectList(self.images, 'id', imageId)
