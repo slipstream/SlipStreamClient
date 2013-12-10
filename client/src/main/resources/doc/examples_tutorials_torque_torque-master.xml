@@ -166,7 +166,7 @@ apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold
 #
 # create normal user
 #
-adduser --quiet --uid 1000 --disabled-password --gecos '' tuser
+adduser --quiet --disabled-password --gecos '' tuser
 
 #
 # master hostname (must be a name!)
