@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +25,7 @@ from mock import Mock
 from slipstream.HttpClient import HttpClient
 from slipstream.exceptions.Exceptions import NetworkError
 
+
 class HttpClientTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -32,9 +33,9 @@ class HttpClientTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
+
     def testGetWithUsernamePassword(self):
-        
+
         httpRequestMock = Mock(return_value=(httplib2.Response({}), ''))
 
         httpObjectMock = Mock()
@@ -42,10 +43,10 @@ class HttpClientTestCase(unittest.TestCase):
 
         mock = Mock(return_value=httpObjectMock)
         HttpClient._getHttpObject = mock
-        
+
         client = HttpClient('username', 'password')
         client.get('url')
-        
+
         args, kwargs = httpRequestMock.call_args
 
         self.assertEqual(('url', 'GET', None), args)
@@ -53,7 +54,7 @@ class HttpClientTestCase(unittest.TestCase):
         self.assertTrue(kwargs['headers']['Authorization'].startswith('Basic '))
 
     def testGetSetsCookie(self):
-        
+
         httpRequestMock = Mock(return_value=(httplib2.Response({'set-cookie': 'acookie'}), ''))
 
         httpObjectMock = Mock()
@@ -64,13 +65,13 @@ class HttpClientTestCase(unittest.TestCase):
 
         client = HttpClient('username', 'password')
         client.get('http://localhost:9999/url')
-        
+
         self.assertEqual('acookie', client.cookie)
 
     def testGetWithCookie(self):
-        
+
         httpRequestMock = Mock(return_value=(httplib2.Response({}), ''))
-        
+
         httpObjectMock = Mock()
         httpObjectMock.request = httpRequestMock
 
@@ -81,16 +82,16 @@ class HttpClientTestCase(unittest.TestCase):
         client.cookie = 'acookie'
 
         client.get('url')
-        
+
         _, kwargs = httpRequestMock.call_args
 
         headers = kwargs['headers']
         self.assertEqual(headers['cookie'], 'acookie')
 
     def testUnknownHttpReturnCode(self):
-        
+
         httpRequestMock = Mock(return_value=(httplib2.Response({'status': '999'}), ''))
-        
+
         httpObjectMock = Mock()
         httpObjectMock.request = httpRequestMock
 
@@ -103,14 +104,14 @@ class HttpClientTestCase(unittest.TestCase):
         self.assertRaises(NetworkError, client.get, 'url')
 
     def testBasicAuthenticationHeaderSet(self):
-        
+
         client = HttpClient('username', 'password')
         headers = client._createAuthenticationHeader()
 
         self.assertTrue(headers['Authorization'].startswith('Basic '))
 
     def testCookieHeaderSet(self):
-        
+
         client = HttpClient(cookie='acookie')
         headers = client._createAuthenticationHeader()
 
@@ -119,4 +120,3 @@ class HttpClientTestCase(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-    

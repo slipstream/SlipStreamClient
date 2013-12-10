@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,17 @@
  limitations under the License.
 """
 
-import sys
 import os
-from optparse import OptionParser
+import sys
 
 from slipstream.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient   
+from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
-etree = util.importETree()
-
-
 class MainProgram(CommandBase):
     '''A command-line program to show/list module definition(s).'''
-    
+
     def __init__(self, argv=None):
         self.module = ''
         self.username = None
@@ -47,7 +43,7 @@ class MainProgram(CommandBase):
                 For example: ./ss-module-put "`cat module.xml`"'''
 
         self.parser.usage = usage
-        
+
         self.parser.add_option('-u','--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
@@ -57,7 +53,7 @@ class MainProgram(CommandBase):
 
         self.parser.add_option('--cookie', dest='cookieFilename',
                                help='SlipStream cookie', metavar='FILE',
-                               default=os.environ.get('SLIPSTREAM_COOKIEFILE', 
+                               default=os.environ.get('SLIPSTREAM_COOKIEFILE',
                                                       os.path.join(util.TMPDIR, 'cookie')))
 
         self.parser.add_option('--endpoint', dest='endpoint',
@@ -70,29 +66,23 @@ class MainProgram(CommandBase):
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
-        
+
     def _checkArgs(self):
         if self.options.ifile:
-            self._read_file()
+            file = self.options.ifile
         else:
             if len(self.args) < 1:
                 self.parser.error('Missing module-xml')
             if len(self.args) > 1:
                 self.usageExitTooManyArguments()
-            self.module = self.args[0]
-
-    def _read_file(self):
-        if not os.path.exists(self.options.ifile):
-            self.usageExit("Unknown filename: " + self.options.ifile)
-        if not os.path.isfile(self.options.ifile):
-            self.usageExit("Input is not a file: " + self.options.ifile)
-        self.module = open(self.options.ifile).read()
+            file = self.args[0]
+        self.module = self.read_input_file(file)
 
     def doWork(self):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        dom = self._read_module_as_xml(self.module)
+        dom = self.read_xml_and_exit_on_error(self.module)
         attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
 
         root_node_name = dom.tag
@@ -105,19 +95,10 @@ class MainProgram(CommandBase):
 
         parts = [attrs['parentUri'], attrs['shortName']]
         uri = '/' + '/'.join([part.strip('/') for part in parts])
-        
+
         url = self.options.endpoint + uri
 
         client.put(url, self.module)
-
-    def _read_module_as_xml(self, module):
-        try:
-            return etree.fromstring(module)
-        except Exception, ex:
-            print str(ex)
-            if self.verboseLevel:
-                raise
-            sys.exit(-1)
 
 if __name__ == "__main__":
     try:

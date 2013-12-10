@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,11 +61,12 @@ class Client(object):
                     value = self._getRuntimeParameter(_key, self.ignoreAbort)
                 except NotYetSetException:
                     pass
-                if value != None:
+                if value is not None:
                     break
                 if self.timeout != 0 and timer >= self.timeout:
                     raise TimeoutException(
-                        "Exceeded timeout limit of %s waiting for key '%s' to be set" % (self.timeout, _key))
+                        "Exceeded timeout limit of %s waiting for key '%s' "
+                        "to be set" % (self.timeout, _key))
                 print >> sys.stderr, "Waiting for %s" % _key
                 sys.stdout.flush()
                 sleepTime = 5
@@ -99,15 +100,15 @@ class Client(object):
             # such that <nodename>:<property> -> <nodename>.1:<property
             parts = _key.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)
             nodenamePart = parts[0]
-            propertyPart = parts[1] # safe since we've done the test in the if above
+            propertyPart = parts[1]  # safe since we've done the test in the if above
             parts = nodenamePart.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
             nodename = parts[0]
             if len(parts) == 1:
                 _key = nodename + \
-                       NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
-                       NodeDecorator.nodeMultiplicityStartIndex + \
-                       NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-                       propertyPart
+                    NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
+                    NodeDecorator.nodeMultiplicityStartIndex + \
+                    NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+                    propertyPart
             return _key
 
         _key = self._getNodeName() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
@@ -140,9 +141,13 @@ class Client(object):
         return self._systemCall(script, retry=False)
 
     def _systemCall(self, cmd, retry=True):
-        """ Execute system call and return stdout.  Raise an exception if the command fails"""
+        """
+        Execute system call and return stdout.
+        Raise an exception if the command fails
+        """
         self._printStep('Executing command: %s' % cmd)
-        p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, close_fds=True)
+        p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
+                             stdout=subprocess.PIPE, close_fds=True)
         (child_stdin, child_stdout) = (p.stdin, p.stdout)
         child_stdin = child_stdin
         stdout = []
@@ -157,7 +162,8 @@ class Client(object):
             if retry:
                 return self._systemCall(cmd, False)
             else:
-                raise ClientError("Error executing command '%s', with error code: %s" % (cmd, returnCode))
+                raise ClientError("Error executing command '%s', with error "
+                                  "code: %s" % (cmd, returnCode))
         return stdout
 
     def _printStep(self, message):

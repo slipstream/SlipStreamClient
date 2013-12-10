@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ import base64
 import commands
 import os
 import socket
+import sys
 import time
 
 from stratuslab.ConfigHolder import ConfigHolder as StratuslabConfigHolder
@@ -54,8 +55,8 @@ class StratuslabClientCloud(BaseCloudConnector):
         self.slConfigHolder = StratuslabConfigHolder(slipstreamConfigHolder.options,
                                                      slipstreamConfigHolder.config)
         self.listener = CreatorBaseListener(verbose=(self.verboseLevel > 1))
-        
-        self.setCapabilities(contextualization=True, 
+
+        self.setCapabilities(contextualization=True,
                              direct_ip_assignment=True,
                              orchestrator_can_kill_itself_or_its_vapp=True)
 
@@ -80,7 +81,8 @@ class StratuslabClientCloud(BaseCloudConnector):
         creator.setListener(self.listener)
 
         createImageTemplateDict = creator._getCreateImageTemplateDict()
-        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo)
+        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo,
+                                                      self._getCloudInstanceName())
 
         def ourCreateTemplateDict():
             createImageTemplateDict.update(msgData)
@@ -90,7 +92,7 @@ class StratuslabClientCloud(BaseCloudConnector):
 
         creator.create()
 
-        # 
+        #
         # if messaging is set to 'pdisk', then try polling for the new image
         # identifier from the storage system; otherwise will just return empty
         # string
@@ -110,17 +112,19 @@ class StratuslabClientCloud(BaseCloudConnector):
                 diid = os.environ.get('SLIPSTREAM_DIID', None)
                 if diid:
                     tag = "SlipStream-%s" % diid
-                    filters = {'tag': [tag,]}
+                    filters = {'tag': [tag, ]}
 
                     slConfigHolder.set('pdiskEndpoint', msg_endpoint)
 
                     pdisk = VolumeManagerFactory.create(slConfigHolder)
 
-                    print "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                    print >> sys.stdout, "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                    sys.stdout.flush()
 
                     # hardcoded polling for 30' at 1' intervals
                     for i in range(30):
-                        print "Search iteration %d" % i
+                        print >> sys.stdout, "Search iteration %d" % i
+                        sys.stdout.flush()
                         volumes = pdisk.describeVolumes(filters)
                         if len(volumes) > 0:
                             try:
@@ -128,18 +132,18 @@ class StratuslabClientCloud(BaseCloudConnector):
                             except Exception as e:
                                 print "Exception occurred looking for volume: %s" % e
                                 pass
-                            break;
+                            break
                         time.sleep(60)
 
         print "Returning new image ID value: %s" % newImageId
         return newImageId
 
     @staticmethod
-    def _getCreateImageTemplateMessaging(imageInfo):
+    def _getCreateImageTemplateMessaging(imageInfo, cloud_instance_name):
         msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
 
         if msg_type:
-            imageResourceUri = BaseCloudConnector.getResourceUri(imageInfo) + '/stratuslab'
+            imageResourceUri = BaseCloudConnector.getResourceUri(imageInfo) + '/' + cloud_instance_name
             message = StratuslabClientCloud._getCreateImageMessagingMessage(imageResourceUri)
             msgData = {Runner.CREATE_IMAGE_KEY_MSG_TYPE: msg_type,
                        Runner.CREATE_IMAGE_KEY_MSG_ENDPOINT: os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'],

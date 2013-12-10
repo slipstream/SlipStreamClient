@@ -3,6 +3,7 @@
 import os
 from distutils.core import setup
 
+
 def _fullsplit(path, result=None):
     """
     Split a pathname into components (the opposite of os.path.join) in a
@@ -17,6 +18,7 @@ def _fullsplit(path, result=None):
         return result
     return _fullsplit(head, [tail] + result)
 
+
 def get_packages(basepkg_name, root_dir=''):
     # Compile the list of packages available, because distutils doesn't have
     # an easy way to do this.
@@ -29,10 +31,11 @@ def get_packages(basepkg_name, root_dir=''):
     for dirpath, dirnames, filenames in os.walk(basepkg_name):
         # Ignore dirnames that start with '.'
         for i, dirname in enumerate(dirnames):
-            if dirname.startswith('.'): del dirnames[i]
+            if dirname.startswith('.'):
+                del dirnames[i]
         if '__init__.py' in filenames:
             packages.append('.'.join(_fullsplit(dirpath)))
-    
+
     os.chdir(cwd)
     return packages
 
@@ -62,17 +65,18 @@ root_dir = 'lib'
 basepkg_name = 'slipstream'
 packages = get_packages(basepkg_name, root_dir)
 
-setup(name=NAME,
-      version=VERSION,
-      description=DESCRIPTION,
-      long_description=LONG_DESCRIPTION,
-      author=AUTHOR,
-      author_email=AUTHOR_EMAIL,
-      license=LICENSE,
-      platforms=PLATFORMS,
-      url=URL,
-      classifiers=CLASSIFIERS,
-      packages=packages,
-      package_dir={'slipstream': 'lib/slipstream'},
-      requires=['httplib2']
-      )
+setup(
+    name=NAME,
+    version=VERSION,
+    description=DESCRIPTION,
+    long_description=LONG_DESCRIPTION,
+    author=AUTHOR,
+    author_email=AUTHOR_EMAIL,
+    license=LICENSE,
+    platforms=PLATFORMS,
+    url=URL,
+    classifiers=CLASSIFIERS,
+    packages=packages,
+    package_dir={'slipstream': 'lib/slipstream'},
+    requires=['httplib2']
+)

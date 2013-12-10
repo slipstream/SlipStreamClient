@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ from libcloud.compute.drivers.openstack import OpenStack_1_1_NodeDriver
 
 
 class OpenStackSecurityGroup(object):
+
     """
     A Security Group.
     """
@@ -45,6 +46,7 @@ class OpenStackSecurityGroup(object):
 
 
 class OpenStackSecurityGroupRule(object):
+
     """
     A Rule of a Security Group.
     """
@@ -74,6 +76,7 @@ class OpenStackSecurityGroupRule(object):
 
 
 class OpenStackKeyPair(object):
+
     """
     A KeyPair.
     """
@@ -159,8 +162,7 @@ def _create_args_to_params(self, node, **kwargs):
     server_params = {
         'name': kwargs.get('name'),
         'metadata': kwargs.get('ex_metadata', {}),
-        'personality': self._files_to_personality(kwargs.get("ex_files",
-            {}))
+        'personality': self._files_to_personality(kwargs.get("ex_files", {}))
     }
 
     if 'ex_keyname' in kwargs:
@@ -293,8 +295,9 @@ def ex_delete_security_group(self, security_group):
 
     @rtype: C{bool}
     """
-    resp = self.connection.request('/os-security-groups/%s' % security_group.id,
-                                   method='DELETE')
+    resp = self.connection.request(
+        '/os-security-groups/%s' % security_group.id,
+        method='DELETE')
     return resp.status == httplib.NO_CONTENT
 
 

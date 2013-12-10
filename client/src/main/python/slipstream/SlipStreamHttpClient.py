@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -45,8 +45,8 @@ class UserInfo(dict):
 
     def __setitem__(self, key, val):
         if not key.startswith(self.qualifires):
-            raise ValueError('Key should start with one of: %s' \
-                             % ', '.join(self.qualifires))
+            raise ValueError('Key should start with one of: %s' %
+                ', '.join(self.qualifires))
         dict.__setitem__(self, key, val)
 
 
@@ -179,7 +179,7 @@ class SlipStreamHttpClient(object):
         return DomExtractor.extractDefaultCloudServiceNameFromRun(self.run_dom)
 
     def _retrieveAndSetRun(self):
-        if self.run_dom == None:
+        if self.run_dom is None:
             url = self.runInstanceEndpoint
             _, run = self._retrieve(url)
             self.run_dom = etree.fromstring(run)
@@ -263,7 +263,7 @@ class SlipStreamHttpClient(object):
 
     def launchDeployment(self, params):
         body = '&'.join(params)
-        resp,_ = self._httpPost(self.runEndpoint, body, contentType='text/plain')
+        resp, _ = self._httpPost(self.runEndpoint, body, contentType='text/plain')
         return resp['location']
 
     def getRunState(self, uuid=None, ignoreAbort=True):
@@ -313,7 +313,7 @@ class DomExtractor(object):
                 name = param.attrib['name']
                 # extra disks go on the node level
                 if not name.startswith(DomExtractor.EXTRADISK_PREFIX):
-                    if not cloudParameters.has_key(category):
+                    if category not in cloudParameters:
                         cloudParameters.update({category: {}})
                     cloudParameters[category][name] = param.findtext('value')
 
@@ -323,7 +323,7 @@ class DomExtractor(object):
     def getElementValueFromElementTree(elementTree, elementName):
         element = elementTree.find(elementName)
         value = getattr(element, 'text', '')
-        if value == None:
+        if value is None:
             value = ''
         return value
 

@@ -17,19 +17,19 @@
  limitations under the License.
 """
 
-import os
 import sys
+import os
 
 from slipstream.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
-
+import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 class MainProgram(CommandBase):
-    '''A command-line program to delete module definition(s).'''
+    '''A command-line program to create/update user definition(s).'''
 
     def __init__(self, argv=None):
-        self.module = ''
+        self.user = None
         self.username = None
         self.password = None
         self.cookie = None
@@ -37,14 +37,9 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''usage: %prog [options] [<module-url>]
+        usage = '''usage: %prog [options] <user>
 
-<module-uri>    Name of the module to delete. For example
-                Public/Tutorials/HelloWorld/client_server/1. If a version
-                is provided (at the end of the module name) this specific
-                version will be deleted, otherwise that last version will
-                be delete.  If several versions exists, this command must
-                be called repeatedly.'''
+<user>    user to create/update. For example joe.'''
 
         self.parser.usage = usage
 
@@ -69,22 +64,30 @@ class MainProgram(CommandBase):
         self._checkArgs()
 
     def _checkArgs(self):
+
         if len(self.args) == 1:
-            self.module = self.args[0]
-        if len(self.args) > 1:
-            self.usageExitTooManyArguments()
+            self.user = self.read_input_file(self.args[0])
+        else:
+            self.usageExitWrongNumberOfArguments()
 
     def doWork(self):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        uri = util.MODULE_URL_PATH
-        if self.module:
-            uri += '/' + self.module
+        dom = self.read_xml_and_exit_on_error(self.user)
+        if not dom.tag in ('user'):
+            sys.stderr.write('Invalid xml\n')
+            sys.exit(-1)
+
+        dom = self.read_xml_and_exit_on_error(self.user)
+        attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+
+        user = attrs['name']
+        uri = util.USER_URL_PATH + '/' + user
 
         url = self.options.endpoint + uri
 
-        client.delete(url)
+        client.put(url, self.user)
 
 if __name__ == "__main__":
     try:

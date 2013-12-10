@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,7 +20,6 @@
 import os
 import sys
 import time
-from optparse import OptionParser
 
 from slipstream.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
@@ -31,10 +30,10 @@ import slipstream.util as util
 
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
-    
+
     REF_QNAME = 'refqname'
-    DEAFULT_WAIT = 0 # minutes
-    DEFAULT_SLEEP = 30 # seconds
+    DEAFULT_WAIT = 0  # minutes
+    DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = 'Inactive'
 
@@ -53,17 +52,17 @@ class MainProgram(CommandBase):
 <module-uri>    Full URL to the module to execute. For example Public/Tutorials/HelloWorld/client_server'''
 
         self.parser.usage = usage
-        
-        self.parser.add_option('-u','--username', dest='username',
+
+        self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p','--password', dest='password',
+        self.parser.add_option('-p', '--password', dest='password',
                                help='SlipStream password', metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
         self.parser.add_option('--cookie', dest='cookieFilename',
                                help='SlipStream cookie', metavar='FILE',
-                               default=os.environ.get('SLIPSTREAM_COOKIEFILE', 
+                               default=os.environ.get('SLIPSTREAM_COOKIEFILE',
                                                       os.path.join(util.TMPDIR, 'cookie')))
 
         self.parser.add_option('--endpoint', dest='endpoint',
@@ -71,8 +70,8 @@ class MainProgram(CommandBase):
                                default=os.environ.get('SLIPSTREAM_ENDPOINT', 'http://slipstream.sixsq.com'))
 
         self.parser.add_option('--parameters', dest='parameters',
-                               help='Deployment or image parameters override. The key must be in a form:'\
-                               ' <node-name>:<parameter-name>. Several pairs can be provided comma separated.',
+                               help='Deployment or image parameters override. The key must be in a form: '
+                                    '<node-name>:<parameter-name>. Several pairs can be provided comma separated.',
                                metavar="KEY1=VALUE1,KEY2=VALUE2",
                                default='')
 
@@ -108,12 +107,12 @@ class MainProgram(CommandBase):
             if len(parts) != 2:
                 self.parser.error('Invalid parameter key/value pair: ' + pair)
             key, value = map(lambda x: x.strip(), parts)
-            parameters[key]=value
+            parameters[key] = value
         return parameters
 
     def _init_client(self):
-        configHolder = ConfigHolder(self.options, context={'empty':None}, 
-                                    config={'empty':None})
+        configHolder = ConfigHolder(self.options, context={'empty': None},
+                                    config={'empty': None})
         configHolder.set('serviceurl', self.options.endpoint)
         self.client = Client(configHolder)
 
@@ -131,8 +130,8 @@ class MainProgram(CommandBase):
 
     def _assembleData(self):
         self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
-        return [self._decorateKey(k) + '=' + v for k,v in self.parameters.items()]
-        
+        return [self._decorateKey(k) + '=' + v for k, v in self.parameters.items()]
+
     def _decorateKey(self, key):
         if key == self.REF_QNAME:
             return key
@@ -154,7 +153,7 @@ class MainProgram(CommandBase):
             time.sleep(time_sleep)
         _sleep.ncycle = 1
 
-        run_uuid = run_url.rsplit('/',1)[-1]
+        run_uuid = run_url.rsplit('/', 1)[-1]
         time_end = time.time() + self.options.wait * 60
         state = self.INITIAL_STATE
         CRITICAL = self.options.nagios and 2 or 1
@@ -164,8 +163,8 @@ class MainProgram(CommandBase):
                 state = self.client.getRunState(run_uuid, ignoreAbort=False)
             except Exceptions.AbortException as ex:
                 if self.options.nagios:
-                    print 'CRITICAL - %s. State: %s. Run: %s' % \
-                            (str(ex).split('\n')[0], state, run_url)
+                    print 'CRITICAL - %s. State: %s. Run: %s' % (
+                        str(ex).split('\n')[0], state, run_url)
                     sys.exit(CRITICAL)
                 else:
                     raise ex
@@ -175,8 +174,8 @@ class MainProgram(CommandBase):
             curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
             if not self.options.nagios:
                 print "[%s] State: %s" % (curr_time, state)
-        print "CRITICAL - Timed out after %i min. State: %s. Run: %s" % \
-                (self.options.wait, state, run_url)
+        print "CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
+            self.options.wait, state, run_url)
         sys.exit(CRITICAL)
 
     def _need_to_wait(self):

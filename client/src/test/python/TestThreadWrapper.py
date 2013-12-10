@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,12 +27,15 @@ from slipstream.utils.tasksrunner import ThreadWrapper, TasksRunner
 EXCEPTION = IOError
 EXCEPTION_MESSAGE = "Foo bar baz"
 
+
 class _ExplodeClass(object):
     def __init__(self):
         self.test_var = 0
+
     def explode(self, val):
         self.test_var = val
         raise EXCEPTION(EXCEPTION_MESSAGE)
+
 
 def _assert_exc_info(exc_info):
     assert isinstance(exc_info, tuple)
@@ -66,6 +69,7 @@ class TestThreadWrapper(unittest.TestCase):
             time.sleep(1)
         _assert_exc_info(thr.get_exc_info())
 
+
 class TestTasksRunner(unittest.TestCase):
     def testRunTaskNoExceptions(self):
         tr = TasksRunner()
@@ -74,7 +78,7 @@ class TestTasksRunner(unittest.TestCase):
         for _ in range(ntasks):
             tr.run_task(Mock())
         tr.wait_tasks_finished()
-        assert tr._tasks_finished() == True
+        assert tr._tasks_finished() is True
         assert len(tr.threads) == ntasks
 
     def testQueueExceptionsManualCheck(self):
@@ -84,9 +88,9 @@ class TestTasksRunner(unittest.TestCase):
             tr.run_task(Mock(side_effect=EXCEPTION(EXCEPTION_MESSAGE)))
         while not tr._tasks_finished():
             time.sleep(1)
-        assert tr._tasks_finished() == True
+        assert tr._tasks_finished() is True
         assert len(tr.threads) == ntasks
-        assert tr.exc_queue.qsize() == ntasks 
+        assert tr.exc_queue.qsize() == ntasks
         for _ in range(ntasks):
             _assert_exc_info(tr.exc_queue.get())
 

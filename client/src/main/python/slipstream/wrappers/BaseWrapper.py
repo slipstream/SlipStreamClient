@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -97,15 +97,15 @@ class BaseWrapper(object):
             # such that <nodename>:<property> -> <nodename>.1:<property
             parts = _key.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)
             nodenamePart = parts[0]
-            propertyPart = parts[1] # safe since we've done the test in the if above
+            propertyPart = parts[1]  # safe since we've done the test in the if above
             parts = nodenamePart.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
             nodename = parts[0]
             if len(parts) == 1:
                 _key = nodename + \
-                       NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
-                       NodeDecorator.nodeMultiplicityStartIndex + \
-                       NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-                       propertyPart
+                    NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
+                    NodeDecorator.nodeMultiplicityStartIndex + \
+                    NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+                    propertyPart
             return _key
 
         _key = self._getNodeName() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
@@ -132,17 +132,17 @@ class BaseWrapper(object):
         self.clientSlipStream._httpDelete(self.getRunResourceUri())
 
     def getUserInfo(self, cloud_service_name):
-        if self._userInfo == None:
+        if self._userInfo is None:
             self._userInfo = self.clientSlipStream.getUserInfo(cloud_service_name)
         return self._userInfo
 
     def getImageInfo(self):
-        if self._imageInfo == None:
+        if self._imageInfo is None:
             self._imageInfo = self.clientSlipStream.getImageInfo()
         return self._imageInfo
 
     def getNodesInfo(self):
-        if self._nodesInfo == None:
+        if self._nodesInfo is None:
             self._nodesInfo = self.clientSlipStream.getNodesInfo()
         return self._nodesInfo
 
@@ -169,4 +169,3 @@ class BaseWrapper(object):
     def _setRuntimeParameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
         self.clientSlipStream.setRuntimeParameter(parameter, value)
-

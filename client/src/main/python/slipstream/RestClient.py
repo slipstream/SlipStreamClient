@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,7 +38,7 @@ except ImportError:
 import socket
 from time import strftime
 
-svnurl = "$HeadURL: https://code.sixsq.com/svn/SlipStream/trunk/SlipStreamClient/src/main/python/slipstream/RestClient.py $";
+svnurl = "$HeadURL: https://code.sixsq.com/svn/SlipStream/trunk/SlipStreamClient/src/main/python/slipstream/RestClient.py $"
 
 
 def getVersion():
@@ -116,7 +116,6 @@ class RestClient:
 
     SLIPSTREAM_DIID_ENV_NAME = 'SLIPSTREAM_DIID'
 
-
     def __init__(self, verbose=False, cloudConnectorModules={}):
         """ cloudConnectorModules contain the Python modules to use to connect to the cloud.
             Recognised keys are:
@@ -179,7 +178,6 @@ class RestClient:
         url = self.runServiceUrl + self.getDiid()
         self._httpPost(url, 'reset', 'text/plain')
 
-
     def _authenticate(self, username=None, password=None):
         """ Authenticate with the server.  Use the username/password passed as
             input parameters, otherwise use the ones provided by the instance
@@ -188,7 +186,7 @@ class RestClient:
             try:
                 username = self.getInstanceData('username')
                 password = self.getInstanceData('password')
-            except KeyError, ex:
+            except KeyError as ex:
                 raise Exceptions.ClientError("Missing parameter: " + str(ex))
 
         body = 'username=' + username + '&password=' + password + '&login=Username'
@@ -196,7 +194,6 @@ class RestClient:
         self.cookie = resp['set-cookie']
 
         return self.cookie
-
 
     def _buildRemoteImage(self, timeout, ebsPreRecipeScript=None,
                           createinstance=False, strictversion=False):
@@ -222,7 +219,7 @@ class RestClient:
         details = self._getImageDetails(refQName, withResolver=True)
 
         # Check image id
-        if not details.has_key('imageId') or details['imageId'] == None:
+        if 'imageId' not in details or details['imageId'] is None:
             msg = 'Missing image id.  Can\'t build an image without a reference image id as a starting point. '
             msg += 'Make sure that your module your module references ends with a module having a valid image id (recommended), '
             msg += 'or provide your module with a valid image id (less recommended since not reproducible).'
@@ -315,7 +312,7 @@ class RestClient:
 
         # prerecipe script
         # Copy pre-recipe script, if it exists
-        if (details.has_key('prerecipe')):
+        if 'prerecipe' in details:
             self._printSectionHead('Pre-Recipe')
 
             preRecipeFilename = 'prerecipe'
@@ -344,7 +341,7 @@ class RestClient:
         # Checking if a config file must be created and copied over (used to set python environment)
         pythonInterpreterLocation = 'python'
         customPythonConfigFilenameTarget = None
-        if details.has_key('properties') and details['properties'].has_key('slipstream.python.location'):
+        if 'properties' in details and 'slipstream.python.location' in details['properties']:
             print >> sys.stderr, 'Setting-up the custom Python environment'
             pythonInterpreterLocation = details['properties']['slipstream.python.location']
 
@@ -363,7 +360,7 @@ export PATH
             print >> sys.stderr, 'Creating tmp directory: %s' % self.tmpdir
             cmd = 'ssh -i ' + keypairFilename + ' root@' + info['dnsName'] + ' "' \
                   + pythonInterpreterLocation + ' -c \\\"import os; os.makedirs(\'' \
-                  + self.tmpdir + '\') if not os.path.exists(\'' + self.tmpdir + '\') else None\\\""';
+                  + self.tmpdir + '\') if not os.path.exists(\'' + self.tmpdir + '\') else None\\\""'
             self._systemCall(cmd, False)
 
             print >> sys.stderr, 'Copying custom environment configuration file: %s to target instance' % customPythonConfigFilename
@@ -396,7 +393,6 @@ export PATH
             script.writelines('echo "Sourcing the custom python environment configuration file"\n')
             script.writelines('source ' + customPythonConfigFilenameTarget + '\n')
 
-
             # Packages
             # FIXME: extract this and put it in something like an os family thing
         #        script.writelines('# Setting environment variable: DEBIAN_FRONTEND=noninteractive to allow headless package installation\n')
@@ -404,7 +400,7 @@ export PATH
 
         packageInstallCmd = 'ss-install-package '
 
-        if (details.has_key('packages')):
+        if 'packages' in details:
             script.writelines('# Calling package manager for package(s) to install\n')
             script.writelines(packageInstallCmd + ' ' + ' '.join(details['packages']) + '\n')
             script.writelines(self.bashScriptErrorHandlingFragment)
@@ -432,7 +428,7 @@ export PATH
         recipeFilenameSource = os.path.join(self.reportsdir, recipeFilename)
         recipeFilenameTarget = os.path.join(self.tmpdir, recipeFilename)
 
-        if (details.has_key('recipe')):
+        if 'recipe' in details:
             recipe = open(recipeFilenameSource, 'w')
             recipe.writelines(details['recipe'] + '\n')
             recipe.close()
@@ -516,8 +512,8 @@ export PATH
         self._systemCall(cmd, False)
 
         print >> sys.stderr, 'Inflating the tarball'
-        cmd = pythonInterpreterLocation + ' -c \\\"import os;import tarfile;os.chdir(\'%s\');tar = tarfile.open(\'%s\',\'r:gz\');[tar.extract(tarinfo) for tarinfo in tar]\\\"' % \
-              (slipStreamClientLocation, tarballPath)
+        cmd = pythonInterpreterLocation + ' -c \\\"import os;import tarfile;os.chdir(\'%s\');tar = tarfile.open(\'%s\',\'r:gz\');[tar.extract(tarinfo) for tarinfo in tar]\\\"' % (
+            slipStreamClientLocation, tarballPath)
         cmd = 'ssh -i ' + keypairFilename + ' root@' + info['dnsName'] \
               + ' "' + cmd + '"'
         print >> sys.stderr, 'Calling:', cmd
@@ -532,7 +528,6 @@ export PATH
 
         return credentials, info
 
-
     def _createBucket(self, bucketname, retry=True):
         """ Create a single bucket.  Retry once if the creation failed """
         try:
@@ -544,7 +539,7 @@ export PATH
             if response.http_response.status == 201 or response.http_response.status == 200:
                 return
             raise ValueError('Error creating S3 bucket.  Error code: %s with reason: %s' % (
-            response.http_response.status, response.message))
+                response.http_response.status, response.message))
         except:
             if retry:
                 return self._createBucket(bucketname, False)
@@ -615,7 +610,6 @@ export PATH
                     pass
         return
 
-
     def _getCategory(self):
         return self.runtimeCloudConnectorModule.getConnector().getInstanceData('version.category')
 
@@ -664,9 +658,9 @@ export PATH
             if validateAll:
                 keys.extend(optionalKeys)
             for key in keys:
-                if not self.credentials.has_key(key):
+                if key not in self.credentials:
                     raise Exceptions.ClientError("Missing EC2 credential '%s'" % key)
-                if self.credentials[key] == None:
+                if self.credentials[key] is None:
                     raise Exceptions.ClientError(
                         "Wrong value for EC2 credential '%s', got '%s'" % (key, self.credentials[key]))
         return self.credentials
@@ -729,8 +723,7 @@ export PATH
                                                                        AmazonCredentialsPlugin.AWS_Secret_Key]).describe_instances(
             instanceIds)
         if response.is_error:
-            raise Exceptions.ServerError(
-                'Failed retrieving image description from EC2 for images: %s with reason: %s' % (
+            raise Exceptions.ServerError('Failed retrieving image description from EC2 for images: %s with reason: %s' % (
                 instanceIds, str(response)))
         if self.verbose:
             print response.parse()
@@ -988,7 +981,7 @@ export PATH
         # Code below assumes that the server values does NOT have a trailing slash.
         # Make sure that all of them are removed.  This should be made more robust in
         # the future.
-        server = server.rstrip('/');
+        server = server.rstrip('/')
         #        print 'server (before):', server
 
         # Override local settings from user data (e.g. passed to EC2 during instantiation)
@@ -1004,24 +997,22 @@ export PATH
         self.authnServiceUrl = self.serverUrl + '/'
         self.authzServiceUrl = self.serverUrl + '/'
 
-
     def _loadConnectors(self, parser, connectors={}):
         """ Load connector from info in the config file, unless passed as parameter. """
 
         computingConnectorName = parser.get('System', 'computingconnector')
         runtimeConnectorName = parser.get('System', 'runtimeconnector')
         storageConnectorName = parser.get('System', 'storageconnector')
-        if connectors.has_key('computing'):
+        if 'computing' in connectors:
             computingConnectorName = connectors['computing']
-        if connectors.has_key('runtime'):
+        if 'runtime' in connectors:
             runtimeConnectorName = connectors['runtime']
-        if connectors.has_key('storage'):
+        if 'storage' in connectors:
             storageConnectorName = connectors['storage']
 
         self.computingCloudConnectorModule = self._loadModule(computingConnectorName)
         self.runtimeCloudConnectorModule = self._loadModule(runtimeConnectorName)
         self.storageCloudConnectorModule = self._loadModule(storageConnectorName)
-
 
     def _loadModule(self, moduleName):
         # Load the modules
@@ -1060,15 +1051,15 @@ export PATH
             # such that <nodename>:<property> -> <nodename>.1:<property
             bits = _key.split(RestClient.NODE_PROPERTY_SEPARATOR)
             nodenamePart = bits[0]
-            propertyPart = bits[1] # safe since we've done the test in the if above
+            propertyPart = bits[1]  # safe since we've done the test in the if above
             bits = nodenamePart.split(RestClient.nodeMultiplicityIndexSeparator)
             nodename = bits[0]
             if len(bits) == 1:
                 _key = nodename + \
-                       RestClient.nodeMultiplicityIndexSeparator + \
-                       RestClient.nodeMultiplicityStartIndex + \
-                       RestClient.NODE_PROPERTY_SEPARATOR + \
-                       propertyPart
+                    RestClient.nodeMultiplicityIndexSeparator + \
+                    RestClient.nodeMultiplicityStartIndex + \
+                    RestClient.NODE_PROPERTY_SEPARATOR + \
+                    propertyPart
             return _key
 
         # Are we in the context of a deployment?
@@ -1189,13 +1180,13 @@ export PATH
         EC2_HOME = os.path.join(os.sep, 'opt', 'ec2-api-tools')
         PATH = os.path.join(EC2_HOME, 'bin')
         JAVA_HOME = os.path.join(os.sep, 'usr')
-        if os.environ.has_key('PATH'):
+        if 'PATH' in os.environ:
             os.environ['PATH'] = PATH + os.path.pathsep + os.environ['PATH']
         else:
             os.environ['PATH'] = PATH
-        if not os.environ.has_key('JAVA_HOME'):
+        if 'JAVA_HOME' not in os.environ:
             os.environ['JAVA_HOME'] = JAVA_HOME
-        if not os.environ.has_key('EC2_HOME'):
+        if 'EC2_HOME' not in os.environ:
             os.environ['EC2_HOME'] = EC2_HOME
         return
 
@@ -1237,12 +1228,12 @@ export PATH
                 parametersNodeName = attribute.split('--')[0]
                 # Strip
                 paramName = attribute.split('--')[1]
-                paramNode = None # node of the attribute
+                paramNode = None  # node of the attribute
                 for node in root.findall(parametersNodeName + '/parameter'):
                     if node.get('name') == paramName:
                         paramNode = node
                         break
-                if paramNode == None:
+                if paramNode is None:
                     paramsNode = root.find(parametersNodeName)
                     if not paramsNode:
                         paramsNode = ET.SubElement(root, parametersNodeName)
@@ -1423,11 +1414,12 @@ export PATH
     def buildBlockStore(self, createinstance, strictversion, timeout):
         """ Build the data store, by instantiating the reference image, and then executing the recipe script  """
 
-        blockDir = {'fileSystemType': 'ext3',
-                    'deviceName': '/dev/sdh',
-                    'mountDir': '/mnt/data-store',
-                    'size': '50',
-                    'errorHandling': self.bashScriptErrorHandlingFragment
+        blockDir = {
+            'fileSystemType': 'ext3',
+            'deviceName': '/dev/sdh',
+            'mountDir': '/mnt/data-store',
+            'size': '50',
+            'errorHandling': self.bashScriptErrorHandlingFragment
         }
 
         ebsPreRecipe = '''
@@ -1528,7 +1520,7 @@ ss-publish-volume $volumeId
               + ' -c ' + self.certPemFileLocation + ' -u XXX_AWS_Account_Number_XXX -r i386'
         # If we're using EBS, we need to tell the bundle command not to include the mounted device
         if blockDict:
-            if blockDict.has_key('mountDir'):
+            if 'mountDir' in blockDict:
                 cmd += ' -e ' + blockDict['mountDir']
         cmd += '"'
         print >> sys.stderr, '    cmd:', cmd
@@ -1554,7 +1546,7 @@ ss-publish-volume $volumeId
         manifest = 'image.manifest.xml'
         cmd = 'ssh -i ' + keypairFilename + ' root@' + info[
             'dnsName'] + ' "cd ' + mntDirname + '; ec2-upload-bundle -b ' + uploadTarget \
-              + ' -m /tmp/' + manifest + ' -a XXX_AWS_Access_Id_XXX -s XXX_AWS_Secret_Key_XXX"'
+            + ' -m /tmp/' + manifest + ' -a XXX_AWS_Access_Id_XXX -s XXX_AWS_Secret_Key_XXX"'
         print >> sys.stderr, '    cmd:', cmd
         cmd = cmd.replace('XXX_AWS_Access_Id_XXX', credentials[AmazonCredentialsPlugin.AWS_Access_Id])
         cmd = cmd.replace('XXX_AWS_Secret_Key_XXX', credentials[AmazonCredentialsPlugin.AWS_Secret_Key])
@@ -1724,7 +1716,7 @@ ss-publish-volume $volumeId
             module = self._getModule(qname)
             imageDetails = self._getImageDetails(module)
         blockDict = {}
-        if imageDetails.has_key('properties') and imageDetails['properties'].has_key('EBS_name'):
+        if 'properties' in imageDetails and 'EBS_name' in imageDetails['properties']:
             ebsName = imageDetails['properties']['EBS_name']
             snapshotId = None
             fileSystemType = 'ext3'
@@ -1733,17 +1725,17 @@ ss-publish-volume $volumeId
             size = '50'
             copy = '--copy'
 
-            if imageDetails.has_key('properties'):
+            if 'properties' in imageDetails:
                 parameters = imageDetails['properties']
-                if parameters.has_key('EBS_devicename'):
+                if 'EBS_devicename' in parameters:
                     deviceName = parameters['EBS_devicename']
-                if parameters.has_key('EBS_filesystemtype'):
+                if 'EBS_filesystemtype' in parameters:
                     fileSystemType = parameters['EBS_filesystemtype']
-                if parameters.has_key('EBS_mountdir'):
+                if 'EBS_mountdir' in parameters:
                     mountDir = parameters['EBS_mountdir']
-                if parameters.has_key('EBS_nosnapshot'):
+                if 'EBS_nosnapshot' in parameters:
                     copy = ''
-                if parameters.has_key('EBS_snapshotid'):
+                if 'EBS_snapshotid' in parameters:
                     snapshotId = parameters['EBS_snapshotid']
 
             # If we have a snapshotId, we don't need to retrieve reference block store, but
@@ -1760,19 +1752,20 @@ ss-publish-volume $volumeId
                         'Missing block store reference and snapshot id to block store %s' % ebsName)
 
                 blockStoreModule = self._getImageDetails(blockStoreReference)
-                if not blockStoreModule.has_key('volumeId'):
+                if 'volumeId' not in blockStoreModule:
                     raise Exceptions.ClientError('Missing volume id from module %s, make sure this referenced  \
                                                   block store has been built')
                 volumeId = blockStoreModule['volumeId']
 
-            blockDict = {'fileSystemType': fileSystemType,
-                         'deviceName': deviceName,
-                         'mountDir': mountDir,
-                         'size': size,
-                         'volumeId': volumeId,
-                         'copy': copy,
-                         'ebsName': ebsName,
-                         'errorHandling': self.bashScriptErrorHandlingFragment
+            blockDict = {
+                'fileSystemType': fileSystemType,
+                'deviceName': deviceName,
+                'mountDir': mountDir,
+                'size': size,
+                'volumeId': volumeId,
+                'copy': copy,
+                'ebsName': ebsName,
+                'errorHandling': self.bashScriptErrorHandlingFragment
             }
         return blockDict
 
@@ -1820,7 +1813,7 @@ ss-publish-volume $volumeId
                     value = self._getInfoSys(_key, ignoreAbort)
                 except Exceptions.NotYetSetError:
                     pass
-                if value != None:
+                if value is not None:
                     break
                 if timeout != 0 and timer >= timeout:
                     raise Exceptions.TimeoutException(
@@ -1879,7 +1872,7 @@ ss-publish-volume $volumeId
         """Return the targets defined for the image version nodename"""
         nodename = self.getNodeName()
         images = self._getImages()
-        if not images.has_key(nodename):
+        if nodename not in images:
             raise Exceptions.ClientError("Can't find image node: " + nodename + " in current deployment")
         imageqname = images[nodename]
         url = self.navigatorServiceUrl + imageqname
@@ -1901,7 +1894,7 @@ ss-publish-volume $volumeId
     def getUserCredentials(self, key):
         """ Return a dictionary of user properties."""
         credentials = self._getUserCredentials()
-        if key == None:
+        if key is None:
             return credentials
         return {key: credentials[key]}
 
@@ -2010,7 +2003,7 @@ ss-publish-volume $volumeId
     def publishImageInfos(self):
         images = self._getImages()
         instanceIds = []
-        instanceDict = {} # {<instanceId>:<imageShortName>}
+        instanceDict = {}  # {<instanceId>:<imageShortName>}
         for imageShortName in images:
             instanceId = self._getInfoSys(imageShortName + RestClient.NODE_PROPERTY_SEPARATOR + 'instanceid',
                                           ignoreAbort=True)
@@ -2057,7 +2050,7 @@ ss-publish-volume $volumeId
                 return self.s3Upload(file, destination)
             elif not (response.http_response.status == 201 or response.http_response.status == 200):
                 raise ValueError('Error uploading file to S3.  Error code: %s with reason: %s' % (
-                response.http_response.status, response.message))
+                    response.http_response.status, response.message))
         except:
             if retry:
                 return self.s3Upload(file, destination, public, retry=False)
@@ -2076,9 +2069,8 @@ ss-publish-volume $volumeId
         try:
             credentials = self._getUserCredentials()
         except socket.error:
-            raise Exceptions.NetworkError(
-                'Failed to contact SlipStream server for credential authentication, please check your network connection ' \
-                + 'and that the SlipStream server is alive at: ' + self.authzServiceUrl)
+            raise Exceptions.NetworkError('Failed to contact SlipStream server for credential authentication, please check your network connection '
+                                          'and that the SlipStream server is alive at: ' + self.authzServiceUrl)
         try:
             connector = self.storageCloudConnectorModule. \
                 getConnector(credentials[AmazonCredentialsPlugin.AWS_Access_Id],
@@ -2086,7 +2078,7 @@ ss-publish-volume $volumeId
             response = connector.get(bucket, path)
             if not (response.http_response.status == 201 or response.http_response.status == 200):
                 raise ValueError('Error downloading file: %s.  Error code: %s with reason: %s' % (
-                remotePath, response.http_response.status, response.message))
+                    remotePath, response.http_response.status, response.message))
         except:
             if retry:
                 return self.s3Download(remotePath, retry=False)
@@ -2110,7 +2102,6 @@ ss-publish-volume $volumeId
             else:
                 raise
         return
-
 
     def setLocalDiid(self, diid):
         diidFilePath = self._setDiid(diid)
@@ -2230,7 +2221,7 @@ ss-publish-volume $volumeId
             details = self._getImageDetails(imageQname, withVirtualResolver=True)
 
             # Check that an imageId is available, otherwise we can't execute the deployment
-            if not details.has_key('imageId'):
+            if 'imageId' not in details:
                 raise Exceptions.ClientError('Image %s was not built prior to this execution' % imageShortName)
             print '    Instantiating image: %s %s %s' % (imageShortName, imageQname, details['imageId'])
 
@@ -2238,11 +2229,11 @@ ss-publish-volume $volumeId
 
             # Add constant parameters to the user-data
             params = {}
-            if details.has_key('properties'):
+            if 'properties' in details:
                 params.update(details['properties'])
-            if details.has_key('outputParameters'):
+            if 'outputParameters' in details:
                 params.update(details['outputParameters'])
-            if details.has_key('inputParameters'):
+            if 'inputParameters' in details:
                 params.update(details['inputParameters'])
 
             userData = self._createUserDataString(self.getDiid(), self.serverUrl, username, password, category,
@@ -2262,7 +2253,7 @@ ss-publish-volume $volumeId
     def assignDefaultAwsSecurityGroupNameIfNotDefined(self):
         credentials = self._getUserCredentials()
         AWS_Security_Group_Name = 'AWS_Security_Group_Name'
-        if not AWS_Security_Group_Name in credentials or credentials[AWS_Security_Group_Name] == None:
+        if not AWS_Security_Group_Name in credentials or credentials[AWS_Security_Group_Name] is None:
             credentials[AWS_Security_Group_Name] = 'default'
         return
 
@@ -2272,7 +2263,6 @@ ss-publish-volume $volumeId
         self.setNodeStatusShutdown(RestClient.orchestratorName)
         self.terminateInstances([instanceId])
         return instanceId
-
 
     def stopImages(self, orchestratorOnly=False):
         """ Stop the running images or the orchestrator.  The stopping behaviour is controlled
@@ -2305,16 +2295,16 @@ ss-publish-volume $volumeId
 
     def isRunForeverOnSuccessSet(self):
         credentials = self._getUserCredentials(validate=False)
-        if (UserCredentialsManager.execOnSuccessRunForeverUserModelParameter in credentials) and (credentials[
-                                                                                                      UserCredentialsManager.execOnSuccessRunForeverUserModelParameter] == UserCredentialsManager.valueWhenTrue):
+        if UserCredentialsManager.execOnSuccessRunForeverUserModelParameter in credentials \
+                and credentials[UserCredentialsManager.execOnSuccessRunForeverUserModelParameter] == UserCredentialsManager.valueWhenTrue:
             return True
         else:
             return False
 
     def isRunForeverOnFailureSet(self):
         credentials = self._getUserCredentials(validate=False)
-        if (UserCredentialsManager.execOnErrorRunForeverUserModelParameter in credentials) and (credentials[
-                                                                                                    UserCredentialsManager.execOnErrorRunForeverUserModelParameter] == UserCredentialsManager.valueWhenTrue):
+        if UserCredentialsManager.execOnErrorRunForeverUserModelParameter in credentials \
+                and credentials[UserCredentialsManager.execOnErrorRunForeverUserModelParameter] == UserCredentialsManager.valueWhenTrue:
             return True
         else:
             return False
@@ -2323,10 +2313,10 @@ ss-publish-volume $volumeId
         for instanceId in instanceIds:
             print '    stopping image instance: %s' % instanceId
         credentials = self._getUserCredentials(validate=False)
-        response = self.computingCloudConnectorModule.getConnector(credentials[AmazonCredentialsPlugin.AWS_Access_Id],
-                                                                   credentials[
-                                                                       AmazonCredentialsPlugin.AWS_Secret_Key]).terminate_instances(
-            instanceIds)
+        response = self.computingCloudConnectorModule.getConnector(
+            credentials[AmazonCredentialsPlugin.AWS_Access_Id],
+            credentials[AmazonCredentialsPlugin.AWS_Secret_Key]
+        ).terminate_instances(instanceIds)
         if response.is_error:
             raise Exceptions.ServerError(
                 'Failed stopping image instances %s with reason: %s' % (' '.join(instanceIds), str(response)))
@@ -2419,6 +2409,7 @@ class AmazonCredentialsPlugin(Credentials):
         super(AmazonCredentialsPlugin, self).__init__(parameters, cloudCredentialsPlugin)
         return
 
+
 # TODO
 
 class ContextualizationManager:
@@ -2429,4 +2420,3 @@ class ContextualizationManager:
 class ConnectorFactory:
     def __init__(self):
         pass
-

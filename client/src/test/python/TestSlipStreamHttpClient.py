@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -168,9 +168,9 @@ RUN_XML = """<run category="Deployment" deleted="false" resourceUri="run/f5f7542
 6978fea8" creation="2012-12-17 10:30:11.244 CET" shortName="ubuntu2" instanceType="inherited" loginUser="ubuntu" platform="ubuntu">
                <parameters class="org.hibernate.collection.PersistentMap">
                   <entry>
-                    <string>extra.disk.volatile</string>   
-                    <parameter category="Cloud" class="com.sixsq.slipstream.persistence.ModuleParameter" description="" mandatory="true" name="extra.disk.volatile" readonly="false" type="String">      
-                      <value>foo</value>   
+                    <string>extra.disk.volatile</string>
+                    <parameter category="Cloud" class="com.sixsq.slipstream.persistence.ModuleParameter" description="" mandatory="true" name="extra.disk.volatile" readonly="false" type="String">
+                      <value>foo</value>
                     </parameter>
                   </entry>
                </parameters>
@@ -271,6 +271,7 @@ USERPARAMETRS_XML = """<user deleted="false" resourceUri="user/test" name="test"
 </user>
 """
 
+
 class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -283,15 +284,15 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
-    
+
     def test_getRunCategory(self):
-        
-        configHolder = ConfigHolder(config={'foo':'bar'}, context=self.context)
+
+        configHolder = ConfigHolder(config={'foo': 'bar'}, context=self.context)
         client = SlipStreamHttpClient(configHolder)
         client._httpGet = Mock(return_value=(200, '<run category="foo" />'))
 
-        self.assertEquals('foo',client.getRunCategory())
-        self.assertEquals('foo',client.getRunCategory())
+        self.assertEquals('foo', client.getRunCategory())
+        self.assertEquals('foo', client.getRunCategory())
 
         self.assertEquals(1, client._httpGet.call_count)
 
@@ -314,7 +315,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
             elif image_dom.attrib['name'] == 'test/ubuntu2':
                 self.assertEquals('echo hello execute 2', targets['execute'][0])
                 self.assertEquals(True, targets['execute'][1])
-                
+
     def test_extractNodesFromDeployment(self):
         nodes = DomExtractor.extractNodesFromRun(etree.fromstring(RUN_XML))
         self.assertEquals(2, len(nodes))
@@ -342,15 +343,15 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
    <prerecipe><![CDATA[%(prerecipe)s]]></prerecipe>
    <recipe><![CDATA[%(recipe)s]]></recipe>
 </imageModule>
-""" % {'package1' : package1,
-       'package2' : package2,
+""" % {'package1': package1,
+       'package2': package2,
        'prerecipe': prerecipe,
-       'recipe'   : recipe}
+       'recipe': recipe}
 
         dom = etree.fromstring(image_module_xml)
         targets = DomExtractor.getBuildTargets(dom)
 
-        failMsg = "Failure getting '%s' build target." 
+        failMsg = "Failure getting '%s' build target."
         assert targets['prerecipe'] == prerecipe, failMsg % 'prerecipe'
         assert targets['recipe'] == recipe, failMsg % 'recipe'
         assert isinstance(targets['packages'], list), failMsg % 'packages'
@@ -367,7 +368,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
                 assert extra_disks['extra.disk.volatile'] == 'foo'
 
     def test_getUserInfoUser(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo':'bar'},
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USERPARAMETRS_XML)
         userInfo = client.getUserInfo('')
@@ -376,7 +377,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert 'test@sixsq.com' == userInfo.get_user('email')
 
     def test_getUserInfo(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo':'bar'},
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USERPARAMETRS_XML)
         userInfo = client.getUserInfo('StratusLab')
@@ -392,13 +393,13 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def test_cpuRamNetwork(self):
         client = SlipStreamHttpClient(ConfigHolder(context=self.context,
-                                                   config={'foo':'bar'}))
+                                                   config={'foo': 'bar'}))
         client._httpGet = Mock(return_value=(200, RUN_XML))
 
         nodes = client.getNodesInfo()
 
-        assert nodes[0]['image']['cloud_parameters']['stratuslab']['stratuslab.cpu'] == None
-        assert nodes[0]['image']['cloud_parameters']['stratuslab']['stratuslab.ram'] == None
+        assert nodes[0]['image']['cloud_parameters']['stratuslab']['stratuslab.cpu'] is None
+        assert nodes[0]['image']['cloud_parameters']['stratuslab']['stratuslab.ram'] is None
         assert nodes[0]['image']['cloud_parameters']['cloudsigma']['cloudsigma.ram'] == '1'
         assert nodes[0]['image']['cloud_parameters']['cloudsigma']['cloudsigma.cpu'] == '1'
         assert nodes[0]['image']['cloud_parameters']['cloudsigma']['cloudsigma.smp'] == '1'
@@ -407,16 +408,16 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def test_getRemoteNodes(self):
         client = SlipStreamHttpClient(ConfigHolder(context=self.context,
-                                                   config={'foo':'bar'}))
+                                                   config={'foo': 'bar'}))
         client._httpGet = Mock(return_value=(200, RUN_XML))
-        
+
         nodes = client.getNodesInfo()
         assert len(nodes) == 2
 
         node_kyes = ['cloudService', 'multiplicity', 'nodename', 'image']
         for node in nodes:
             for key in node_kyes:
-                self.assertTrue(node.has_key(key), 'No element %s' % key)
+                self.assertTrue(key in node, 'No element %s' % key)
 
 if __name__ == '__main__':
     unittest.main()

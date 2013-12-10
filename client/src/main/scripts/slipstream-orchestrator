@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,21 +17,17 @@
  limitations under the License.
 """
 
-import os
 import sys
-import subprocess
-import traceback
 
-import slipstream.exceptions.Exceptions as Exceptions
 from slipstream.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.Orchestrator import Orchestrator
 from os import environ
 
-        
+
 class MainProgram(CommandBase):
     '''A command-line program to execute the Orchestrator sequence.'''
-    
+
     def __init__(self, argv=None):
         super(MainProgram, self).__init__(argv)
 
@@ -41,7 +37,7 @@ class MainProgram(CommandBase):
         self.parser.usage = usage
 
         self.options, self.args = self.parser.parse_args()
-        
+
     def doWork(self):
         configHolder = ConfigHolder(self.options)
         configHolder.set('cloud', environ['SLIPSTREAM_CLOUD'])

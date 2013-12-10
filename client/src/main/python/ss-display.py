@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,19 +17,17 @@
  limitations under the License.
 """
 
-from optparse import OptionParser
-
 from slipstream.CommandBase import CommandBase
-from slipstream.Client import Client   
+from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(CommandBase):
     '''A command-line program to set directly the statecustom value, such that the dashboard can be made more dynamic.'''
-    
+
     def __init__(self, argv=None):
         self.value = None
-        super(MainProgram,self).__init__(argv)
+        super(MainProgram, self).__init__(argv)
 
     def parse(self):
         usage = '''%prog [options] <value>
@@ -48,7 +46,7 @@ class MainProgram(CommandBase):
     def doWork(self):
         configHolder = ConfigHolder(self.options)
         client = Client(configHolder)
-        value = client.setRuntimeParameter('statecustom', self.value)
+        client.setRuntimeParameter('statecustom', self.value)
 
 main = MainProgram
 

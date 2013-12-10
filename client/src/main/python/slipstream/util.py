@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,6 @@ import urllib2
 import subprocess
 import tempfile
 import pkgutil
-import cStringIO
 import contextlib
 import warnings
 
@@ -78,13 +77,13 @@ def get_cloudconnector_modulename_by_cloudname(cloudname):
         connector_class = loadModule(module_name).getConnectorClass()
         if getattr(connector_class, 'cloudName') == cloudname:
             return module_name
-    raise Exceptions.NotFoundError('Failed to find cloud connector module for cloud %s.' % \
+    raise Exceptions.NotFoundError('Failed to find cloud connector module for cloud %s.' %
                                    cloudname)
 
 
 def needToAddSshPubkey():
-    return (os.environ.get(ENV_NEED_TO_ADD_SSHPUBKEY, '').lower() == 'true') and \
-           not isWindows()
+    return (os.environ.get(ENV_NEED_TO_ADD_SSHPUBKEY, '').lower() == 'true') \
+        and not isWindows()
 
 
 def configureLogger():
@@ -101,7 +100,7 @@ def isWindows():
 def execute(commandAndArgsList, **kwargs):
     wait = not kwargs.get('noWait', False)
 
-    if kwargs.has_key('noWait'):
+    if 'noWait' in kwargs:
         del kwargs['noWait']
 
     withStderr = kwargs.get('withStderr', False)
@@ -110,14 +109,14 @@ def execute(commandAndArgsList, **kwargs):
     if withStderr:
         kwargs['stderr'] = subprocess.PIPE
         withStdOutErr = False
-    if kwargs.has_key('withStderr'):
+    if 'withStderr' in kwargs:
         del kwargs['withStderr']
 
     if withStdOutErr:
         kwargs['stdout'] = subprocess.PIPE
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
-    if kwargs.has_key('withOutput'):
+    if 'withOutput' in kwargs:
         del kwargs['withOutput']
 
     if isWindows():
@@ -133,7 +132,7 @@ def execute(commandAndArgsList, **kwargs):
 
     printDetail('Calling: %s' % _cmd, kwargs)
 
-    if isinstance(commandAndArgsList, list) and kwargs.get('shell', False) == True:
+    if isinstance(commandAndArgsList, list) and kwargs.get('shell', False) is True:
         commandAndArgsList = ' '.join(commandAndArgsList)
 
     process = subprocess.Popen(commandAndArgsList, **kwargs)
@@ -252,14 +251,14 @@ class StdOutWithLogger:
 
 def getHomeDirectory():
     if (sys.platform == "win32"):
-        if (os.environ.has_key("HOME")):
+        if "HOME" in os.environ:
             return os.environ["HOME"]
-        elif (os.environ.has_key("USERPROFILE")):
+        elif "USERPROFILE" in os.environ:
             return os.environ["USERPROFILE"]
         else:
             return "C:\\"
     else:
-        if (os.environ.has_key("HOME")):
+        if "HOME" in os.environ:
             return os.environ["HOME"]
         else:
             # No home directory set
@@ -294,7 +293,7 @@ def getInstallationLocation():
     # Relative to the src dir.  We do this to avoid importing a module, since util
     # should have a minimum of dependencies
     slipstreamDefaultRelativeDirName = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-    if os.environ.has_key('SLIPSTREAM_HOME'):
+    if 'SLIPSTREAM_HOME' in os.environ:
         slipstreamHome = os.environ['SLIPSTREAM_HOME']
     elif os.path.exists(slipstreamDefaultDirName):
         slipstreamHome = slipstreamDefaultDirName
@@ -538,9 +537,14 @@ def appendSshPubkeyToAuthorizedKeys(pubkey):
     fileAppendContent(dot_ssh_path + '/authorized_keys',
                       '\n' + pubkey)
 
+
 class NullFile(object):
-    def write(self, x): pass
-    def flush(self): pass
+    def write(self, x):
+        pass
+
+    def flush(self):
+        pass
+
 
 @contextlib.contextmanager
 def nostdout():
@@ -550,7 +554,8 @@ def nostdout():
         yield
     finally:
         sys.stdout = save_stdout
-    
+
+
 @contextlib.contextmanager
 def nostderr():
     save_stderr = sys.stderr
@@ -559,7 +564,8 @@ def nostderr():
         yield
     finally:
         sys.stderr = save_stderr
-    
+
+
 @contextlib.contextmanager
 def nostdouterr():
     save_stdout = sys.stdout
@@ -571,6 +577,7 @@ def nostdouterr():
     finally:
         sys.stdout = save_stdout
         sys.stderr = save_stderr
+
 
 def deprecated(func):
     """This is a decorator which can be used to mark functions
@@ -585,4 +592,3 @@ def deprecated(func):
     newFunc.__doc__ = func.__doc__
     newFunc.__dict__.update(func.__dict__)
     return newFunc
-

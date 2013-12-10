@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,10 +58,11 @@ def generateKeyPair(bits=2048):
     pyCryptoPatch()
     private = RSA.generate(bits)
     public = private.publickey()
-    return private.exportKey(), public.exportSSHKey() #public.exportKey(format='OpenSSH')
+    return private.exportKey(), public.exportSSHKey()  # public.exportKey(format='OpenSSH')
 
 
-def scp(src, dst, user, host, sshKey=None, password='', timeout=CONNECT_TIMEOUT, **kwargs):
+def scp(src, dst, user, host, sshKey=None, password='',
+        timeout=CONNECT_TIMEOUT, **kwargs):
     """Uses either SSH CLI or API (paramiko).
 
     SSH API is used only when 'password' is provided. When 'password' and 'sshKey'
@@ -77,7 +78,8 @@ def scp(src, dst, user, host, sshKey=None, password='', timeout=CONNECT_TIMEOUT,
                         sshKey=sshKey, timeout=timeout, **kwargs)
 
 
-def _scp_api(src, user, host, dst, password='', sshKey=None, timeout=CONNECT_TIMEOUT):
+def _scp_api(src, user, host, dst, password='', sshKey=None,
+             timeout=CONNECT_TIMEOUT):
     ssh = _ssh_connect_api(host, user, password,
                            sshKey=sshKey, tcp_timeout=timeout)
     with closing(scpclient.Write(ssh.get_transport(), os.path.dirname(dst))) as _scp:
@@ -117,7 +119,8 @@ def sshCmd(cmd, host, sshKey=None, user='root', password='',
                                 timeout, **kwargs)
 
 
-def _ssh_connect_api(hostname, username, password, sshKey=None, tcp_timeout=CONNECT_TIMEOUT):
+def _ssh_connect_api(hostname, username, password, sshKey=None,
+                     tcp_timeout=CONNECT_TIMEOUT):
     sshKey = sshKey or None
     ssh = SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -130,7 +133,8 @@ def _ssh_connect_api(hostname, username, password, sshKey=None, tcp_timeout=CONN
     return ssh
 
 
-def _ssh_execute_api(cmd, hostname, username, password, sshKey, tcp_timeout, **kwargs):
+def _ssh_execute_api(cmd, hostname, username, password, sshKey, tcp_timeout,
+                     **kwargs):
     def _ssh_exec_get_stdouterr(ssh, cmd):
         transport = ssh.get_transport()
         channel = transport.open_session()
@@ -182,7 +186,8 @@ def _ssh_execute_cli(cmd, host, user, sshKey, tcp_timeout, **kwargs):
             except:
                 pass
 
-    sshCmd = ['ssh', '-p', SSH_PORT, '-o', 'ConnectTimeout=%s' % tcp_timeout, '-o', 'StrictHostKeyChecking=no']
+    sshCmd = ['ssh', '-p', SSH_PORT, '-o', 'ConnectTimeout=%s' % tcp_timeout,
+              '-o', 'StrictHostKeyChecking=no']
 
     if sshKey and os.path.isfile(sshKey):
         sshCmd.append('-i')
@@ -291,7 +296,8 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
     raise Exceptions.TimeoutException('Failed to connect after %s sec.' % timeout)
 
 
-def _ssh_can_connect_api(host, user, sshKey=None, password=None, timeout=None, **kwargs):
+def _ssh_can_connect_api(host, user, sshKey=None, password=None, timeout=None,
+                         **kwargs):
     try:
         ssh = _ssh_connect_api(host, user, password, sshKey=sshKey,
                                tcp_timeout=timeout)
@@ -316,7 +322,8 @@ def _ssh_can_connect_api(host, user, sshKey=None, password=None, timeout=None, *
 
 
 def _ssh_can_connect_cli(host, user, sshKey=None, timeout=None, **kwargs):
-    rc_output = _ssh_execute_cli('true', host, user, sshKey, timeout, withOutput=True, **kwargs)
+    rc_output = _ssh_execute_cli('true', host, user, sshKey, timeout,
+                                 withOutput=True, **kwargs)
     if isinstance(rc_output, int):
         rc = rc_output
     else:
@@ -348,7 +355,7 @@ def remoteRunScript(user, host, script, sshKey=None, password='', nohup=False):
                              sshKey=sshKey, password=password, withStderr=True)
             if rc != 0:
                 if retry_count <= 0:
-                    raise Exceptions.ExecutionException("An error occurred while uploading " + \
+                    raise Exceptions.ExecutionException("An error occurred while uploading "
                                                         "script to %s: %s" % (host, stderr))
                 else:
                     time.sleep(5)
@@ -364,14 +371,14 @@ def remoteRunScript(user, host, script, sshKey=None, password='', nohup=False):
         except:
             pass
 
-    nohup_cmd = (nohup == True) and 'at now -f' or ''
+    nohup_cmd = (nohup is True) and 'at now -f' or ''
     sudo = (user != 'root') and 'sudo' or ''
     dstCommand = ('%s %s %s' % (sudo, nohup_cmd, dstScriptFile)).strip()
     rc, stderr = sshCmdWithStderr(dstCommand, host, sshKey=sshKey,
                                   user=user, password=password)
     if rc != 0:
-        raise Exceptions.ExecutionException('An error occurred while ' + \
-                                            'executing user script: %s.' % stderr)
+        raise Exceptions.ExecutionException("An error occurred while "
+                                            "executing user script: %s." % stderr)
     return rc, stderr
 
 
@@ -380,7 +387,8 @@ def remoteRunScriptNohup(user, host, script, sshKey=None, password=''):
                            password=password, nohup=True)
 
 
-def remoteInstallPackages(user, host, packages, platform, sshKey=None, password=''):
+def remoteInstallPackages(user, host, packages, platform, sshKey=None,
+                          password=''):
     "platform - OS distribution as defined in util.SUPPORTED_PLATFORMS."
     sudo = (user != 'root') and 'sudo ' or ''
 
@@ -390,13 +398,13 @@ def remoteInstallPackages(user, host, packages, platform, sshKey=None, password=
                                       host, user=user,
                                       sshKey=sshKey, password=password)
         if rc != 0:
-            raise Exceptions.ExecutionException('An error occurred while updating ' + \
-                                                'system packages: %s.' % stderr)
+            raise Exceptions.ExecutionException("An error occurred while updating "
+                                                "system packages: %s." % stderr)
 
     cmd = '%s%s' % (sudo,
                     getPackagesInstallCommand(platform, packages))
     rc, stderr = sshCmdWithStderr(cmd, host, user=user,
                                   sshKey=sshKey, password=password)
     if rc != 0:
-        raise Exceptions.ExecutionException('An error occurred while installing ' + \
-                                            'user packages: %s.' % stderr)
+        raise Exceptions.ExecutionException("An error occurred while installing "
+                                            "user packages: %s." % stderr)

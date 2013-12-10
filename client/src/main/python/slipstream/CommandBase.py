@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,8 +24,9 @@ from slipstream import __version__
 import slipstream.util as util
 from slipstream.exceptions.Exceptions import NotYetSetException
 
+etree = util.importETree()
 
-if os.environ.has_key('SLIPSTREAM_HOME'):
+if 'SLIPSTREAM_HOME' in os.environ:
     slipstreamHome = os.environ['SLIPSTREAM_HOME']
 else:
     slipstreamHome = os.path.dirname(__file__)
@@ -107,7 +108,6 @@ class CommandBase(object):
                                call will return with an error. With this option values \
                                can be queried even if the abort flag is raised',
                                default=False, action='store_true')
-
 
     def _callAndHandleErrorsForCommands(self, methodName, *args, **kw):
         res = 0
@@ -211,3 +211,23 @@ class CommandBase(object):
 
     def log(self, message):
         util.printDetail(message, self.verboseLevel)
+        
+    def read_xml_and_exit_on_error(self, xml):
+        try:
+            return self._read_as_xml(xml)
+        except Exception as ex:
+            print str(ex)
+            if self.verboseLevel:
+                raise
+            sys.exit(-1)
+
+    def _read_as_xml(self, xml):
+        return etree.fromstring(xml)
+
+    def read_input_file(self, ifile):
+        if not os.path.exists(ifile):
+            self.usageExit("Unknown filename: " + ifile)
+        if not os.path.isfile(ifile):
+            self.usageExit("Input is not a file: " + ifile)
+        return open(ifile).read()
+

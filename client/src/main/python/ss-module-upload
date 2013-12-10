@@ -1,20 +1,19 @@
 #!/usr/bin/python
 
-import sys
 import os
-import glob
-from optparse import OptionParser
+import sys
 
 from slipstream.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient   
+from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 etree = util.importETree()
 
+
 class MainProgram(CommandBase):
     '''Uploads a collection of modules (in XML format) to the server.'''
-    
+
     def __init__(self, argv=None):
         self.module = ''
         self.username = None
@@ -27,11 +26,11 @@ class MainProgram(CommandBase):
         usage = '''usage: %prog [options]'''
 
         self.parser.usage = usage
-        
-        self.parser.add_option('-u','--username', dest='username',
+
+        self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p','--password', dest='password',
+        self.parser.add_option('-p', '--password', dest='password',
                                help='SlipStream password', metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
@@ -42,7 +41,7 @@ class MainProgram(CommandBase):
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
-        
+
     def _checkArgs(self):
         if len(self.args) == 0:
             self.usageExit("You must provide at least one file to upload.")
@@ -56,7 +55,7 @@ class MainProgram(CommandBase):
     def _read_module_as_xml(self, contents):
         try:
             return etree.fromstring(contents)
-        except Exception, ex:
+        except Exception as ex:
             print str(ex)
             if self.verboseLevel:
                 raise
@@ -67,7 +66,7 @@ class MainProgram(CommandBase):
         client.verboseLevel = self.verboseLevel
 
         # read all files once to determine the upload URL for each file
-        # the URL is used to sort the files into an order that puts 
+        # the URL is used to sort the files into an order that puts
         # parents before children
         projects = {}
         images = {}
@@ -92,7 +91,7 @@ class MainProgram(CommandBase):
 
                 parts = [attrs['parentUri'], attrs['shortName']]
                 uri = '/' + '/'.join([part.strip('/') for part in parts])
-        
+
                 url = self.options.endpoint + uri
 
                 if dom.tag == 'projectModule':

@@ -7,9 +7,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,7 +26,7 @@ from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
 from slipstream import util
 
-CONFIG_FILE = os.path.join(os.path.dirname(__file__), 
+CONFIG_FILE = os.path.join(os.path.dirname(__file__),
                            'pyunit.credentials.properties')
 # Example configuration file.
 """
@@ -36,27 +36,27 @@ stratuslab.password = xxx
 stratuslab.imageid =  HZTKYZgX7XzSokCHMB60lS0wsiv
 """
 
+
 class TestStratusLabClientCloud(unittest.TestCase):
     def setUp(self):
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'stratuslab'
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
         os.environ['SLIPSTREAM_DIID'] = '00000000-0000-0000-0000-000000000000'
-        
+
         if not os.path.exists(CONFIG_FILE):
             raise Exception('Configuration file %s not found.' % CONFIG_FILE)
 
-        self.ch = ConfigHolder(configFile=CONFIG_FILE,
-                                          context={'foo':'bar'})
+        self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
         self.ch.set('verboseLevel', '2')
-        
+
         os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = self.ch.config['SLIPSTREAM_MESSAGING_ENDPOINT']
         os.environ['SLIPSTREAM_MESSAGING_TYPE'] = self.ch.config['SLIPSTREAM_MESSAGING_TYPE']
         os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = self.ch.config['SLIPSTREAM_MESSAGING_QUEUE']
 
         self.client = StratuslabClientCloud(self.ch)
         self.client.publishVmInfo = Mock()
-        
+
         self.user_info = UserInfo('stratuslab')
         self.user_info['stratuslab.endpoint'] = self.ch.config['stratuslab.endpoint']
         self.user_info['stratuslab.ip.type'] = self.ch.config['stratuslab.ip.type']
@@ -67,26 +67,34 @@ class TestStratusLabClientCloud(unittest.TestCase):
         self.user_info['User.firstName'] = 'Foo'
         self.user_info['User.lastName'] = 'Bar'
         self.user_info['User.email'] = 'dont@bother.me'
-        
+
         extra_disk_volatile = self.ch.config['stratuslab.extra.disk.volatile']
         image_id = self.ch.config['stratuslab.imageid']
         self.multiplicity = 1
-        self.node_info = {'multiplicity' : self.multiplicity,
-                          'nodename' : 'test_node',
-                          'image' : {'extra_disks': {},
-                                     'cloud_parameters' : {'stratuslab':{
-                                                                        'stratuslab.instance.type': 'm1.small',
-                                                                        'stratuslab.disks.bus.type': 'virtio',
-                                                                        'stratuslab.cpu': '',
-                                                                        'stratuslab.ram': ''
-                                                                         },
-                                                           'Cloud':{ 'network' : 'public' ,
-                                                                    'extra.disk.volatile': extra_disk_volatile}
-                                                           },
-                                      'attributes' : {'resourceUri' : '',
-                                                      'imageId' : image_id,
-                                                      'platform' : 'Ubuntu'},
-                                     'targets' : {'prerecipe' : 
+        self.node_info = {
+            'multiplicity': self.multiplicity,
+            'nodename': 'test_node',
+            'image': {
+                'extra_disks': {},
+                'cloud_parameters': {
+                    'stratuslab': {
+                        'stratuslab.instance.type': 'm1.small',
+                        'stratuslab.disks.bus.type': 'virtio',
+                        'stratuslab.cpu': '',
+                        'stratuslab.ram': ''
+                    },
+                    'Cloud': {
+                        'network': 'public',
+                        'extra.disk.volatile': extra_disk_volatile
+                    }
+                },
+                'attributes': {
+                    'resourceUri': '',
+                    'imageId': image_id,
+                    'platform': 'Ubuntu'
+                },
+                'targets': {
+                    'prerecipe':
 """#!/bin/sh
 set -e
 set -x
@@ -94,7 +102,7 @@ set -x
 ls -l /tmp
 dpkg -l | egrep "nano|lvm" || true
 """,
-                                       'recipe' : 
+                    'recipe':
 """#!/bin/sh
 set -e
 set -x
@@ -102,18 +110,19 @@ set -x
 dpkg -l | egrep "nano|lvm" || true
 lvs
 """,
-                                       'packages' : ['lvm2','nano']}
-                                     },
-                          }
+                    'packages': ['lvm2', 'nano']
+                }
+            },
+        }
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
         os.environ.pop('SLIPSTREAM_BOOTSTRAP_BIN')
         self.client = None
         self.ch = None
-        
+
     def test_1_startStopImages(self):
-        
+
         self.client.startNodesAndClients(self.user_info, [self.node_info])
 
         util.printAndFlush('Instances started')

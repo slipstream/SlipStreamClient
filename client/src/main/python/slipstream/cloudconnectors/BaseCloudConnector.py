@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ class BaseCloudConnector(object):
     RUN_BOOTSTRAP_SCRIPT = False
     WAIT_IP = False
     ADD_SSHPUBKEY_ON_NODE = False
-    
+
     # CAPABILITIES
     CAPABILITY_VAPP = 'vapp'
     CAPABILITY_BUILD_IN_SINGLE_VAPP = 'buildInSingleVapp'
@@ -56,7 +56,7 @@ class BaseCloudConnector(object):
     CAPABILITY_DIRECT_IP_ASSIGNMENT = 'directIpAssignment'
     CAPABILITY_ADD_SHH_PUBLIC_KEY_ON_NODE = 'addSshPublicKeyOnNode'
     CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP = 'orchestratorCanKillItselfOrItsVapp'
-        
+
     def __init__(self, configHolder):
         self.verboseLevel = 0
         configHolder.assign(self)
@@ -81,7 +81,7 @@ class BaseCloudConnector(object):
 
         self.tempPrivateKeyFileName = ''
         self.tempPublicKey = ''
-        
+
         self._capabilities = []
 
     def _init_threading_related(self):
@@ -91,20 +91,21 @@ class BaseCloudConnector(object):
         self._thread_local = local()
         self._thread_local.isWindows = False
 
-    def setCapabilities(self, vapp=False, build_in_single_vapp=False, 
-                        contextualization=False, direct_ip_assignment=False, 
+    def setCapabilities(self, vapp=False, build_in_single_vapp=False,
+                        contextualization=False, direct_ip_assignment=False,
                         add_ssh_public_key_on_node=False,
                         orchestrator_can_kill_itself_or_its_vapp=False):
-        if vapp: self._capabilities.append(self.CAPABILITY_VAPP)
-        if build_in_single_vapp: 
+        if vapp:
+            self._capabilities.append(self.CAPABILITY_VAPP)
+        if build_in_single_vapp:
             self._capabilities.append(self.CAPABILITY_BUILD_IN_SINGLE_VAPP)
-        if contextualization: 
+        if contextualization:
             self._capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
-        if direct_ip_assignment: 
+        if direct_ip_assignment:
             self._capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
-        if add_ssh_public_key_on_node: 
+        if add_ssh_public_key_on_node:
             self._capabilities.append(self.CAPABILITY_ADD_SHH_PUBLIC_KEY_ON_NODE)
-        if orchestrator_can_kill_itself_or_its_vapp: 
+        if orchestrator_can_kill_itself_or_its_vapp:
             self._capabilities.append(self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
     def hasCapability(self, capability):
@@ -128,6 +129,10 @@ class BaseCloudConnector(object):
     @staticmethod
     def getAttributes(imageInfo):
         return imageInfo['attributes']
+
+    @staticmethod
+    def getImageUser(imageInfo):
+        return imageInfo['attributes']['loginUser']
 
     @staticmethod
     def getCloudParameters(image):
@@ -193,7 +198,7 @@ class BaseCloudConnector(object):
 
     @deprecated
     def needRunBootstrapScript(self):
-        return self.RUN_BOOTSTRAP_SCRIPT == True
+        return self.RUN_BOOTSTRAP_SCRIPT is True
 
     @deprecated
     def setWaitIp(self):
@@ -201,7 +206,7 @@ class BaseCloudConnector(object):
 
     @deprecated
     def needWaitIp(self):
-        return self.WAIT_IP == True
+        return self.WAIT_IP is True
 
     @deprecated
     def setNeedToAddSshPubkeyOnNode(self):
@@ -219,9 +224,9 @@ class BaseCloudConnector(object):
         try:
             vm = self._startImage(user_info, image_info, name)
             self.addVm(name, vm)
-            
+
             self._creatorVmId = self.vmGetId(vm)
-    
+
             if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
                 vm = self._waitAndGetInstanceIpAddress(vm)
                 self.addVm(name, vm)
@@ -232,7 +237,7 @@ class BaseCloudConnector(object):
 
     def startNodesAndClients(self, user_info, nodes_info):
         self.initialization(user_info)
-        
+
         try:
             self._startNodeInstantiationTasksWaitFinished(user_info, nodes_info)
         finally:
@@ -290,7 +295,7 @@ class BaseCloudConnector(object):
 
     def initialization(self, user_info):
         pass
-    
+
     def finalization(self, user_info):
         """This method is called once when all instances have been started or
         if an exception has occurred."""
@@ -300,7 +305,7 @@ class BaseCloudConnector(object):
         return None
 
     def _waitAndGetInstanceIpAddress(self, vm):
-        """This method needs to be implemented by the connector if the latter 
+        """This method needs to be implemented by the connector if the latter
         not define the capability 'direct_ip_assignment'."""
         return vm
 
@@ -318,9 +323,9 @@ class BaseCloudConnector(object):
         return None
 
     def stopDeployment(self):
-        """This method should terminate all instances except the orchestrator if 
+        """This method should terminate all instances except the orchestrator if
         the connector don't has the vapp capability.
-        This method should terminate the full vapp if the connector has the vapp 
+        This method should terminate the full vapp if the connector has the vapp
         capability."""
         pass
 
@@ -334,10 +339,10 @@ class BaseCloudConnector(object):
     def stopImagesByIds(self, ids):
         """Please use stopVmsByIds instead"""
         return self.stopVmsByIds(ids)
-    
+
     def stopVmsByIds(self, ids):
         pass
-    
+
     def stopVappsByIds(self, ids):
         pass
 
@@ -445,6 +450,9 @@ class BaseCloudConnector(object):
             except:
                 pass
 
+    def _getCloudInstanceName(self):
+        return self.cloud
+    
     def _getSshCredentials(self, imageInfo, user_info, vm_name=None):
         username, password = self._getSshUsernamePassword(imageInfo, vm_name)
         if password:
@@ -504,7 +512,7 @@ class BaseCloudConnector(object):
 
     def _generateInstanceName(self, nodename):
         return nodename + ':%s' % self._getRunId()
-    
+
     def _getRunId(self):
         return os.environ.get('SLIPSTREAM_DIID', '???')
 
@@ -610,7 +618,6 @@ class BaseCloudConnector(object):
                 winrm.close_shell(_shellId)
         return stdout, stderr, returnCode
 
-
     def getObfuscationScript(self, orchestratorPublicKey, username, userInfo=None):
         command = "#!/bin/bash -xe\n"
         #command += "sed -r -i 's/# *(account +required +pam_access\\.so).*/\\1/' /etc/pam.d/login\n"
@@ -703,23 +710,25 @@ class BaseCloudConnector(object):
 
         #command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1"\n'
-        return command % \
-               {'bootstrap': bootstrap,
-                'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
-                'reports': reportdir,
-                'nodename': nodename,
-                'username': username,
-                'password': password}
+        return command % {
+            'bootstrap': bootstrap,
+            'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
+            'reports': reportdir,
+            'nodename': nodename,
+            'username': username,
+            'password': password
+        }
 
     def _buildSlipStreamBootstrapCommandForLinux(self, nodename):
         bootstrap = os.path.join(tempfile.gettempdir(), 'slipstream.bootstrap')
         reportdir = Client.REPORTSDIR
         command = 'mkdir -p %(reports)s; wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
-        return command % \
-               {'bootstrap': bootstrap,
-                'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
-                'reports': reportdir,
-                'nodename': nodename}
+        return command % {
+            'bootstrap': bootstrap,
+            'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
+            'reports': reportdir,
+            'nodename': nodename
+        }
 
     def _waitCanConnectWithSshOrAbort(self, host, username='', password='', sshKey=None):
         self._printDetail('Check if we can connect to %s' % host)
@@ -751,7 +760,6 @@ class BaseCloudConnector(object):
     def getVmsDetails(self):
         vms_details = []
         for name, vm in self.getVms().items():
-            vms_details.append({name:
-                                    {'id': self.vmGetId(vm),
-                                     'ip': self.vmGetIp(vm)}})
+            vms_details.append({name: {'id': self.vmGetId(vm),
+                                       'ip': self.vmGetIp(vm)}})
         return vms_details
