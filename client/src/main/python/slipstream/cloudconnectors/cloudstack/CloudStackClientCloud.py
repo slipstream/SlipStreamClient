@@ -37,6 +37,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
 
         self.setCapabilities(contextualization=True,
+                             generate_password=True,
                              direct_ip_assignment=True,
                              orchestrator_can_kill_itself_or_its_vapp=True)
 
@@ -69,8 +70,15 @@ class CloudStackClientCloud(BaseCloudConnector):
         instance_name = self.formatInstanceName(instance_name)
         instanceType = self._getInstanceType(image_info)
         ipType = self.getCloudParameters(image_info)['network']
-        keypair = self._userInfoGetKeypairName(user_info)
+        
+        keypair = None
+        contextualizationScript = None
+        if not self.isWindows():
+            keypair = self._userInfoGetKeypairName(user_info)
+            contextualizationScript = cloudSpecificData or None
+        
         securityGroups = [x.strip() for x in self._getCloudParameter(image_info, 'security.groups').split(',') if x]
+        
         try:
             size = [i for i in self.sizes if i.name == instanceType][0]
         except IndexError:
@@ -79,20 +87,21 @@ class CloudStackClientCloud(BaseCloudConnector):
             image = [i for i in self.images if i.id == imageId][0]
         except IndexError:
             raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
-        contextualizationScript = cloudSpecificData or None
 
-        if size is None:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instanceType)
-        if image is None:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
-
-        instance = self._thread_local.driver.create_node(
-            name=instance_name,
-            size=size,
-            image=image,
-            ex_keyname=keypair,
-            ex_userdata=contextualizationScript,
-            ex_security_groups=securityGroups)
+        if self.isWindows():
+            instance = self._thread_local.driver.create_node(
+                name=instance_name,
+                size=size,
+                image=image,
+                ex_security_groups=securityGroups)
+        else:
+            instance = self._thread_local.driver.create_node(
+                name=instance_name,
+                size=size,
+                image=image,
+                ex_keyname=keypair,
+                ex_userdata=contextualizationScript,
+                ex_security_groups=securityGroups)
 
         ip = self._getInstanceIpAddress(instance, ipType)
         if not ip:
@@ -139,6 +148,10 @@ class CloudStackClientCloud(BaseCloudConnector):
                           port=url.port,
                           path=url.path
                           );
+
+    def vmGetPassword(self, vm_name):
+        vm = self.getVm(vm_name)
+        return vm['instance'].extra.get('password', None)
 
     def vmGetIp(self, vm):
         return vm['ip']

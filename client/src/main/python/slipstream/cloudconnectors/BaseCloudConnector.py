@@ -53,6 +53,8 @@ class BaseCloudConnector(object):
     CAPABILITY_VAPP = 'vapp'
     CAPABILITY_BUILD_IN_SINGLE_VAPP = 'buildInSingleVapp'
     CAPABILITY_CONTEXTUALIZATION = 'contextualization'
+    CAPABILITY_WINDOWS_CONTEXTUALIZATION = 'windowsContextualization'
+    CAPABILITY_GENERATE_PASSWORD = 'generatePassword'
     CAPABILITY_DIRECT_IP_ASSIGNMENT = 'directIpAssignment'
     CAPABILITY_ADD_SHH_PUBLIC_KEY_ON_NODE = 'addSshPublicKeyOnNode'
     CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP = 'orchestratorCanKillItselfOrItsVapp'
@@ -92,7 +94,10 @@ class BaseCloudConnector(object):
         self._thread_local.isWindows = False
 
     def setCapabilities(self, vapp=False, build_in_single_vapp=False,
-                        contextualization=False, direct_ip_assignment=False,
+                        contextualization=False, 
+                        windows_contextualization=False,
+                        generate_password=False,
+                        direct_ip_assignment=False,
                         add_ssh_public_key_on_node=False,
                         orchestrator_can_kill_itself_or_its_vapp=False):
         if vapp:
@@ -101,6 +106,10 @@ class BaseCloudConnector(object):
             self._capabilities.append(self.CAPABILITY_BUILD_IN_SINGLE_VAPP)
         if contextualization:
             self._capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
+        if windows_contextualization:
+            self._capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+        if generate_password:
+            self._capabilities.append(self.CAPABILITY_GENERATE_PASSWORD)
         if direct_ip_assignment:
             self._capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
         if add_ssh_public_key_on_node:
@@ -280,13 +289,13 @@ class BaseCloudConnector(object):
             vm = self._waitAndGetInstanceIpAddress(vm)
             self.addVm(nodename, vm)
 
-        if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION):
-            if self.isWindows():
-                self._launchWindowsBootstrapScript(image_info, nodename,
-                                                   self.vmGetIp(vm))
-            else:
-                self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
-                                                           nodename, self.vmGetIp(vm))
+        if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not self.isWindows():
+            self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
+                                                       nodename, 
+                                                       self.vmGetIp(vm))
+        elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) and self.isWindows():
+            self._launchWindowsBootstrapScript(image_info, nodename,
+                                               self.vmGetIp(vm))
 
     def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
         """Cloud specific VM provisioning.
@@ -517,7 +526,7 @@ class BaseCloudConnector(object):
         return os.environ.get('SLIPSTREAM_DIID', '???')
 
     def _secureSshAccessAndRunBootstrapScript(self, userInfo, image_info, nodename, ip):
-        username, password = self._getSshUsernamePassword(image_info)
+        username, password = self._getSshUsernamePassword(image_info, nodename)
         privateKey, publicKey = generateKeyPair()
         privateKey = util.filePutContentInTempFile(privateKey)
 
@@ -555,7 +564,7 @@ class BaseCloudConnector(object):
         self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip, output))
 
     def _launchWindowsBootstrapScript(self, image_info, nodename, ip):
-        username, password = self._getSshUsernamePassword(image_info)
+        username, password = self._getSshUsernamePassword(image_info, nodename)
         script = self._getBootstrapScript(nodename, username=username)
         winrm = self._getWinrm(ip, username, password)
         self._waitCanConnectWithWinrmOrAbort(winrm)
@@ -576,8 +585,8 @@ class BaseCloudConnector(object):
             if command:
                 commands += command + '& '
         commands += 'echo "Bootstrap Finished"'
-        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId)
-        winrm.close_shell(shellId)
+        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId, runAndContinue=True)
+        #winrm.close_shell(shellId)
         return stdout, stderr, returnCode
 
     def _waitCanConnectWithWinrmOrAbort(self, winrm):
@@ -695,18 +704,20 @@ class BaseCloudConnector(object):
         command += 'powershell -Command "$wc = New-Object System.Net.WebClient; $wc.Headers.Add(\'User-Agent\',\'PowerShell\'); $wc.DownloadFile(\'%(bootstrapUrl)s\', $env:temp+\'\\%(bootstrap)s\')" > %(reports)s\\%(nodename)s.slipstream.log 2>&1\n'
         command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
-
-        password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
-        command += 'set pass=%(password)s\n'
-        command += 'net user %(username)s %%pass%%\n'
-        command += 'ss-get nodename > tmp.txt\n'
-        command += 'set /p nodename= < tmp.txt\n'
-        command += 'ss-get index > tmp.txt\n'
-        command += 'set /p index= < tmp.txt\n'
-        command += 'ss-get cloudservice > tmp.txt\n'
-        command += 'set /p cloudservice= < tmp.txt\n'
-        command += 'del tmp.txt\n'
-        command += 'ss-set %%nodename%%.%%index%%:%%cloudservice%%.login.password %%pass%%\n'
+        
+        password = ''
+        if not self.hasCapability(self.CAPABILITY_GENERATE_PASSWORD):
+            password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+            command += 'set pass=%(password)s\n'
+            command += 'net user %(username)s %%pass%%\n'
+            command += 'ss-get nodename > tmp.txt\n'
+            command += 'set /p nodename= < tmp.txt\n'
+            command += 'ss-get index > tmp.txt\n'
+            command += 'set /p index= < tmp.txt\n'
+            command += 'ss-get cloudservice > tmp.txt\n'
+            command += 'set /p cloudservice= < tmp.txt\n'
+            command += 'del tmp.txt\n'
+            command += 'ss-set %%nodename%%.%%index%%:%%cloudservice%%.login.password %%pass%%\n'
 
         #command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1"\n'
