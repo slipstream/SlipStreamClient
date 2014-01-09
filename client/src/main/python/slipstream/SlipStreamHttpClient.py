@@ -232,9 +232,9 @@ class SlipStreamHttpClient(object):
 
         return content.strip().strip('"').strip("'")
 
-    def setRuntimeParameter(self, key, value):
+    def setRuntimeParameter(self, key, value, ignoreAbort=False):
         url = self.runInstanceEndpoint + '/' + key
-        if self.ignoreAbort:
+        if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
 
         _, content = self._httpPut(url, util.removeASCIIEscape(value), accept='text/plain')

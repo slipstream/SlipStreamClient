@@ -352,7 +352,13 @@ def printAndFlush(message):
     else:
         output = sys.stdout
     output.flush()
-    print >> output, message,
+    try:
+        print >> output, message,
+    except UnicodeEncodeError:
+        if not isinstance(message, unicode):
+            message = unicode(message, 'UTF-8')
+        message = message.encode('ascii', 'ignore')
+        print >> output, message,
     output.flush()
 
 

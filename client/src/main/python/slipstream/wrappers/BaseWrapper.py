@@ -40,7 +40,7 @@ class NodeInfoPublisher(SlipStreamHttpClient):
 
     def _setRuntimeParameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
-        self.setRuntimeParameter(parameter, value)
+        self.setRuntimeParameter(parameter, value, ignoreAbort=True)
 
 
 class BaseWrapper(object):
