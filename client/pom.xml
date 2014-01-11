@@ -191,6 +191,8 @@
               <arguments>
                 <argument>-f</argument>
                 <argument>parseable</argument>
+                <argument>--rcfile</argument>
+                <argument>${basedir}/pylint.config</argument>
                 <argument>slipstream</argument>
               </arguments>
             </configuration>
