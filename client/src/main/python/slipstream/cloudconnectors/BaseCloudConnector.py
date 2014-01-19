@@ -42,8 +42,10 @@ from winrm.exceptions import WinRMTransportError
 class BaseCloudConnector(object):
     TIMEOUT_CONNECT = 10 * 60
 
-    DISK_VOLATILE_PARAMETER_NAME = SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + '.volatile'
-    DISK_PERSISTENT_PARAMETER_NAME = SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + '.persistent'
+    DISK_VOLATILE_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + 
+                                    '.volatile')
+    DISK_PERSISTENT_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + 
+                                      '.persistent')
 
     RUN_BOOTSTRAP_SCRIPT = False
     WAIT_IP = False
@@ -575,8 +577,8 @@ class BaseCloudConnector(object):
         self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip, output))
 
     def _getWinrm(self, ip, username, password):
-        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext', username=username,
-                               password=password)
+        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext', 
+                               username=username, password=password)
 
     def _runScriptWithWinrm(self, winrm, script):
         shellId = winrm.open_shell()
@@ -585,7 +587,8 @@ class BaseCloudConnector(object):
             if command:
                 commands += command + '& '
         commands += 'echo "Bootstrap Finished"'
-        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId, runAndContinue=True)
+        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId, 
+                                                               runAndContinue=True)
         #winrm.close_shell(shellId)
         return stdout, stderr, returnCode
 
@@ -593,7 +596,8 @@ class BaseCloudConnector(object):
         try:
             self._waitCanConnectWithWinrmOrTimeout(winrm, self.TIMEOUT_CONNECT)
         except Exception as ex:
-            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint, str(ex)))
+            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint, 
+                                                                                 str(ex)))
 
     def _waitCanConnectWithWinrmOrTimeout(self, winrm, timeout):
         time_stop = time.time() + timeout
@@ -649,7 +653,8 @@ class BaseCloudConnector(object):
     def _getPublicSshKey(self, userInfo):
         return userInfo.get_general('ssh.public.key') or ''
 
-    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None, username=None):
+    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None, 
+                            username=None):
         script = ''
         addEnvironmentVariableCommand = ''
         if self.isWindows():
@@ -707,7 +712,8 @@ class BaseCloudConnector(object):
         
         password = ''
         if not self.hasCapability(self.CAPABILITY_GENERATE_PASSWORD):
-            password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
+            password = ''.join(random.choice(string.ascii_letters + string.digits) 
+                               for _ in range(10))
             command += 'set pass=%(password)s\n'
             command += 'net user %(username)s %%pass%%\n'
             command += 'ss-get nodename > tmp.txt\n'
