@@ -33,7 +33,9 @@ from stratuslab.volume_manager.volume_manager_factory import VolumeManagerFactor
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
+from slipstream.NodeDecorator import NodeDecorator
 from slipstream.utils.ssh import generateSshKeyPair
+from slipstream.cloudconnectors.stratuslab.stratuslabPatch import patchStratuslab
 
 
 def getConnector(configHolder):
@@ -59,39 +61,46 @@ class StratuslabClientCloud(BaseCloudConnector):
         self.setCapabilities(contextualization=True,
                              direct_ip_assignment=True,
                              orchestrator_can_kill_itself_or_its_vapp=True)
+        patchStratuslab()
 
     def startImage(self, user_info, image_info):
-        return self.getVmsDetails()
-
-    def _buildImage(self, userInfo, imageInfo):
-
+        
         self._prepareMachineForBuildImage()
-
+        
         self.slConfigHolder.set('marketplaceEndpoint',
-                                userInfo.get_cloud('marketplace.endpoint'))
-
+                                user_info.get_cloud('marketplace.endpoint'))
+        
         manifestDownloader = ManifestDownloader(self.slConfigHolder)
 
-        imageId = self.getImageId(imageInfo)
-        imageInfo['imageVersion'] = manifestDownloader.getImageVersion(imageId=imageId)
+        imageId = self.getImageId(image_info)
+        image_info['imageVersion'] = manifestDownloader.getImageVersion(imageId=imageId)
+        
+        self._updateStratuslabConfigHolderForBuildImage(user_info, image_info)
+        
+        self.creator = Creator(imageId, self.slConfigHolder)
+        self.creator.setListener(self.listener)
 
-        self._updateStratuslabConfigHolderForBuildImage(userInfo, imageInfo)
-
-        creator = Creator(imageId, self.slConfigHolder)
-        creator.setListener(self.listener)
-
-        createImageTemplateDict = creator._getCreateImageTemplateDict()
-        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(imageInfo,
+        createImageTemplateDict = self.creator._getCreateImageTemplateDict()
+        msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(image_info,
                                                       self._getCloudInstanceName())
 
         def ourCreateTemplateDict():
             createImageTemplateDict.update(msgData)
             return createImageTemplateDict
 
-        creator._getCreateImageTemplateDict = ourCreateTemplateDict
+        self.creator._getCreateImageTemplateDict = ourCreateTemplateDict
+        
+        self.creator.createStep1()
+        
+        self.addVm(NodeDecorator.MACHINE_NAME, self.creator.runner)
+        
+        return self.getVmsDetails()
 
-        creator.create()
+    def _buildImage(self, userInfo, imageInfo):
 
+        #self.creator.create()
+        self.creator.createStep2()
+        
         #
         # if messaging is set to 'pdisk', then try polling for the new image
         # identifier from the storage system; otherwise will just return empty
