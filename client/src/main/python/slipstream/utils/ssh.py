@@ -292,6 +292,9 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
         except SshFailedToConnect as ex:
             _printDetail(str(ex), kwargs_)
             time.sleep(5)
+        except paramiko.SSHException as ex:
+            _printDetail(str(ex), kwargs_)
+            time.sleep(5)
 
     raise Exceptions.TimeoutException('Failed to connect after %s sec.' % timeout)
 
