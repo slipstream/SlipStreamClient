@@ -20,7 +20,10 @@
 import sys
 import os
 import tarfile
+import httplib
+import ssl
 import urllib2
+import socket
 import shutil
 import subprocess
 import tempfile
@@ -32,6 +35,40 @@ SLIPSTREAM_CLIENT_HOME = os.path.join(os.sep, 'opt', 'slipstream', 'client')
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
+
+
+class HTTPSConnection(httplib.HTTPSConnection):
+    def connect(self):
+        """Connect to a host on a given (SSL) port.
+
+        Switching SSL protocol from SSLv23 to SSLv3 and TLSv1 as last resort
+        when a violation of protocol occurred.
+        See: http://bugs.python.org/issue11220
+        """
+        sock = socket.create_connection((self.host, self.port), self.timeout)
+        if self._tunnel_host:
+            self.sock = sock
+            self._tunnel()
+        try:
+            # using SSLv23
+            self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                        ssl_version=ssl.PROTOCOL_SSLv23)
+        except ssl.SSLError:
+            try:
+                # switching to SSLv3
+                self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                            ssl_version=ssl.PROTOCOL_SSLv3)
+            except ssl.SSLError:
+                # switching to TLSv1
+                self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                            ssl_version=ssl.PROTOCOL_TLSv1)
+
+
+class HTTPSHandler(urllib2.HTTPSHandler):
+    def https_open(self, req):
+        return self.do_open(HTTPSConnection, req)
+
+urllib2.install_opener(urllib2.build_opener(HTTPSHandler()))
 
 
 def _setPythonpathSlipStream():
