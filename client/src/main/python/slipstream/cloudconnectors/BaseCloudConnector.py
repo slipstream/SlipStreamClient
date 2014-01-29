@@ -49,7 +49,6 @@ class BaseCloudConnector(object):
 
     RUN_BOOTSTRAP_SCRIPT = False
     WAIT_IP = False
-    ADD_SSHPUBKEY_ON_NODE = False
 
     # CAPABILITIES
     CAPABILITY_VAPP = 'vapp'
@@ -58,7 +57,7 @@ class BaseCloudConnector(object):
     CAPABILITY_WINDOWS_CONTEXTUALIZATION = 'windowsContextualization'
     CAPABILITY_GENERATE_PASSWORD = 'generatePassword'
     CAPABILITY_DIRECT_IP_ASSIGNMENT = 'directIpAssignment'
-    CAPABILITY_ADD_SHH_PUBLIC_KEY_ON_NODE = 'addSshPublicKeyOnNode'
+    CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE = 'needToAddSshPublicKeyOnNode'
     CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP = 'orchestratorCanKillItselfOrItsVapp'
 
     def __init__(self, configHolder):
@@ -100,7 +99,7 @@ class BaseCloudConnector(object):
                         windows_contextualization=False,
                         generate_password=False,
                         direct_ip_assignment=False,
-                        add_ssh_public_key_on_node=False,
+                        need_to_add_ssh_public_key_on_node=False,
                         orchestrator_can_kill_itself_or_its_vapp=False):
         if vapp:
             self._capabilities.append(self.CAPABILITY_VAPP)
@@ -114,8 +113,8 @@ class BaseCloudConnector(object):
             self._capabilities.append(self.CAPABILITY_GENERATE_PASSWORD)
         if direct_ip_assignment:
             self._capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
-        if add_ssh_public_key_on_node:
-            self._capabilities.append(self.CAPABILITY_ADD_SHH_PUBLIC_KEY_ON_NODE)
+        if need_to_add_ssh_public_key_on_node:
+            self._capabilities.append(self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE)
         if orchestrator_can_kill_itself_or_its_vapp:
             self._capabilities.append(self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
@@ -218,14 +217,6 @@ class BaseCloudConnector(object):
     @deprecated
     def needWaitIp(self):
         return self.WAIT_IP is True
-
-    @deprecated
-    def setNeedToAddSshPubkeyOnNode(self):
-        self.ADD_SSHPUBKEY_ON_NODE = True
-
-    @deprecated
-    def needToAddSshPubkeyOnNode(self):
-        return self.ADD_SSHPUBKEY_ON_NODE
 
     def startImage(self, user_info, image_info):
         name = NodeDecorator.MACHINE_NAME
@@ -679,7 +670,7 @@ class BaseCloudConnector(object):
 
         script += '%s %s=%s\n' % (addEnvironmentVariableCommand,
                                   util.ENV_NEED_TO_ADD_SSHPUBKEY,
-                                  self.hasCapability(self.ADD_SSHPUBKEY_ON_NODE))
+                                  self.hasCapability(self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE))
 
         if preBootstrap:
             script += '%s\n' % preBootstrap
