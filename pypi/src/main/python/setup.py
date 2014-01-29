@@ -19,7 +19,7 @@
 
 from distutils.core import setup
 
-VERSION = '1.3-1'
+VERSION = '2.1-1'
 CLASSIFIERS = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
