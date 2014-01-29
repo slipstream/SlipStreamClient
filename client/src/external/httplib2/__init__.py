@@ -73,11 +73,28 @@ try:
             cert_reqs = ssl.CERT_NONE
         else:
             cert_reqs = ssl.CERT_REQUIRED
-        # We should be specifying SSL version 3 or TLS v1, but the ssl module
-        # doesn't expose the necessary knobs. So we need to go with the default
-        # of SSLv23.
-        return ssl.wrap_socket(sock, keyfile=key_file, certfile=cert_file,
-                               cert_reqs=cert_reqs, ca_certs=ca_certs)
+        # WARNING: the following code is a patch modifying the original
+        # httplib2 library. It allows SSL switching protocol from
+        # SSLv23 to SSLv3 and TLSv1 as last resort when a violation of
+        # protocol occurred.
+        try:
+            # using SSLv23
+            sock = ssl.wrap_socket(sock, keyfile=key_file, certfile=cert_file,
+                                   cert_reqs=cert_reqs, ca_certs=ca_certs,
+                                   ssl_version=ssl.PROTOCOL_SSLv23)
+        except ssl.SSLError:
+            try:
+                # switching to SSLv3
+                sock = ssl.wrap_socket(sock, keyfile=key_file,
+                    certfile=cert_file, cert_reqs=cert_reqs, ca_certs=ca_certs,
+                    ssl_version=ssl.PROTOCOL_SSLv3)
+            except ssl.SSLError:
+                # switching to TLSv1
+                sock = ssl.wrap_socket(sock, keyfile=key_file,
+                    certfile=cert_file, cert_reqs=cert_reqs, ca_certs=ca_certs,
+                    ssl_version=ssl.PROTOCOL_TLSv1)
+        return sock
+
 except (AttributeError, ImportError):
     ssl_SSLError = None
     def _ssl_wrap_socket(sock, key_file, cert_file,
