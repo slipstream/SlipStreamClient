@@ -37,38 +37,27 @@ DISTRO = None
 PIP_INSTALLED = False
 
 
-class HTTPSConnection(httplib.HTTPSConnection):
-    def connect(self):
-        """Connect to a host on a given (SSL) port.
+class HTTPSConnectionV3(httplib.HTTPSConnection):
 
-        Switching SSL protocol from SSLv23 to SSLv3 and TLSv1 as last resort
-        when a violation of protocol occurred.
+    def connect(self):
+        """Connect to a host on a given (SSL) port enforcing SSL protocol SSLv3.
+
         See: http://bugs.python.org/issue11220
         """
         sock = socket.create_connection((self.host, self.port), self.timeout)
         if self._tunnel_host:
             self.sock = sock
             self._tunnel()
-        try:
-            # using SSLv23
-            self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                        ssl_version=ssl.PROTOCOL_SSLv23)
-        except ssl.SSLError:
-            try:
-                # switching to SSLv3
-                self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                            ssl_version=ssl.PROTOCOL_SSLv3)
-            except ssl.SSLError:
-                # switching to TLSv1
-                self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                            ssl_version=ssl.PROTOCOL_TLSv1)
+        self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                    ssl_version=ssl.PROTOCOL_SSLv3)
 
 
-class HTTPSHandler(urllib2.HTTPSHandler):
+class HTTPSHandlerV3(urllib2.HTTPSHandler):
+
     def https_open(self, req):
-        return self.do_open(HTTPSConnection, req)
+        return self.do_open(HTTPSConnectionV3, req)
 
-urllib2.install_opener(urllib2.build_opener(HTTPSHandler()))
+urllib2.install_opener(urllib2.build_opener(HTTPSHandlerV3()))
 
 
 def _setPythonpathSlipStream():
