@@ -21,23 +21,24 @@ from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.util import loadModule
 
 NODE_EXECUTORS = {
-    'Image': 'slipstream.executors.node.NodeImageExecutor',
-    'Deployment': 'slipstream.executors.node.NodeDeploymentExecutor'
+    'Machine': 'slipstream.executors.node.NodeImageExecutor',
+    'Run': 'slipstream.executors.node.NodeDeploymentExecutor',
+    'Orchestration': 'slipstream.executors.node.NodeDeploymentExecutor'
 }
 
 
-def get_executor_module_name(category):
+def get_executor_module_name(runType):
     try:
-        return NODE_EXECUTORS[category]
+        return NODE_EXECUTORS[runType]
     except KeyError:
-        raise Exceptions.ClientError("Unknown executor category: %s" % category)
+        raise Exceptions.ClientError("Unknown executor type: %s" % runType)
 
 
 class NodeExecutorFactory:
     @staticmethod
     def createExecutor(configHolder):
         wrapper = BaseWrapper(configHolder)
-        category = wrapper.getRunCategory()
+        runType = wrapper.getRunType()
 
-        return loadModule(get_executor_module_name(category)). \
+        return loadModule(get_executor_module_name(runType)). \
             getExecutor(wrapper, configHolder)

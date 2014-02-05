@@ -114,6 +114,10 @@ class MachineExecutor(object):
         else:
             util.printAction('Done!')
 
+    def onDetached(self):
+        util.printAction('Detached')
+        raise TerminalStateException('Detached')
+
     def _executeRaiseOnError(self, cmd):
         res = util.execute(cmd.split(' '))
         if res:

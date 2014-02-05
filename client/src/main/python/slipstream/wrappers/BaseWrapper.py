@@ -81,6 +81,9 @@ class BaseWrapper(object):
     def getRunCategory(self):
         return self.clientSlipStream.getRunCategory()
 
+    def getRunType(self):
+        return self.clientSlipStream.getRunType()
+
     def _qualifyKey(self, key):
         """Qualify the key, if not already done, with the right nodename"""
 

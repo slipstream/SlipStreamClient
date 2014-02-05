@@ -171,6 +171,13 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extractCategoryFromRun(self.run_dom)
 
+    def getRunType(self):
+        return self._getRunType()
+
+    def _getRunType(self):
+        self._retrieveAndSetRun()
+        return DomExtractor.extractTypeFromRun(self.run_dom)
+
     def getDefaultCloudServiceName(self):
         return self._getDefaultCloudServiceName()
 
@@ -352,15 +359,24 @@ class DomExtractor(object):
         return run_dom.attrib['category']
 
     @staticmethod
+    def extractTypeFromRun(run_dom):
+        return run_dom.attrib['type']
+
+    @staticmethod
     def extractDefaultCloudServiceNameFromRun(run_dom):
         return run_dom.attrib['cloudServiceName']
 
     @staticmethod
     def getDeploymentTargets(run_dom, nodename):
         "Get deployment targets for node with name 'nodename'"
-        for node in run_dom.findall('module/nodes/entry/node'):
-            if node.get('name') == nodename:
-                return DomExtractor.getDeploymentTargetsFromImageDom(node.find('image'))
+        module = run_dom.find('module')
+        
+        if module.get('category') == 'Image':
+            return DomExtractor.getDeploymentTargetsFromImageDom(module)
+        else:
+            for node in run_dom.findall('module/nodes/entry/node'):
+                if node.get('name') == nodename:
+                    return DomExtractor.getDeploymentTargetsFromImageDom(node.find('image'))
         return {}
 
     @staticmethod
