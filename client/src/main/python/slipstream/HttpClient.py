@@ -68,14 +68,14 @@ class HttpClient(object):
                 pass
             return content
 
-        def _handle2xx():
+        def _handle2xx(resp):
             if not self.cookie:
                 self.cookie = resp.get('set-cookie', None)
                 if self.cookie:
                     self._saveCookie()
             return resp, content
 
-        def _handle3xx():
+        def _handle3xx(resp):
             if resp.status == 302:
                 # Redirected
                 resp, content = self._call(resp['location'], method, body, accept)
@@ -83,7 +83,7 @@ class HttpClient(object):
                 raise Exception('Should have been handled by httplib2!! ' + str(resp.status) + ": " + resp.reason)
             return resp, content
 
-        def _handle4xx():
+        def _handle4xx(resp):
             CONFLICT_ERROR = 409
             PRECONDITION_FAILED_ERROR = 412
             EXPECTATION_FAILED_ERROR = 417
@@ -107,7 +107,7 @@ class HttpClient(object):
             clientEx.code = resp.status
             raise clientEx
 
-        def _handle5xx():
+        def _handle5xx(resp):
             if retry:
                 return self._call(url, method, body, contentType, accept, retry=False)
             raise Exceptions.ServerError('Failed calling method %s on url %s, with reason: %s' %
@@ -167,16 +167,16 @@ class HttpClient(object):
                 resp, _convertContent(content)))
 
             if str(resp.status).startswith('2'):
-                return _handle2xx()
+                return _handle2xx(resp)
 
             if str(resp.status).startswith('3'):
-                return _handle3xx()
+                return _handle3xx(resp)
 
             if str(resp.status).startswith('4'):
-                return _handle4xx()
+                return _handle4xx(resp)
 
             if str(resp.status).startswith('5'):
-                return _handle5xx()
+                return _handle5xx(resp)
 
             raise Exceptions.NetworkError('Unknown return code: %s' % resp.status)
 
