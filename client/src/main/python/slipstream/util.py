@@ -273,15 +273,16 @@ def getConfigFileName():
         3- calling module location
     '''
     filename = 'slipstream.client.conf'
-    configFilename = os.path.join(os.getcwd(), filename)
+    try:
+        configFilename = os.path.join(os.getcwd(), filename)
+    except OSError: # current directory may no longer exists
+        configFilename = os.path.join(getInstallationLocation(), filename)
     if os.path.exists(configFilename):
         return configFilename
-    configFilename = os.path.join(getInstallationLocation(), filename)
-    if not os.path.exists(configFilename):
-        configFilename = os.path.join(os.path.dirname(sys.argv[0]), filename)
-    if not os.path.exists(configFilename):
-        raise Exceptions.ConfigurationError('Failed to find the configuration file: ' + configFilename)
-    return configFilename
+    configFilename = os.path.join(os.path.dirname(sys.argv[0]), filename)
+    if os.path.exists(configFilename):
+        return configFilename
+    raise Exceptions.ConfigurationError('Failed to find the configuration file: ' + configFilename)
 
 
 def getInstallationLocation():
@@ -290,17 +291,16 @@ def getInstallationLocation():
         2- Default target directory, if exists (/opt/slipstream/src)
         3- Base module: __file__/../../.., since the util module is namespaced
     '''
+    if 'SLIPSTREAM_HOME' in os.environ:
+        return os.environ['SLIPSTREAM_HOME']
+
     slipstreamDefaultDirName = os.path.join(os.sep, 'opt', 'slipstream', 'client', 'src')
+    if os.path.exists(slipstreamDefaultDirName):
+        return slipstreamDefaultDirName
+
     # Relative to the src dir.  We do this to avoid importing a module, since util
     # should have a minimum of dependencies
-    slipstreamDefaultRelativeDirName = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-    if 'SLIPSTREAM_HOME' in os.environ:
-        slipstreamHome = os.environ['SLIPSTREAM_HOME']
-    elif os.path.exists(slipstreamDefaultDirName):
-        slipstreamHome = slipstreamDefaultDirName
-    else:
-        slipstreamHome = slipstreamDefaultRelativeDirName
-    return slipstreamHome
+    return os.path.join(os.path.dirname(__file__), '..', '..', '..')
 
 
 def uuid():
