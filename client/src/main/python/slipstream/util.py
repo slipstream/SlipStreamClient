@@ -348,27 +348,41 @@ def printStep(message):
 
 
 def printAndFlush(message):
-    if PRINT_TO_STDERR_ONLY:
-        output = sys.stderr
-    else:
-        output = sys.stdout
+    message = _prependCurrentTimeToMgs(message)
+    output = _get_print_stream()
     output.flush()
-    try:
-        print >> output, message,
-    except UnicodeEncodeError:
-        if not isinstance(message, unicode):
-            message = unicode(message, 'UTF-8')
-        message = message.encode('ascii', 'ignore')
-        print >> output, message,
+    _print(output, message)
     output.flush()
 
 
 def printError(message):
+    message = _prependCurrentTimeToMgs('\nERROR: %s\n' % message)
     sys.stdout.flush()
     sys.stderr.flush()
-    print >> sys.stderr, 'ERROR: %s' % message
+    _print(sys.stderr, message)
     sys.stdout.flush()
     sys.stderr.flush()
+
+
+def _print(stream, message):
+    try:
+        print >> stream, message,
+    except UnicodeEncodeError:
+        if not isinstance(message, unicode):
+            message = unicode(message, 'UTF-8')
+        message = message.encode('ascii', 'ignore')
+        print >> stream, message,
+
+
+def _get_print_stream():
+    if PRINT_TO_STDERR_ONLY:
+        return sys.stderr
+    else:
+        return sys.stdout
+
+
+def _prependCurrentTimeToMgs(msg):
+    return '\n: %s : %s' % (toTimeInIso8601(time.time()), msg)
 
 
 def assignAttributes(obj, dictionary):
