@@ -16,9 +16,11 @@
  limitations under the License.
 """
 
+import os
 import time
 import traceback
 import tarfile
+import tempfile
 
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.exceptions.Exceptions import TimeoutException, \
@@ -92,6 +94,7 @@ class MachineExecutor(object):
         util.printAction('Sending report')
         reportFileName = '%s_report_%s.tgz' % (
             self._nodename(), util.toTimeInIso8601NoColon(time.time()))
+        reportFileName = os.path.join(tempfile.gettempdir(), reportFileName)
         try:
             archive = tarfile.open(reportFileName, 'w:gz')
             for element in self.reportFilesAndDirsList:
