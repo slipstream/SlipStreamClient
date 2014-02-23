@@ -188,7 +188,7 @@ class HttpClient(object):
         return resp, content
 
     def _getHttpObject(self):
-        h = httplib2.Http(".cache", timeout=300,
+        h = httplib2.Http(cache=util.HTTP_CACHEDIR, timeout=300,
                           disable_ssl_certificate_validation=self.disableSslCertificateValidation)
         h.force_exception_to_status_code = False
         return h

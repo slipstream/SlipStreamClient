@@ -43,6 +43,7 @@ PRINT_TO_STDERR_ONLY = False
 TMPDIR = os.path.join(tempfile.gettempdir(), 'slipstream')
 REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR', os.path.join(os.sep, TMPDIR, 'reports'))
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
+HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 
 RUN_URL_PATH = '/run'
 MODULE_URL_PATH = '/module'
