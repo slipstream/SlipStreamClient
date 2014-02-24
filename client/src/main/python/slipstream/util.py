@@ -348,7 +348,7 @@ def printStep(message):
 
 
 def printAndFlush(message):
-    message = _prependCurrentTimeToMgs(message)
+    message = _prepend_current_time_to_message(message)
     output = _get_print_stream()
     output.flush()
     _print(output, message)
@@ -356,7 +356,7 @@ def printAndFlush(message):
 
 
 def printError(message):
-    message = _prependCurrentTimeToMgs('\nERROR: %s\n' % message)
+    message = _prepend_current_time_to_message('\nERROR: %s\n' % message)
     sys.stdout.flush()
     sys.stderr.flush()
     _print(sys.stderr, message)
@@ -381,7 +381,7 @@ def _get_print_stream():
         return sys.stdout
 
 
-def _prependCurrentTimeToMgs(msg):
+def _prepend_current_time_to_message(msg):
     return '\n: %s : %s' % (toTimeInIso8601(time.time()), msg)
 
 
