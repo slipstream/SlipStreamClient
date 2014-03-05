@@ -44,9 +44,10 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''usage: %prog [options] <user>
+        usage = '''usage: %prog [options] <file>
 
-<user>    user to create/update. For example joe.'''
+<file>    XML file to create/update the user.
+          For an example look at the ss-user-get output.'''
 
         self.parser.usage = usage
 
