@@ -16,6 +16,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import sys
 
@@ -46,7 +47,8 @@ class MainProgram(CommandBase):
         self.addIgnoreAbortOption()
 
         self.parser.add_option('--noblock', dest='noBlock',
-                               help='return immediately even if the parameter has no value',
+                               help='return immediately even if the parameter '
+                                    'has no value',
                                default=False, action='store_true')
 
         self.options, self.args = self.parser.parse_args()
@@ -65,12 +67,11 @@ class MainProgram(CommandBase):
         configHolder = ConfigHolder(self.options)
         client = Client(configHolder)
         value = client.getRuntimeParameter(self.key)
-        print value
+        print(value)
 
 if __name__ == "__main__":
     try:
         MainProgram()
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
         sys.exit(-1)
-

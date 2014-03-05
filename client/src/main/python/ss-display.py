@@ -16,6 +16,9 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
+
+import sys
 
 from slipstream.CommandBase import CommandBase
 from slipstream.Client import Client
@@ -23,7 +26,8 @@ from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(CommandBase):
-    '''A command-line program to set directly the statecustom value, such that the dashboard can be made more dynamic.'''
+    '''A command-line program to set directly the statecustom value, such that
+    the dashboard can be made more dynamic.'''
 
     def __init__(self, argv=None):
         self.value = None
@@ -50,10 +54,9 @@ class MainProgram(CommandBase):
         client = Client(configHolder)
         client.setRuntimeParameter('statecustom', self.value)
 
-main = MainProgram
-
 if __name__ == "__main__":
     try:
-        main()
+        MainProgram()
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
+        sys.exit(-1)
