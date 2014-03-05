@@ -40,6 +40,7 @@ setup(
         'bin/ss-module-put',
         'bin/ss-run-get',
         'bin/ss-user-get',
+        'bin/ss-user-put',
     ],
     packages=[
         'slipstream',
