@@ -34,6 +34,8 @@ class MainProgram(CommandBase):
 
 <value>          Value to be set.'''
 
+        self.parser.usage = usage
+
         self.addIgnoreAbortOption()
 
         self.options, self.args = self.parser.parse_args()
