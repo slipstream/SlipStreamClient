@@ -296,8 +296,13 @@ class StratuslabClientCloud(BaseCloudConnector):
         for nodename, runner in self.getVms().items():
             try:
                 runner.killInstances()
-            except Exception, ex:
-                errors.append('Error killing node %s\n%s' % (nodename, ex.message))
+            except Exception:
+                # Retry killing instances.
+                try:
+                    time.sleep(2)
+                    runner.killInstances()
+                except Exception as ex:
+                    errors.append('Error killing node %s\n%s' % (nodename, str(ex)))
         if errors:
             raise Exceptions.CloudError('Failed stopping following instances. Details: %s' % '\n   -> '.join(errors))
 
