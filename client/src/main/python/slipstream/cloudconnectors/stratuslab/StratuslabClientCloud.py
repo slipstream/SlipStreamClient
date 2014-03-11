@@ -29,6 +29,7 @@ from stratuslab.Creator import Creator
 from stratuslab.Creator import CreatorBaseListener
 from stratuslab.vm_manager.Runner import Runner
 from stratuslab.volume_manager.volume_manager_factory import VolumeManagerFactory
+from stratuslab.Exceptions import OneException 
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 import slipstream.exceptions.Exceptions as Exceptions
@@ -257,7 +258,16 @@ class StratuslabClientCloud(BaseCloudConnector):
 
     def _doRunInstance(self, imageId, configHolder):
         runner = self._getStratusLabRunner(imageId, configHolder)
-        runner.runInstance()
+        try:
+            runner.runInstance()
+        except OneException as ex:
+            # Retry once on a machine allocation error. OpenNebula has a problem 
+            # in authorization module which on a heavy load may through this error.
+            if str(ex).strip().startswith('[VirtualMachineAllocate]'):
+                time.sleep(2)
+                runner.runInstance()
+            else:
+                raise 
         return runner
 
     def _getStratusLabRunner(self, imageId, configHolder):
