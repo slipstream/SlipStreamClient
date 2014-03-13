@@ -225,13 +225,14 @@ class BaseCloudConnector(object):
 
         try:
             vm = self._startImage(user_info, image_info, name)
-            self.addVm(name, vm)
+            self.addVm(name, vm, image_info)
 
             self._creatorVmId = self.vmGetId(vm)
 
             if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
                 vm = self._waitAndGetInstanceIpAddress(vm)
-                self.addVm(name, vm)
+                self.addVm(name, vm, image_info)
+
         finally:
             self.finalization(user_info)
 
@@ -276,11 +277,11 @@ class BaseCloudConnector(object):
                               self._generateInstanceName(nodename),
                               cloudSpecificData)
 
-        self.addVm(nodename, vm)
+        self.addVm(nodename, vm, image_info)
 
         if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
             vm = self._waitAndGetInstanceIpAddress(vm)
-            self.addVm(nodename, vm)
+            self.addVm(nodename, vm, image_info)
 
         if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not self.isWindows():
             self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
@@ -356,13 +357,14 @@ class BaseCloudConnector(object):
     def isTerminateRunServerSide(self):
         return self._terminateRunServerSide
 
-    def addVm(self, name, vm):
+    def addVm(self, name, vm, image_info):
         self._vms[name] = vm
-        self.publishVmInfo(name, vm)
+        self.publishVmInfo(name, vm, image_info)
 
-    def publishVmInfo(self, nodename, vm):
+    def publishVmInfo(self, nodename, vm, image_info):
         self.publishVmId(nodename, self.vmGetId(vm))
         self.publishVmIp(nodename, self.vmGetIp(vm))
+        self.publishUrlSsh(nodename, vm, image_info)
 
     def publishVmId(self, nodename, vm_id):
         # Needed for thread safety
@@ -371,6 +373,13 @@ class BaseCloudConnector(object):
     def publishVmIp(self, nodename, vm_ip):
         # Needed for thread safety
         NodeInfoPublisher(self.configHolder).publish_hostname(nodename, vm_ip)
+
+    def publishUrlSsh(self, nodename, vm, image_info):
+        vm_ip = self.vmGetIp(vm)
+        ssh_username, _ = self._getSshUsernamePassword(image_info)
+
+        # Needed for thread safety
+        NodeInfoPublisher(self.configHolder).publish_url_ssh(nodename, vm_ip, ssh_username)
 
     def getVms(self):
         return self._vms
