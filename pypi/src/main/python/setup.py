@@ -2,7 +2,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ from distutils.core import setup
 
 setup(
     name='slipstream-client',
-    version='2.1-1',
+    version='2.1-6',
     description='SlipStream end-user client (CLI)',
     long_description='SlipStream client (CLI) to communicate '
                      'with SlipStream server.',
