@@ -93,7 +93,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         
         self.creator.createStep1()
         
-        self.addVm(NodeDecorator.MACHINE_NAME, self.creator.runner)
+        self.addVm(NodeDecorator.MACHINE_NAME, self.creator.runner, image_info)
         
         return self.getVmsDetails()
 

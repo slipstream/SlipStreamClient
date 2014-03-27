@@ -49,13 +49,17 @@ class PhysicalHostClientCloud(BaseCloudConnector):
         self.username = user_info.get_cloud('username')
         self.password = user_info.get_cloud('password')
         self.privateKey = self._getSshPrivateKey(user_info)
-
+        image_info = {'attributes': {'loginUser': self.username},
+                      'cloud_parameters': {self.cloudName:
+                                           {self.cloudName+'.login.password': self.password}}
+                      }
         self.addVm('orchestrator-physicalhost', {'username': self.username,
                                                  'password': self.password,
                                                  'privateKey': self.privateKey,
                                                  'host': os.environ['PHYSICALHOST_ORCHESTRATOR_HOST'],
                                                  'id': os.environ['PHYSICALHOST_ORCHESTRATOR_HOST'],
-                                                 'ip': os.environ['PHYSICALHOST_ORCHESTRATOR_HOST']})
+                                                 'ip': os.environ['PHYSICALHOST_ORCHESTRATOR_HOST']},
+                                                 image_info)
 
     def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
         host = self.getImageId(image_info)

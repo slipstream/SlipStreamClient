@@ -375,6 +375,8 @@ class BaseCloudConnector(object):
         NodeInfoPublisher(self.configHolder).publish_hostname(nodename, vm_ip)
 
     def publishUrlSsh(self, nodename, vm, image_info):
+        if not image_info:
+            return
         vm_ip = self.vmGetIp(vm)
         ssh_username, _ = self._getSshUsernamePassword(image_info)
 
