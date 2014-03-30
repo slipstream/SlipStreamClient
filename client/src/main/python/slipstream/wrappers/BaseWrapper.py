@@ -39,8 +39,8 @@ class NodeInfoPublisher(SlipStreamHttpClient):
         self._setRuntimeParameter(nodename, 'hostname', vm_ip)
 
     def publish_url_ssh(self, nodename, vm_ip, username):
-        url = 'ssh://%s@%s' % (vm_ip.strip(), username.strip())
-        self._setRuntimeParameter(nodename, 'url.ssh', vm_ip)
+        url = 'ssh://%s@%s' % (username.strip(), vm_ip.strip())
+        self._setRuntimeParameter(nodename, 'url.ssh', url)
 
     def _setRuntimeParameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
