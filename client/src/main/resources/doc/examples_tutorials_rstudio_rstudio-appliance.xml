@@ -194,6 +194,12 @@ ss-set rstudio_pswd $ruser_password
 rstudio-server restart 
 
 #
+# set the deployment url
+#
+hname=`ss-get hostname`
+ss-set ss:url.service "http://${hname}"
+
+#
 # set the customstate to inform user that everything's ready
 #
 ss-set statecustom 'RStudio Ready!'</target>
