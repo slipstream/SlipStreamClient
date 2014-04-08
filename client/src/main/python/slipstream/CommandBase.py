@@ -179,7 +179,8 @@ class CommandBase(object):
     def parseCommandLineEnv(self, value):
         bits = value.split('=')
         if len(bits) == 0 or len(bits) > 2:
-            self.usageExit("Error: environment variables must be expressed as: <name>=<value>, got '%s'" % value)
+            self.usageExit("Error: environment variables must be expressed as: "
+                           "<name>=<value>, got '%s'" % value)
         self.userEnv[bits[0]] = bits[1]
 
         return bits[0], bits[1]
@@ -211,7 +212,7 @@ class CommandBase(object):
 
     def log(self, message):
         util.printDetail(message, self.verboseLevel)
-        
+
     def read_xml_and_exit_on_error(self, xml):
         try:
             return self._read_as_xml(xml)

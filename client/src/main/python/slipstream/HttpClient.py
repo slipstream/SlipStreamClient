@@ -31,8 +31,9 @@ etree = util.importETree()
 
 
 class HttpClient(object):
-    def __init__(self, username=None, password=None, cookie=None, configHolder=None):
 
+    def __init__(self, username=None, password=None, cookie=None,
+                 configHolder=None):
         self.cookie = cookie
         self.username = username
         self.password = password
@@ -48,17 +49,19 @@ class HttpClient(object):
     def get(self, url, accept='application/xml'):
         return self._call(url, 'GET', accept=accept)
 
-    def put(self, url, body=None, contentType='application/xml', accept='application/xml'):
+    def put(self, url, body=None, contentType='application/xml',
+            accept='application/xml'):
         return self._call(url, 'PUT', body, contentType, accept)
 
-    def post(self, url, body=None, contentType='application/xml', accept='application/xml'):
+    def post(self, url, body=None, contentType='application/xml',
+             accept='application/xml'):
         return self._call(url, 'POST', body, contentType)
 
     def delete(self, url):
         return self._call(url, 'DELETE')
 
-    def _call(self, url, method, body=None, contentType='application/xml', accept='application/xml', headers={},
-              retry=True):
+    def _call(self, url, method, body=None, contentType='application/xml',
+              accept='application/xml', headers={}, retry=True):
 
         def _convertContent(content):
             try:
@@ -80,7 +83,9 @@ class HttpClient(object):
                 # Redirected
                 resp, content = self._call(resp['location'], method, body, accept)
             else:
-                raise Exception('Should have been handled by httplib2!! ' + str(resp.status) + ": " + resp.reason)
+                raise Exception(
+                    "Should have been handled by httplib2!! %s: %s" % (resp.status,
+                                                                       resp.reason))
             return resp, content
 
         def _handle4xx(resp):
@@ -97,9 +102,10 @@ class HttpClient(object):
                 # FIXME: fix the server such that 406 is not returned when cookie expires
                 if resp.status == 401 or resp.status == 406:
                     headers = self._createAuthenticationHeader()
-                    return self._call(url, method, body, contentType, accept, headers, retry=False)
-            msg = 'Failed calling method %s on url %s, with reason: %s' % \
-                  (method, url, str(resp.status) + ": " + resp.reason)
+                    return self._call(url, method, body, contentType, accept,
+                                      headers, retry=False)
+            msg = "Failed calling method %s on url %s, with reason: %d: %s" % (
+                method, url, resp.status, resp.reason)
             if resp.status == 404:
                 clientEx = Exceptions.NotFoundError(resp.reason)
             else:
@@ -109,9 +115,11 @@ class HttpClient(object):
 
         def _handle5xx(resp):
             if retry:
-                return self._call(url, method, body, contentType, accept, retry=False)
-            raise Exceptions.ServerError('Failed calling method %s on url %s, with reason: %s' %
-                                         (method, url, str(resp.status) + ": " + resp.reason))
+                return self._call(url, method, body, contentType, accept,
+                                  retry=False)
+            raise Exceptions.ServerError(
+                "Failed calling method %s on url %s, with reason: %d: %s" % (
+                    method, url, resp.status, resp.reason))
 
         def _extractDetail(xmlContent):
             if xmlContent == '':
@@ -146,12 +154,14 @@ class HttpClient(object):
             while(True):
                 try:
                     if len(headers):
-                        resp, content = h.request(url, method, body, headers=headers)
+                        resp, content = h.request(url, method, body,
+                                                  headers=headers)
                     else:
                         resp, content = h.request(url, method, body)
                     break
                 except httplib.BadStatusLine:
-                    raise Exceptions.NetworkError('Error: BadStatusLine contacting: ' + url)
+                    raise Exceptions.NetworkError(
+                        "Error: BadStatusLine contacting: %s" % url)
                 except httplib2.RelativeURIError as ex:
                     raise Exceptions.ClientError('%s' % ex)
                 except socket.error as ex:

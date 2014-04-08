@@ -41,7 +41,8 @@ VERBOSE_LEVEL_DETAILED = 2
 PRINT_TO_STDERR_ONLY = False
 
 TMPDIR = os.path.join(tempfile.gettempdir(), 'slipstream')
-REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR', os.path.join(os.sep, TMPDIR, 'reports'))
+REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR',
+                            os.path.join(os.sep, TMPDIR, 'reports'))
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
 HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 
@@ -78,8 +79,8 @@ def get_cloudconnector_modulename_by_cloudname(cloudname):
         connector_class = loadModule(module_name).getConnectorClass()
         if getattr(connector_class, 'cloudName') == cloudname:
             return module_name
-    raise Exceptions.NotFoundError('Failed to find cloud connector module for cloud %s.' %
-                                   cloudname)
+    raise Exceptions.NotFoundError(
+        "Failed to find cloud connector module for cloud %s." % cloudname)
 
 
 def needToAddSshPubkey():
@@ -88,7 +89,8 @@ def needToAddSshPubkey():
 
 
 def configureLogger():
-    filename = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'slipstream.log')
+    filename = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])),
+                            'slipstream.log')
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(message)s',
                         filename=filename)
@@ -282,7 +284,8 @@ def getConfigFileName():
     configFilename = os.path.join(os.path.dirname(sys.argv[0]), filename)
     if os.path.exists(configFilename):
         return configFilename
-    raise Exceptions.ConfigurationError('Failed to find the configuration file: ' + configFilename)
+    raise Exceptions.ConfigurationError(
+        "Failed to find the configuration file: " + configFilename)
 
 
 def getInstallationLocation():
@@ -294,7 +297,8 @@ def getInstallationLocation():
     if 'SLIPSTREAM_HOME' in os.environ:
         return os.environ['SLIPSTREAM_HOME']
 
-    slipstreamDefaultDirName = os.path.join(os.sep, 'opt', 'slipstream', 'client', 'src')
+    slipstreamDefaultDirName = os.path.join(os.sep, 'opt', 'slipstream', 'client',
+                                            'src')
     if os.path.exists(slipstreamDefaultDirName):
         return slipstreamDefaultDirName
 
@@ -463,7 +467,8 @@ def importETree():
                         # normal ElementTree install
                         import elementtree.ElementTree as etree
                     except ImportError:
-                        raise Exception("Failed to import ElementTree from any known place")
+                        raise Exception("Failed to import ElementTree "
+                                        "from any known place")
     return etree
 
 
@@ -538,8 +543,9 @@ def _getSecureHostPortFromUrl(endpoint):
 
 def getPackagesInstallCommand(platform, packages):
     if platform.lower() not in SUPPORTED_PLATFORMS:
-        raise ValueError("Unsupported platform '%s' while installing packages. Supported: %s" %
-                         (platform, ', '.join(SUPPORTED_PLATFORMS)))
+        raise ValueError("Unsupported platform '%s' while installing packages. "
+                         "Supported: %s" % (platform,
+                                            ', '.join(SUPPORTED_PLATFORMS)))
 
     if platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['debian_based']:
         cmd = 'apt-get -y install'

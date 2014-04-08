@@ -103,7 +103,9 @@ class ConfigHolder(object):
         return self.__deepcopy__()
 
     def __deepcopy__(self, memo=dict()):
-        deepCopy = ConfigHolder(copy.deepcopy(self.options), copy.deepcopy(self.config), copy.deepcopy(self.context))
+        deepCopy = ConfigHolder(copy.deepcopy(self.options),
+                                copy.deepcopy(self.config),
+                                copy.deepcopy(self.context))
         return deepCopy
 
     def __str__(self):

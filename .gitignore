@@ -9,3 +9,4 @@ target
 .project
 .pydevproject
 pyunit.credentials.properties
+/bin

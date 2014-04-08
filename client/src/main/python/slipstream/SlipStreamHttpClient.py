@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import os
 
@@ -81,9 +82,11 @@ class SlipStreamHttpClient(object):
 
         self.authnServiceUrl = self.serviceRootEndpoint + '/'
 
-        self.runReportEndpoint = self.serviceRootEndpoint + '/reports/' + self.diid
+        self.runReportEndpoint = '%s/reports/%s' % (self.serviceRootEndpoint,
+                                                    self.diid)
 
-        self.userEndpoint = self.serviceRootEndpoint + '/user/' + self.username
+        self.userEndpoint = '%s/user/%s' % (self.serviceRootEndpoint,
+                                            self.username)
 
     def getUserInfo(self, cloud_qualifier):
 
@@ -203,18 +206,20 @@ class SlipStreamHttpClient(object):
         return self._httpPost(url, resourceUri, 'text/plain')
 
     def advance(self, nodeName):
-        url = self.runInstanceEndpoint + '/' + nodeName + ':' + NodeDecorator.STATE_KEY
+        url = '%s/%s:%s' % (self.runInstanceEndpoint, nodeName,
+                            NodeDecorator.STATE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
 
     def _fail(self, message):
-        self.setRuntimeParameter(NodeDecorator.globalNamspacePrefix + NodeDecorator.ABORT_KEY, message)
+        self.setRuntimeParameter(
+            NodeDecorator.globalNamspacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
         self._uploadReport(self.runReportEndpoint, report)
 
     def _uploadReport(self, url, report):
-        print 'Uploading report to: ', url
+        print('Uploading report to: %s' % url)
 
         body = open(report, 'rb').read()
         url += '/' + os.path.basename(report)
@@ -222,7 +227,9 @@ class SlipStreamHttpClient(object):
         self._httpPut(url, body, '', accept="*/*")
 
     def isAbort(self):
-        url = self.runInstanceEndpoint + '/' + NodeDecorator.globalNamspacePrefix + NodeDecorator.ABORT_KEY
+        url = '%s/%s%s' % (self.runInstanceEndpoint,
+                           NodeDecorator.globalNamspacePrefix,
+                           NodeDecorator.ABORT_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         _, content = self._httpGet(url, accept='text/plain')
         return content.strip().strip('"').strip("'")
@@ -244,14 +251,16 @@ class SlipStreamHttpClient(object):
         if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
 
-        _, content = self._httpPut(url, util.removeASCIIEscape(value), accept='text/plain')
+        _, content = self._httpPut(url, util.removeASCIIEscape(value),
+                                   accept='text/plain')
 
         return content.strip().strip('"').strip("'")
 
     def _httpGet(self, url, accept='application/xml'):
         return self.httpClient.get(url, accept)
 
-    def _httpPut(self, url, body=None, contentType='application/xml', accept='application/xml'):
+    def _httpPut(self, url, body=None, contentType='application/xml',
+                 accept='application/xml'):
         return self.httpClient.put(url, body, contentType, accept)
 
     def _httpPost(self, url, body=None, contentType='application/xml'):
@@ -275,7 +284,8 @@ class SlipStreamHttpClient(object):
 
     def getRunState(self, uuid=None, ignoreAbort=True):
         if not uuid and not self.diid:
-            raise Exceptions.ExecutionException("Run ID should be provided to get state.")
+            raise Exceptions.ExecutionException("Run ID should be provided "
+                                                "to get state.")
         state_key = NodeDecorator.globalNamspacePrefix + NodeDecorator.STATE_KEY
         self.runInstanceEndpoint = self.runEndpoint + '/' + (uuid or self.diid)
         return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
@@ -343,7 +353,8 @@ class DomExtractor(object):
         targets = {}
 
         for target in ['prerecipe', 'recipe']:
-            targets[target] = DomExtractor.getElementValueFromElementTree(dom, target)
+            targets[target] = DomExtractor.getElementValueFromElementTree(dom,
+                                                                          target)
 
         targets['packages'] = []
         packages = dom.findall('packages/package')
@@ -370,13 +381,14 @@ class DomExtractor(object):
     def getDeploymentTargets(run_dom, nodename):
         "Get deployment targets for node with name 'nodename'"
         module = run_dom.find('module')
-        
+
         if module.get('category') == 'Image':
             return DomExtractor.getDeploymentTargetsFromImageDom(module)
         else:
             for node in run_dom.findall('module/nodes/entry/node'):
                 if node.get('name') == nodename:
-                    return DomExtractor.getDeploymentTargetsFromImageDom(node.find('image'))
+                    return DomExtractor.getDeploymentTargetsFromImageDom(
+                        node.find('image'))
         return {}
 
     @staticmethod
