@@ -388,6 +388,7 @@ class DomExtractor(object):
             parameters[node.get('name')] = node.find('value').text
         return parameters
 
+    @staticmethod
     def getDeploymentTargets(run_dom, nodename):
         "Get deployment targets for node with name 'nodename'"
         module = run_dom.find('module')
