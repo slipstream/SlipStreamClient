@@ -52,6 +52,7 @@ class BaseWrapper(object):
         self._userInfo = None
         self._imageInfo = None
         self._nodesInfo = None
+        self._runParameters = None
 
     def advance(self):
         nodeName = self._getNodeName()
@@ -138,6 +139,11 @@ class BaseWrapper(object):
         if self._userInfo is None:
             self._userInfo = self.clientSlipStream.getUserInfo(cloud_service_name)
         return self._userInfo
+
+    def getRunParameters(self):
+        if self._runParameters is None:
+            self._runParameters = self.clientSlipStream.getRunParameters()
+        return self._runParameters
 
     def getImageInfo(self):
         if self._imageInfo is None:

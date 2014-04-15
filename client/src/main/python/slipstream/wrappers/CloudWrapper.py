@@ -140,14 +140,14 @@ class CloudWrapper(BaseWrapper):
         self._deleteRunResource()
 
     def _needToStopImages(self, ignore_on_success_run_forever=False):
-        userInfo = self.getUserInfo(self.cloudProxy.cloud)
+        runParameters = self.getRunParameters()
 
         try:
-            onErrorRunForever = userInfo.get_general('On Error Run Forever')
+            onErrorRunForever = runParameters.get('General.On Error Run Forever')
         except KeyError:
             onErrorRunForever = 'false'
         try:
-            onSuccessRunForever = userInfo.get_general('On Success Run Forever')
+            onSuccessRunForever = runParameters.get('General.On Success Run Forever')
         except KeyError:
             onSuccessRunForever = 'false'
 

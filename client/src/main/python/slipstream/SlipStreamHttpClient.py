@@ -227,6 +227,10 @@ class SlipStreamHttpClient(object):
         _, content = self._httpGet(url, accept='text/plain')
         return content.strip().strip('"').strip("'")
 
+    def getRunParameters(self):
+        self._retrieveAndSetRun()
+        return DomExtractor.extractRunParametersFromRun(self.run_dom)
+
     def getRuntimeParameter(self, key, ignoreAbort=False):
 
         url = self.runInstanceEndpoint + '/' + key
@@ -367,6 +371,12 @@ class DomExtractor(object):
         return run_dom.attrib['cloudServiceName']
 
     @staticmethod
+    def extractRunParametersFromRun(run_dom):
+        parameters = {}
+        for node in run_dom.findall('parameters/entry/parameter'):
+            parameters[node.get('name')] = node.find('value').text
+        return parameters
+
     def getDeploymentTargets(run_dom, nodename):
         "Get deployment targets for node with name 'nodename'"
         module = run_dom.find('module')

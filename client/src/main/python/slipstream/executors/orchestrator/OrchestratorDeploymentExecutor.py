@@ -41,6 +41,10 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         util.printStep('Publishing instance initialization information')
         self.wrapper.publishDeploymentInitializationInfo()
 
+    def onDetached(self):
+        self._killItself()
+        super(OrchestratorDeploymentExecutor, self).onDetached()
+
     def onTerminal(self):
         util.printAction('Terminating')
         util.printStep('Stopping instances')
