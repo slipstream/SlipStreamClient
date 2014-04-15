@@ -16,6 +16,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -23,6 +24,11 @@ import sys
 from slipstream.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
+
+default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
+                                  'http://slipstream.sixsq.com')
+default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
+                                os.path.join(util.TMPDIR, 'cookie'))
 
 
 class MainProgram(CommandBase):
@@ -57,12 +63,11 @@ class MainProgram(CommandBase):
 
         self.parser.add_option('--cookie', dest='cookieFilename',
                                help='SlipStream cookie', metavar='FILE',
-                               default=os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                                      os.path.join(util.TMPDIR, 'cookie')))
+                               default=default_cookie)
 
-        self.parser.add_option('--endpoint', dest='endpoint',
-                               help='SlipStream server endpoint', metavar='URL',
-                               default=os.environ.get('SLIPSTREAM_ENDPOINT', 'http://slipstream.sixsq.com'))
+        self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
+                               help='SlipStream server endpoint',
+                               default=default_endpoint)
 
         self.options, self.args = self.parser.parse_args()
 
@@ -90,5 +95,5 @@ if __name__ == "__main__":
     try:
         MainProgram()
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
         sys.exit(-1)

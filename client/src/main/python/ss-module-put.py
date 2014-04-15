@@ -16,6 +16,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -24,6 +25,12 @@ from slipstream.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
+
+default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
+                                  'http://slipstream.sixsq.com')
+default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
+                                os.path.join(util.TMPDIR, 'cookie'))
+
 
 class MainProgram(CommandBase):
     '''A command-line program to show/list module definition(s).'''
@@ -39,29 +46,30 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] [<module-xml>]
 
-<module-xml>    XML rendering of the module to update (e.g. as produced by ss-module-get).
+<module-xml>    XML rendering of the module to update (e.g. as produced by
+                ss-module-get).
                 For example: ./ss-module-put "`cat module.xml`"'''
 
         self.parser.usage = usage
 
-        self.parser.add_option('-u','--username', dest='username',
+        self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p','--password', dest='password',
+        self.parser.add_option('-p', '--password', dest='password',
                                help='SlipStream password', metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
         self.parser.add_option('--cookie', dest='cookieFilename',
                                help='SlipStream cookie', metavar='FILE',
-                               default=os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                                      os.path.join(util.TMPDIR, 'cookie')))
+                               default=default_cookie)
 
         self.parser.add_option('--endpoint', dest='endpoint',
                                help='SlipStream server endpoint', metavar='URL',
-                               default=os.environ.get('SLIPSTREAM_ENDPOINT', 'http://slipstream.sixsq.com'))
+                               default=default_endpoint)
 
-        self.parser.add_option('-i','--ifile', dest='ifile',
-                               help='Optional input file. Replaces <module-xml> argument', metavar='FILE')
+        self.parser.add_option('-i', '--ifile', dest='ifile', metavar='FILE',
+                               help='Optional input file. '
+                                    'Replaces <module-xml> argument')
 
         self.options, self.args = self.parser.parse_args()
 
@@ -104,5 +112,5 @@ if __name__ == "__main__":
     try:
         MainProgram()
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
         sys.exit(-1)

@@ -41,8 +41,10 @@ VERBOSE_LEVEL_DETAILED = 2
 PRINT_TO_STDERR_ONLY = False
 
 TMPDIR = os.path.join(tempfile.gettempdir(), 'slipstream')
-REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR', os.path.join(os.sep, TMPDIR, 'reports'))
+REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR',
+                            os.path.join(os.sep, TMPDIR, 'reports'))
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
+HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 
 RUN_URL_PATH = '/run'
 MODULE_URL_PATH = '/module'
@@ -77,8 +79,8 @@ def get_cloudconnector_modulename_by_cloudname(cloudname):
         connector_class = loadModule(module_name).getConnectorClass()
         if getattr(connector_class, 'cloudName') == cloudname:
             return module_name
-    raise Exceptions.NotFoundError('Failed to find cloud connector module for cloud %s.' %
-                                   cloudname)
+    raise Exceptions.NotFoundError(
+        "Failed to find cloud connector module for cloud %s." % cloudname)
 
 
 def needToAddSshPubkey():
@@ -87,7 +89,8 @@ def needToAddSshPubkey():
 
 
 def configureLogger():
-    filename = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])), 'slipstream.log')
+    filename = os.path.join(os.path.abspath(os.path.dirname(sys.argv[0])),
+                            'slipstream.log')
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s %(levelname)s %(message)s',
                         filename=filename)
@@ -272,15 +275,17 @@ def getConfigFileName():
         3- calling module location
     '''
     filename = 'slipstream.client.conf'
-    configFilename = os.path.join(os.getcwd(), filename)
+    try:
+        configFilename = os.path.join(os.getcwd(), filename)
+    except OSError: # current directory may no longer exists
+        configFilename = os.path.join(getInstallationLocation(), filename)
     if os.path.exists(configFilename):
         return configFilename
-    configFilename = os.path.join(getInstallationLocation(), filename)
-    if not os.path.exists(configFilename):
-        configFilename = os.path.join(os.path.dirname(sys.argv[0]), filename)
-    if not os.path.exists(configFilename):
-        raise Exceptions.ConfigurationError('Failed to find the configuration file: ' + configFilename)
-    return configFilename
+    configFilename = os.path.join(os.path.dirname(sys.argv[0]), filename)
+    if os.path.exists(configFilename):
+        return configFilename
+    raise Exceptions.ConfigurationError(
+        "Failed to find the configuration file: " + configFilename)
 
 
 def getInstallationLocation():
@@ -289,17 +294,17 @@ def getInstallationLocation():
         2- Default target directory, if exists (/opt/slipstream/src)
         3- Base module: __file__/../../.., since the util module is namespaced
     '''
-    slipstreamDefaultDirName = os.path.join(os.sep, 'opt', 'slipstream', 'client', 'src')
+    if 'SLIPSTREAM_HOME' in os.environ:
+        return os.environ['SLIPSTREAM_HOME']
+
+    slipstreamDefaultDirName = os.path.join(os.sep, 'opt', 'slipstream', 'client',
+                                            'src')
+    if os.path.exists(slipstreamDefaultDirName):
+        return slipstreamDefaultDirName
+
     # Relative to the src dir.  We do this to avoid importing a module, since util
     # should have a minimum of dependencies
-    slipstreamDefaultRelativeDirName = os.path.join(os.path.dirname(__file__), '..', '..', '..')
-    if 'SLIPSTREAM_HOME' in os.environ:
-        slipstreamHome = os.environ['SLIPSTREAM_HOME']
-    elif os.path.exists(slipstreamDefaultDirName):
-        slipstreamHome = slipstreamDefaultDirName
-    else:
-        slipstreamHome = slipstreamDefaultRelativeDirName
-    return slipstreamHome
+    return os.path.join(os.path.dirname(__file__), '..', '..', '..')
 
 
 def uuid():
@@ -347,27 +352,41 @@ def printStep(message):
 
 
 def printAndFlush(message):
-    if PRINT_TO_STDERR_ONLY:
-        output = sys.stderr
-    else:
-        output = sys.stdout
+    message = _prepend_current_time_to_message(message)
+    output = _get_print_stream()
     output.flush()
-    try:
-        print >> output, message,
-    except UnicodeEncodeError:
-        if not isinstance(message, unicode):
-            message = unicode(message, 'UTF-8')
-        message = message.encode('ascii', 'ignore')
-        print >> output, message,
+    _print(output, message)
     output.flush()
 
 
 def printError(message):
+    message = _prepend_current_time_to_message('\nERROR: %s\n' % message)
     sys.stdout.flush()
     sys.stderr.flush()
-    print >> sys.stderr, 'ERROR: %s' % message
+    _print(sys.stderr, message)
     sys.stdout.flush()
     sys.stderr.flush()
+
+
+def _print(stream, message):
+    try:
+        print >> stream, message,
+    except UnicodeEncodeError:
+        if not isinstance(message, unicode):
+            message = unicode(message, 'UTF-8')
+        message = message.encode('ascii', 'ignore')
+        print >> stream, message,
+
+
+def _get_print_stream():
+    if PRINT_TO_STDERR_ONLY:
+        return sys.stderr
+    else:
+        return sys.stdout
+
+
+def _prepend_current_time_to_message(msg):
+    return '\n: %s : %s' % (toTimeInIso8601(time.time()), msg)
 
 
 def assignAttributes(obj, dictionary):
@@ -448,7 +467,8 @@ def importETree():
                         # normal ElementTree install
                         import elementtree.ElementTree as etree
                     except ImportError:
-                        raise Exception("Failed to import ElementTree from any known place")
+                        raise Exception("Failed to import ElementTree "
+                                        "from any known place")
     return etree
 
 
@@ -523,8 +543,9 @@ def _getSecureHostPortFromUrl(endpoint):
 
 def getPackagesInstallCommand(platform, packages):
     if platform.lower() not in SUPPORTED_PLATFORMS:
-        raise ValueError("Unsupported platform '%s' while installing packages. Supported: %s" %
-                         (platform, ', '.join(SUPPORTED_PLATFORMS)))
+        raise ValueError("Unsupported platform '%s' while installing packages. "
+                         "Supported: %s" % (platform,
+                                            ', '.join(SUPPORTED_PLATFORMS)))
 
     if platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['debian_based']:
         cmd = 'apt-get -y install'

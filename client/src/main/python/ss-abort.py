@@ -16,6 +16,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 from slipstream.CommandBase import CommandBase
 from slipstream.Client import Client
@@ -24,7 +25,8 @@ from slipstream.NodeDecorator import NodeDecorator
 
 
 class MainProgram(CommandBase):
-    '''A command-line program to set the abort key/value pair in the info sys restlet.'''
+    '''A command-line program to set the abort key/value pair in the info sys
+    restlet.'''
 
     def __init__(self, argv=None):
         self.reason = None
@@ -57,10 +59,10 @@ class MainProgram(CommandBase):
         client = Client(configHolder)
         client.setRuntimeParameter(NodeDecorator.ABORT_KEY, self.reason)
 
-main = MainProgram
-
 if __name__ == "__main__":
     try:
-        main()
+        MainProgram()
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
+        sys.exit(-1)
+

@@ -4,7 +4,9 @@ target
 *.log
 .idea/
 .coverage
+.cache/
 .settings/
 .project
 .pydevproject
 pyunit.credentials.properties
+/bin

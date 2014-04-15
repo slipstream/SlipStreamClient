@@ -16,6 +16,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -26,6 +27,11 @@ from slipstream.ConfigHolder import ConfigHolder
 from slipstream.Client import Client
 from slipstream.exceptions import Exceptions
 import slipstream.util as util
+
+default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
+                                  'http://slipstream.sixsq.com')
+default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
+                                os.path.join(util.TMPDIR, 'cookie'))
 
 
 class MainProgram(CommandBase):
@@ -49,7 +55,8 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] <module-url>
 
-<module-uri>    Full URL to the module to execute. For example Public/Tutorials/HelloWorld/client_server'''
+<module-uri>    Full URL to the module to execute.
+                For example Public/Tutorials/HelloWorld/client_server'''
 
         self.parser.usage = usage
 
@@ -62,22 +69,25 @@ class MainProgram(CommandBase):
 
         self.parser.add_option('--cookie', dest='cookieFilename',
                                help='SlipStream cookie', metavar='FILE',
-                               default=os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                                      os.path.join(util.TMPDIR, 'cookie')))
+                               default=default_cookie)
 
         self.parser.add_option('--endpoint', dest='endpoint',
                                help='SlipStream server endpoint', metavar='URL',
-                               default=os.environ.get('SLIPSTREAM_ENDPOINT', 'http://slipstream.sixsq.com'))
+                               default=default_endpoint)
 
         self.parser.add_option('--parameters', dest='parameters',
-                               help='Deployment or image parameters override. The key must be in a form: '
-                                    '<node-name>:<parameter-name>. Several pairs can be provided comma separated.',
+                               help='Deployment or image parameters override. '
+                                    'The key must be in a form: '
+                                    '<node-name>:<parameter-name>. '
+                                    'Several pairs can be provided comma '
+                                    'separated.',
                                metavar="KEY1=VALUE1,KEY2=VALUE2",
                                default='')
 
         self.parser.add_option('-w', '--wait', dest='wait',
                                help='Wait MINUTES for the deployment to finish.',
-                               type='int', metavar='MINUTES', default=self.DEAFULT_WAIT)
+                               type='int', metavar='MINUTES',
+                               default=self.DEAFULT_WAIT)
 
         self.parser.add_option('--nagios', dest='nagios',
                                help='Behave like Nagios check.',
@@ -126,7 +136,7 @@ class MainProgram(CommandBase):
         if self._need_to_wait():
             self._wait_run_in_final_state(run_url)
         else:
-            print run_url
+            print(run_url)
 
     def _assembleData(self):
         self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
@@ -163,19 +173,19 @@ class MainProgram(CommandBase):
                 state = self.client.getRunState(run_uuid, ignoreAbort=False)
             except Exceptions.AbortException as ex:
                 if self.options.nagios:
-                    print 'CRITICAL - %s. State: %s. Run: %s' % (
-                        str(ex).split('\n')[0], state, run_url)
+                    print('CRITICAL - %s. State: %s. Run: %s' % (
+                        str(ex).split('\n')[0], state, run_url))
                     sys.exit(CRITICAL)
                 else:
                     raise ex
             if state == 'Terminal':
-                print 'OK - Terminal. Run: %s' % run_url
+                print('OK - Terminal. Run: %s' % run_url)
                 sys.exit(0)
             curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
             if not self.options.nagios:
-                print "[%s] State: %s" % (curr_time, state)
-        print "CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
-            self.options.wait, state, run_url)
+                print("[%s] State: %s" % (curr_time, state))
+        print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
+            self.options.wait, state, run_url))
         sys.exit(CRITICAL)
 
     def _need_to_wait(self):
@@ -185,5 +195,5 @@ if __name__ == "__main__":
     try:
         MainProgram()
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
         sys.exit(-1)

@@ -29,6 +29,7 @@ from stratuslab.Creator import Creator
 from stratuslab.Creator import CreatorBaseListener
 from stratuslab.vm_manager.Runner import Runner
 from stratuslab.volume_manager.volume_manager_factory import VolumeManagerFactory
+from stratuslab.Exceptions import OneException 
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 import slipstream.exceptions.Exceptions as Exceptions
@@ -92,7 +93,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         
         self.creator.createStep1()
         
-        self.addVm(NodeDecorator.MACHINE_NAME, self.creator.runner)
+        self.addVm(NodeDecorator.MACHINE_NAME, self.creator.runner, image_info)
         
         return self.getVmsDetails()
 
@@ -257,7 +258,16 @@ class StratuslabClientCloud(BaseCloudConnector):
 
     def _doRunInstance(self, imageId, configHolder):
         runner = self._getStratusLabRunner(imageId, configHolder)
-        runner.runInstance()
+        try:
+            runner.runInstance()
+        except OneException as ex:
+            # Retry once on a machine allocation error. OpenNebula has a problem 
+            # in authorization module which on a heavy load may through this error.
+            if str(ex).strip().startswith('[VirtualMachineAllocate]'):
+                time.sleep(2)
+                runner.runInstance()
+            else:
+                raise 
         return runner
 
     def _getStratusLabRunner(self, imageId, configHolder):
@@ -286,8 +296,13 @@ class StratuslabClientCloud(BaseCloudConnector):
         for nodename, runner in self.getVms().items():
             try:
                 runner.killInstances()
-            except Exception, ex:
-                errors.append('Error killing node %s\n%s' % (nodename, ex.message))
+            except Exception:
+                # Retry killing instances.
+                try:
+                    time.sleep(2)
+                    runner.killInstances()
+                except Exception as ex:
+                    errors.append('Error killing node %s\n%s' % (nodename, str(ex)))
         if errors:
             raise Exceptions.CloudError('Failed stopping following instances. Details: %s' % '\n   -> '.join(errors))
 

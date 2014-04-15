@@ -247,7 +247,14 @@ chown tuser:tuser /home/tuser/.ssh/authorized_keys
 chmod 0600 /home/tuser/.ssh/authorized_keys
 su - tuser -c 'cat /home/tuser/.ssh/id_rsa.pub &gt;&gt; /home/tuser/.ssh/authorized_keys'
 
-ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`</target>
+ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`
+
+#
+# set the service url
+#
+hname=`ss-set hostname`
+ss-set ss:url.service "ssh://tuser@${hname}"
+</target>
    </targets>
    <packages class="org.hibernate.collection.PersistentBag" />
    <prerecipe />

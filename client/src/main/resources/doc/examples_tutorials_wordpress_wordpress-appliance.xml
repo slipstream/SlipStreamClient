@@ -288,6 +288,10 @@ ss-display "Configuring WordPress"
 puppet apply -v init.pp
 
 ss-display "WordPress ready to go!"
+
+hname=`ss-get hostname`
+ss-set ss:url.service "http://${hname}"
+
 </target>
    </targets>
    <packages class="org.hibernate.collection.PersistentBag" />

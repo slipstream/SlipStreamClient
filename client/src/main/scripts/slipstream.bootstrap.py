@@ -291,6 +291,7 @@ def _getTargetScriptCommand(targetScript):
 
 def runTargetScript(cmd):
     print 'Calling target script:', cmd
+    os.environ['SLIPSTREAM_HOME'] = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin')
     subprocess.call(cmd, shell=True)
     sys.stdout.flush()
     sys.stderr.flush()
