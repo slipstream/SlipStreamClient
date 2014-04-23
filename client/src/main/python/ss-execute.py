@@ -128,6 +128,16 @@ class MainProgram(CommandBase):
             parameters[key] = value
         return parameters
 
+    def doWork(self):
+        self._init_client()
+        run_url = self._launch_deployment()
+        if self._need_to_wait():
+            rc = self._wait_run_and_handle_failures(run_url)
+            self._cond_terminate_run(rc)
+            sys.exit(rc)
+        else:
+            print(run_url)
+
     def _init_client(self):
         configHolder = ConfigHolder(self.options, context={'empty': None},
                                     config={'empty': None})
@@ -149,16 +159,6 @@ class MainProgram(CommandBase):
                 sys.exit(RC_CRITICAL_NAGIOS)
             else:
                 raise ex
-
-    def doWork(self):
-        self._init_client()
-        run_url = self._launch_deployment()
-        if self._need_to_wait():
-            rc = self._wait_run_and_handle_failures(run_url)
-            self._cond_terminate_run(rc)
-            sys.exit(rc)
-        else:
-            print(run_url)
 
     def _wait_run_and_handle_failures(self, run_url):
         '''Wait for final state of the run. Handle failures and print 
