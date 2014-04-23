@@ -154,39 +154,48 @@ class MainProgram(CommandBase):
         self._init_client()
         run_url = self._launch_deployment()
         if self._need_to_wait():
-            wait_run_handle_failures
-            rc = self._get_critical_rc()
-            final_state = 'Terminal'
-            try:
-                self._wait_run_in_final_state(run_url, self.options.wait,
-                                              final_state)
-            except AbortException as ex:
-                if self.options.nagios:
-                    print('CRITICAL - %s. State: %s. Run: %s' % (
-                        str(ex).split('\n')[0], ex.state, run_url))
-                else:
-                    print('CRITICAL - %s\nState: %s. Run: %s' % (
-                        str(ex), ex.state, run_url))
-            except TimeoutException as ex:
-                print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
-                    self.options.wait, ex.state, run_url))
-            except Exception as ex:
-                print('AAAAA')
-                if self.options.nagios:
-                    print("CRITICAL - Unhandled error: %s. Run: %s" % (
-                        str(ex).split('\n')[0], run_url))
-                else:
-                    raise ex
-            else:
-                print('OK - State: %s. Run: %s' % (final_state, run_url))
-                rc = RC_SUCCESS
+            rc = self._wait_run_and_handle_failures(run_url)
             self._cond_terminate_run(rc)
             sys.exit(rc)
         else:
             print(run_url)
 
+    def _wait_run_and_handle_failures(self, run_url):
+        '''Wait for final state of the run. Handle failures and print 
+        respective messages. Return global exit code depending if this is 
+        Nagios check or not.
+        '''
+        rc = self._get_critical_rc()
+        final_state = 'Terminal'
+
+        try:
+            self._wait_run_in_final_state(run_url, self.options.wait,
+                                          final_state)
+        except AbortException as ex:
+            if self.options.nagios:
+                print('CRITICAL - %s. State: %s. Run: %s' % (
+                    str(ex).split('\n')[0], ex.state, run_url))
+            else:
+                print('CRITICAL - %s\nState: %s. Run: %s' % (
+                    str(ex), ex.state, run_url))
+        except TimeoutException as ex:
+            print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
+                self.options.wait, ex.state, run_url))
+        except Exception as ex:
+            print('AAAAA')
+            if self.options.nagios:
+                print("CRITICAL - Unhandled error: %s. Run: %s" % (
+                    str(ex).split('\n')[0], run_url))
+            else:
+                raise ex
+        else:
+            print('OK - State: %s. Run: %s' % (final_state, run_url))
+            rc = RC_SUCCESS
+
+        return rc
+
     def _cond_terminate_run(self, returncode):
-        '''Run gets terminated:
+        '''Run gets conditionally terminated
         - when we are acting as Nagios check
         - when there was a failure and we were asked to kill the VMs on error.
         '''
