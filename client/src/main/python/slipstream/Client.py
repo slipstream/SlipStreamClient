@@ -38,6 +38,9 @@ class Client(object):
     DEPLOYMENT = NodeDecorator.DEPLOYMENT
 
     def __init__(self, configHolder):
+        self.noBlock = True
+        self.ignoreAbort = False
+        self.timeout = 30
         self.verboseLevel = 1
         self.verboseThreshold = 1
         configHolder.assgnConfigAndOptions(self)
