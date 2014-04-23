@@ -227,6 +227,9 @@ class SlipStreamHttpClient(object):
         self._httpPut(url, body, '', accept="*/*")
 
     def isAbort(self):
+        return self.getGlobalAbortMessage() != ''
+
+    def getGlobalAbortMessage(self):
         url = '%s/%s%s' % (self.runInstanceEndpoint,
                            NodeDecorator.globalNamspacePrefix,
                            NodeDecorator.ABORT_KEY)

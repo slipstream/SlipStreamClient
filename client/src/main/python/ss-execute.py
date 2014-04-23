@@ -178,6 +178,8 @@ class MainProgram(CommandBase):
             else:
                 print('CRITICAL - %s\nState: %s. Run: %s' % (
                     str(ex), ex.state, run_url))
+            ss_abort_msg = self.client.getGlobalAbortMessage()
+            print('Abort reason:\n%s' % ss_abort_msg)
         except TimeoutException as ex:
             print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
                 self.options.wait, ex.state, run_url))

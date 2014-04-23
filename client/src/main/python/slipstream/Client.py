@@ -188,3 +188,6 @@ class Client(object):
 
     def terminateRun(self):
         self.httpClient._httpDelete(self.httpClient.runInstanceEndpoint)
+
+    def getGlobalAbortMessage(self):
+        return self.httpClient.getGlobalAbortMessage()
