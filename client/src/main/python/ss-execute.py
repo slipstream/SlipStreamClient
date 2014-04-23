@@ -133,9 +133,12 @@ class MainProgram(CommandBase):
         self._init_client()
         run_url = self._launch_deployment()
         if self._need_to_wait():
-            rc = self._wait_run_and_handle_failures(run_url)
-            self._cond_terminate_run(rc)
-            sys.exit(rc)
+            rc = self._get_critical_rc()
+            try:
+                rc = self._wait_run_and_handle_failures(run_url)
+                sys.exit(rc)
+            finally:
+                self._cond_terminate_run(rc)
         else:
             print(run_url)
 
