@@ -21,6 +21,7 @@ from __future__ import print_function
 import os
 import sys
 import time
+import traceback
 
 from slipstream.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
@@ -187,6 +188,7 @@ class MainProgram(CommandBase):
             if self.options.nagios:
                 print("CRITICAL - Unhandled error: %s. Run: %s" % (
                     str(ex).split('\n')[0], run_url))
+                traceback.print_exc()
             else:
                 raise ex
         else:
