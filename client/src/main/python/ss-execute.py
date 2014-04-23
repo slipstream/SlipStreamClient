@@ -246,7 +246,6 @@ class MainProgram(CommandBase):
         while time.time() <= time_end:
             _sleep()
             try:
-                print('getting state')
                 state = self.client.getRunState(run_uuid, ignoreAbort=False)
             except AbortException as ex:
                 ex.state = state
