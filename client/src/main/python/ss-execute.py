@@ -25,7 +25,7 @@ import time
 from slipstream.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.Client import Client
-from slipstream.exceptions import Exceptions
+from slipstream.exceptions.Exceptions import AbortException, TimeoutException
 import slipstream.util as util
 
 default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
@@ -33,6 +33,9 @@ default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
 default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
                                 os.path.join(util.TMPDIR, 'cookie'))
 
+RC_SUCCESS = 0
+RC_CRITICAL_DEFAULT = 1
+RC_CRITICAL_NAGIOS = 2
 
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
@@ -93,6 +96,11 @@ class MainProgram(CommandBase):
                                help='Behave like Nagios check.',
                                default=False, action='store_true')
 
+        self.parser.add_option('--terminate-vms-on-error',
+                               dest='terminate_vms_on_error',
+                               help='Terminate VMs on any error.',
+                               default=False, action='store_true')
+
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
@@ -127,16 +135,73 @@ class MainProgram(CommandBase):
         self.client = Client(configHolder)
 
     def _launch_deployment(self):
+        '''Return run URL on success.
+        On failure:
+        - in case of Nagios check generate CRITICAL error
+        - else, the caught exception is re-raised.
+        '''
         params = self._assembleData()
-        return self.client.launchDeployment(params)
+        try:
+            return self.client.launchDeployment(params)
+        except Exception as ex:
+            if self.options.nagios:
+                print("CRITICAL - Unhandled error: %s." % (str(ex).split('\n')[0]))
+                sys.exit(RC_CRITICAL_NAGIOS)
+            else:
+                raise ex
 
     def doWork(self):
         self._init_client()
         run_url = self._launch_deployment()
         if self._need_to_wait():
-            self._wait_run_in_final_state(run_url)
+            wait_run_handle_failures
+            rc = self._get_critical_rc()
+            final_state = 'Terminal'
+            try:
+                self._wait_run_in_final_state(run_url, self.options.wait,
+                                              final_state)
+            except AbortException as ex:
+                if self.options.nagios:
+                    print('CRITICAL - %s. State: %s. Run: %s' % (
+                        str(ex).split('\n')[0], ex.state, run_url))
+                else:
+                    print('CRITICAL - %s\nState: %s. Run: %s' % (
+                        str(ex), ex.state, run_url))
+            except TimeoutException as ex:
+                print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
+                    self.options.wait, ex.state, run_url))
+            except Exception as ex:
+                print('AAAAA')
+                if self.options.nagios:
+                    print("CRITICAL - Unhandled error: %s. Run: %s" % (
+                        str(ex).split('\n')[0], run_url))
+                else:
+                    raise ex
+            else:
+                print('OK - State: %s. Run: %s' % (final_state, run_url))
+                rc = RC_SUCCESS
+            self._cond_terminate_run(rc)
+            sys.exit(rc)
         else:
             print(run_url)
+
+    def _cond_terminate_run(self, returncode):
+        '''Run gets terminated:
+        - when we are acting as Nagios check
+        - when there was a failure and we were asked to kill the VMs on error.
+        '''
+        if self.options.nagios or\
+                (returncode != RC_SUCCESS and self.options.terminate_vms_on_error):
+            self._terminate_run()
+
+    def _terminate_run(self):
+        try:
+            self.client.terminateRun()
+        except:
+            pass
+
+    def _get_critical_rc(self):
+        return self.options.nagios and RC_CRITICAL_NAGIOS or RC_CRITICAL_DEFAULT
 
     def _assembleData(self):
         self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
@@ -151,7 +216,11 @@ class MainProgram(CommandBase):
         nodename, key = parts
         return 'parameter--node--' + nodename + '--' + key
 
-    def _wait_run_in_final_state(self, run_url):
+    def _wait_run_in_final_state(self, run_url, waitmin, final_state):
+        '''Return on reaching final state.
+        On timeout raise TimeoutException with the last state attribute set.
+        On aborted Run raise AbortException with the last state attribute set.
+        '''
         def _sleep():
             time_sleep = self.DEFAULT_SLEEP
             if _sleep.ncycle <= 2:
@@ -164,29 +233,24 @@ class MainProgram(CommandBase):
         _sleep.ncycle = 1
 
         run_uuid = run_url.rsplit('/', 1)[-1]
-        time_end = time.time() + self.options.wait * 60
+        time_end = time.time() + waitmin * 60
         state = self.INITIAL_STATE
-        CRITICAL = self.options.nagios and 2 or 1
         while time.time() <= time_end:
             _sleep()
             try:
+                print('getting state')
                 state = self.client.getRunState(run_uuid, ignoreAbort=False)
-            except Exceptions.AbortException as ex:
-                if self.options.nagios:
-                    print('CRITICAL - %s. State: %s. Run: %s' % (
-                        str(ex).split('\n')[0], state, run_url))
-                    sys.exit(CRITICAL)
-                else:
-                    raise ex
-            if state == 'Terminal':
-                print('OK - Terminal. Run: %s' % run_url)
-                sys.exit(0)
-            curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
+            except AbortException as ex:
+                ex.state = state
+                raise ex
+            if state == final_state:
+                return
             if not self.options.nagios:
+                curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
                 print("[%s] State: %s" % (curr_time, state))
-        print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
-            self.options.wait, state, run_url))
-        sys.exit(CRITICAL)
+        time_exc = TimeoutException()
+        time_exc.state = state
+        raise time_exc
 
     def _need_to_wait(self):
         return self.options.wait > self.DEAFULT_WAIT

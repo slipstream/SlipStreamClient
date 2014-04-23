@@ -173,7 +173,7 @@ class Client(object):
         util.printDetail(message, self.verboseLevel, self.verboseThreshold)
 
     def getCategory(self):
-        return self.httpClient.getCategory()
+        return self.httpClient.getRunCategory()
 
     def fail(self, message):
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
@@ -182,3 +182,6 @@ class Client(object):
     def advance(self):
         nodeName = self._getNodeName()
         self.httpClient.advance(nodeName)
+
+    def terminateRun(self):
+        self.httpClient._httpDelete(self.httpClient.runInstanceEndpoint)
