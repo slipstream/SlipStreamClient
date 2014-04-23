@@ -182,7 +182,6 @@ class MainProgram(CommandBase):
             print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
                 self.options.wait, ex.state, run_url))
         except Exception as ex:
-            print('AAAAA')
             if self.options.nagios:
                 print("CRITICAL - Unhandled error: %s. Run: %s" % (
                     str(ex).split('\n')[0], run_url))
