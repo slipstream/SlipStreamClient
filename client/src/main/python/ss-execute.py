@@ -96,9 +96,9 @@ class MainProgram(CommandBase):
                                help='Behave like Nagios check.',
                                default=False, action='store_true')
 
-        self.parser.add_option('--terminate-vms-on-error',
-                               dest='terminate_vms_on_error',
-                               help='Terminate VMs on any error.',
+        self.parser.add_option('--kill-vms-on-error',
+                               dest='kill_vms_on_error',
+                               help='Kill VMs on any error.',
                                default=False, action='store_true')
 
         self.options, self.args = self.parser.parse_args()
@@ -199,7 +199,7 @@ class MainProgram(CommandBase):
         - when there was a failure and we were asked to kill the VMs on error.
         '''
         if self.options.nagios or\
-                (returncode != RC_SUCCESS and self.options.terminate_vms_on_error):
+                (returncode != RC_SUCCESS and self.options.kill_vms_on_error):
             self._terminate_run()
 
     def _terminate_run(self):
