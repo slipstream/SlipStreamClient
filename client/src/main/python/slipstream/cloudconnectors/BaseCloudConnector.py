@@ -501,11 +501,17 @@ class BaseCloudConnector(object):
         return self._getCloudParameter(image, 'network')
 
     def _getSshUsernamePassword(self, image, vm_name=None):
-        attributes = image['attributes']
+        user = self._getSshUsername(image)
+        password = self._getSshPassword(image, vm_name)
+        return user, password
 
-        user = attributes.get('loginUser', '')
+    def _getSshUsername(self, image):
+        user = image['attributes'].get('loginUser', '')
         if not user:
             user = 'root'
+        return user
+
+    def _getSshPassword(self, image, vm_name=None):
         password = None
         try:
             password = self._getCloudParameter(image, 'login.password')
@@ -514,7 +520,7 @@ class BaseCloudConnector(object):
                 password = self.vmGetPassword(vm_name)
             except:
                 pass
-        return user, password
+        return password
 
     def _getCloudParameter(self, image, parameter):
         params = image['cloud_parameters'][self.cloud]
