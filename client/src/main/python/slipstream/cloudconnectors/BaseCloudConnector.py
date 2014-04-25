@@ -24,13 +24,15 @@ import random
 import string
 from threading import local
 
-from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
+from slipstream.listeners.SlipStreamClientListenerAdapter import \
+    SlipStreamClientListenerAdapter
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
 from slipstream.Client import Client
 from slipstream.util import deprecated
 from slipstream import util, SlipStreamHttpClient
 from slipstream.utils.ssh import remoteRunScriptNohup, \
-    waitUntilSshCanConnectOrTimeout, remoteRunScript, remoteInstallPackages, generateKeyPair
+    waitUntilSshCanConnectOrTimeout, remoteRunScript, remoteInstallPackages, \
+    generateKeyPair
 from slipstream.utils.tasksrunner import TasksRunner
 from slipstream.NodeDecorator import NodeDecorator
 import slipstream.exceptions.Exceptions as Exceptions
@@ -305,6 +307,8 @@ class BaseCloudConnector(object):
         pass
 
     def _getCloudSpecificData(self, node_info, node_number, nodename):
+        # TODO: Consider providing user_info as well. Current use-case is
+        #       cloud-init based context in OCCI connector.
         return None
 
     def _waitAndGetInstanceIpAddress(self, vm):
@@ -497,11 +501,17 @@ class BaseCloudConnector(object):
         return self._getCloudParameter(image, 'network')
 
     def _getSshUsernamePassword(self, image, vm_name=None):
-        attributes = image['attributes']
+        user = self._getSshUsername(image)
+        password = self._getSshPassword(image, vm_name)
+        return user, password
 
-        user = attributes.get('loginUser', '')
+    def _getSshUsername(self, image):
+        user = image['attributes'].get('loginUser', '')
         if not user:
             user = 'root'
+        return user
+
+    def _getSshPassword(self, image, vm_name=None):
         password = None
         try:
             password = self._getCloudParameter(image, 'login.password')
@@ -510,7 +520,7 @@ class BaseCloudConnector(object):
                 password = self.vmGetPassword(vm_name)
             except:
                 pass
-        return user, password
+        return password
 
     def _getCloudParameter(self, image, parameter):
         params = image['cloud_parameters'][self.cloud]
@@ -591,7 +601,7 @@ class BaseCloudConnector(object):
         commands += 'echo "Bootstrap Finished"'
         stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId,
                                                                runAndContinue=True)
-        #winrm.close_shell(shellId)
+        # winrm.close_shell(shellId)
         return stdout, stderr, returnCode
 
     def _waitCanConnectWithWinrmOrAbort(self, winrm):
@@ -635,13 +645,13 @@ class BaseCloudConnector(object):
 
     def getObfuscationScript(self, orchestratorPublicKey, username, userInfo=None):
         command = "#!/bin/bash -xe\n"
-        #command += "sed -r -i 's/# *(account +required +pam_access\\.so).*/\\1/' /etc/pam.d/login\n"
-        #command += "echo '-:ALL:LOCAL' >> /etc/security/access.conf\n"
+        # command += "sed -r -i 's/# *(account +required +pam_access\\.so).*/\\1/' /etc/pam.d/login\n"
+        # command += "echo '-:ALL:LOCAL' >> /etc/security/access.conf\n"
         command += "sed -i -r '/^[\\t ]*RSAAuthentication/d;/^[\\t ]*PubkeyAuthentication/d;/^[\\t ]*PasswordAuthentication/d' /etc/ssh/sshd_config\n"
         command += "echo 'RSAAuthentication yes\nPubkeyAuthentication yes\nPasswordAuthentication no\n' >> /etc/ssh/sshd_config\n"
-        #command += "sed -i -r 's/^#?[\\t ]*(RSAAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
-        #command += "sed -i -r 's/^#?[\\t ]*(PubkeyAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
-        #command += "sed -i -r 's/^#?[\t ]*(PasswordAuthentication[\\t ]+)((yes)|(no))/\\1no/' /etc/ssh/sshd_config\n"
+        # command += "sed -i -r 's/^#?[\\t ]*(RSAAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
+        # command += "sed -i -r 's/^#?[\\t ]*(PubkeyAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
+        # command += "sed -i -r 's/^#?[\t ]*(PasswordAuthentication[\\t ]+)((yes)|(no))/\\1no/' /etc/ssh/sshd_config\n"
         command += "umask 077\n"
         command += "mkdir -p ~/.ssh\n"
         if userInfo:
@@ -727,7 +737,7 @@ class BaseCloudConnector(object):
             command += 'del tmp.txt\n'
             command += 'ss-set %%nodename%%.%%index%%:%%cloudservice%%.login.password %%pass%%\n'
 
-        #command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
+        # command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1"\n'
         return command % {
             'bootstrap': bootstrap,
