@@ -1,10 +1,29 @@
+"""
+ SlipStream Client
+ =====
+ Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ =====
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+"""
+
 import re
 import time
 
 from urlparse import urlparse
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
-from slipstream.NodeDecorator import RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY
+from slipstream.NodeDecorator import (RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT,
+                                      KEY_RUN_CATEGORY)
 from slipstream.utils.tasksrunner import TasksRunner
 import slipstream.util as util
 import slipstream.exceptions.Exceptions as Exceptions
@@ -51,8 +70,8 @@ class CloudStackClientCloud(BaseCloudConnector):
         if self.run_category == RUN_CATEGORY_DEPLOYMENT:
             self._importKeypair(user_info)
         elif self.run_category == RUN_CATEGORY_IMAGE:
-            #self._createKeypairAndSetOnUserInfo(user_info)
-            raise NotImplementedError('The run category "%s" is not yet implemented')
+            raise NotImplementedError('The run category "%s" is not yet '
+                                      'implemented' % self.run_category)
 
     def finalization(self, user_info):
         try:
@@ -61,32 +80,38 @@ class CloudStackClientCloud(BaseCloudConnector):
         except:
             pass
 
-    def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
+    def _startImage(self, user_info, image_info, instance_name,
+                    cloudSpecificData=None):
         self._thread_local.driver = self._getDriver(user_info)
-        return self._startImageOnCloudStack(user_info, image_info, instance_name, cloudSpecificData)
+        return self._startImageOnCloudStack(user_info, image_info, instance_name,
+                                            cloudSpecificData)
 
-    def _startImageOnCloudStack(self, user_info, image_info, instance_name, cloudSpecificData=None):
+    def _startImageOnCloudStack(self, user_info, image_info, instance_name,
+                                cloudSpecificData=None):
         imageId = self.getImageId(image_info)
         instance_name = self.formatInstanceName(instance_name)
         instanceType = self._getInstanceType(image_info)
         ipType = self.getCloudParameters(image_info)['network']
-        
+
         keypair = None
         contextualizationScript = None
         if not self.isWindows():
             keypair = self._userInfoGetKeypairName(user_info)
             contextualizationScript = cloudSpecificData or None
-        
-        securityGroups = [x.strip() for x in self._getCloudParameter(image_info, 'security.groups').split(',') if x]
-        
+
+        security_groups = self._getCloudParameter(image_info, 'security.groups')
+        securityGroups = [x.strip() for x in security_groups.split(',') if x]
+
         try:
             size = [i for i in self.sizes if i.name == instanceType][0]
         except IndexError:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified instance type: %s" % instanceType)
+            raise Exceptions.ParameterNotFoundException(
+                "Couldn't find the specified instance type: %s" % instanceType)
         try:
             image = [i for i in self.images if i.id == imageId][0]
         except IndexError:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
+            raise Exceptions.ParameterNotFoundException(
+                "Couldn't find the specified image: %s" % imageId)
 
         if self.isWindows():
             instance = self._thread_local.driver.create_node(
@@ -125,6 +150,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         for instance in instances:
             driver = self._getDriver(self.user_info)
             tasksRunnner.run_task(driver.destroy_node, (instance,))
+
         tasksRunnner.wait_tasks_finished()
 
     def stopDeployment(self):
@@ -146,8 +172,7 @@ class CloudStackClientCloud(BaseCloudConnector):
                           secure=secure,
                           host=url.hostname,
                           port=url.port,
-                          path=url.path
-                          );
+                          path=url.path)
 
     def vmGetPassword(self, vm_name):
         vm = self.getVm(vm_name)
@@ -169,9 +194,11 @@ class CloudStackClientCloud(BaseCloudConnector):
         kp_name = 'ss-key-%i' % int(time.time())
         public_key = self._getPublicSshKey(user_info)
         try:
-            kp = self._thread_local.driver.ex_import_keypair_from_string(kp_name, public_key)
+            kp = self._thread_local.driver.ex_import_keypair_from_string(
+                kp_name, public_key)
         except Exception as e:
-            raise Exceptions.ExecutionException('Cannot import the public key. Reason: %s' % e)
+            raise Exceptions.ExecutionException('Cannot import the public key. '
+                                                'Reason: %s' % e)
         kp_name = kp.get('keyName', None)
         self._userInfoSetKeypairName(user_info, kp_name)
         return kp_name
@@ -202,4 +229,9 @@ class CloudStackClientCloud(BaseCloudConnector):
             m = re.search('[a-zA-Z]([a-zA-Z0-9-]*[a-zA-Z0-9]+)?', newname)
             return m.string[m.start():m.end()]
         except:
-            raise Exceptions.ExecutionException('Cannot handle the instance name "%s". Instance name can contain ASCII letters "a" through "z", the digits "0" through "9", and the hyphen ("-"), must be between 1 and 63 characters long, and can\'t start or end with "-" and can\'t start with digit' % name)
+            raise Exceptions.ExecutionException(
+                'Cannot handle the instance name "%s". Instance name can '
+                'contain ASCII letters "a" through "z", the digits "0" '
+                'through "9", and the hyphen ("-"), must be between 1 and 63 '
+                'characters long, and can\'t start or end with "-" '
+                'and can\'t start with digit' % name)

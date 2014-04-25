@@ -1,9 +1,25 @@
 """
-In the waiting of libcloud 0.13.3 this patch correspond to these commits:
- - https://github.com/apache/libcloud/commit/f798a248604c4ca08bbb658b71e7a9cfceedf56e
- - https://github.com/apache/libcloud/commit/2be6b006928639917cbda1641a98eeb5a13040a3
- - https://github.com/apache/libcloud/commit/f15bc5ed2ecef63db51dbebdbc8654e09e296483
+ SlipStream Client
+ =====
+ Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ =====
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
 """
+
+# In the waiting of libcloud 0.13.3 this patch correspond to these commits:
+# - https://github.com/apache/libcloud/commit/f798a248604c4ca08bbb658b71e7a9cfceedf56e
+# - https://github.com/apache/libcloud/commit/2be6b006928639917cbda1641a98eeb5a13040a3
+# - https://github.com/apache/libcloud/commit/f15bc5ed2ecef63db51dbebdbc8654e09e296483
 
 import os
 import base64

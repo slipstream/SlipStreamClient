@@ -254,14 +254,14 @@ class BaseCloudConnector(object):
         for node_info in nodes_info:
             self._startNodeInstancesAndClients(user_info, node_info)
 
-        self._waitNodesStartupTasksFinshed()
+        self._waitNodesStartupTasksFinished()
 
     def _startNodeInstancesAndClients(self, user_info, node_info):
         for node_number in range(1, int(node_info['multiplicity']) + 1):
             self.tasksRunnner.run_task(self._startNodeInstanceAndClient,
                                        (user_info, node_info, node_number))
 
-    def _waitNodesStartupTasksFinshed(self):
+    def _waitNodesStartupTasksFinished(self):
         self.tasksRunnner.wait_tasks_finished()
 
     def _startNodeInstanceAndClient(self, user_info, node_info, node_number):
