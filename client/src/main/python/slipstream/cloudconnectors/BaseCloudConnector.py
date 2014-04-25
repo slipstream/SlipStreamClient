@@ -24,13 +24,15 @@ import random
 import string
 from threading import local
 
-from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
+from slipstream.listeners.SlipStreamClientListenerAdapter import \
+    SlipStreamClientListenerAdapter
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
 from slipstream.Client import Client
 from slipstream.util import deprecated
 from slipstream import util, SlipStreamHttpClient
 from slipstream.utils.ssh import remoteRunScriptNohup, \
-    waitUntilSshCanConnectOrTimeout, remoteRunScript, remoteInstallPackages, generateKeyPair
+    waitUntilSshCanConnectOrTimeout, remoteRunScript, remoteInstallPackages, \
+    generateKeyPair
 from slipstream.utils.tasksrunner import TasksRunner
 from slipstream.NodeDecorator import NodeDecorator
 import slipstream.exceptions.Exceptions as Exceptions
@@ -42,9 +44,9 @@ from winrm.exceptions import WinRMTransportError
 class BaseCloudConnector(object):
     TIMEOUT_CONNECT = 10 * 60
 
-    DISK_VOLATILE_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + 
+    DISK_VOLATILE_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX +
                                     '.volatile')
-    DISK_PERSISTENT_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + 
+    DISK_PERSISTENT_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX +
                                       '.persistent')
 
     RUN_BOOTSTRAP_SCRIPT = False
@@ -95,7 +97,7 @@ class BaseCloudConnector(object):
         self._thread_local.isWindows = False
 
     def setCapabilities(self, vapp=False, build_in_single_vapp=False,
-                        contextualization=False, 
+                        contextualization=False,
                         windows_contextualization=False,
                         generate_password=False,
                         direct_ip_assignment=False,
@@ -285,7 +287,7 @@ class BaseCloudConnector(object):
 
         if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not self.isWindows():
             self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
-                                                       nodename, 
+                                                       nodename,
                                                        self.vmGetIp(vm))
         elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) and self.isWindows():
             self._launchWindowsBootstrapScript(image_info, nodename,
@@ -465,7 +467,7 @@ class BaseCloudConnector(object):
 
     def _getCloudInstanceName(self):
         return self.cloud
-    
+
     def _getSshCredentials(self, imageInfo, user_info, vm_name=None):
         username, password = self._getSshUsernamePassword(imageInfo, vm_name)
         if password:
@@ -579,7 +581,7 @@ class BaseCloudConnector(object):
         self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip, output))
 
     def _getWinrm(self, ip, username, password):
-        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext', 
+        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext',
                                username=username, password=password)
 
     def _runScriptWithWinrm(self, winrm, script):
@@ -589,16 +591,16 @@ class BaseCloudConnector(object):
             if command:
                 commands += command + '& '
         commands += 'echo "Bootstrap Finished"'
-        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId, 
+        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId,
                                                                runAndContinue=True)
-        #winrm.close_shell(shellId)
+        # winrm.close_shell(shellId)
         return stdout, stderr, returnCode
 
     def _waitCanConnectWithWinrmOrAbort(self, winrm):
         try:
             self._waitCanConnectWithWinrmOrTimeout(winrm, self.TIMEOUT_CONNECT)
         except Exception as ex:
-            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint, 
+            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint,
                                                                                  str(ex)))
 
     def _waitCanConnectWithWinrmOrTimeout(self, winrm, timeout):
@@ -635,13 +637,13 @@ class BaseCloudConnector(object):
 
     def getObfuscationScript(self, orchestratorPublicKey, username, userInfo=None):
         command = "#!/bin/bash -xe\n"
-        #command += "sed -r -i 's/# *(account +required +pam_access\\.so).*/\\1/' /etc/pam.d/login\n"
-        #command += "echo '-:ALL:LOCAL' >> /etc/security/access.conf\n"
+        # command += "sed -r -i 's/# *(account +required +pam_access\\.so).*/\\1/' /etc/pam.d/login\n"
+        # command += "echo '-:ALL:LOCAL' >> /etc/security/access.conf\n"
         command += "sed -i -r '/^[\\t ]*RSAAuthentication/d;/^[\\t ]*PubkeyAuthentication/d;/^[\\t ]*PasswordAuthentication/d' /etc/ssh/sshd_config\n"
         command += "echo 'RSAAuthentication yes\nPubkeyAuthentication yes\nPasswordAuthentication no\n' >> /etc/ssh/sshd_config\n"
-        #command += "sed -i -r 's/^#?[\\t ]*(RSAAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
-        #command += "sed -i -r 's/^#?[\\t ]*(PubkeyAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
-        #command += "sed -i -r 's/^#?[\t ]*(PasswordAuthentication[\\t ]+)((yes)|(no))/\\1no/' /etc/ssh/sshd_config\n"
+        # command += "sed -i -r 's/^#?[\\t ]*(RSAAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
+        # command += "sed -i -r 's/^#?[\\t ]*(PubkeyAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
+        # command += "sed -i -r 's/^#?[\t ]*(PasswordAuthentication[\\t ]+)((yes)|(no))/\\1no/' /etc/ssh/sshd_config\n"
         command += "umask 077\n"
         command += "mkdir -p ~/.ssh\n"
         if userInfo:
@@ -655,7 +657,7 @@ class BaseCloudConnector(object):
     def _getPublicSshKey(self, userInfo):
         return userInfo.get_general('ssh.public.key') or ''
 
-    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None, 
+    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
                             username=None):
         script = ''
         addEnvironmentVariableCommand = ''
@@ -711,10 +713,10 @@ class BaseCloudConnector(object):
         command += 'powershell -Command "[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}; $wc = New-Object System.Net.WebClient; $wc.Headers.Add(\'User-Agent\',\'PowerShell\'); $wc.DownloadFile(\'%(bootstrapUrl)s\', $env:temp+\'\\%(bootstrap)s\')" > %(reports)s\\%(nodename)s.slipstream.log 2>&1\n'
         command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
-        
+
         password = ''
         if not self.hasCapability(self.CAPABILITY_GENERATE_PASSWORD):
-            password = ''.join(random.choice(string.ascii_letters + string.digits) 
+            password = ''.join(random.choice(string.ascii_letters + string.digits)
                                for _ in range(10))
             command += 'set pass=%(password)s\n'
             command += 'net user %(username)s %%pass%%\n'
@@ -727,7 +729,7 @@ class BaseCloudConnector(object):
             command += 'del tmp.txt\n'
             command += 'ss-set %%nodename%%.%%index%%:%%cloudservice%%.login.password %%pass%%\n'
 
-        #command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
+        # command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1"\n'
         return command % {
             'bootstrap': bootstrap,
