@@ -307,6 +307,8 @@ class BaseCloudConnector(object):
         pass
 
     def _getCloudSpecificData(self, node_info, node_number, nodename):
+        # TODO: Consider providing user_info as well. Current use-case is
+        #       cloud-init based context in OCCI connector.
         return None
 
     def _waitAndGetInstanceIpAddress(self, vm):
