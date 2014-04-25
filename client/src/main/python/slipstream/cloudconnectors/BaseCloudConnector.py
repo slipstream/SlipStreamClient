@@ -42,9 +42,9 @@ from winrm.exceptions import WinRMTransportError
 class BaseCloudConnector(object):
     TIMEOUT_CONNECT = 10 * 60
 
-    DISK_VOLATILE_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + 
+    DISK_VOLATILE_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX +
                                     '.volatile')
-    DISK_PERSISTENT_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + 
+    DISK_PERSISTENT_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX +
                                       '.persistent')
 
     RUN_BOOTSTRAP_SCRIPT = False
@@ -95,7 +95,7 @@ class BaseCloudConnector(object):
         self._thread_local.isWindows = False
 
     def setCapabilities(self, vapp=False, build_in_single_vapp=False,
-                        contextualization=False, 
+                        contextualization=False,
                         windows_contextualization=False,
                         generate_password=False,
                         direct_ip_assignment=False,
@@ -252,14 +252,14 @@ class BaseCloudConnector(object):
         for node_info in nodes_info:
             self._startNodeInstancesAndClients(user_info, node_info)
 
-        self._waitNodesStartupTasksFinshed()
+        self._waitNodesStartupTasksFinished()
 
     def _startNodeInstancesAndClients(self, user_info, node_info):
         for node_number in range(1, int(node_info['multiplicity']) + 1):
             self.tasksRunnner.run_task(self._startNodeInstanceAndClient,
                                        (user_info, node_info, node_number))
 
-    def _waitNodesStartupTasksFinshed(self):
+    def _waitNodesStartupTasksFinished(self):
         self.tasksRunnner.wait_tasks_finished()
 
     def _startNodeInstanceAndClient(self, user_info, node_info, node_number):
@@ -285,7 +285,7 @@ class BaseCloudConnector(object):
 
         if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not self.isWindows():
             self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
-                                                       nodename, 
+                                                       nodename,
                                                        self.vmGetIp(vm))
         elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) and self.isWindows():
             self._launchWindowsBootstrapScript(image_info, nodename,
@@ -465,7 +465,7 @@ class BaseCloudConnector(object):
 
     def _getCloudInstanceName(self):
         return self.cloud
-    
+
     def _getSshCredentials(self, imageInfo, user_info, vm_name=None):
         username, password = self._getSshUsernamePassword(imageInfo, vm_name)
         if password:
@@ -579,7 +579,7 @@ class BaseCloudConnector(object):
         self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip, output))
 
     def _getWinrm(self, ip, username, password):
-        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext', 
+        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext',
                                username=username, password=password)
 
     def _runScriptWithWinrm(self, winrm, script):
@@ -589,7 +589,7 @@ class BaseCloudConnector(object):
             if command:
                 commands += command + '& '
         commands += 'echo "Bootstrap Finished"'
-        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId, 
+        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId,
                                                                runAndContinue=True)
         #winrm.close_shell(shellId)
         return stdout, stderr, returnCode
@@ -598,7 +598,7 @@ class BaseCloudConnector(object):
         try:
             self._waitCanConnectWithWinrmOrTimeout(winrm, self.TIMEOUT_CONNECT)
         except Exception as ex:
-            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint, 
+            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint,
                                                                                  str(ex)))
 
     def _waitCanConnectWithWinrmOrTimeout(self, winrm, timeout):
@@ -655,7 +655,7 @@ class BaseCloudConnector(object):
     def _getPublicSshKey(self, userInfo):
         return userInfo.get_general('ssh.public.key') or ''
 
-    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None, 
+    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
                             username=None):
         script = ''
         addEnvironmentVariableCommand = ''
@@ -711,10 +711,10 @@ class BaseCloudConnector(object):
         command += 'powershell -Command "[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}; $wc = New-Object System.Net.WebClient; $wc.Headers.Add(\'User-Agent\',\'PowerShell\'); $wc.DownloadFile(\'%(bootstrapUrl)s\', $env:temp+\'\\%(bootstrap)s\')" > %(reports)s\\%(nodename)s.slipstream.log 2>&1\n'
         command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
-        
+
         password = ''
         if not self.hasCapability(self.CAPABILITY_GENERATE_PASSWORD):
-            password = ''.join(random.choice(string.ascii_letters + string.digits) 
+            password = ''.join(random.choice(string.ascii_letters + string.digits)
                                for _ in range(10))
             command += 'set pass=%(password)s\n'
             command += 'net user %(username)s %%pass%%\n'

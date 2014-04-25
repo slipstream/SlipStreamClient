@@ -24,13 +24,15 @@ def get_connector_module_name(configHolder):
     try:
         return getattr(configHolder, CONFIGPARAM_CONNECTOR_MODULE_NAME)
     except AttributeError:
-        raise NotFoundError(('Failed to find module name for connector: %s\n' % configHolder.cloud) +
-                            "The connector module name should be defined in " +
-                            ("configuration file as '%s' parameter." % CONFIGPARAM_CONNECTOR_MODULE_NAME))
+        raise NotFoundError("Failed to find module name for connector: %s\n"
+                            "The connector module name should be defined in "
+                            "configuration file as '%s' parameter." % (
+                                configHolder.cloud,
+                                CONFIGPARAM_CONNECTOR_MODULE_NAME))
 
 
 class CloudConnectorFactory(object):
     @staticmethod
     def createConnector(configHolder):
-        return loadModule(get_connector_module_name(configHolder)). \
-            getConnector(configHolder)
+        mod = loadModule(get_connector_module_name(configHolder))
+        return mod.getConnector(configHolder)
