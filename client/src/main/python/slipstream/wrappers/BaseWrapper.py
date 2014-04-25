@@ -76,7 +76,7 @@ class BaseWrapper(object):
         return self.clientSlipStream.getRuntimeParameter(key)
 
     def isAbort(self):
-        key = NodeDecorator.globalNamspacePrefix + NodeDecorator.ABORT_KEY
+        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
         try:
             value = self.clientSlipStream.getRuntimeParameter(key, True)
         except NotYetSetException:
