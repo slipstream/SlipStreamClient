@@ -43,7 +43,7 @@ class Client(object):
         self.timeout = 30
         self.verboseLevel = 1
         self.verboseThreshold = 1
-        configHolder.assgnConfigAndOptions(self)
+        configHolder.assignConfigAndOptions(self)
         self.context = configHolder.context
         self.httpClient = SlipStreamHttpClient(configHolder)
 

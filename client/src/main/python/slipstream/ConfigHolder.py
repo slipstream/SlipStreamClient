@@ -85,7 +85,7 @@ class ConfigHolder(object):
         self.assignOptions(obj)
         self.assignContext(obj)
 
-    def assgnConfigAndOptions(self, obj):
+    def assignConfigAndOptions(self, obj):
         self.assignConfig(obj)
         self.assignOptions(obj)
 
