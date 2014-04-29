@@ -538,6 +538,10 @@ class BaseCloudConnector(object):
 
     def _getRunId(self):
         return os.environ.get('SLIPSTREAM_DIID', '???')
+    
+    @staticmethod
+    def isStartOrchestrator():
+        return os.environ.get('CLI_ORCHESTRATOR', 'False') == 'True'
 
     def _secureSshAccessAndRunBootstrapScript(self, userInfo, image_info, nodename, ip):
         username, password = self._getSshUsernamePassword(image_info, nodename)
@@ -714,6 +718,11 @@ class BaseCloudConnector(object):
             username = 'administrator'
         bootstrap = 'slipstream.bootstrap'
         reportdir = Client.WINDOWS_REPORTSDIR
+        
+        targetScript = ''
+        if self.isStartOrchestrator():
+            targetScript = 'slipstream-orchestrator'
+        
         command = 'mkdir %(reports)s\n'
         command += 'powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'http://www.python.org/ftp/python/2.7.4/python-2.7.4.msi\', $env:temp+\'\\python.msi\')"\n'
         command += 'start /wait msiexec /i %%TMP%%\\python.msi /qn /quiet /norestart /log log.txt TARGETDIR=C:\\Python27\\ ALLUSERS=1\n'
@@ -737,26 +746,34 @@ class BaseCloudConnector(object):
             command += 'del tmp.txt\n'
             command += 'ss-set %%nodename%%.%%index%%:%%cloudservice%%.login.password %%pass%%\n'
 
-        # command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
-        command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1"\n'
+        #command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
+        command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s %(targetScript)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
+
         return command % {
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
             'reports': reportdir,
             'nodename': nodename,
             'username': username,
-            'password': password
+            'password': password,
+            'targetScript': targetScript
         }
 
     def _buildSlipStreamBootstrapCommandForLinux(self, nodename):
         bootstrap = os.path.join(tempfile.gettempdir(), 'slipstream.bootstrap')
         reportdir = Client.REPORTSDIR
-        command = 'mkdir -p %(reports)s; wget --no-check-certificate --secure-protocol=SSLv3 -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+        
+        targetScript = ''
+        if self.isStartOrchestrator():
+            targetScript = 'slipstream-orchestrator'
+        
+        command = 'mkdir -p %(reports)s; wget --no-check-certificate --secure-protocol=SSLv3 -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
         return command % {
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
             'reports': reportdir,
-            'nodename': nodename
+            'nodename': nodename,
+            'targetScript': targetScript
         }
 
     def _waitCanConnectWithSshOrAbort(self, host, username='', password='', sshKey=None):
