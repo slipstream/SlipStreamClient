@@ -162,7 +162,7 @@ def _setInstallCommandAndDistro():
         for pkgmngr in ['apt-get', 'yum']:
             try:
                 subprocess.check_call([pkgmngr, '-h'], stdout=subprocess.PIPE)
-            except subprocess.CalledProcessError:
+            except (subprocess.CalledProcessError, OSError):
                 pass
             else:
                 # TODO: on Ubuntu 10.04 there is no subprocess.check_output()!!!
