@@ -142,14 +142,8 @@ class CloudWrapper(BaseWrapper):
     def _needToStopImages(self, ignore_on_success_run_forever=False):
         runParameters = self.getRunParameters()
 
-        try:
-            onErrorRunForever = runParameters.get('General.On Error Run Forever')
-        except KeyError:
-            onErrorRunForever = 'false'
-        try:
-            onSuccessRunForever = runParameters.get('General.On Success Run Forever')
-        except KeyError:
-            onSuccessRunForever = 'false'
+        onErrorRunForever = runParameters.get('General.On Error Run Forever', 'false')
+        onSuccessRunForever = runParameters.get('General.On Success Run Forever', 'false')
 
         stop = True
         if self.isAbort():

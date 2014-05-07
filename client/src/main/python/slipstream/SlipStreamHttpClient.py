@@ -388,7 +388,8 @@ class DomExtractor(object):
     def extractRunParametersFromRun(run_dom):
         parameters = {}
         for node in run_dom.findall('parameters/entry/parameter'):
-            parameters[node.get('name')] = node.find('value').text
+            value = node.find('value')
+            parameters[node.get('name')] = value.text if value is not None else None
         return parameters
 
     @staticmethod
