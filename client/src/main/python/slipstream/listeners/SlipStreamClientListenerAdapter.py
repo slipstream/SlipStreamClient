@@ -24,7 +24,7 @@ class SlipStreamClientListenerAdapter(SimplePrintListener):
     def __init__(self, slipStremClient):
         super(SlipStreamClientListenerAdapter, self).__init__()
         self._client = slipStremClient
-        self._parameterGlobal = NodeDecorator.globalNamspacePrefix + \
+        self._parameterGlobal = NodeDecorator.globalNamespacePrefix + \
             NodeDecorator.stateMessagePropertyName
         self._parameterSelf = slipStremClient.nodename + \
             NodeDecorator.NODE_PROPERTY_SEPARATOR + \

@@ -23,9 +23,9 @@ KEY_RUN_CATEGORY = 'run_category'
 
 class NodeDecorator(object):
     # Execution instance property namespace and separator
-    globalNamspaceName = 'ss'
+    globalNamespaceName = 'ss'
     NODE_PROPERTY_SEPARATOR = ':'
-    globalNamspacePrefix = globalNamspaceName + NODE_PROPERTY_SEPARATOR
+    globalNamespacePrefix = globalNamespaceName + NODE_PROPERTY_SEPARATOR
 
     ABORT_KEY = 'abort'
 
@@ -34,9 +34,9 @@ class NodeDecorator(object):
     nodeMultiplicityStartIndex = '1'
 
     # Counter names
-    initCounterName = globalNamspacePrefix + 'initCounter'
-    finalizeCounterName = globalNamspacePrefix + 'finalizeCounter'
-    terminateCounterName = globalNamspacePrefix + 'terminateCounter'
+    initCounterName = globalNamespacePrefix + 'initCounter'
+    finalizeCounterName = globalNamespacePrefix + 'finalizeCounter'
+    terminateCounterName = globalNamespacePrefix + 'terminateCounter'
 
     # Orchestrator name
     orchestratorName = 'orchestrator'
@@ -46,7 +46,7 @@ class NodeDecorator(object):
     defaultMachineNamePrefix = MACHINE_NAME + NODE_PROPERTY_SEPARATOR
 
     # List of reserved and special node names
-    reservedNodeNames = [globalNamspaceName, orchestratorName, MACHINE_NAME]
+    reservedNodeNames = [globalNamespaceName, orchestratorName, MACHINE_NAME]
 
     # State names
     STATE_KEY = 'state'
