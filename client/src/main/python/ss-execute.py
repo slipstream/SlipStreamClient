@@ -162,7 +162,7 @@ class MainProgram(CommandBase):
                 print("CRITICAL - Unhandled error: %s." % (str(ex).split('\n')[0]))
                 sys.exit(RC_CRITICAL_NAGIOS)
             else:
-                raise ex
+                raise
 
     def _wait_run_and_handle_failures(self, run_url):
         '''Wait for final state of the run. Handle failures and print 
@@ -193,7 +193,7 @@ class MainProgram(CommandBase):
                     str(ex).split('\n')[0], run_url))
                 traceback.print_exc()
             else:
-                raise ex
+                raise
         else:
             print('OK - State: %s. Run: %s' % (final_state, run_url))
             rc = RC_SUCCESS
@@ -256,13 +256,13 @@ class MainProgram(CommandBase):
                 state = self.client.getRunState(run_uuid, ignoreAbort=False)
             except AbortException as ex:
                 ex.state = state
-                raise ex
+                raise
             if state == final_state:
                 return
             if not self.options.nagios:
                 curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
                 print("[%s] State: %s" % (curr_time, state))
-        time_exc = TimeoutException()
+        time_exc = TimeoutException('Timed out.')
         time_exc.state = state
         raise time_exc
 
