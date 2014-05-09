@@ -27,8 +27,8 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         super(OrchestratorImageBuildExecutor, self).__init__(wrapper,
                                                              configHolder)
 
-    def onInitializing(self):
-        super(OrchestratorImageBuildExecutor, self).onInitializing()
+    def onProvisioning(self):
+        super(OrchestratorImageBuildExecutor, self).onProvisioning()
 
         util.printStep('Starting instance')
         try:
@@ -44,8 +44,8 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         util.printStep('Publishing instance initialization information')
         self.wrapper.publishDeploymentInitializationInfo()
 
-    def onRunning(self):
-        super(OrchestratorImageBuildExecutor, self).onRunning()
+    def onExecuting(self):
+        super(OrchestratorImageBuildExecutor, self).onExecuting()
         if self.wrapper.isAbort():
             util.printError('Abort set, skipping Running')
             self._advanceMachine()
@@ -63,17 +63,17 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         finally:
             self._advanceMachine()
 
-    def onSendingFinalReport(self):
-        super(OrchestratorImageBuildExecutor, self).onSendingFinalReport()
+    def onSendingReports(self):
+        super(OrchestratorImageBuildExecutor, self).onSendingReports()
+        self._advanceMachine()
+        
+    def onReady(self):
         self._advanceMachine()
 
     def onFinalizing(self):
         super(OrchestratorImageBuildExecutor, self).onFinalizing()
         self._killCreator()
         self._advanceMachine()
-
-    def onTerminal(self):
-        super(OrchestratorImageBuildExecutor, self).onTerminal()
         self._killItself(True)
 
     def _killCreator(self):

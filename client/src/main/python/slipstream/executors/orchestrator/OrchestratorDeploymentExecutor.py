@@ -27,8 +27,8 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         super(OrchestratorDeploymentExecutor, self).__init__(wrapper,
                                                              configHolder)
 
-    def onInitializing(self):
-        util.printAction('Initializing')
+    def onProvisioning(self):
+        util.printAction('Provisioning')
         util.printStep('Starting instances')
         try:
             self.wrapper.startImages()
@@ -41,12 +41,12 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         util.printStep('Publishing instance initialization information')
         self.wrapper.publishDeploymentInitializationInfo()
 
-    def onDetached(self):
+    def onReady(self):
         self._killItself()
-        super(OrchestratorDeploymentExecutor, self).onDetached()
+        super(OrchestratorDeploymentExecutor, self).onReady()
 
-    def onTerminal(self):
-        util.printAction('Terminating')
+    def onFinalizing(self):
+        util.printAction('Finalizing')
         util.printStep('Stopping instances')
 
         try:
@@ -60,6 +60,6 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         util.printStep('Publishing instance termination information')
         self.wrapper.publishDeploymentTerminateInfo()
 
-        super(OrchestratorDeploymentExecutor, self).onTerminal()
+        super(OrchestratorDeploymentExecutor, self).onFinalizing()
 
         self._killItself()

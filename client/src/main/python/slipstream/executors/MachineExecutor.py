@@ -81,17 +81,17 @@ class MachineExecutor(object):
                 time.sleep(timeSleep)
         raise TimeoutException('Timeout reached waiting for next state, current state: %s' % state)
 
-    def onInactive(self):
+    def onInitializing(self):
         pass
 
-    def onInitializing(self):
-        util.printAction('Initializing')
+    def onProvisioning(self):
+        util.printAction('Provisioning')
 
-    def onRunning(self):
-        util.printAction('Running')
+    def onExecuting(self):
+        util.printAction('Executing')
 
-    def onSendingFinalReport(self):
-        util.printAction('Sending report')
+    def onSendingReports(self):
+        util.printAction('Sending reports')
         reportFileName = '%s_report_%s.tgz' % (
             self._nodename(), util.toTimeInIso8601NoColon(time.time()))
         reportFileName = os.path.join(tempfile.gettempdir(), reportFileName)
@@ -105,21 +105,19 @@ class MachineExecutor(object):
 
         self.wrapper.clientSlipStream.sendReport(reportFileName)
 
-    def _nodename(self):
-        return self.wrapper.nodename()
+    def onReady(self):
+        util.printAction('Ready')
 
     def onFinalizing(self):
         util.printAction('Finalizing')
 
-    def onTerminal(self):
         if self.wrapper.isAbort():
             util.printError("Failed")
         else:
             util.printAction('Done!')
 
-    def onDetached(self):
-        util.printAction('Detached')
-        raise TerminalStateException('Detached')
+    def _nodename(self):
+        return self.wrapper.nodename()
 
     def _executeRaiseOnError(self, cmd):
         res = util.execute(cmd.split(' '))

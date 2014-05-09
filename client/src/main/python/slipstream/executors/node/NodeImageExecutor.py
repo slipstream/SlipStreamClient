@@ -28,7 +28,7 @@ class NodeImageExecutor(MachineExecutor):
     def __init__(self, wrapper, configHolder):
         super(NodeImageExecutor, self).__init__(wrapper, configHolder)
 
-    def onInitializing(self):
+    def onProvisioning(self):
         util.printAction('Node image creation sequence')
         util.printDetail("Nothing to do from within the image, "
                          "the orchestrator will do the work.", 0)

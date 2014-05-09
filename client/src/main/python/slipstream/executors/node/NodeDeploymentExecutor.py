@@ -37,8 +37,8 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
         self.targets = {}
 
-    def onInitializing(self):
-        util.printAction('Initializing')
+    def onProvisioning(self):
+        util.printAction('Provisioning')
 
         self._addSshPubkeyIfNeeded()
 
@@ -52,11 +52,11 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail('Target: %s' % target)
             util.printDetail('Script:\n%s\n' % script[0])
 
-    def onRunning(self):
-        util.printAction('Running')
+    def onExecuting(self):
+        util.printAction('Executing')
         self._executeTarget('execute')
 
-    def onSendingFinalReport(self):
+    def onSendingReports(self):
         util.printAction('Sending report')
         try:
             self._executeTarget('report')
@@ -66,7 +66,7 @@ class NodeDeploymentExecutor(MachineExecutor):
                              verboseThreshold=util.VERBOSE_LEVEL_NORMAL)
             raise
         finally:
-            super(NodeDeploymentExecutor, self).onSendingFinalReport()
+            super(NodeDeploymentExecutor, self).onSendingReports()
 
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)
