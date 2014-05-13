@@ -165,16 +165,17 @@ class MainProgram(CommandBase):
                 raise
 
     def _wait_run_and_handle_failures(self, run_url):
-        '''Wait for final state of the run. Handle failures and print 
-        respective messages. Return global exit code depending if this is 
+        '''Wait for final state of the run. Handle failures and print
+        respective messages. Return global exit code depending if this is
         Nagios check or not.
         '''
         rc = self._get_critical_rc()
-        final_state = 'Terminal'
+        final_states = ['Terminal', 'Detached']
 
         try:
-            self._wait_run_in_final_state(run_url, self.options.wait,
-                                          final_state)
+            final_state = self._wait_run_in_final_state(run_url,
+                                                        self.options.wait,
+                                                        final_states)
         except AbortException as ex:
             if self.options.nagios:
                 print('CRITICAL - %s. State: %s. Run: %s' % (
@@ -231,7 +232,7 @@ class MainProgram(CommandBase):
         nodename, key = parts
         return 'parameter--node--' + nodename + '--' + key
 
-    def _wait_run_in_final_state(self, run_url, waitmin, final_state):
+    def _wait_run_in_final_state(self, run_url, waitmin, final_states):
         '''Return on reaching final state.
         On timeout raise TimeoutException with the last state attribute set.
         On aborted Run raise AbortException with the last state attribute set.
@@ -257,8 +258,8 @@ class MainProgram(CommandBase):
             except AbortException as ex:
                 ex.state = state
                 raise
-            if state == final_state:
-                return
+            if state in final_states:
+                return state
             if not self.options.nagios:
                 curr_time = time.strftime("%Y-%M-%d-%H:%M:%S UTC", time.gmtime())
                 print("[%s] State: %s" % (curr_time, state))
