@@ -24,6 +24,7 @@ import tempfile
 import time
 from contextlib import closing
 import socket
+import exceptions
 
 import paramiko
 from paramiko import SSHClient
@@ -260,10 +261,11 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
     kind = password and 'api' or 'cli'
     time_stop = time.time() + timeout
     timeout_connect = 3
-    auth_failures = 5
+    auth_failures = 15
     while (time_stop - time.time()) >= 0:
         kwargs_ = copy.copy(kwargs)
         try:
+            print kind
             if True == globals()['_ssh_can_connect_' + kind](host, user,
                                                              sshKey=sshKey, password=password,
                                                              timeout=timeout_connect, **kwargs_):
@@ -293,6 +295,9 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
             _printDetail(str(ex), kwargs_)
             time.sleep(5)
         except paramiko.SSHException as ex:
+            _printDetail(str(ex), kwargs_)
+            time.sleep(5)
+        except exceptions.EOFError as ex:
             _printDetail(str(ex), kwargs_)
             time.sleep(5)
 

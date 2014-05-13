@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -8,7 +9,18 @@ from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.cloudconnectors.cloudstack.CloudStackCommand import CloudStackCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
+from slipstream.cloudconnectors.cloudstack.CloudStackAdvancedZoneClientCloud import CloudStackAdvancedZoneClientCloud
 
+
+def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
+                        username=None):
+    return os.environ['context_script']
+
+def publishVmInfo(self, nodename, vm, image_info):
+    pass
+
+def _generateNodeName(self, nodename, node_number):
+    return nodename
 
 class MainProgram(CloudStackCommand):
 
@@ -28,9 +40,13 @@ class MainProgram(CloudStackCommand):
                                help='Instance Type',
                                default=None, metavar='TYPE')
 
-        self.parser.add_option('--network', dest='network',
-                               help='Network (public or private)',
-                               default='public', metavar='NETWORK')
+        self.parser.add_option('--network-type', dest='network_type',
+                               help='Network type (public or private)',
+                               default='public', metavar='NETWORK-TYPE')
+        
+        self.parser.add_option('--networks', dest='networks',
+                               help='Networks (comma separated)',
+                               default='', metavar='NETWORKS')
 
         self.parser.add_option('--public-key', dest='public_key',
                                help='Public key in the OpenSSH format',
@@ -42,13 +58,16 @@ class MainProgram(CloudStackCommand):
 
         self.parser.add_option('--context-script', dest='context_script',
                                help='Context script',
-                               default=None, metavar='SCRIPT')
+                               default='', metavar='SCRIPT')
+        
+        self.parser.add_option('--zone-type', dest='zone_type',
+                               help='Type of the zone (Basic [default], Advanced)',
+                               default='Basic', metavar='ZONE-TYPE')
 
     def checkOptions(self):
         if not all((self.options.imageId, self.options.instance_name,
                     self.options.instance_type, self.options.public_key)):
-            self.parser.error("Some options were not given values. "
-                              "All options are mandatory.")
+            self.parser.error("Some mandatory options were not given values.")
 
     def _setUserInfo(self):
         super(MainProgram, self)._setUserInfo()
@@ -57,22 +76,27 @@ class MainProgram(CloudStackCommand):
     def doWork(self):
         ss_node = {
             'nodename': self.options.instance_name,
+            'multiplicity': 1,
             'image': {
                 'attributes': {
-                    'imageId': self.options.imageId
+                    'imageId': self.options.imageId,
+                    'platform' : 'linux'
                 },
                 'cloud_parameters': {
                     'cloudstack': {
                         'cloudstack.instance.type': self.options.instance_type,
-                        'cloudstack.security.groups': self.options.security_groups
+                        'cloudstack.security.groups': self.options.security_groups,
+                        'cloudstack.networks': self.options.networks
                     },
                     'Cloud': {
-                        'network': self.options.network
+                        'network': self.options.network_type
                     }
                 },
                 'extra_disks': {}
             },
         }
+        os.environ['context_script'] = self.options.context_script or ''
+        
         with nostdouterr():
             node = self._startImage(ss_node)
         print '%s, %s' % (node['id'], node['ip'])
@@ -80,19 +104,22 @@ class MainProgram(CloudStackCommand):
     def _startImage(self, ss_node):
         nodename = ss_node['nodename']
 
-        cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0,
-                                                         KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                                context={'foo': 'bar'}))
-        cc.initialization(self.userInfo)
-        try:
-            node = cc._startImage(self.userInfo,
-                                  cc._extractImageInfoFromNodeInfo(ss_node),
-                                  nodename, self.options.context_script)
-        finally:
-            cc.finalization(self.userInfo)
+        if self.options.zone_type.lower() == 'advanced':
+            cc = CloudStackAdvancedZoneClientCloud(ConfigHolder(options={'verboseLevel': 0,
+                                                                         KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
+                                                                         context={'foo': 'bar'}))
+        else:
+            cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0,
+                                                    KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
+                                                    context={'foo': 'bar'}))
 
-        return {'id': cc.vmGetId(node), 'ip': cc.vmGetIp(node)}
-
+        CloudStackClientCloud._getBootstrapScript = _getBootstrapScript
+        CloudStackClientCloud._generateNodeName = _generateNodeName
+        CloudStackClientCloud.publishVmInfo = publishVmInfo
+            
+        vms = cc.startNodesAndClients(self.userInfo, [ss_node])
+        vm = vms[0].itervalues().next()
+        return vm
 
 if __name__ == "__main__":
     try:

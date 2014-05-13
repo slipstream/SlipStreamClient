@@ -284,7 +284,7 @@ class BaseCloudConnector(object):
         if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
             vm = self._waitAndGetInstanceIpAddress(vm)
             self.addVm(nodename, vm, image_info)
-
+        
         if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not self.isWindows():
             self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
                                                        nodename,
@@ -784,7 +784,7 @@ class BaseCloudConnector(object):
                                             sshKey=sshKey,
                                             user=username, password=password)
         except Exception as ex:
-            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (host, str(ex)))
+            raise Exceptions.ExecutionException("Failed to connect to %s: %s, %s" % (host, type(ex), str(ex)))
 
     def _runScript(self, ip, username, script, password='', sshKey=None):
         return remoteRunScript(username, ip, script, sshKey=sshKey,
