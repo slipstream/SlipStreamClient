@@ -176,6 +176,7 @@
                                     <location>${project.build.directory}/client/sbin/</location>
                                     <includes>
                                         <include>cloudstack-*</include>
+                                        <include>openstack-*</include>
                                     </includes>
                                 </source>
                                 <source>
