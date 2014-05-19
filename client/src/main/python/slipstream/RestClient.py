@@ -85,18 +85,18 @@ class RestClient:
     localDiidFile = os.path.join(tmpdir, 'diid')
 
     # Execution instance property namespace and separator
-    globalNamspaceName = 'ss'
+    globalNamespaceName = 'ss'
     NODE_PROPERTY_SEPARATOR = ':'
-    globalNamspacePrefix = globalNamspaceName + NODE_PROPERTY_SEPARATOR
+    globalNamespacePrefix = globalNamespaceName + NODE_PROPERTY_SEPARATOR
 
     # Node multiplicity index separator - e.g. <nodename>.<index>:<prop>
     nodeMultiplicityIndexSeparator = '.'
     nodeMultiplicityStartIndex = '1'
 
     # Counter names
-    initCounterName = globalNamspacePrefix + 'initCounter'
-    finalizeCounterName = globalNamspacePrefix + 'finalizeCounter'
-    terminateCounterName = globalNamspacePrefix + 'terminateCounter'
+    initCounterName = globalNamespacePrefix + 'initCounter'
+    finalizeCounterName = globalNamespacePrefix + 'finalizeCounter'
+    terminateCounterName = globalNamespacePrefix + 'terminateCounter'
 
     # Orchestrator name
     orchestratorName = 'orchestrator'
@@ -106,7 +106,7 @@ class RestClient:
     defaultMachineNamePrefix = defaultMachineName + NODE_PROPERTY_SEPARATOR
 
     # List of reserved and special node names
-    reservedNodeNames = [globalNamspaceName, orchestratorName, defaultMachineName]
+    reservedNodeNames = [globalNamespaceName, orchestratorName, defaultMachineName]
 
     # State names
     STATE_KEY = 'state'
@@ -1157,7 +1157,7 @@ export PATH
 
     def _setState(self, state):
         self.state = state
-        self.setInfoSys(RestClient.globalNamspacePrefix + RestClient.STATE_KEY, state, ignoreAbort=True)
+        self.setInfoSys(RestClient.globalNamespacePrefix + RestClient.STATE_KEY, state, ignoreAbort=True)
         return
 
     def _setupCredentials(self):
@@ -1273,7 +1273,7 @@ export PATH
         """ Set the abort flag for both the global execution and the
             node speficif flag."""
         abort = 'abort'
-        globalAbort = RestClient.globalNamspacePrefix + abort
+        globalAbort = RestClient.globalNamespacePrefix + abort
 
         # Clear the flag if cancel
         if cancel:

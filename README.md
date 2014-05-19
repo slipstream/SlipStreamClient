@@ -8,3 +8,9 @@ for accessing SlipStream server.
 More information about the SlipStream can be found at: 
 http://sixsq.com/products/slipstream.html
 
+Install
+-----
+
+To install the client:
+
+```pip install slipstream-client```

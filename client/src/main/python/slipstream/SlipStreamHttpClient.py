@@ -213,7 +213,7 @@ class SlipStreamHttpClient(object):
 
     def _fail(self, message):
         self.setRuntimeParameter(
-            NodeDecorator.globalNamspacePrefix + NodeDecorator.ABORT_KEY, message)
+            NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
         self._uploadReport(self.runReportEndpoint, report)
@@ -231,7 +231,7 @@ class SlipStreamHttpClient(object):
 
     def getGlobalAbortMessage(self):
         url = '%s/%s%s' % (self.runInstanceEndpoint,
-                           NodeDecorator.globalNamspacePrefix,
+                           NodeDecorator.globalNamespacePrefix,
                            NodeDecorator.ABORT_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         _, content = self._httpGet(url, accept='text/plain')
@@ -293,7 +293,7 @@ class SlipStreamHttpClient(object):
         if not uuid and not self.diid:
             raise Exceptions.ExecutionException("Run ID should be provided "
                                                 "to get state.")
-        state_key = NodeDecorator.globalNamspacePrefix + NodeDecorator.STATE_KEY
+        state_key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
         self.runInstanceEndpoint = self.runEndpoint + '/' + (uuid or self.diid)
         return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
 

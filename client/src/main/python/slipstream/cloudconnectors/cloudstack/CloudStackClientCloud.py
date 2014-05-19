@@ -22,16 +22,15 @@ import time
 from urlparse import urlparse
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
-from slipstream.NodeDecorator import (RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT,
+from slipstream.NodeDecorator import (NodeDecorator, RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT,
                                       KEY_RUN_CATEGORY)
 from slipstream.utils.tasksrunner import TasksRunner
 import slipstream.util as util
 import slipstream.exceptions.Exceptions as Exceptions
 
+from libcloud.compute.base import KeyPair
 from libcloud.compute.types import Provider
 from libcloud.compute.providers import get_driver
-
-from slipstream.cloudconnectors.cloudstack.libcloudPatch import patchLibcloud
 
 import libcloud.security
 
@@ -50,7 +49,6 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     def __init__(self, configHolder):
         libcloud.security.VERIFY_SSL_CERT = False
-        patchLibcloud()
 
         super(CloudStackClientCloud, self).__init__(configHolder)
         self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
@@ -68,7 +66,10 @@ class CloudStackClientCloud(BaseCloudConnector):
         self.user_info = user_info
 
         if self.run_category == RUN_CATEGORY_DEPLOYMENT:
-            self._importKeypair(user_info)
+            try:
+                self._importKeypair(user_info)
+            except Exceptions.ExecutionException, e:
+                util.printError(e)
         elif self.run_category == RUN_CATEGORY_IMAGE:
             raise NotImplementedError('The run category "%s" is not yet '
                                       'implemented' % self.run_category)
@@ -76,7 +77,8 @@ class CloudStackClientCloud(BaseCloudConnector):
     def finalization(self, user_info):
         try:
             kp_name = self._userInfoGetKeypairName(user_info)
-            self._deleteKeypair(kp_name)
+            if kp_name:
+                self._deleteKeypair(kp_name)
         except:
             pass
 
@@ -99,8 +101,10 @@ class CloudStackClientCloud(BaseCloudConnector):
             keypair = self._userInfoGetKeypairName(user_info)
             contextualizationScript = cloudSpecificData or None
 
+        securityGroups = None
         security_groups = self._getCloudParameter(image_info, 'security.groups')
-        securityGroups = [x.strip() for x in security_groups.split(',') if x]
+        if security_groups:
+            securityGroups = [x.strip() for x in security_groups.split(',') if x]
 
         try:
             size = [i for i in self.sizes if i.name == instanceType][0]
@@ -176,6 +180,7 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     def vmGetPassword(self, vm_name):
         vm = self.getVm(vm_name)
+        print 'VM Password: ', vm['instance'].extra.get('password', None)
         return vm['instance'].extra.get('password', None)
 
     def vmGetIp(self, vm):
@@ -186,32 +191,35 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     def _getInstanceIpAddress(self, instance, ipType):
         if ipType.lower() == 'private':
-            return (len(instance.private_ip) != 0) and instance.private_ip[0] or ''
+            return (len(instance.private_ips) != 0) and instance.private_ips[0] or (len(instance.public_ips) != 0) and instance.public_ips[0] or ''
         else:
-            return (len(instance.public_ip) != 0) and instance.public_ip[0] or ''
+            return (len(instance.public_ips) != 0) and instance.public_ips[0] or (len(instance.private_ips) != 0) and instance.private_ips[0] or ''
 
     def _importKeypair(self, user_info):
         kp_name = 'ss-key-%i' % int(time.time())
         public_key = self._getPublicSshKey(user_info)
         try:
-            kp = self._thread_local.driver.ex_import_keypair_from_string(
+            kp = self._thread_local.driver.import_key_pair_from_string(
                 kp_name, public_key)
         except Exception as e:
+            self._userInfoSetKeypairName(user_info, None)
             raise Exceptions.ExecutionException('Cannot import the public key. '
                                                 'Reason: %s' % e)
-        kp_name = kp.get('keyName', None)
+        kp_name = kp.name
         self._userInfoSetKeypairName(user_info, kp_name)
         return kp_name
 
     def _createKeypairAndSetOnUserInfo(self, user_info):
         kp_name = 'ss-build-image-%i' % int(time.time())
-        kp = self._thread_local.driver.ex_create_keypair(kp_name)
+        kp = self._thread_local.driver.create_key_pair(kp_name)
         self._userInfoSetPrivateKey(user_info, kp.private_key)
-        self._userInfoSetKeypairName(user_info, kp.name)
-        return kp.get('keyName', None)
+        kp_name = kp.name
+        self._userInfoSetKeypairName(user_info, kp_name)
+        return kp_name
 
     def _deleteKeypair(self, kp_name):
-        return self._thread_local.driver.ex_delete_keypair(kp_name)
+        kp = KeyPair(name=kp_name, public_key=None, fingerprint=None, driver=self._thread_local.driver)
+        return self._thread_local.driver.delete_keypair(kp)
 
     def formatInstanceName(self, name):
         name = self.removeBadCharInInstanceName(name)
