@@ -71,25 +71,32 @@ class NodeDeploymentExecutor(MachineExecutor):
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
-            tmpfilesuffix = ''
-            if util.isWindows():
-                tmpfilesuffix = '.ps1'
-            fn = tempfile.mktemp(suffix=tmpfilesuffix)
-            if isinstance(self.targets[target][0], unicode):
-                with codecs.open(fn, 'w', 'utf8') as fh:
-                    fh.write(self.targets[target][0])
-            else:
-                with open(fn, 'w') as fh:
-                    fh.write(self.targets[target][0])
-            os.chmod(fn, 0755)
-            currentDir = os.getcwd()
-            os.chdir(tempfile.gettempdir() + os.sep)
-            try:
-                self._executeRaiseOnError(fn)
-            finally:
-                os.chdir(currentDir)
+            self._run_target_script(self.targets[target][0])
         else:
-            print 'Nothing to do'
+            util.printAndFlush('Nothing to do\n')
+
+    def _run_target_script(self, target_script):
+        if not target_script:
+            util.printAndFlush('Script is empty\n')
+            return
+
+        tmpfilesuffix = ''
+        if util.isWindows():
+            tmpfilesuffix = '.ps1'
+        fn = tempfile.mktemp(suffix=tmpfilesuffix)
+        if isinstance(target_script, unicode):
+            with codecs.open(fn, 'w', 'utf8') as fh:
+                fh.write(target_script)
+        else:
+            with open(fn, 'w') as fh:
+                fh.write(target_script)
+        os.chmod(fn, 0755)
+        currentDir = os.getcwd()
+        os.chdir(tempfile.gettempdir() + os.sep)
+        try:
+            self._executeRaiseOnError(fn)
+        finally:
+            os.chdir(currentDir)
 
     def _addSshPubkeyIfNeeded(self):
         if util.needToAddSshPubkey():
