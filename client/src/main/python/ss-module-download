@@ -39,6 +39,7 @@ class MainProgram(CommandBase):
         self.password = None
         self.cookie = None
         self.endpoint = None
+        self.purgImageIds = False
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
@@ -58,6 +59,10 @@ class MainProgram(CommandBase):
         self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
                                help='SlipStream server endpoint',
                                default=default_endpoint)
+
+        self.parser.add_option('--purge-image-ids', dest='purgImageIds',
+                               help='Remove cloud image ids before saving',
+                               default=False, action='store_true')
 
         self.options, self.args = self.parser.parse_args()
 
@@ -118,11 +123,12 @@ class MainProgram(CommandBase):
 
         while len(queue) > 0:
             module = queue.pop(0)
-            print('PROCESSING: %s' % module)
+            print('Processing: %s' % module)
 
             root = self._retrieveModuleAsXml(client, module)
             self._removeRuns(root)
-            self._removeCloudImageIdentifiers(root)
+            if self.purgImageIds:
+                self._removeCloudImageIdentifiers(root)
             self._writeModuleAsXml(root, module)
 
             for child in self._getModuleChildren(module, root):
