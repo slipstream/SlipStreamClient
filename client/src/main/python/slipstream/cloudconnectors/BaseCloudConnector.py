@@ -90,7 +90,7 @@ class BaseCloudConnector(object):
         self._capabilities = []
 
     def _init_threading_related(self):
-        self.tasksRunnner = TasksRunner()
+        self.tasks_runnner = None
 
         # This parameter is thread local
         self._thread_local = local()
@@ -159,8 +159,23 @@ class BaseCloudConnector(object):
         return imageInfo['targets']
 
     @staticmethod
-    def _getSshPrivateKey(userInfo):
-        return userInfo.get_cloud('private.key')
+    def _getSshPrivateKey(user_info):
+        return user_info.get_cloud('private.key')
+
+    @staticmethod
+    def _getPublicSshKey(user_info):
+        return user_info.get_general('ssh.public.key') or ''
+
+    @staticmethod
+    def _get_max_workers(config_holder):
+        try:
+            ss = Client(config_holder)
+            ss.ignoreAbort = True
+            return ss.getRuntimeParameter('max.iaas.workers')
+        except Exception as ex:
+            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex),
+                             verboseThreshold=0)
+            return None
 
     @staticmethod
     def getImageId(image_info):
@@ -257,12 +272,17 @@ class BaseCloudConnector(object):
         self._waitNodesStartupTasksFinished()
 
     def _startNodeInstancesAndClients(self, user_info, node_info):
+        max_workers = self._get_max_workers(self.configHolder)
+        self.tasks_runnner = TasksRunner(self._startNodeInstanceAndClient,
+                                         max_workers=max_workers,
+                                         verbose=self.verboseLevel)
         for node_number in range(1, int(node_info['multiplicity']) + 1):
-            self.tasksRunnner.run_task(self._startNodeInstanceAndClient,
-                                       (user_info, node_info, node_number))
+            self.tasks_runnner.put_task(user_info, node_info, node_number)
+        self.tasks_runnner.run_tasks()
 
     def _waitNodesStartupTasksFinished(self):
-        self.tasksRunnner.wait_tasks_finished()
+        if self.tasks_runnner != None:
+            self.tasks_runnner.wait_tasks_processed()
 
     def _startNodeInstanceAndClient(self, user_info, node_info, node_number):
         image_info = self._extractImageInfoFromNodeInfo(node_info)
@@ -665,9 +685,6 @@ class BaseCloudConnector(object):
         command += "restorecon -Rv ~/.ssh || true\n"
         command += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
         return command
-
-    def _getPublicSshKey(self, userInfo):
-        return userInfo.get_general('ssh.public.key') or ''
 
     def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
                             username=None):

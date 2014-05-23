@@ -155,7 +155,7 @@ class CloudStackClientCloud(BaseCloudConnector):
             driver = self._getDriver(self.user_info)
             tasksRunnner.run_task(driver.destroy_node, (instance,))
 
-        tasksRunnner.wait_tasks_finished()
+        tasksRunnner.wait_tasks_processed()
 
     def stopDeployment(self):
         instances = [vm['instance'] for vm in self.getVms().itervalues()]

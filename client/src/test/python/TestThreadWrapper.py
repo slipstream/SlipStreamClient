@@ -23,6 +23,8 @@ from mock import Mock
 import unittest
 
 from slipstream.utils.tasksrunner import ThreadWrapper, TasksRunner
+from slipstream.utils import tasksrunner
+tasksrunner.QUEUE_GET_TIMEOUT = 1
 
 EXCEPTION = IOError
 EXCEPTION_MESSAGE = "Foo bar baz"
@@ -71,32 +73,49 @@ class TestThreadWrapper(unittest.TestCase):
 
 
 class TestTasksRunner(unittest.TestCase):
+
     def testRunTaskNoExceptions(self):
-        tr = TasksRunner()
-        tr.QUEUE_GET_TIMEOUT = 1
-        ntasks = 3
+        tr = TasksRunner(Mock())
+        ntasks = 5
         for _ in range(ntasks):
-            tr.run_task(Mock())
-        tr.wait_tasks_finished()
+            tr.put_task(None)
+        tr.run_tasks()
+        tr.wait_tasks_processed()
+        assert 0 == tr.tasks_queue.qsize()
         assert tr._tasks_finished() is True
-        assert len(tr.threads) == ntasks
+        assert len(tr.workers) == ntasks
+
+    def testMtasksNworkers(self):
+        max_workers = 10
+        tr = TasksRunner(Mock(), max_workers=10)
+        ntasks = 25
+        for _ in range(ntasks):
+            tr.put_task(None)
+        tr.run_tasks()
+        tr.wait_tasks_processed()
+        assert 0 == tr.tasks_queue.qsize()
+        assert tr._tasks_finished() is True
+        assert len(tr.workers) == max_workers
 
     def testQueueExceptionsManualCheck(self):
-        tr = TasksRunner()
+        tr = TasksRunner(Mock(side_effect=EXCEPTION(EXCEPTION_MESSAGE)))
         ntasks = 3
         for _ in range(ntasks):
-            tr.run_task(Mock(side_effect=EXCEPTION(EXCEPTION_MESSAGE)))
+            tr.put_task(None)
+        tr.run_tasks()
         while not tr._tasks_finished():
             time.sleep(1)
         assert tr._tasks_finished() is True
-        assert len(tr.threads) == ntasks
+        assert len(tr.workers) == ntasks
         assert tr.exc_queue.qsize() == ntasks
         for _ in range(ntasks):
             _assert_exc_info(tr.exc_queue.get())
 
     def testQueueExceptionsRaises(self):
-        tr = TasksRunner()
+        tr = TasksRunner(Mock(side_effect=EXCEPTION(EXCEPTION_MESSAGE)))
         ntasks = 3
         for _ in range(ntasks):
-            tr.run_task(Mock(side_effect=EXCEPTION(EXCEPTION_MESSAGE)))
-        self.failUnlessRaises(EXCEPTION, tr.wait_tasks_finished)
+            tr.put_task()
+        tr.run_tasks()
+        self.failUnlessRaises(EXCEPTION, tr.wait_tasks_processed)
+
