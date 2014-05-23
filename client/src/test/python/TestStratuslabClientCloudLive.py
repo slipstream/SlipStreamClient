@@ -48,7 +48,7 @@ class TestStratusLabClientCloud(unittest.TestCase):
             raise Exception('Configuration file %s not found.' % CONFIG_FILE)
 
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
-        self.ch.set('verboseLevel', '2')
+        self.ch.set('verboseLevel', self.ch.config['General.verbosity'])
 
         os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = self.ch.config['SLIPSTREAM_MESSAGING_ENDPOINT']
         os.environ['SLIPSTREAM_MESSAGING_TYPE'] = self.ch.config['SLIPSTREAM_MESSAGING_TYPE']
@@ -70,7 +70,8 @@ class TestStratusLabClientCloud(unittest.TestCase):
 
         extra_disk_volatile = self.ch.config['stratuslab.extra.disk.volatile']
         image_id = self.ch.config['stratuslab.imageid']
-        self.multiplicity = 1
+        self.multiplicity = self.ch.config['stratuslab.multiplicity']
+        self.max_iaas_workers = self.ch.config['stratuslab.max.iaas.workers']
         self.node_info = {
             'multiplicity': self.multiplicity,
             'nodename': 'test_node',
@@ -123,14 +124,17 @@ lvs
 
     def test_1_startStopImages(self):
 
-        self.client.startNodesAndClients(self.user_info, [self.node_info])
+        self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
 
-        util.printAndFlush('Instances started')
+        try:
+            self.client.startNodesAndClients(self.user_info, [self.node_info])
 
-        vms = self.client.getVms()
-        assert len(vms) == self.multiplicity
+            util.printAndFlush('Instances started\n')
 
-        self.client.stopDeployment()
+            vms = self.client.getVms()
+            assert len(vms) == int(self.multiplicity)
+        finally:
+            self.client.stopDeployment()
 
     def test_2_buildImage(self):
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
