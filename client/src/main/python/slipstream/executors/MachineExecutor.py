@@ -73,13 +73,20 @@ class MachineExecutor(object):
         timeMax = time.time() + float(self.timeout)
         util.printDetail('Waiting for next state transition, currently in %s' %
                          state, self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
-        while time.time() <= timeMax:
+        while time.time() <= timeMax or self._is_timeout_not_needed(state):
             newState = self.wrapper.getState()
             if state != newState:
                 return newState
             else:
-                time.sleep(timeSleep)
-        raise TimeoutException('Timeout reached waiting for next state, current state: %s' % state)
+                if self._is_timeout_not_needed(state):
+                    time.sleep(timeSleep * 12)
+                else:
+                    time.sleep(timeSleep)
+        else:
+            raise TimeoutException('Timeout reached waiting for next state, current state: %s' % state)
+
+    def _is_timeout_not_needed(self, state):
+        return state == 'Ready' and not self.wrapper.needToStopImages()
 
     def onInitializing(self):
         pass
