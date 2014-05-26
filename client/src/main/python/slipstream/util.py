@@ -101,26 +101,19 @@ def isWindows():
 
 
 def execute(commandAndArgsList, **kwargs):
-    wait = not kwargs.get('noWait', False)
+    wait = not kwargs.pop('noWait', False)
 
-    if 'noWait' in kwargs:
-        del kwargs['noWait']
-
-    withStderr = kwargs.get('withStderr', False)
-    withStdOutErr = kwargs.get('withOutput', False)
+    withStderr = kwargs.pop('withStderr', False)
+    withStdOutErr = kwargs.pop('withOutput', False)
     # Getting stderr takes precedence on getting stdout&stderr.
     if withStderr:
         kwargs['stderr'] = subprocess.PIPE
         withStdOutErr = False
-    if 'withStderr' in kwargs:
-        del kwargs['withStderr']
 
     if withStdOutErr:
         kwargs['stdout'] = subprocess.PIPE
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
-    if 'withOutput' in kwargs:
-        del kwargs['withOutput']
 
     if isWindows():
         commandAndArgsList.insert(0, '-File')
