@@ -68,12 +68,16 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         self._advanceMachine()
         
     def onReady(self):
+        super(OrchestratorImageBuildExecutor, self).onReady()
         self._advanceMachine()
 
     def onFinalizing(self):
         super(OrchestratorImageBuildExecutor, self).onFinalizing()
         self._killCreator()
         self._advanceMachine()
+        
+        self.wrapper.advance()
+        
         self._killItself(True)
 
     def _killCreator(self):

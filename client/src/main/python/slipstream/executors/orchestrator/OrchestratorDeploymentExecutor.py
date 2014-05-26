@@ -42,13 +42,15 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         self.wrapper.publishDeploymentInitializationInfo()
 
     def onReady(self):
-        self._killItself()
         super(OrchestratorDeploymentExecutor, self).onReady()
+        
+        if not self.wrapper.needToStopImages():
+            self._killItself()
 
     def onFinalizing(self):
-        util.printAction('Finalizing')
+        super(OrchestratorDeploymentExecutor, self).onFinalizing()
+        
         util.printStep('Stopping instances')
-
         try:
             self.wrapper.stopNodes()
         except Exceptions.AbortException:
@@ -59,7 +61,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
         util.printStep('Publishing instance termination information')
         self.wrapper.publishDeploymentTerminateInfo()
-
-        super(OrchestratorDeploymentExecutor, self).onFinalizing()
-
+        
+        self.wrapper.advance()
+        
         self._killItself()
