@@ -207,7 +207,7 @@ class SlipStreamHttpClient(object):
 
     def advance(self, nodeName):
         url = '%s/%s:%s' % (self.runInstanceEndpoint, nodeName,
-                            NodeDecorator.STATE_KEY)
+                            NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
 
