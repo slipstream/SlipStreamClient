@@ -16,21 +16,20 @@
  limitations under the License.
 """
 
+import contextlib
 import logging
 import os
-import sys
-import time
-from ConfigParser import SafeConfigParser
-import urllib2
-import subprocess
-import tempfile
 import pkgutil
-import contextlib
-import warnings
-
+import subprocess
+import sys
+import tempfile
+import time
+import urllib2
 import uuid as uuidModule
-import slipstream.exceptions.Exceptions as Exceptions
+import warnings
+from ConfigParser import SafeConfigParser
 
+import slipstream.exceptions.Exceptions as Exceptions
 
 timeformat = '%Y-%m-%d %H:%M:%S'
 
