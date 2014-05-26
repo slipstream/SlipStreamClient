@@ -72,7 +72,7 @@ class BaseWrapper(object):
         self.clientSlipStream.setRuntimeParameter(abort, message)
 
     def getState(self):
-        key = self._qualifyKey(NodeDecorator.STATE_KEY)
+        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
         return self.clientSlipStream.getRuntimeParameter(key)
 
     def isAbort(self):
