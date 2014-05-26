@@ -83,10 +83,13 @@ class MainProgram(OpenStackCommand):
                                                KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                                                context={'foo':'bar'}))
         with nostdout():
-            cc.initialization(self.userInfo)
-            node = cc._startImage(self.userInfo, 
-                                  cc._extractImageInfoFromNodeInfo(ss_node), 
-                                  nodename, self.options.context_script)
+            try:
+                cc.initialization(self.userInfo)
+                node = cc._startImage(self.userInfo, 
+                                      cc._extractImageInfoFromNodeInfo(ss_node), 
+                                      nodename, self.options.context_script)
+            finally:
+                cc.finalization(self.userInfo)
 
         return {'id': node['id'], 'ip': 'Unknown', 'cc': cc, 'node': node}
 
