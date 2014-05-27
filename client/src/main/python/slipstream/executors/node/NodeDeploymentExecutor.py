@@ -93,8 +93,11 @@ class NodeDeploymentExecutor(MachineExecutor):
         os.chmod(fn, 0755)
         currentDir = os.getcwd()
         os.chdir(tempfile.gettempdir() + os.sep)
+
+        timeout = int(self.wrapper.getUserInfo().get_general('Timeout'))
+
         try:
-            self._executeRaiseOnError(fn)
+            self._executeRaiseOnError(fn, timeout=timeout)
         finally:
             os.chdir(currentDir)
 

@@ -20,10 +20,13 @@ import contextlib
 import logging
 import os
 import pkgutil
+import shlex
 import subprocess
 import sys
 import tempfile
+import threading
 import time
+import traceback
 import urllib2
 import uuid as uuidModule
 import warnings
@@ -99,9 +102,57 @@ def isWindows():
     return sys.platform == 'win32'
 
 
-def execute(commandAndArgsList, **kwargs):
-    wait = not kwargs.pop('noWait', False)
+class TimeoutExpired(Exception):
+    """This exception is raised when the timeout expires while waiting for a
+    child process.
+    """
+    def __init__(self, cmd, timeout):
+        self.cmd = cmd
+        self.timeout = timeout
 
+    def __str__(self):
+        return ("Command '%s' timed out after %s seconds" %
+                (self.cmd, self.timeout))
+
+
+class Command(object):
+    """
+    Enables to run subprocess commands in a different thread with TIMEOUT option.
+
+    Credits: https://gist.github.com/kirpit/1306188
+    """
+    command = None
+    process = None
+    status = None
+    output, error = '', ''
+
+    def __init__(self, command):
+        if isinstance(command, basestring):
+            command = shlex.split(command)
+        self.command = command
+
+    def run(self, timeout=None, **kwargs):
+        """ Run a command then return: (status, output, error). """
+        def target(**kwargs):
+            try:
+                self.process = subprocess.Popen(self.command, **kwargs)
+                self.output, self.error = self.process.communicate()
+                self.returncode = self.process.returncode
+            except:
+                self.error = traceback.format_exc()
+                self.returncode = -1
+        # thread
+        thread = threading.Thread(target=target, kwargs=kwargs)
+        thread.start()
+        thread.join(timeout)
+        if thread.is_alive():
+            self.process.terminate()
+            thread.join()
+            raise TimeoutExpired(self.command, timeout)
+        return self.output, self.error
+
+
+def execute(commandAndArgsList, timeout=None, **kwargs):
     withStderr = kwargs.pop('withStderr', False)
     withStdOutErr = kwargs.pop('withOutput', False)
     # Getting stderr takes precedence on getting stdout&stderr.
@@ -130,10 +181,8 @@ def execute(commandAndArgsList, **kwargs):
     if isinstance(commandAndArgsList, list) and kwargs.get('shell', False) is True:
         commandAndArgsList = ' '.join(commandAndArgsList)
 
-    process = subprocess.Popen(commandAndArgsList, **kwargs)
-
-    if wait:
-        output, errors = process.communicate()
+    process = Command(commandAndArgsList)
+    output, errors = process.run(timeout=timeout, **kwargs)
 
     if withStderr:
         return process.returncode, errors

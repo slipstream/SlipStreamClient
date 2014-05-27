@@ -121,8 +121,8 @@ class MachineExecutor(object):
         util.printAction('Detached')
         raise TerminalStateException('Detached')
 
-    def _executeRaiseOnError(self, cmd):
-        res = util.execute(cmd.split(' '))
+    def _executeRaiseOnError(self, cmd, timeout=None):
+        res = util.execute(cmd.split(' '), timeout=timeout)
         if res:
             raise ExecutionException('Failed executing: %s' % cmd)
 
