@@ -71,10 +71,6 @@ class NodeDeploymentExecutor(MachineExecutor):
             
     def onFinalizing(self):
         super(NodeDeploymentExecutor, self).onSendingReports()
-        
-    def onDone(self):
-        time.sleep(60)
-        raise ExecutionException('The run is in Done state but the VM is still running !')
 
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)
