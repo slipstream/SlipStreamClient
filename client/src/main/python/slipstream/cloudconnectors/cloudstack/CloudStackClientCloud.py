@@ -149,13 +149,19 @@ class CloudStackClientCloud(BaseCloudConnector):
         return self._thread_local.driver.list_nodes()
 
     def _stopInstances(self, instances):
-        tasksRunnner = TasksRunner()
-
+        max_workers = self._get_max_workers(self.configHolder)
+        tasksRunnner = TasksRunner(self.__stop_instance,
+                                   max_workers=max_workers,
+                                   verbose=self.verboseLevel)
         for instance in instances:
-            driver = self._getDriver(self.user_info)
-            tasksRunnner.run_task(driver.destroy_node, (instance,))
+            tasksRunnner.put_task(instance)
 
-        tasksRunnner.wait_tasks_finished()
+        tasksRunnner.run_tasks()
+        tasksRunnner.wait_tasks_processed()
+
+    def __stop_instance(self, instance):
+        driver = self._getDriver(self.user_info)
+        driver.destroy_node(instance)
 
     def stopDeployment(self):
         instances = [vm['instance'] for vm in self.getVms().itervalues()]
@@ -165,7 +171,8 @@ class CloudStackClientCloud(BaseCloudConnector):
         instances = [i for i in self.listInstances() if i.id in ids]
         self._stopInstances(instances)
 
-    def _getDriver(self, userInfo):
+    @staticmethod
+    def _getDriver(userInfo):
         CloudStack = get_driver(Provider.CLOUDSTACK)
 
         url = urlparse(userInfo.get_cloud('endpoint'))

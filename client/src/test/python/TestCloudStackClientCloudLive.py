@@ -41,9 +41,10 @@ cloudstack.endpoint = https://api.exoscale.ch/compute
 cloudstack.key = xxx
 cloudstack.secret = yyy
 cloudstack.zone = CH-GV2
-cloudstack.template = a17b40d6-83e4-4f2a-9ef0-dce6af575789
+cloudstack.template = 8c7e60ae-3a30-4031-a3e6-29832d85d7cb
 cloudstack.instance.type = Micro
 cloudstack.security.groups = default
+cloudstack.max.iaas.workers = 2
 """
 
 
@@ -60,6 +61,7 @@ class TestCloudStackClientCloud(unittest.TestCase):
 
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
         self.ch.set(KEY_RUN_CATEGORY, '')
+        self.ch.set('verboseLevel', self.ch.config['General.verbosity'])
 
         self.client = CloudStackClientCloud(self.ch)
 
@@ -72,6 +74,8 @@ class TestCloudStackClientCloud(unittest.TestCase):
 
         image_id = self.ch.config['cloudstack.template']
         self.multiplicity = 4
+        self.max_iaas_workers = self.ch.config.get('cloudstack.max.iaas.workers',
+                                                   str(self.multiplicity))
         self.node_info = {
             'multiplicity': self.multiplicity,
             'nodename': 'test_node',
@@ -116,16 +120,18 @@ lvs
         self.ch = None
 
     def test_1_startStopImages(self):
+        self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
-        self.client.startNodesAndClients(self.user_info, [self.node_info])
+        try:
+            self.client.startNodesAndClients(self.user_info, [self.node_info])
 
-        util.printAndFlush('Instances started')
+            util.printAndFlush('Instances started')
 
-        vms = self.client.getVms()
-        assert len(vms) == self.multiplicity
-
-        self.client.stopDeployment()
+            vms = self.client.getVms()
+            assert len(vms) == self.multiplicity
+        finally:
+            self.client.stopDeployment()
 
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE

@@ -16,21 +16,20 @@
  limitations under the License.
 """
 
+import contextlib
 import logging
 import os
-import sys
-import time
-from ConfigParser import SafeConfigParser
-import urllib2
-import subprocess
-import tempfile
 import pkgutil
-import contextlib
-import warnings
-
+import subprocess
+import sys
+import tempfile
+import time
+import urllib2
 import uuid as uuidModule
-import slipstream.exceptions.Exceptions as Exceptions
+import warnings
+from ConfigParser import SafeConfigParser
 
+import slipstream.exceptions.Exceptions as Exceptions
 
 timeformat = '%Y-%m-%d %H:%M:%S'
 
@@ -101,26 +100,19 @@ def isWindows():
 
 
 def execute(commandAndArgsList, **kwargs):
-    wait = not kwargs.get('noWait', False)
+    wait = not kwargs.pop('noWait', False)
 
-    if 'noWait' in kwargs:
-        del kwargs['noWait']
-
-    withStderr = kwargs.get('withStderr', False)
-    withStdOutErr = kwargs.get('withOutput', False)
+    withStderr = kwargs.pop('withStderr', False)
+    withStdOutErr = kwargs.pop('withOutput', False)
     # Getting stderr takes precedence on getting stdout&stderr.
     if withStderr:
         kwargs['stderr'] = subprocess.PIPE
         withStdOutErr = False
-    if 'withStderr' in kwargs:
-        del kwargs['withStderr']
 
     if withStdOutErr:
         kwargs['stdout'] = subprocess.PIPE
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
-    if 'withOutput' in kwargs:
-        del kwargs['withOutput']
 
     if isWindows():
         commandAndArgsList.insert(0, '-File')
