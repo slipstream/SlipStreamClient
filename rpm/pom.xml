@@ -117,11 +117,18 @@
 
 					<mappings>
 
+                        <mapping>
+                            <directory>/opt/slipstream/downloads</directory>
+                            <filemode>755</filemode>
+                            <username>slipstream</username>
+                            <groupname>slipstream</groupname>
+                        </mapping>
+
 						<mapping>
 							<directory>/opt/slipstream/downloads</directory>
 							<filemode>644</filemode>
-							<username>root</username>
-							<groupname>root</groupname>
+							<username>slipstream</username>
+							<groupname>slipstream</groupname>
 							<directoryIncluded>false</directoryIncluded>
 							<sources>
 								<source>
@@ -134,8 +141,8 @@
 						<mapping>
 							<directory>/opt/slipstream/downloads</directory>
 							<filemode>755</filemode>
-							<username>root</username>
-							<groupname>root</groupname>
+							<username>slipstream</username>
+							<groupname>slipstream</groupname>
 							<directoryIncluded>false</directoryIncluded>
 							<sources>
 								<source>
@@ -148,8 +155,8 @@
 						<mapping>
 							<directory>/usr/lib/python2.6/site-packages</directory>
 							<filemode>644</filemode>
-							<username>root</username>
-							<groupname>root</groupname>
+							<username>slipstream</username>
+							<groupname>slipstream</groupname>
 							<directoryIncluded>false</directoryIncluded>
 							<sources>
 								<source>
