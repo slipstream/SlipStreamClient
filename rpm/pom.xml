@@ -108,7 +108,7 @@
 					<url>http://sixsq.com</url>
 					<needarch>noarch</needarch>
 					<description>
-						SlipStream Client API and CLI. 
+						SlipStream Client API and CLI.
 					</description>
 					<requires>
 						<require>python &gt;= 2.6</require>
@@ -130,7 +130,7 @@
 								</source>
 							</sources>
 						</mapping>
-						
+
 						<mapping>
 							<directory>/opt/slipstream/downloads</directory>
 							<filemode>755</filemode>
@@ -165,6 +165,46 @@
 							</sources>
 						</mapping>
 
+			            <mapping>
+			              <directory>${slipstream.base.dir}/connectors/bin</directory>
+			              <filemode>775</filemode>
+			              <username>slipstream</username>
+			              <groupname>slipstream</groupname>
+			              <directoryIncluded>false</directoryIncluded>
+			              <sources>
+				               <source>
+				                   <location>${project.build.directory}/client/sbin/</location>
+				                   <includes>
+				                       <include>cloudstack-*</include>
+				                       <include>openstack-*</include>
+				                   </includes>
+				               </source>
+			              </sources>
+			            </mapping>
+			            <mapping>
+			                <directory>/usr/bin</directory>
+			                <sources>
+			                    <softlinkSource>
+			                        <location>${slipstream.base.dir}/connectors/bin/cloudstack-describe-instances</location>
+			                    </softlinkSource>
+			                    <softlinkSource>
+			                        <location>${slipstream.base.dir}/connectors/bin/cloudstack-run-instances</location>
+			                    </softlinkSource>
+			                    <softlinkSource>
+			                        <location>${slipstream.base.dir}/connectors/bin/cloudstack-terminate-instances</location>
+			                    </softlinkSource>
+			                    <softlinkSource>
+			                        <location>${slipstream.base.dir}/connectors/bin/openstack-describe-instances</location>
+			                    </softlinkSource>
+			                    <softlinkSource>
+			                        <location>${slipstream.base.dir}/connectors/bin/openstack-run-instances</location>
+			                    </softlinkSource>
+			                    <softlinkSource>
+			                        <location>${slipstream.base.dir}/connectors/bin/openstack-terminate-instances</location>
+			                    </softlinkSource>
+			                </sources>
+			            </mapping>
+
                         <mapping>
                             <directory>/usr/bin</directory>
                             <filemode>755</filemode>
@@ -172,13 +212,6 @@
                             <groupname>root</groupname>
                             <directoryIncluded>false</directoryIncluded>
                             <sources>
-                                <source>
-                                    <location>${project.build.directory}/client/sbin/</location>
-                                    <includes>
-                                        <include>cloudstack-*</include>
-                                        <include>openstack-*</include>
-                                    </includes>
-                                </source>
                                 <source>
                                     <location>${project.build.directory}/client/bin/</location>
                                     <includes>
@@ -205,6 +238,13 @@
                         </mapping>
 
 					</mappings>
+
+         <preinstallScriptlet>
+             <script>
+/bin/rm -f /usr/bin/cloudstack-*
+/bin/rm -f /usr/bin/openstack-*
+             </script>
+         </preinstallScriptlet>
 
           <postinstallScriptlet>
             <!-- fixing a bug in client -->
