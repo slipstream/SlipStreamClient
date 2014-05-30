@@ -21,7 +21,7 @@ from distutils.core import setup
 
 setup(
     name='slipstream-client',
-    version='2.1-6',
+    version='${pom.version}',
     description='SlipStream end-user client (CLI)',
     long_description='SlipStream client (CLI) to communicate '
                      'with SlipStream server.',
