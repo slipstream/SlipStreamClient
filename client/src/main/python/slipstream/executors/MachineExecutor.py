@@ -122,19 +122,19 @@ class MachineExecutor(object):
             util.printError("Failed")
         else:
             util.printAction('Done!')
-            
+
     def onDone(self):
         self._abort_running_in_final_state()
-    
+
     def onCancelled(self):
         self._abort_running_in_final_state()
-        
+
     def onAborted(self):
         self._abort_running_in_final_state()
-        
+
     def _abort_running_in_final_state(self):
         time.sleep(60)
-        raise ExecutionException('The run is in a final state but the VM is still running !')  
+        raise ExecutionException('The run is in a final state but the VM is still running !')
 
     def _nodename(self):
         return self.wrapper.nodename()

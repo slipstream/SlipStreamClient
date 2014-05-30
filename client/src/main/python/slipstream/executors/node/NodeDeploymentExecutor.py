@@ -27,6 +27,9 @@ import slipstream.util as util
 from slipstream.exceptions.Exceptions import ExecutionException
 from slipstream.util import appendSshPubkeyToAuthorizedKeys
 
+TARGET_POLL_INTERVAL = 10  # Time to wait (in seconds) between to server call
+                           # while executing a target script.
+
 
 def getExecutor(wrapper, configHolder):
     return NodeDeploymentExecutor(wrapper, configHolder)
@@ -68,7 +71,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             raise
         finally:
             super(NodeDeploymentExecutor, self).onSendingReports()
-            
+
     def onFinalizing(self):
         super(NodeDeploymentExecutor, self).onSendingReports()
 
@@ -98,9 +101,28 @@ class NodeDeploymentExecutor(MachineExecutor):
         currentDir = os.getcwd()
         os.chdir(tempfile.gettempdir() + os.sep)
         try:
-            self._executeRaiseOnError(fn)
+            process = self._executeRaiseOnError(fn, noWait=True)
         finally:
             os.chdir(currentDir)
+
+        # The process is still working on the background.
+        while process.poll() is None:
+            # Ask server whether the abort flag is set. If so, kill the
+            # process and exit. Otherwise, sleep for some time.
+            if self.wrapper.isAbort():
+                try:
+                    util.printDetail('Abort flag detected. '
+                                     'Terminating target script execution...')
+                    process.terminate()
+                    time.sleep(5)
+                    if process.poll() is None:
+                        util.printDetail('Termination is taking too long. '
+                                         'Killing the target script...')
+                        process.kill()
+                except OSError:
+                    pass
+                break
+            time.sleep(TARGET_POLL_INTERVAL)
 
     def _addSshPubkeyIfNeeded(self):
         if util.needToAddSshPubkey():

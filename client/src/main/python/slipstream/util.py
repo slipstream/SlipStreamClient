@@ -127,13 +127,15 @@ def execute(commandAndArgsList, **kwargs):
 
     printDetail('Calling: %s' % _cmd, kwargs)
 
-    if isinstance(commandAndArgsList, list) and kwargs.get('shell', False) is True:
+    if isinstance(commandAndArgsList, list) and kwargs.get('shell', False):
         commandAndArgsList = ' '.join(commandAndArgsList)
 
     process = subprocess.Popen(commandAndArgsList, **kwargs)
 
-    if wait:
-        output, errors = process.communicate()
+    if not wait:
+        return process
+
+    output, errors = process.communicate()
 
     if withStderr:
         return process.returncode, errors
