@@ -125,7 +125,6 @@ def _ssh_connect_api(hostname, username, password, sshKey=None,
     sshKey = sshKey or None
     ssh = SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-    ssh.load_system_host_keys()
     ssh.connect(hostname=hostname,
                 username=username,
                 password=password,
@@ -261,7 +260,9 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
     kind = password and 'api' or 'cli'
     time_stop = time.time() + timeout
     timeout_connect = 3
-    auth_failures = 15
+    auth_failures = 20
+    
+    reason = 'Unknown'
     while (time_stop - time.time()) >= 0:
         kwargs_ = copy.copy(kwargs)
         try:
@@ -272,36 +273,45 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
                 return True
         except SshConnectionRefused as ex:
             _printDetail(str(ex), kwargs_)
+            reason = 'SshConnectionRefused'
             time.sleep(5)
         except SshHostUnreachable as ex:
             _printDetail(str(ex), kwargs_)
+            reason = 'SshHostUnreachable'
             time.sleep(10)
         except SshConnectionResetByPeer as ex:
             _printDetail(str(ex), kwargs_)
+            reason = 'SshConnectionResetByPeer'
             time.sleep(5)
         except SshConnectionTimedOut as ex:
             _printDetail(str(ex), kwargs_)
+            reason = 'SshConnectionTimedOut'
             timeout_connect *= 2
         except SshServerNameNotKnown as ex:
             _printDetail(str(ex), kwargs_)
             raise
         except SshAuthFailed as ex:
             _printDetail(('%i: ' % auth_failures) + str(ex), kwargs_)
+            reason = 'SshAuthFailed'
             if auth_failures <= 0:
                 raise
             auth_failures -= 1
             time.sleep(5)
         except SshFailedToConnect as ex:
+            reason = 'SshFailedToConnect'
             _printDetail(str(ex), kwargs_)
             time.sleep(5)
         except paramiko.SSHException as ex:
             _printDetail(str(ex), kwargs_)
+            reason = 'paramiko.SSHException:', str(ex)
             time.sleep(5)
         except exceptions.EOFError as ex:
             _printDetail(str(ex), kwargs_)
+            reason = 'exceptions.EOFError'
             time.sleep(5)
 
-    raise Exceptions.TimeoutException('Failed to connect after %s sec.' % timeout)
+    raise Exceptions.TimeoutException('Failed to connect after %s sec. \nReason: %s' 
+                                      % (timeout, reason))
 
 
 def _ssh_can_connect_api(host, user, sshKey=None, password=None, timeout=None,

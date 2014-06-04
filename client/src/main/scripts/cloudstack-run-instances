@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import sys
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -12,15 +13,18 @@ from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudSta
 from slipstream.cloudconnectors.cloudstack.CloudStackAdvancedZoneClientCloud import CloudStackAdvancedZoneClientCloud
 
 
+saved_stdout = sys.stdout
+
 def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
                         username=None):
     return os.environ['context_script']
 
 def publishVmInfo(self, nodename, vm, image_info):
-    pass
+    print >> saved_stdout, '%s, %s' % (self.vmGetId(vm), self.vmGetIp(vm))
 
 def _generateNodeName(self, nodename, node_number):
     return nodename
+
 
 class MainProgram(CloudStackCommand):
 
@@ -99,7 +103,7 @@ class MainProgram(CloudStackCommand):
         
         with nostdouterr():
             node = self._startImage(ss_node)
-        print '%s, %s' % (node['id'], node['ip'])
+        #print '%s, %s' % (node['id'], node['ip'])
 
     def _startImage(self, ss_node):
         nodename = ss_node['nodename']
@@ -127,5 +131,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print '\n\nExecution interrupted by the user... goodbye!'
     except Exception as e:
-        print e
+        print >> sys.stderr, e
         exit(1)
