@@ -555,7 +555,10 @@ def appendSshPubkeyToAuthorizedKeys(pubkey):
         pass
     fileAppendContent(dot_ssh_path + '/authorized_keys',
                       '\n' + pubkey)
-
+    execute('restorecon -R %s || true' % dot_ssh_path, noWait=True, shell=True, withStderr=True, 
+            withOutput=True)
+    
+    
 
 class NullFile(object):
     def write(self, x):
