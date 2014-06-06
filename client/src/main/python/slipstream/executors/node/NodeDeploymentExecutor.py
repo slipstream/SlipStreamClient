@@ -101,7 +101,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         currentDir = os.getcwd()
         os.chdir(tempfile.gettempdir() + os.sep)
         try:
-            process = self._executeRaiseOnError(fn, noWait=True)
+            process = util.execute(fn, noWait=True)
         finally:
             os.chdir(currentDir)
 

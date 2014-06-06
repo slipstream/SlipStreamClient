@@ -139,11 +139,6 @@ class MachineExecutor(object):
     def _nodename(self):
         return self.wrapper.nodename()
 
-    def _executeRaiseOnError(self, cmd):
-        res = util.execute(cmd.split(' '))
-        if res:
-            raise ExecutionException('Failed executing: %s' % cmd)
-
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
 
