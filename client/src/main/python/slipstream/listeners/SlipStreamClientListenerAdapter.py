@@ -25,10 +25,10 @@ class SlipStreamClientListenerAdapter(SimplePrintListener):
         super(SlipStreamClientListenerAdapter, self).__init__()
         self._client = slipStremClient
         self._parameterGlobal = NodeDecorator.globalNamespacePrefix + \
-            NodeDecorator.stateMessagePropertyName
+            NodeDecorator.STATECUSTOM_KEY
         self._parameterSelf = slipStremClient.nodename + \
             NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-            NodeDecorator.stateMessagePropertyName
+            NodeDecorator.STATECUSTOM_KEY
         self.write = self._write
 
     def _write(self, msg):

@@ -154,16 +154,6 @@ class CloudWrapper(BaseWrapper):
 
         return stop
 
-    def publishDeploymentTerminateInfo(self):
-        if self.imagesStopped:
-            finalState = 'Shutdown'
-        else:
-            finalState = 'Running'
-
-        for instanceDetail in self.instancesDetail:
-            for nodename in instanceDetail:
-                self.setStateMessage(nodename, finalState)
-
     def updateSlipStreamImage(self):
         util.printStep("Updating SlipStream image run")
 

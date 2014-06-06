@@ -58,9 +58,6 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         except Exception as ex:
             util.printError('Error stopping instances: %s' % ex)
             raise
-
-        util.printStep('Publishing instance termination information')
-        self.wrapper.publishDeploymentTerminateInfo()
         
         self.wrapper.advance()
         

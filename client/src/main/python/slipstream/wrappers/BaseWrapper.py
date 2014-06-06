@@ -170,9 +170,6 @@ class BaseWrapper(object):
         self.setInstanceId(nodename, vm_id)
         self.setInstanceIp(nodename, vm_ip)
 
-    def setStateMessage(self, nodename, state):
-        self._setRuntimeParameter(nodename, 'statemessage', state)
-
     def setInstanceId(self, nodename, vm_id):
         self._setRuntimeParameter(nodename, 'instanceid', vm_id)
 

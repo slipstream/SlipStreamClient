@@ -50,9 +50,8 @@ class NodeDecorator(object):
 
     # State names
     STATE_KEY = 'state'
-    stateMessagePropertyName = 'statemessage'
-    
     COMPLETE_KEY = 'complete'
+    STATECUSTOM_KEY = 'statecustom'
 
     urlIgnoreAbortAttributeFragment = '?ignoreabort=true'
 
