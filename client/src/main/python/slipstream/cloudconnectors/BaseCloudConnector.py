@@ -453,9 +453,11 @@ class BaseCloudConnector(object):
     def _buildImageIncrement(self, user_info, imageInfo, host):
         prerecipe, recipe, packages = self.extractAllTargets(imageInfo)
         try:
+            machine_name = NodeDecorator.MACHINE_NAME
+            
             username, password, sshPrivateKeyFile = \
                 self._getSshCredentials(imageInfo, user_info,
-                                        NodeDecorator.MACHINE_NAME)
+                                        machine_name)
 
             if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not sshPrivateKeyFile:
                 password = ''
@@ -467,15 +469,18 @@ class BaseCloudConnector(object):
 
             if prerecipe:
                 util.printStep('Running Pre-recipe')
+                self.listener.write_for(machine_name, 'Running Pre-recipe')
                 remoteRunScript(username, host, prerecipe,
                                 sshKey=sshPrivateKeyFile, password=password)
             if packages:
                 util.printStep('Installing Packages')
+                self.listener.write_for(machine_name, 'Installing Packages')
                 remoteInstallPackages(username, host, packages,
                                       self.getPlatform(imageInfo),
                                       sshKey=sshPrivateKeyFile, password=password)
             if recipe:
                 util.printStep('Running Recipe')
+                self.listener.write_for(machine_name, 'Running Recipe')
                 remoteRunScript(username, host, recipe,
                                 sshKey=sshPrivateKeyFile, password=password)
 

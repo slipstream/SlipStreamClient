@@ -32,7 +32,7 @@ class MainProgram(OpenStackCommand):
 
         self.parser.add_option('--network-type', dest='network_type',
                                help='Network type (public or private)',
-                               default='public', metavar='NETWORK-TYPE')
+                               default='', metavar='NETWORK-TYPE')
 
         self.parser.add_option('--public-key', dest='public_key',
                                help='Public key in the OpenSSH format',
@@ -72,7 +72,8 @@ class MainProgram(OpenStackCommand):
         #print '%s, %s' % (node['id'], node['ip'])
         
         try:
-            node['ip'] = self._waitAndGetIp(node)
+            with nostdouterr():
+                node['ip'] = self._waitAndGetIp(node)
         finally:
             print '%s, %s' % (node['id'], node['ip'])
 
@@ -82,14 +83,13 @@ class MainProgram(OpenStackCommand):
         cc = OpenStackClientCloud(ConfigHolder(options={'verboseLevel':0, 
                                                KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                                                context={'foo':'bar'}))
-        with nostdout():
-            try:
-                cc.initialization(self.userInfo)
-                node = cc._startImage(self.userInfo, 
-                                      cc._extractImageInfoFromNodeInfo(ss_node), 
-                                      nodename, self.options.context_script)
-            finally:
-                cc.finalization(self.userInfo)
+        try:
+            cc.initialization(self.userInfo)
+            node = cc._startImage(self.userInfo, 
+                                  cc._extractImageInfoFromNodeInfo(ss_node), 
+                                  nodename, self.options.context_script)
+        finally:
+            cc.finalization(self.userInfo)
 
         return {'id': node['id'], 'ip': 'Unknown', 'cc': cc, 'node': node}
 

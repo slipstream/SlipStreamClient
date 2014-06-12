@@ -179,3 +179,6 @@ class BaseWrapper(object):
     def _setRuntimeParameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
         self.clientSlipStream.setRuntimeParameter(parameter, value)
+    
+    def needToStopImages(self, ignore_on_success_run_forever=False):    
+        return False

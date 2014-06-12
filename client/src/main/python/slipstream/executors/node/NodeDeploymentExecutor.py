@@ -17,6 +17,7 @@
 """
 
 import os
+import sys
 import time
 import codecs
 import tempfile
@@ -79,6 +80,8 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
             self._run_target_script(self.targets[target][0])
+            sys.stdout.flush()
+            sys.stderr.flush()
         else:
             util.printAndFlush('Nothing to do\n')
 
