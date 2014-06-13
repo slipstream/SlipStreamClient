@@ -78,7 +78,7 @@ class CloudWrapper(BaseWrapper):
     @deprecated
     def stopImages(self, ids=[]):
 
-        if self._needToStopImages():
+        if self.needToStopImages():
             if ids:
                 self.cloudProxy.stopImagesByIds(ids)
             else:
@@ -86,7 +86,7 @@ class CloudWrapper(BaseWrapper):
             self.imagesStopped = True
 
     def stopCreator(self):
-        if self._needToStopImages(True):
+        if self.needToStopImages(True):
             creator_id = self.getCreatorVmId()
             if creator_id:
                 if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
@@ -95,7 +95,7 @@ class CloudWrapper(BaseWrapper):
                     self.cloudProxy.stopVappsByIds([creator_id])
 
     def stopNodes(self):
-        if self._needToStopImages():
+        if self.needToStopImages():
             if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
                 self.cloudProxy.stopDeployment()
             self.imagesStopped = True
@@ -107,7 +107,7 @@ class CloudWrapper(BaseWrapper):
             self.stopOrchestratorDeployment()
 
     def stopOrchestratorBuild(self):
-        if self._needToStopImages(True):
+        if self.needToStopImages(True):
             orch_id = self.getMachineCloudInstanceId()
 
             if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
@@ -125,12 +125,12 @@ class CloudWrapper(BaseWrapper):
                     self.terminateRunServerSide()
 
     def stopOrchestratorDeployment(self):
-        if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP) and self._needToStopImages():
+        if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP) and self.needToStopImages():
             if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
                 self.cloudProxy.stopDeployment()
             else:
                 self.terminateRunServerSide()
-        elif self._needToStopImages() and not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+        elif self.needToStopImages() and not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
             self.terminateRunServerSide()
         else:
             orch_id = self.getMachineCloudInstanceId()
@@ -139,7 +139,7 @@ class CloudWrapper(BaseWrapper):
     def terminateRunServerSide(self):
         self._deleteRunResource()
 
-    def _needToStopImages(self, ignore_on_success_run_forever=False):
+    def needToStopImages(self, ignore_on_success_run_forever=False):
         runParameters = self.getRunParameters()
 
         onErrorRunForever = runParameters.get('General.On Error Run Forever', 'false')
@@ -153,16 +153,6 @@ class CloudWrapper(BaseWrapper):
             stop = False
 
         return stop
-
-    def publishDeploymentTerminateInfo(self):
-        if self.imagesStopped:
-            finalState = 'Shutdown'
-        else:
-            finalState = 'Running'
-
-        for instanceDetail in self.instancesDetail:
-            for nodename in instanceDetail:
-                self.setStateMessage(nodename, finalState)
 
     def updateSlipStreamImage(self):
         util.printStep("Updating SlipStream image run")

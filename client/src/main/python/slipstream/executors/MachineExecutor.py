@@ -73,25 +73,32 @@ class MachineExecutor(object):
         timeMax = time.time() + float(self.timeout)
         util.printDetail('Waiting for next state transition, currently in %s' %
                          state, self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
-        while time.time() <= timeMax:
+        while time.time() <= timeMax or self._is_timeout_not_needed(state):
             newState = self.wrapper.getState()
             if state != newState:
                 return newState
             else:
-                time.sleep(timeSleep)
-        raise TimeoutException('Timeout reached waiting for next state, current state: %s' % state)
+                if self._is_timeout_not_needed(state):
+                    time.sleep(timeSleep * 12)
+                else:
+                    time.sleep(timeSleep)
+        else:
+            raise TimeoutException('Timeout reached waiting for next state, current state: %s' % state)
 
-    def onInactive(self):
-        pass
+    def _is_timeout_not_needed(self, state):
+        return state == 'Ready' and not self.wrapper.needToStopImages()
 
     def onInitializing(self):
-        util.printAction('Initializing')
+        pass
 
-    def onRunning(self):
-        util.printAction('Running')
+    def onProvisioning(self):
+        util.printAction('Provisioning')
 
-    def onSendingFinalReport(self):
-        util.printAction('Sending report')
+    def onExecuting(self):
+        util.printAction('Executing')
+
+    def onSendingReports(self):
+        util.printAction('Sending reports')
         reportFileName = '%s_report_%s.tgz' % (
             self._nodename(), util.toTimeInIso8601NoColon(time.time()))
         reportFileName = os.path.join(tempfile.gettempdir(), reportFileName)
@@ -105,26 +112,32 @@ class MachineExecutor(object):
 
         self.wrapper.clientSlipStream.sendReport(reportFileName)
 
-    def _nodename(self):
-        return self.wrapper.nodename()
+    def onReady(self):
+        util.printAction('Ready')
 
     def onFinalizing(self):
         util.printAction('Finalizing')
 
-    def onTerminal(self):
         if self.wrapper.isAbort():
             util.printError("Failed")
         else:
             util.printAction('Done!')
 
-    def onDetached(self):
-        util.printAction('Detached')
-        raise TerminalStateException('Detached')
+    def onDone(self):
+        self._abort_running_in_final_state()
 
-    def _executeRaiseOnError(self, cmd):
-        res = util.execute(cmd.split(' '))
-        if res:
-            raise ExecutionException('Failed executing: %s' % cmd)
+    def onCancelled(self):
+        self._abort_running_in_final_state()
+
+    def onAborted(self):
+        self._abort_running_in_final_state()
+
+    def _abort_running_in_final_state(self):
+        time.sleep(60)
+        raise ExecutionException('The run is in a final state but the VM is still running !')
+
+    def _nodename(self):
+        return self.wrapper.nodename()
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)

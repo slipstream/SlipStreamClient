@@ -17,6 +17,8 @@
 """
 
 import os
+import sys
+import time
 import codecs
 import tempfile
 
@@ -25,6 +27,9 @@ from slipstream.executors.MachineExecutor import MachineExecutor
 import slipstream.util as util
 from slipstream.exceptions.Exceptions import ExecutionException
 from slipstream.util import appendSshPubkeyToAuthorizedKeys
+
+TARGET_POLL_INTERVAL = 10  # Time to wait (in seconds) between to server call
+                           # while executing a target script.
 
 
 def getExecutor(wrapper, configHolder):
@@ -37,8 +42,8 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
         self.targets = {}
 
-    def onInitializing(self):
-        util.printAction('Initializing')
+    def onProvisioning(self):
+        util.printAction('Provisioning')
 
         self._addSshPubkeyIfNeeded()
 
@@ -52,11 +57,11 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail('Target: %s' % target)
             util.printDetail('Script:\n%s\n' % script[0])
 
-    def onRunning(self):
-        util.printAction('Running')
+    def onExecuting(self):
+        util.printAction('Executing')
         self._executeTarget('execute')
 
-    def onSendingFinalReport(self):
+    def onSendingReports(self):
         util.printAction('Sending report')
         try:
             self._executeTarget('report')
@@ -66,12 +71,17 @@ class NodeDeploymentExecutor(MachineExecutor):
                              verboseThreshold=util.VERBOSE_LEVEL_NORMAL)
             raise
         finally:
-            super(NodeDeploymentExecutor, self).onSendingFinalReport()
+            super(NodeDeploymentExecutor, self).onSendingReports()
+
+    def onFinalizing(self):
+        super(NodeDeploymentExecutor, self).onSendingReports()
 
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
             self._run_target_script(self.targets[target][0])
+            sys.stdout.flush()
+            sys.stderr.flush()
         else:
             util.printAndFlush('Nothing to do\n')
 
@@ -94,9 +104,28 @@ class NodeDeploymentExecutor(MachineExecutor):
         currentDir = os.getcwd()
         os.chdir(tempfile.gettempdir() + os.sep)
         try:
-            self._executeRaiseOnError(fn)
+            process = util.execute(fn, noWait=True)
         finally:
             os.chdir(currentDir)
+
+        # The process is still working on the background.
+        while process.poll() is None:
+            # Ask server whether the abort flag is set. If so, kill the
+            # process and exit. Otherwise, sleep for some time.
+            if self.wrapper.isAbort():
+                try:
+                    util.printDetail('Abort flag detected. '
+                                     'Terminating target script execution...')
+                    process.terminate()
+                    time.sleep(5)
+                    if process.poll() is None:
+                        util.printDetail('Termination is taking too long. '
+                                         'Killing the target script...')
+                        process.kill()
+                except OSError:
+                    pass
+                break
+            time.sleep(TARGET_POLL_INTERVAL)
 
     def _addSshPubkeyIfNeeded(self):
         if util.needToAddSshPubkey():

@@ -27,8 +27,8 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         super(OrchestratorDeploymentExecutor, self).__init__(wrapper,
                                                              configHolder)
 
-    def onInitializing(self):
-        util.printAction('Initializing')
+    def onProvisioning(self):
+        util.printAction('Provisioning')
         util.printStep('Starting instances')
         try:
             self.wrapper.startImages()
@@ -41,14 +41,16 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         util.printStep('Publishing instance initialization information')
         self.wrapper.publishDeploymentInitializationInfo()
 
-    def onDetached(self):
-        self._killItself()
-        super(OrchestratorDeploymentExecutor, self).onDetached()
+    def onReady(self):
+        super(OrchestratorDeploymentExecutor, self).onReady()
+        
+        if not self.wrapper.needToStopImages():
+            self._killItself()
 
-    def onTerminal(self):
-        util.printAction('Terminating')
+    def onFinalizing(self):
+        super(OrchestratorDeploymentExecutor, self).onFinalizing()
+        
         util.printStep('Stopping instances')
-
         try:
             self.wrapper.stopNodes()
         except Exceptions.AbortException:
@@ -56,10 +58,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         except Exception as ex:
             util.printError('Error stopping instances: %s' % ex)
             raise
-
-        util.printStep('Publishing instance termination information')
-        self.wrapper.publishDeploymentTerminateInfo()
-
-        super(OrchestratorDeploymentExecutor, self).onTerminal()
-
+        
+        self.wrapper.advance()
+        
         self._killItself()

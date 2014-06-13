@@ -24,6 +24,9 @@ class SimplePrintListener(object):
 
     def write(self, msg):
         pass
+    
+    def write_for(self, nodename, msg):
+        self.write(nodename + ': ' + msg)
 
     def __beVerbose(self, msg):
         print msg

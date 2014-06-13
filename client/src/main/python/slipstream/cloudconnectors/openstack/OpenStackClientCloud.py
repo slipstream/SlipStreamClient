@@ -94,7 +94,9 @@ class OpenStackClientCloud(BaseCloudConnector):
     def _buildImageOnOpenStack(self, userInfo, imageInfo):
         self._thread_local.driver = self._getDriver(userInfo)
 
-        vm = self.getVm(NodeDecorator.MACHINE_NAME)
+        machine_name = NodeDecorator.MACHINE_NAME
+
+        vm = self.getVm(machine_name)
 
         util.printAndFlush("\n  imageInfo: %s \n" % str(imageInfo))
         util.printAndFlush("\n  VM: %s \n" % str(vm))
@@ -110,11 +112,13 @@ class OpenStackClientCloud(BaseCloudConnector):
         attributes = self.getAttributes(imageInfo)
 
         util.printStep('Creation of the new Image.')
+        self.listener.write_for(machine_name, 'Saving the image')
         newImg = self._thread_local.driver.ex_save_image(instance, 
                                                          attributes['shortName'], 
                                                          metadata=None)
 
         self._waitImageCreationCompleted(newImg.id)
+        self.listener.write_for(machine_name, 'Image saved !')
 
         self._newImageId = newImg.id
 

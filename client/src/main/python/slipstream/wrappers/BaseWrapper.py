@@ -72,7 +72,7 @@ class BaseWrapper(object):
         self.clientSlipStream.setRuntimeParameter(abort, message)
 
     def getState(self):
-        key = self._qualifyKey(NodeDecorator.STATE_KEY)
+        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
         return self.clientSlipStream.getRuntimeParameter(key)
 
     def isAbort(self):
@@ -170,9 +170,6 @@ class BaseWrapper(object):
         self.setInstanceId(nodename, vm_id)
         self.setInstanceIp(nodename, vm_ip)
 
-    def setStateMessage(self, nodename, state):
-        self._setRuntimeParameter(nodename, 'statemessage', state)
-
     def setInstanceId(self, nodename, vm_id):
         self._setRuntimeParameter(nodename, 'instanceid', vm_id)
 
@@ -182,3 +179,6 @@ class BaseWrapper(object):
     def _setRuntimeParameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
         self.clientSlipStream.setRuntimeParameter(parameter, value)
+    
+    def needToStopImages(self, ignore_on_success_run_forever=False):    
+        return False
