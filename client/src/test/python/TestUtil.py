@@ -11,7 +11,7 @@ class TestUtil(unittest.TestCase):
         self.assertEqual(status, 0)
 
         process = util.execute(['sleep', '3'], noWait=True)
-        self.assertIsInstance(process, subprocess.Popen)
+        self.assertTrue(isinstance(process, subprocess.Popen))
         process.kill()
 
     def xtest_execute_apple_specific(self):
