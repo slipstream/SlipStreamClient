@@ -271,7 +271,7 @@ def getConfigFileName():
     filename = 'slipstream.client.conf'
     try:
         configFilename = os.path.join(os.getcwd(), filename)
-    except OSError: # current directory may no longer exists
+    except OSError:  # current directory may no longer exists
         configFilename = os.path.join(getInstallationLocation(), filename)
     if os.path.exists(configFilename):
         return configFilename
@@ -557,10 +557,10 @@ def appendSshPubkeyToAuthorizedKeys(pubkey):
         pass
     fileAppendContent(dot_ssh_path + '/authorized_keys',
                       '\n' + pubkey)
-    execute('restorecon -R %s || true' % dot_ssh_path, noWait=True, shell=True, withStderr=True, 
+    execute('restorecon -R %s || true' % dot_ssh_path, noWait=True, shell=True, withStderr=True,
             withOutput=True)
-    
-    
+
+
 
 class NullFile(object):
     def write(self, x):
@@ -612,7 +612,7 @@ def deprecated(func):
         warnings.warn("Call to deprecated function %s." % func.__name__,
                       category=DeprecationWarning, stacklevel=2)
         return func(*args, **kwargs)
-    #warnings.simplefilter('default', DeprecationWarning)
+    # warnings.simplefilter('default', DeprecationWarning)
     newFunc.__name__ = func.__name__
     newFunc.__doc__ = func.__doc__
     newFunc.__dict__.update(func.__dict__)
