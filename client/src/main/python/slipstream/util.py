@@ -591,12 +591,13 @@ def nostderr():
 
 
 @contextlib.contextmanager
-def nostdouterr():
+def nostdouterr(override=False):
     save_stdout = sys.stdout
     save_stderr = sys.stderr
     try:
-        sys.stdout = NullFile()
-        sys.stderr = NullFile()
+        if not override:
+            sys.stdout = NullFile()
+            sys.stderr = NullFile()
         yield
     finally:
         sys.stdout = save_stdout
