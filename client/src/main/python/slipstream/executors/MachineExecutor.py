@@ -46,7 +46,8 @@ class MachineExecutor(object):
     def _execute(self, state=None):
         state = (state and state) or self.wrapper.getState()
         if not state:
-            raise ExecutionException('Machine executor: No state to execute specified.')
+            raise ExecutionException('Machine executor: No state to execute '
+                                     'specified.')
         try:
             getattr(self, 'on' + state)()
         except AbortException as ex:
@@ -83,7 +84,8 @@ class MachineExecutor(object):
                 else:
                     time.sleep(timeSleep)
         else:
-            raise TimeoutException('Timeout reached waiting for next state, current state: %s' % state)
+            raise TimeoutException('Timeout reached waiting for next state, '
+                                   'current state: %s' % state)
 
     def _is_timeout_not_needed(self, state):
         return state == 'Ready' and not self.wrapper.needToStopImages()
@@ -134,7 +136,8 @@ class MachineExecutor(object):
 
     def _abort_running_in_final_state(self):
         time.sleep(60)
-        raise ExecutionException('The run is in a final state but the VM is still running !')
+        raise ExecutionException('The run is in a final state but the VM is '
+                                 'still running !')
 
     def _nodename(self):
         return self.wrapper.nodename()

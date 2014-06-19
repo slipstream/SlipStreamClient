@@ -44,10 +44,10 @@ from winrm.exceptions import WinRMTransportError
 class BaseCloudConnector(object):
     TIMEOUT_CONNECT = 10 * 60
 
-    DISK_VOLATILE_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX +
-                                    '.volatile')
-    DISK_PERSISTENT_PARAMETER_NAME = (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX +
-                                      '.persistent')
+    DISK_VOLATILE_PARAMETER_NAME = \
+        (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + '.volatile')
+    DISK_PERSISTENT_PARAMETER_NAME = \
+        (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + '.persistent')
 
     RUN_BOOTSTRAP_SCRIPT = False
     WAIT_IP = False
@@ -116,9 +116,11 @@ class BaseCloudConnector(object):
         if direct_ip_assignment:
             self._capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
         if need_to_add_ssh_public_key_on_node:
-            self._capabilities.append(self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE)
+            self._capabilities.append(
+                self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE)
         if orchestrator_can_kill_itself_or_its_vapp:
-            self._capabilities.append(self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
+            self._capabilities.append(
+                self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
     def hasCapability(self, capability):
         return capability in self._capabilities
@@ -217,7 +219,8 @@ class BaseCloudConnector(object):
         return self._thread_local.isWindows
 
     def _setIsWindows(self, image_info):
-        self._thread_local.isWindows = self.getPlatform(image_info).lower() == 'windows'
+        self._thread_local.isWindows = \
+            self.getPlatform(image_info).lower() == 'windows'
 
     @deprecated
     def setRunBootstrapScript(self, run=True):
@@ -305,7 +308,8 @@ class BaseCloudConnector(object):
             vm = self._waitAndGetInstanceIpAddress(vm)
             self.addVm(nodename, vm, image_info)
 
-        if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not self.isWindows():
+        if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and \
+            not self.isWindows():
             self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
                                                        nodename,
                                                        self.vmGetIp(vm))
@@ -313,7 +317,8 @@ class BaseCloudConnector(object):
             self._launchWindowsBootstrapScript(image_info, nodename,
                                                self.vmGetIp(vm))
 
-    def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
+    def _startImage(self, user_info, image_info, instance_name,
+                    cloudSpecificData=None):
         """Cloud specific VM provisioning.
         Returns: node - cloud specific representation of a started VM."""
         raise NotImplementedError()
@@ -392,7 +397,8 @@ class BaseCloudConnector(object):
 
     def publishVmId(self, nodename, vm_id):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_instanceid(nodename, str(vm_id))
+        NodeInfoPublisher(self.configHolder).publish_instanceid(nodename,
+                                                                str(vm_id))
 
     def publishVmIp(self, nodename, vm_ip):
         # Needed for thread safety
@@ -405,7 +411,8 @@ class BaseCloudConnector(object):
         ssh_username, _ = self._getSshUsernamePassword(image_info)
 
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_url_ssh(nodename, vm_ip, ssh_username)
+        NodeInfoPublisher(self.configHolder).publish_url_ssh(nodename, vm_ip,
+                                                             ssh_username)
 
     def getVms(self):
         return self._vms
@@ -454,14 +461,16 @@ class BaseCloudConnector(object):
         prerecipe, recipe, packages = self.extractAllTargets(imageInfo)
         try:
             machine_name = NodeDecorator.MACHINE_NAME
-            
+
             username, password, sshPrivateKeyFile = \
                 self._getSshCredentials(imageInfo, user_info,
                                         machine_name)
 
-            if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not sshPrivateKeyFile:
+            if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and \
+                not sshPrivateKeyFile:
                 password = ''
-                sshPrivateKeyFile, publicKey = self._getTempPrivateKeyFileNameAndPublicKey()
+                sshPrivateKeyFile, publicKey = \
+                    self._getTempPrivateKeyFileNameAndPublicKey()
 
             self._waitCanConnectWithSshOrAbort(host, username=username,
                                                password=password,
@@ -477,7 +486,8 @@ class BaseCloudConnector(object):
                 self.listener.write_for(machine_name, 'Installing Packages')
                 remoteInstallPackages(username, host, packages,
                                       self.getPlatform(imageInfo),
-                                      sshKey=sshPrivateKeyFile, password=password)
+                                      sshKey=sshPrivateKeyFile,
+                                      password=password)
             if recipe:
                 util.printStep('Running Recipe')
                 self.listener.write_for(machine_name, 'Running Recipe')
@@ -485,7 +495,8 @@ class BaseCloudConnector(object):
                                 sshKey=sshPrivateKeyFile, password=password)
 
             if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION):
-                self._revertSshSecurity(host, username, sshPrivateKeyFile, publicKey)
+                self._revertSshSecurity(host, username, sshPrivateKeyFile,
+                                        publicKey)
         finally:
             try:
                 os.unlink(sshPrivateKeyFile)
@@ -553,10 +564,12 @@ class BaseCloudConnector(object):
         try:
             return params[param]
         except KeyError:
-            raise Exceptions.ParameterNotFoundException("Cloud parameter '%s' not found" % param)
+            raise Exceptions.ParameterNotFoundException("Cloud parameter "
+                                                    "'%s' not found" % param)
 
     def _generateNodeName(self, nodename, node_number):
-        return nodename + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + str(node_number)
+        return nodename + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
+                str(node_number)
 
     def _generateInstanceName(self, nodename):
         return nodename + ':%s' % self._getRunId()
@@ -568,7 +581,8 @@ class BaseCloudConnector(object):
     def isStartOrchestrator():
         return os.environ.get('CLI_ORCHESTRATOR', 'False') == 'True'
 
-    def _secureSshAccessAndRunBootstrapScript(self, userInfo, image_info, nodename, ip):
+    def _secureSshAccessAndRunBootstrapScript(self, userInfo, image_info,
+                                              nodename, ip):
         username, password = self._getSshUsernamePassword(image_info, nodename)
         privateKey, publicKey = generateKeyPair()
         privateKey = util.filePutContentInTempFile(privateKey)
@@ -579,9 +593,11 @@ class BaseCloudConnector(object):
     def _secureSshAccess(self, ip, username, password, publicKey, userInfo=None):
         self._waitCanConnectWithSshOrAbort(ip, username, password)
         script = self.getObfuscationScript(publicKey, username, userInfo)
-        self._printDetail("Securing SSH access to %s with:\n%s\n" % (ip, script))
+        self._printDetail("Securing SSH access to %s with:\n%s\n" % (ip,
+                                                                     script))
         _, output = self._runScript(ip, username, script, password=password)
-        self._printDetail("Secured SSH access to %s. Output:\n%s\n" % (ip, output))
+        self._printDetail("Secured SSH access to %s. Output:\n%s\n" % (ip,
+                                                                       output))
 
     def _revertSshSecurity(self, ip, username, privateKey, orchestratorPublicKey):
         self._waitCanConnectWithSshOrAbort(ip, username, sshKey=privateKey)
@@ -602,24 +618,30 @@ class BaseCloudConnector(object):
     def _launchBootstrapScript(self, nodename, ip, username, privateKey):
         self._waitCanConnectWithSshOrAbort(ip, username, sshKey=privateKey)
         script = self._getBootstrapScript(nodename)
-        self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip, script))
-        _, output = self._runScriptOnBackgroud(ip, username, script, sshKey=privateKey)
-        self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip, output))
+        self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip,
+                                                                       script))
+        _, output = self._runScriptOnBackgroud(ip, username, script,
+                                               sshKey=privateKey)
+        self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip,
+                                                                      output))
 
     def _launchWindowsBootstrapScript(self, image_info, nodename, ip):
         username, password = self._getSshUsernamePassword(image_info, nodename)
         script = self._getBootstrapScript(nodename, username=username)
         winrm = self._getWinrm(ip, username, password)
         self._waitCanConnectWithWinrmOrAbort(winrm)
-        self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip, script))
+        self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip,
+                                                                       script))
         util.printAndFlush(script)
         winrm.timeout = winrm.set_timeout(600)
         output = self._runScriptWithWinrm(winrm, script)
-        self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip, output))
+        self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip,
+                                                                      output))
 
     def _getWinrm(self, ip, username, password):
-        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip, transport='plaintext',
-                               username=username, password=password)
+        return WinRMWebService(endpoint='http://%s:5985/wsman' % ip,
+                               transport='plaintext', username=username,
+                               password=password)
 
     def _runScriptWithWinrm(self, winrm, script):
         shellId = winrm.open_shell()
@@ -628,7 +650,8 @@ class BaseCloudConnector(object):
             if command:
                 commands += command + '& '
         commands += 'echo "Bootstrap Finished"'
-        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands, shellId,
+        stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands,
+                                                               shellId,
                                                                runAndContinue=True)
         # winrm.close_shell(shellId)
         return stdout, stderr, returnCode
@@ -637,8 +660,9 @@ class BaseCloudConnector(object):
         try:
             self._waitCanConnectWithWinrmOrTimeout(winrm, self.TIMEOUT_CONNECT)
         except Exception as ex:
-            raise Exceptions.ExecutionException("Failed to connect to %s: %s" % (winrm.endpoint,
-                                                                                 str(ex)))
+            raise Exceptions.ExecutionException("Failed to connect to "
+                                                "%s: %s" % (winrm.endpoint,
+                                                            str(ex)))
 
     def _waitCanConnectWithWinrmOrTimeout(self, winrm, timeout):
         time_stop = time.time() + timeout
@@ -651,7 +675,8 @@ class BaseCloudConnector(object):
                 util.printDetail(str(ex))
                 time.sleep(5)
 
-    def _runCommandWithWinrm(self, winrm, command, shellId=None, runAndContinue=False):
+    def _runCommandWithWinrm(self, winrm, command, shellId=None,
+                             runAndContinue=False):
         if shellId:
             _shellId = shellId
         else:
@@ -662,7 +687,8 @@ class BaseCloudConnector(object):
         util.printAndFlush('\nwinrm.get_command_output\n')
         if not runAndContinue:
             try:
-                stdout, stderr, returnCode = winrm.get_command_output(_shellId, commandId)
+                stdout, stderr, returnCode = winrm.get_command_output(_shellId,
+                                                                      commandId)
             except Exception as e:
                 print 'WINRM Exception: %s' % str(e)
         util.printAndFlush('\nwinrm.cleanup_command\n')

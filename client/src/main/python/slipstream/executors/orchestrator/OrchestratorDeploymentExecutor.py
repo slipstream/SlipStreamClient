@@ -43,13 +43,13 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
     def onReady(self):
         super(OrchestratorDeploymentExecutor, self).onReady()
-        
+
         if not self.wrapper.needToStopImages():
             self._killItself()
 
     def onFinalizing(self):
         super(OrchestratorDeploymentExecutor, self).onFinalizing()
-        
+
         util.printStep('Stopping instances')
         try:
             self.wrapper.stopNodes()
@@ -58,7 +58,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         except Exception as ex:
             util.printError('Error stopping instances: %s' % ex)
             raise
-        
+
         self.wrapper.advance()
-        
+
         self._killItself()

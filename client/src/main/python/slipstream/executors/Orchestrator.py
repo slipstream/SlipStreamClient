@@ -17,10 +17,12 @@
 """
 
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.executors.orchestrator.OrchestratorExecutorFactory import OrchestratorExecutorFactory
+from slipstream.executors.orchestrator.OrchestratorExecutorFactory import \
+    OrchestratorExecutorFactory
 from slipstream.executors.Machine import Machine
 
 
 class Orchestrator(Machine):
     def __init__(self, configHolder=ConfigHolder()):
-        super(Orchestrator, self).__init__(OrchestratorExecutorFactory, configHolder)
+        super(Orchestrator, self).__init__(OrchestratorExecutorFactory,
+                                           configHolder)
