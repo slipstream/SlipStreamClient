@@ -279,42 +279,45 @@ class BaseCloudConnector(object):
         self.tasks_runnner = TasksRunner(self._startNodeInstanceAndClient,
                                          max_workers=max_workers,
                                          verbose=self.verboseLevel)
-        for node_number in range(1, int(node_info['multiplicity']) + 1):
-            self.tasks_runnner.put_task(user_info, node_info, node_number)
+        for instance_number in range(1, int(node_info['multiplicity']) + 1):
+            self.tasks_runnner.put_task(user_info, node_info, instance_number)
         self.tasks_runnner.run_tasks()
 
     def _waitNodesStartupTasksFinished(self):
         if self.tasks_runnner != None:
             self.tasks_runnner.wait_tasks_processed()
 
-    def _startNodeInstanceAndClient(self, user_info, node_info, node_number):
+    def _startNodeInstanceAndClient(self, user_info, node_info, instance_number):
         image_info = self._extractImageInfoFromNodeInfo(node_info)
-        nodename = self._generateNodeName(node_info['nodename'], node_number)
+        instance_name = self._generateInstanceName(node_info['nodename'],
+                                                   instance_number)
 
         self._setIsWindows(image_info)
 
-        self._printDetail("Starting node: %s" % nodename)
+        self._printDetail("Starting instance: %s" % instance_name)
 
         cloudSpecificData = self._getCloudSpecificData(node_info,
-                                                       node_number, nodename)
+                                                       instance_number,
+                                                       instance_name)
         vm = self._startImage(user_info,
                               image_info,
-                              self._generateInstanceName(nodename),
+                              self._generateVmName(instance_name),
                               cloudSpecificData)
 
-        self.addVm(nodename, vm, image_info)
+        self.addVm(instance_name, vm, image_info)
 
         if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
             vm = self._waitAndGetInstanceIpAddress(vm)
-            self.addVm(nodename, vm, image_info)
+            self.addVm(instance_name, vm, image_info)
 
         if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and \
             not self.isWindows():
             self._secureSshAccessAndRunBootstrapScript(user_info, image_info,
-                                                       nodename,
+                                                       instance_name,
                                                        self.vmGetIp(vm))
-        elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) and self.isWindows():
-            self._launchWindowsBootstrapScript(image_info, nodename,
+        elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) \
+            and self.isWindows():
+            self._launchWindowsBootstrapScript(image_info, instance_name,
                                                self.vmGetIp(vm))
 
     def _startImage(self, user_info, image_info, instance_name,
@@ -331,7 +334,7 @@ class BaseCloudConnector(object):
         if an exception has occurred."""
         pass
 
-    def _getCloudSpecificData(self, node_info, node_number, nodename):
+    def _getCloudSpecificData(self, node_info, instance_number, instance_name):
         # TODO: Consider providing user_info as well. Current use-case is
         #       cloud-init based context in OCCI connector.
         return None
@@ -386,32 +389,35 @@ class BaseCloudConnector(object):
     def isTerminateRunServerSide(self):
         return self._terminateRunServerSide
 
-    def addVm(self, name, vm, image_info):
+    def addVm(self, name, vm, image_info=None):
         self._vms[name] = vm
         self.publishVmInfo(name, vm, image_info)
 
-    def publishVmInfo(self, nodename, vm, image_info):
-        self.publishVmId(nodename, self.vmGetId(vm))
-        self.publishVmIp(nodename, self.vmGetIp(vm))
-        self.publishUrlSsh(nodename, vm, image_info)
+    def publishVmInfo(self, instance_name, vm, image_info):
+        self.publishVmId(instance_name, self.vmGetId(vm))
+        self.publishVmIp(instance_name, self.vmGetIp(vm))
+        if image_info:
+            self.publishUrlSsh(instance_name, vm, image_info)
 
-    def publishVmId(self, nodename, vm_id):
+    def publishVmId(self, instance_name, vm_id):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_instanceid(nodename,
+        NodeInfoPublisher(self.configHolder).publish_instanceid(instance_name,
                                                                 str(vm_id))
 
-    def publishVmIp(self, nodename, vm_ip):
+    def publishVmIp(self, instance_name, vm_ip):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_hostname(nodename, vm_ip)
+        NodeInfoPublisher(self.configHolder).publish_hostname(instance_name,
+                                                              vm_ip)
 
-    def publishUrlSsh(self, nodename, vm, image_info):
+    def publishUrlSsh(self, instance_name, vm, image_info):
         if not image_info:
             return
         vm_ip = self.vmGetIp(vm)
         ssh_username, _ = self._getSshUsernamePassword(image_info)
 
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_url_ssh(nodename, vm_ip,
+        NodeInfoPublisher(self.configHolder).publish_url_ssh(instance_name,
+                                                             vm_ip,
                                                              ssh_username)
 
     def getVms(self):
@@ -567,12 +573,17 @@ class BaseCloudConnector(object):
             raise Exceptions.ParameterNotFoundException("Cloud parameter "
                                                     "'%s' not found" % param)
 
-    def _generateNodeName(self, nodename, node_number):
-        return nodename + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
-                str(node_number)
+    def _generateInstanceName(self, instance_name, instance_number):
+        return instance_name + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
+                str(instance_number)
 
-    def _generateInstanceName(self, nodename):
-        return nodename + ':%s' % self._getRunId()
+    def _generateVmName(self, instance_name):
+        return instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+            '%s' % self._getRunId()
+
+    @staticmethod
+    def _get_instance_name_from_vm_name(vm_name):
+        return vm_name.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)[0]
 
     def _getRunId(self):
         return os.environ.get('SLIPSTREAM_DIID', '???')
@@ -582,13 +593,14 @@ class BaseCloudConnector(object):
         return os.environ.get('CLI_ORCHESTRATOR', 'False') == 'True'
 
     def _secureSshAccessAndRunBootstrapScript(self, userInfo, image_info,
-                                              nodename, ip):
-        username, password = self._getSshUsernamePassword(image_info, nodename)
+                                              instance_name, ip):
+        username, password = self._getSshUsernamePassword(image_info,
+                                                          instance_name)
         privateKey, publicKey = generateKeyPair()
         privateKey = util.filePutContentInTempFile(privateKey)
 
         self._secureSshAccess(ip, username, password, publicKey, userInfo)
-        self._launchBootstrapScript(nodename, ip, username, privateKey)
+        self._launchBootstrapScript(instance_name, ip, username, privateKey)
 
     def _secureSshAccess(self, ip, username, password, publicKey, userInfo=None):
         self._waitCanConnectWithSshOrAbort(ip, username, password)
@@ -615,9 +627,9 @@ class BaseCloudConnector(object):
         _, output = self._runScript(ip, username, script, sshKey=privateKey)
         self._printDetail("Reverted security of SSH access to %s. Output:\n%s\n" % (ip, output))
 
-    def _launchBootstrapScript(self, nodename, ip, username, privateKey):
+    def _launchBootstrapScript(self, instance_name, ip, username, privateKey):
         self._waitCanConnectWithSshOrAbort(ip, username, sshKey=privateKey)
-        script = self._getBootstrapScript(nodename)
+        script = self._getBootstrapScript(instance_name)
         self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip,
                                                                        script))
         _, output = self._runScriptOnBackgroud(ip, username, script,
@@ -625,9 +637,10 @@ class BaseCloudConnector(object):
         self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip,
                                                                       output))
 
-    def _launchWindowsBootstrapScript(self, image_info, nodename, ip):
-        username, password = self._getSshUsernamePassword(image_info, nodename)
-        script = self._getBootstrapScript(nodename, username=username)
+    def _launchWindowsBootstrapScript(self, image_info, instance_name, ip):
+        username, password = self._getSshUsernamePassword(image_info,
+                                                          instance_name)
+        script = self._getBootstrapScript(instance_name, username=username)
         winrm = self._getWinrm(ip, username, password)
         self._waitCanConnectWithWinrmOrAbort(winrm)
         self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip,
@@ -717,7 +730,8 @@ class BaseCloudConnector(object):
         command += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
         return command
 
-    def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
+    def _getBootstrapScript(self, instance_name, preExport=None,
+                            preBootstrap=None, postBootstrap=None,
                             username=None):
         script = ''
         addEnvironmentVariableCommand = ''
@@ -737,9 +751,11 @@ class BaseCloudConnector(object):
                     val = Client.WINDOWS_REPORTSDIR
                 if re.search(' ', val):
                     val = '"%s"' % val
-                script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var, val)
+                script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var,
+                                          val)
 
-        script += '%s SLIPSTREAM_NODENAME=%s\n' % (addEnvironmentVariableCommand, nodename)
+        script += '%s SLIPSTREAM_NODENAME=%s\n' % (addEnvironmentVariableCommand,
+                                                   instance_name)
 
         script += '%s %s=%s\n' % (addEnvironmentVariableCommand,
                                   util.ENV_NEED_TO_ADD_SSHPUBKEY,
@@ -748,20 +764,23 @@ class BaseCloudConnector(object):
         if preBootstrap:
             script += '%s\n' % preBootstrap
 
-        script += '%s\n' % self._buildSlipStreamBootstrapCommand(nodename, username)
+        script += '%s\n' % self._buildSlipStreamBootstrapCommand(instance_name,
+                                                                 username)
 
         if postBootstrap:
             script += '%s\n' % postBootstrap
 
         return script
 
-    def _buildSlipStreamBootstrapCommand(self, nodename, username=None):
+    def _buildSlipStreamBootstrapCommand(self, instance_name, username=None):
         if self.isWindows():
-            return self._buildSlipStreamBootstrapCommandForWindows(nodename, username)
+            return self._buildSlipStreamBootstrapCommandForWindows(instance_name,
+                                                                   username)
         else:
-            return self._buildSlipStreamBootstrapCommandForLinux(nodename)
+            return self._buildSlipStreamBootstrapCommandForLinux(instance_name)
 
-    def _buildSlipStreamBootstrapCommandForWindows(self, nodename, username):
+    def _buildSlipStreamBootstrapCommandForWindows(self, instance_name,
+                                                   username):
         if not username:
             username = 'administrator'
         bootstrap = 'slipstream.bootstrap'
@@ -801,13 +820,13 @@ class BaseCloudConnector(object):
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
             'reports': reportdir,
-            'nodename': nodename,
+            'nodename': instance_name,
             'username': username,
             'password': password,
             'targetScript': targetScript
         }
 
-    def _buildSlipStreamBootstrapCommandForLinux(self, nodename):
+    def _buildSlipStreamBootstrapCommandForLinux(self, instance_name):
         bootstrap = os.path.join(tempfile.gettempdir(), 'slipstream.bootstrap')
         reportdir = Client.REPORTSDIR
 
@@ -820,11 +839,12 @@ class BaseCloudConnector(object):
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
             'reports': reportdir,
-            'nodename': nodename,
+            'nodename': instance_name,
             'targetScript': targetScript
         }
 
-    def _waitCanConnectWithSshOrAbort(self, host, username='', password='', sshKey=None):
+    def _waitCanConnectWithSshOrAbort(self, host, username='', password='',
+                                      sshKey=None):
         self._printDetail('Check if we can connect to %s' % host)
         try:
             waitUntilSshCanConnectOrTimeout(host,
@@ -832,7 +852,9 @@ class BaseCloudConnector(object):
                                             sshKey=sshKey,
                                             user=username, password=password)
         except Exception as ex:
-            raise Exceptions.ExecutionException("Failed to connect to %s: %s, %s" % (host, type(ex), str(ex)))
+            raise Exceptions.ExecutionException("Failed to connect to "
+                                                "%s: %s, %s" % (host, type(ex),
+                                                                str(ex)))
 
     def _runScript(self, ip, username, script, password='', sshKey=None):
         return remoteRunScript(username, ip, script, sshKey=sshKey,
