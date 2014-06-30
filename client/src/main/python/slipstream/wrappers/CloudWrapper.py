@@ -71,7 +71,7 @@ class CloudWrapper(BaseWrapper):
         return self._get_node_instances_in_scale_state(self.SCALE_STATE_REMOVED)
 
     def _get_node_instances_to_start(self):
-        return self._get_node_instances_in_scale_state(self.SCALE_STATE_STARTING)
+        return self._get_node_instances_in_scale_state(self.SCALE_STATE_CREATING)
 
     def _get_node_instances_to_stop(self):
         return self._get_node_instances_in_scale_state(self.SCALE_STATE_REMOVING)
@@ -91,7 +91,7 @@ class CloudWrapper(BaseWrapper):
         self.cloudProxy.stopVmsByIds(ids)
 
         instance_names_removed = node_instances_to_stop.keys()
-        self.set_scale_state(instance_names_removed,
+        self.set_scale_state_on_node_instances(instance_names_removed,
                              self.SCALE_STATE_REMOVED)
 
         # Cache instance names that are to be set as 'gone' at Ready state.
@@ -100,8 +100,9 @@ class CloudWrapper(BaseWrapper):
     def set_removed_instances_as_gone(self):
         '''Using cached list of instance names that were set as 'removed'.
         '''
-        self.set_scale_state(self._instance_names_to_be_gone,
+        self.set_scale_state_on_node_instances(self._instance_names_to_be_gone,
                              self.SCALE_STATE_GONE)
+        self._instance_names_to_be_gone = {}
 
     def stopCreator(self):
         if self.needToStopImages(True):

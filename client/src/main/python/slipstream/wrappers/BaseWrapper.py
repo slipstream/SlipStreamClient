@@ -49,7 +49,11 @@ class NodeInfoPublisher(SlipStreamHttpClient):
 
 class BaseWrapper(object):
 
-    SCALE_STATE_STARTING = 'starting'
+    SCALE_STATE_CREATING = 'creating'
+    SCALE_STATE_CREATED = 'created'
+    # FIXME: rename me please
+    SCALE_STATE_OPERATIONAL = 'operational'
+
     SCALE_STATE_REMOVING = 'removing'
     SCALE_STATE_REMOVED = 'removed'
     SCALE_STATE_GONE = 'gone'
@@ -193,8 +197,21 @@ class BaseWrapper(object):
     def discard_run_locally(self):
         self.clientSlipStream.discard_run()
 
-    def set_scale_state(self, instance_names, scale_state):
+    def set_scale_state_on_node_instances(self, instance_names, scale_state):
         for instance_name in instance_names:
             key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
                 NodeDecorator.SCALE_STATE_KEY
             self.clientSlipStream.setRuntimeParameter(key, scale_state)
+
+    def set_scale_state(self, scale_state):
+        '''Set scale state for this node instances.
+        '''
+        key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
+        self.clientSlipStream.setRuntimeParameter(key, scale_state)
+
+    def get_scale_state(self, scale_state):
+        '''Set scale state for this node instances.
+        '''
+        key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
+        return self.clientSlipStream.getRuntimeParameter(key)
+

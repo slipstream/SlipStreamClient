@@ -45,12 +45,12 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onProvisioning(self):
         super(NodeDeploymentExecutor, self).onProvisioning()
 
-        # get scale.state as runtime parameter
+        scale_state = self.wrapper.get_scale_state()
 
-        # Only if scale.state is 'creating'
-        self._addSshPubkeyIfNeeded()
-        # set to 'created' if 'creating'.
-        # set to '' if 'created'.
+        if scale_state == self.wrapper.SCALE_STATE_CREATING:
+            self._addSshPubkeyIfNeeded()
+
+            self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_CREATED)
 
         util.printStep('Getting deployment targets')
 
@@ -146,4 +146,4 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onReady(self):
         super(NodeDeploymentExecutor, self).onReady()
 
-        # set scale.state to ''
+        self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_OPERATIONAL)
