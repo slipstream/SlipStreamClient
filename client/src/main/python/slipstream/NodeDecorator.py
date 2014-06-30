@@ -53,6 +53,10 @@ class NodeDecorator(object):
     COMPLETE_KEY = 'complete'
     STATECUSTOM_KEY = 'statecustom'
 
+    SCALE_STATE_KEY = 'scale.state'
+    INSTANCEID_KEY = 'instanceid'
+    CLOUDSERVICE_KEY = 'cloudservice'
+
     urlIgnoreAbortAttributeFragment = '?ignoreabort=true'
 
     SLIPSTREAM_DIID_ENV_NAME = 'SLIPSTREAM_DIID'

@@ -90,7 +90,7 @@ class MainProgram(CommandBase):
         attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
 
         user = attrs['name']
-        uri = util.USER_URL_PATH + '/' + user
+        uri = util.USER_RESOURCE_PATH + '/' + user
 
         url = self.options.endpoint + uri
 

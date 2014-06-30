@@ -88,13 +88,23 @@ class MachineExecutor(object):
                                    'current state: %s' % state)
 
     def _is_timeout_not_needed(self, state):
-        return state == 'Ready' and not self.wrapper.needToStopImages()
+        return state == 'Ready' and not self.wrapper.needToStopImages() and\
+            not self._is_mutable()
+
+    def _is_mutable(self):
+        self.wrapper.is_mutable()
+        return False
 
     def onInitializing(self):
         pass
 
     def onProvisioning(self):
         util.printAction('Provisioning')
+
+        self._discard_run_locally()
+
+    def _discard_run_locally(self):
+        self.wrapper.discard_run_locally()
 
     def onExecuting(self):
         util.printAction('Executing')

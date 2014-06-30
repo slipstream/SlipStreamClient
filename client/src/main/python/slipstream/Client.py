@@ -187,7 +187,7 @@ class Client(object):
         self.httpClient.advance(nodeName)
 
     def terminateRun(self):
-        self.httpClient._httpDelete(self.httpClient.runInstanceEndpoint)
+        self.httpClient._httpDelete(self.httpClient.run_url)
 
     def getGlobalAbortMessage(self):
         return self.httpClient.getGlobalAbortMessage()

@@ -48,6 +48,12 @@ class NodeInfoPublisher(SlipStreamHttpClient):
 
 
 class BaseWrapper(object):
+
+    SCALE_STATE_STARTING = 'starting'
+    SCALE_STATE_REMOVING = 'removing'
+    SCALE_STATE_REMOVED = 'removed'
+    SCALE_STATE_GONE = 'gone'
+
     def __init__(self, configHolder):
         self.clientSlipStream = SlipStreamHttpClient(configHolder)
         self.clientSlipStream.ignoreAbort = True
@@ -55,7 +61,6 @@ class BaseWrapper(object):
 
         self._userInfo = None
         self._imageInfo = None
-        self._nodesInfo = None
         self._runParameters = None
 
     def advance(self):
@@ -130,14 +135,17 @@ class BaseWrapper(object):
         return self.clientSlipStream.getNodeDeploymentTargets()
 
     def getMachineCloudInstanceId(self):
-        key = self._qualifyKey('instanceid')
+        key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
         return self.clientSlipStream.getRuntimeParameter(key)
 
     def getRunResourceUri(self):
-        return self.clientSlipStream.runInstanceEndpoint
+        return self.clientSlipStream.run_url
 
     def _deleteRunResource(self):
         self.clientSlipStream._httpDelete(self.getRunResourceUri())
+
+    def discard_user_info_locally(self):
+        self._userInfo = None
 
     def getUserInfo(self, cloud_service_name):
         if self._userInfo is None:
@@ -153,11 +161,6 @@ class BaseWrapper(object):
         if self._imageInfo is None:
             self._imageInfo = self.clientSlipStream.getImageInfo()
         return self._imageInfo
-
-    def getNodesInfo(self):
-        if self._nodesInfo is None:
-            self._nodesInfo = self.clientSlipStream.getNodesInfo()
-        return self._nodesInfo
 
     def getUserSshPubkey(self):
         userInfo = self.getUserInfo('')
@@ -179,6 +182,19 @@ class BaseWrapper(object):
     def _setRuntimeParameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
         self.clientSlipStream.setRuntimeParameter(parameter, value)
-    
-    def needToStopImages(self, ignore_on_success_run_forever=False):    
+
+    def needToStopImages(self, ignore_on_success_run_forever=False):
         return False
+
+    def is_mutable(self):
+        mutable = self.clientSlipStream._get_run_mutable()
+        return util.str2bool(mutable)
+
+    def discard_run_locally(self):
+        self.clientSlipStream.discard_run()
+
+    def set_scale_state(self, instance_names, scale_state):
+        for instance_name in instance_names:
+            key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+                NodeDecorator.SCALE_STATE_KEY
+            self.clientSlipStream.setRuntimeParameter(key, scale_state)

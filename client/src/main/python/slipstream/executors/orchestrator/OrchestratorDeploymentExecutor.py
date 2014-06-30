@@ -28,10 +28,14 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
                                                              configHolder)
 
     def onProvisioning(self):
-        util.printAction('Provisioning')
+        super(OrchestratorDeploymentExecutor, self).onProvisioning()
+
+        self._cleanup_provisioning_info()
+
         util.printStep('Starting instances')
         try:
-            self.wrapper.startImages()
+            self.wrapper.start_node_instances()
+            self.wrapper.stop_node_instances()
         except Exceptions.AbortException:
             pass
         except Exception as ex:
@@ -43,6 +47,8 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
     def onReady(self):
         super(OrchestratorDeploymentExecutor, self).onReady()
+
+        self.wrapper.set_removed_instances_as_gone()
 
         if not self.wrapper.needToStopImages():
             self._killItself()
@@ -62,3 +68,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         self.wrapper.advance()
 
         self._killItself()
+
+    def _cleanup_provisioning_info(self):
+        self.wrapper.discard_user_info_locally()
+        self.wrapper.discard_nodes_info_locally()

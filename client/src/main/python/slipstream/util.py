@@ -45,9 +45,9 @@ REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR',
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
 HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 
-RUN_URL_PATH = '/run'
-MODULE_URL_PATH = '/module'
-USER_URL_PATH = '/user'
+RUN_RESOURCE_PATH = '/run'
+MODULE_RESOURCE_PATH = '/module'
+USER_RESOURCE_PATH = '/user'
 
 CONFIGPARAM_CONNECTOR_MODULE_NAME = 'cloudconnector'
 
@@ -617,3 +617,7 @@ def deprecated(func):
     newFunc.__doc__ = func.__doc__
     newFunc.__dict__.update(func.__dict__)
     return newFunc
+
+
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")

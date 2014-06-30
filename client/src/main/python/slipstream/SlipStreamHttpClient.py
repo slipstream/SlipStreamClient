@@ -70,22 +70,20 @@ class SlipStreamHttpClient(object):
 
         configHolder.assign(self)
 
-        self._assembleEndpoints()
+        self._assemble_endpoints()
 
         self.httpClient = HttpClient(configHolder=configHolder)
 
-    def _assembleEndpoints(self):
-        self.serviceRootEndpoint = self.serviceurl
+    def _assemble_endpoints(self):
+        self.runEndpoint = self.serviceurl + util.RUN_RESOURCE_PATH
+        self.run_url = self.runEndpoint + '/' + self.diid
 
-        self.runEndpoint = self.serviceRootEndpoint + util.RUN_URL_PATH
-        self.runInstanceEndpoint = self.runEndpoint + '/' + self.diid
+        self.authnServiceUrl = self.serviceurl + '/'
 
-        self.authnServiceUrl = self.serviceRootEndpoint + '/'
-
-        self.runReportEndpoint = '%s/reports/%s' % (self.serviceRootEndpoint,
+        self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
                                                     self.diid)
 
-        self.userEndpoint = '%s/user/%s' % (self.serviceRootEndpoint,
+        self.userEndpoint = '%s/user/%s' % (self.serviceurl,
                                             self.username)
 
     def getUserInfo(self, cloud_qualifier):
@@ -144,15 +142,12 @@ class SlipStreamHttpClient(object):
         rootElement = etree.fromstring(run)
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
-    def getNodesInfo(self):
+    def get_node_instances(self, cloud_service_name):
+        '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
+        '''
         self._retrieveAndSetRun()
-        return self._getRemoteNodes()
-
-    def _getRemoteNodes(self):
-        nodes = DomExtractor.extractNodesFromRun(self.run_dom)
-        for node in nodes:
-            node['image'] = self._getImageInfoFromImageDom(node['image'])
-        return nodes
+        return DomExtractor.extract_node_instances(self.run_dom,
+                                                   cloud_service_name)
 
     def _getTargets(self, image_dom):
         category = self.getRunCategory()
@@ -181,6 +176,10 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extractTypeFromRun(self.run_dom)
 
+    def _get_run_mutable(self):
+        self._retrieveAndSetRun()
+        return DomExtractor.extractMutableFromRun(self.run_dom)
+
     def getDefaultCloudServiceName(self):
         return self._getDefaultCloudServiceName()
 
@@ -188,9 +187,12 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extractDefaultCloudServiceNameFromRun(self.run_dom)
 
+    def discard_run(self):
+        self.run_dom = None
+
     def _retrieveAndSetRun(self):
         if self.run_dom is None:
-            url = self.runInstanceEndpoint
+            url = self.run_url
             _, run = self._retrieve(url)
             self.run_dom = etree.fromstring(run)
 
@@ -198,7 +200,7 @@ class SlipStreamHttpClient(object):
         return self._httpGet(url, 'application/xml')
 
     def reset(self):
-        url = self.runInstanceEndpoint
+        url = self.run_url
         self._httpPost(url, 'reset', 'text/plain')
 
     def execute(self, resourceUri):
@@ -206,7 +208,7 @@ class SlipStreamHttpClient(object):
         return self._httpPost(url, resourceUri, 'text/plain')
 
     def advance(self, nodeName):
-        url = '%s/%s:%s' % (self.runInstanceEndpoint, nodeName,
+        url = '%s/%s:%s' % (self.run_url, nodeName,
                             NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
@@ -230,7 +232,7 @@ class SlipStreamHttpClient(object):
         return self.getGlobalAbortMessage() != ''
 
     def getGlobalAbortMessage(self):
-        url = '%s/%s%s' % (self.runInstanceEndpoint,
+        url = '%s/%s%s' % (self.run_url,
                            NodeDecorator.globalNamespacePrefix,
                            NodeDecorator.ABORT_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
@@ -243,7 +245,7 @@ class SlipStreamHttpClient(object):
 
     def getRuntimeParameter(self, key, ignoreAbort=False):
 
-        url = self.runInstanceEndpoint + '/' + key
+        url = self.run_url + '/' + key
         if (self.ignoreAbort or ignoreAbort):
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
@@ -254,7 +256,7 @@ class SlipStreamHttpClient(object):
         return content.strip().strip('"').strip("'")
 
     def setRuntimeParameter(self, key, value, ignoreAbort=False):
-        url = self.runInstanceEndpoint + '/' + key
+        url = self.run_url + '/' + key
         if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
 
@@ -280,7 +282,7 @@ class SlipStreamHttpClient(object):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)
 
     def putNewImageId(self, resourceUri, imageId):
-        url = self.serviceRootEndpoint + '/' + resourceUri
+        url = self.serviceurl + '/' + resourceUri
         self._printDetail('Set new image id: %s %s' % (url, imageId))
         self._httpPut(url, imageId)
 
@@ -294,7 +296,7 @@ class SlipStreamHttpClient(object):
             raise Exceptions.ExecutionException("Run ID should be provided "
                                                 "to get state.")
         state_key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
-        self.runInstanceEndpoint = self.runEndpoint + '/' + (uuid or self.diid)
+        self.run_url = self.runEndpoint + '/' + (uuid or self.diid)
         return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
 
 
@@ -302,16 +304,25 @@ class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
 
     @staticmethod
-    def extractNodesFromRun(run_dom):
-        nodes = []
-        for _node in run_dom.findall('module/nodes/entry/node'):
+    def extract_node_instances(run_dom, cloud_service_name=''):
+        '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
+        '''
+        nodes = {}
+        for node_name in run_dom.attrib['nodeNames']:
+            query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_name
             node = {}
-            node['cloudService'] = _node.get('cloudService')
-            node['multiplicity'] = int(_node.get('multiplicity'))
-            node['nodename'] = _node.get('name')
-            node['image'] = _node.find('image')
-            nodes.append(node)
+            for rtp in run_dom.findall(query):
+                key = DomExtractor._get_key_from_runtimeparameter(rtp)
+                node[key] = rtp.text
+            nodes[node_name] = node
+        for node in nodes:
+            if cloud_service_name == nodes[node][NodeDecorator.CLOUDSERVICE_KEY]:
+                del nodes[node]
         return nodes
+
+    @staticmethod
+    def _get_key_from_runtimeparameter(rtp):
+        return rtp.attrib['key'].split(NodeDecorator.NODE_PROPERTY_SEPARATOR, 1)[-1]
 
     @staticmethod
     def getExtraDisksFromImageDom(image_dom):
@@ -379,6 +390,10 @@ class DomExtractor(object):
     @staticmethod
     def extractTypeFromRun(run_dom):
         return run_dom.attrib['type']
+
+    @staticmethod
+    def extractMutableFromRun(run_dom):
+        return run_dom.attrib['mutable']
 
     @staticmethod
     def extractDefaultCloudServiceNameFromRun(run_dom):

@@ -43,9 +43,14 @@ class NodeDeploymentExecutor(MachineExecutor):
         self.targets = {}
 
     def onProvisioning(self):
-        util.printAction('Provisioning')
+        super(NodeDeploymentExecutor, self).onProvisioning()
 
+        # get scale.state as runtime parameter
+
+        # Only if scale.state is 'creating'
         self._addSshPubkeyIfNeeded()
+        # set to 'created' if 'creating'.
+        # set to '' if 'created'.
 
         util.printStep('Getting deployment targets')
 
@@ -137,3 +142,8 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _getUserSshPubkey(self):
         return self.wrapper.getUserSshPubkey()
+
+    def onReady(self):
+        super(NodeDeploymentExecutor, self).onReady()
+
+        # set scale.state to ''
