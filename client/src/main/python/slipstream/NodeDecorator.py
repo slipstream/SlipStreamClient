@@ -48,6 +48,11 @@ class NodeDecorator(object):
     # List of reserved and special node names
     reservedNodeNames = [globalNamespaceName, orchestratorName, MACHINE_NAME]
 
+    NODE_NAME_KEY = 'nodename'
+    NODE_INSTANCE_NAME_KEY = 'name'
+
+    IS_ORCHESTRATOR_KEY = 'is.orchestrator'
+
     # State names
     STATE_KEY = 'state'
     COMPLETE_KEY = 'complete'

@@ -6,9 +6,9 @@
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
  You may obtain a copy of the License at
- 
+
       http://www.apache.org/licenses/LICENSE-2.0
- 
+
  Unless required by applicable law or agreed to in writing, software
  distributed under the License is distributed on an "AS IS" BASIS,
  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -48,7 +48,7 @@ def searchInObjectList(list_, propertyName, propertyValue):
             if getattr(element, propertyName) == propertyValue:
                 return element
     return None
-    
+
 
 class OpenStackClientCloud(BaseCloudConnector):
     cloudName = 'openstack'
@@ -59,14 +59,14 @@ class OpenStackClientCloud(BaseCloudConnector):
         libcloud.security.VERIFY_SSL_CERT = False
 
         super(OpenStackClientCloud, self).__init__(configHolder)
-        
+
         self.setCapabilities(contextualization=True,
                              orchestrator_can_kill_itself_or_its_vapp=True)
-        
+
         self.flavors = []
         self.images = []
         self.securit_groups = []
-        
+
 
     def initialization(self, user_info):
         util.printStep('Initialize the OpenStack connector.')
@@ -74,7 +74,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         self.flavors = self._thread_local.driver.list_sizes()
         self.images = self._thread_local.driver.list_images()
         self.securit_groups = self._thread_local.driver.ex_list_security_groups()
-        
+
         if self.run_category == RUN_CATEGORY_DEPLOYMENT:
             self._importKeypair(user_info)
         elif self.run_category == RUN_CATEGORY_IMAGE:
@@ -88,17 +88,17 @@ class OpenStackClientCloud(BaseCloudConnector):
         except Exception:
             pass
 
-    def _buildImage(self, userInfo, imageInfo):
-        self._buildImageOnOpenStack(userInfo, imageInfo)
+    def _buildImage(self, userInfo, node_instance):
+        self._buildImageOnOpenStack(userInfo, node_instance)
 
-    def _buildImageOnOpenStack(self, userInfo, imageInfo):
+    def _buildImageOnOpenStack(self, userInfo, node_instance):
         self._thread_local.driver = self._getDriver(userInfo)
 
         machine_name = NodeDecorator.MACHINE_NAME
 
         vm = self.getVm(machine_name)
 
-        util.printAndFlush("\n  imageInfo: %s \n" % str(imageInfo))
+        util.printAndFlush("\n  node_instance: %s \n" % str(node_instance))
         util.printAndFlush("\n  VM: %s \n" % str(vm))
 
         ipAddress = self.vmGetIp(vm)
@@ -107,14 +107,12 @@ class OpenStackClientCloud(BaseCloudConnector):
 
         self._waitInstanceInRunningState(self._creatorVmId)
 
-        self._buildImageIncrement(userInfo, imageInfo, ipAddress)
-
-        attributes = self.getAttributes(imageInfo)
+        self._buildImageIncrement(userInfo, node_instance, ipAddress)
 
         util.printStep('Creation of the new Image.')
         self.listener.write_for(machine_name, 'Saving the image')
-        newImg = self._thread_local.driver.ex_save_image(instance, 
-                                                         attributes['shortName'], 
+        newImg = self._thread_local.driver.ex_save_image(instance,
+                                                         node_instance['shortName'],
                                                          metadata=None)
 
         self._waitImageCreationCompleted(newImg.id)
@@ -122,42 +120,42 @@ class OpenStackClientCloud(BaseCloudConnector):
 
         self._newImageId = newImg.id
 
-    def _startImage(self, user_info, image_info, instance_name, cloudSpecificData=None):
+    def _startImage(self, user_info, node_instance, vm_name, cloudSpecificData=None):
         self._thread_local.driver = self._getDriver(user_info)
-        return self._startImageOnOpenStack(user_info, image_info, instance_name, cloudSpecificData)
+        return self._startImageOnOpenStack(user_info, node_instance, vm_name, cloudSpecificData)
 
-    def _startImageOnOpenStack(self, user_info, image_info, instance_name, cloudSpecificData=None):
-        imageId = self.getImageId(image_info)
-        instanceType = self._getInstanceType(image_info)
+    def _startImageOnOpenStack(self, user_info, node_instance, vm_name, cloudSpecificData=None):
+        imageId = self.getImageId(node_instance)
+        instanceType = self._getInstanceType(node_instance)
         keypair = self._userInfoGetKeypairName(user_info)
-        _sec_groups = self._getCloudParameter(image_info, 'security.groups').split(',')
+        _sec_groups = self._getCloudParameter(node_instance, 'security.groups').split(',')
         securityGroups = [[i for i in self.securit_groups if i.name == x.strip()][0] for x in _sec_groups if x]
         flavor = searchInObjectList(self.flavors, 'name', instanceType)
         image = searchInObjectList(self.images, 'id', imageId)
         contextualizationScript = cloudSpecificData or ''
 
-        if flavor == None: 
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" 
+        if flavor == None:
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s"
                                                         % instanceType)
-        if image == None: 
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" 
+        if image == None:
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s"
                                                         % imageId)
 
-        instance = self._thread_local.driver.create_node(name=instance_name,
+        instance = self._thread_local.driver.create_node(name=vm_name,
                                                          size=flavor,
                                                          image=image,
                                                          ex_keyname=keypair,
                                                          ex_userdata=contextualizationScript,
                                                          ex_security_groups=securityGroups)
 
-        vm = dict(networkType=self.getCloudParameters(image_info)['network'],
+        vm = dict(networkType=self.getCloudParameters(node_instance)['network'],
                   instance=instance,
                   ip='',
                   id=instance.id)
         return vm
 
-    def _getCloudSpecificData(self, node_info, node_number, nodename):
-        return self._getBootstrapScript(nodename)
+    def _getCloudSpecificData(self, user_info, node_instance):
+        return self._getBootstrapScript(node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY])
 
     def listInstances(self):
         return self._thread_local.driver.list_nodes()
@@ -181,9 +179,9 @@ class OpenStackClientCloud(BaseCloudConnector):
                                ex_tenant_name=userInfo.get_cloud('tenant.name'),
                                ex_force_auth_url=userInfo.get_cloud('endpoint'),
                                ex_force_auth_version='2.0_password',
-                               ex_force_service_type=userInfo.get_cloud('service.type'), #os.environ['OPENSTACK_SERVICE_TYPE'],
-                               ex_force_service_name=userInfo.get_cloud('service.name'), #os.environ['OPENSTACK_SERVICE_NAME'],
-                               ex_force_service_region=userInfo.get_cloud('service.region')) #os.environ['OPENSTACK_SERVICE_REGION'])
+                               ex_force_service_type=userInfo.get_cloud('service.type'),
+                               ex_force_service_name=userInfo.get_cloud('service.name'),
+                               ex_force_service_region=userInfo.get_cloud('service.region'))
 
     def vmGetIp(self, vm):
         return vm['ip']
@@ -237,7 +235,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         while state != NodeState.RUNNING:
             if time.time() > timeStop:
                 raise Exceptions.ExecutionException(
-                    'Timed out while waiting for instance "%s" enter in running state' 
+                    'Timed out while waiting for instance "%s" enter in running state'
                     % instanceId)
             time.sleep(1)
             node = self._thread_local.driver.list_nodes()

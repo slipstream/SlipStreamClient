@@ -78,8 +78,8 @@ class CloudWrapper(BaseWrapper):
 
     def _get_node_instances_in_scale_state(self, scale_state):
         instances = {}
-        for instance_name, instance in self._get_node_instances(self.cloudProxy.cloud).iteritems():
-            if instance[NodeDecorator.SCALE_STATE_KEY] == scale_state:
+        for instance_name, instance in self._get_nodes_instances(self.cloudProxy.cloud).iteritems():
+            if instance.get(NodeDecorator.SCALE_STATE_KEY, None) == scale_state:
                 instances[instance_name] = instance
         return instances
 
@@ -183,8 +183,7 @@ class CloudWrapper(BaseWrapper):
         if not newImageId:
             return
 
-        self._updateSlipStreamImage(self.cloudProxy.getResourceUri(image_info),
-                                    newImageId)
+        self._updateSlipStreamImage(self.cloudProxy.getResourceUri(image_info), newImageId)
 
     # REMARK: LS: I think it's a better idea to create a dedicated function in the cloud connector
     def _updateSlipStreamImage(self, resourceUri, newImageId):
@@ -203,11 +202,11 @@ class CloudWrapper(BaseWrapper):
     def discard_nodes_info_locally(self):
         self._nodes_info = {}
 
-    def _get_node_instances(self, cloud_service_name):
+    def _get_nodes_instances(self, cloud_service_name):
         '''Return dict {<node-name>: {<runtime-param-name>: <value>, }, }
         '''
-        if self._nodes_info is {}:
-            self._nodes_info = self.clientSlipStream.get_node_instances(cloud_service_name)
+        if not self._nodes_info:
+            self._nodes_info = self.clientSlipStream.get_nodes_instances(cloud_service_name)
         return self._nodes_info
 
     @deprecated

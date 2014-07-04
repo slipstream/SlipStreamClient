@@ -142,12 +142,21 @@ class SlipStreamHttpClient(object):
         rootElement = etree.fromstring(run)
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
-    def get_node_instances(self, cloud_service_name):
+    def get_nodes_instances(self, cloud_service_name):
         '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
         '''
         self._retrieveAndSetRun()
-        return DomExtractor.extract_node_instances(self.run_dom,
-                                                   cloud_service_name)
+        nodes_instances = DomExtractor.extract_nodes_instances_runtime_parameters(self.run_dom, cloud_service_name)
+
+        for node_instance_name, node_instance in nodes_instances.items():
+            node_name = node_instance.get(NodeDecorator.NODE_NAME_KEY,'')
+            for key, value in DomExtractor.extract_node_image_attributes(self.run_dom, node_name).items():
+                nodes_instances[node_instance_name]['image.%s' % key] = value
+            if not util.str2bool(node_instance[NodeDecorator.IS_ORCHESTRATOR_KEY]):
+                for key, value in DomExtractor.extract_node_image_targets(self.run_dom, node_name).items():
+                    nodes_instances[node_instance_name]['image.%s' % key] = value
+
+        return nodes_instances
 
     def _getTargets(self, image_dom):
         category = self.getRunCategory()
@@ -304,25 +313,76 @@ class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
 
     @staticmethod
-    def extract_node_instances(run_dom, cloud_service_name=''):
+    def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=''):
         '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
         '''
-        nodes = {}
-        for node_name in run_dom.attrib['nodeNames']:
-            query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_name
-            node = {}
+        nodes_instances = {}
+        for node_instance_name in run_dom.attrib['nodeNames'].split(','):
+            node_instance_name = node_instance_name.strip()
+
+            node_instance = {NodeDecorator.NODE_INSTANCE_NAME_KEY: node_instance_name}
+
+            query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
             for rtp in run_dom.findall(query):
                 key = DomExtractor._get_key_from_runtimeparameter(rtp)
-                node[key] = rtp.text
-            nodes[node_name] = node
-        for node in nodes:
-            if cloud_service_name == nodes[node][NodeDecorator.CLOUDSERVICE_KEY]:
-                del nodes[node]
-        return nodes
+                node_instance[key] = rtp.text
+            nodes_instances[node_instance_name] = node_instance
+
+        for node_instance_name in nodes_instances.keys():
+            if cloud_service_name != nodes_instances[node_instance_name][NodeDecorator.CLOUDSERVICE_KEY]:
+                del nodes_instances[node_instance_name]
+
+        return nodes_instances
 
     @staticmethod
     def _get_key_from_runtimeparameter(rtp):
         return rtp.attrib['key'].split(NodeDecorator.NODE_PROPERTY_SEPARATOR, 1)[-1]
+
+    @staticmethod
+    def extract_node_image_attributes(run_dom, nodename):
+        ''' Return image attributes of all nodes.
+        '''
+        image = DomExtractor.extract_node_image(run_dom, nodename)
+        attributes = {}
+
+        if image:
+            attributes = DomExtractor.getAttributes(image)
+
+        return attributes
+
+    @staticmethod
+    def extract_node_image(run_dom, nodename):
+        ''' Return image attributes of all nodes.
+        '''
+        image = None
+
+        if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
+            image = run_dom.find('module')
+        else:
+            for node in run_dom.findall('module/nodes/entry/node'):
+                if node.get('name') == nodename:
+                    image = node.find('image')
+
+        return image
+
+    @staticmethod
+    def extract_node_image_targets(run_dom, node_name):
+        targets = {}
+        image_dom = DomExtractor.extract_node_image(run_dom, node_name)
+
+        category = DomExtractor.get_module_category(run_dom)
+        if category == NodeDecorator.IMAGE:
+            targets = DomExtractor.getBuildTargets(image_dom)
+        if category == NodeDecorator.DEPLOYMENT:
+            targets = DomExtractor.getDeploymentTargetsFromImageDom(image_dom)
+        else:
+            raise Exceptions.ClientError("Unknown category: %s" % category)
+
+        return targets
+
+    @staticmethod
+    def get_module_category(run_dom):
+        return run_dom.find('module').get('category')
 
     @staticmethod
     def getExtraDisksFromImageDom(image_dom):
@@ -371,8 +431,7 @@ class DomExtractor(object):
         targets = {}
 
         for target in ['prerecipe', 'recipe']:
-            targets[target] = DomExtractor.getElementValueFromElementTree(dom,
-                                                                          target)
+            targets[target] = DomExtractor.getElementValueFromElementTree(dom, target)
 
         targets['packages'] = []
         packages = dom.findall('packages/package')
@@ -417,8 +476,7 @@ class DomExtractor(object):
         else:
             for node in run_dom.findall('module/nodes/entry/node'):
                 if node.get('name') == nodename:
-                    return DomExtractor.getDeploymentTargetsFromImageDom(
-                        node.find('image'))
+                    return DomExtractor.getDeploymentTargetsFromImageDom(node.find('image'))
         return {}
 
     @staticmethod

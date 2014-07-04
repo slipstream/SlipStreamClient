@@ -25,7 +25,7 @@ class MainProgram(OpenStackCommand):
         self._stopInstance(self.options.instanceId)
 
     def _stopInstance(self, node_id):
-        cc = OpenStackClientCloud(ConfigHolder(options={'verboseLevel':0}, 
+        cc = OpenStackClientCloud(ConfigHolder(options={'verboseLevel':0},
                                                context={'foo':'bar'}))
         with nostdout():
             cc.initialization(self.userInfo)

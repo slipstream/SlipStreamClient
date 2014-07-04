@@ -50,7 +50,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
         self.wrapper.set_removed_instances_as_gone()
 
-        if not self.wrapper.needToStopImages():
+        if not self.wrapper.needToStopImages() and not self._is_mutable():
             self._killItself()
 
     def onFinalizing(self):

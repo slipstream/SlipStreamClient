@@ -44,10 +44,16 @@ openstack.ssh.password = yyy
 
 
 class TestOpenStackClientCloud(unittest.TestCase):
+
+    connector_instance_name = 'openstack'
+
+    def constructKey(self, name):
+        return self.connector_instance_name + '.' + name
+
     def setUp(self):
         BaseCloudConnector.publishVmInfo = Mock()
 
-        os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'openstack'
+        os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = self.connector_instance_name
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
         os.environ['SLIPSTREAM_DIID'] = '00000000-0000-0000-0000-000000000000'
 
@@ -57,39 +63,39 @@ class TestOpenStackClientCloud(unittest.TestCase):
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
         self.ch.set(KEY_RUN_CATEGORY, '')
 
-        os.environ['OPENSTACK_SERVICE_TYPE'] = self.ch.config['OPENSTACK_SERVICE_TYPE']
-        os.environ['OPENSTACK_SERVICE_NAME'] = self.ch.config['OPENSTACK_SERVICE_NAME']
-        os.environ['OPENSTACK_SERVICE_REGION'] = self.ch.config['OPENSTACK_SERVICE_REGION']
-
         self.client = OpenStackClientCloud(self.ch)
 
-        self.user_info = UserInfo('openstack')
-        self.user_info['openstack.endpoint'] = self.ch.config['openstack.endpoint']
-        self.user_info['openstack.tenant.name'] = self.ch.config['openstack.tenant.name']
-        self.user_info['openstack.username'] = self.ch.config['openstack.username']
-        self.user_info['openstack.password'] = self.ch.config['openstack.password']
+        self.user_info = UserInfo(self.connector_instance_name)
         self.user_info['General.ssh.public.key'] = self.ch.config['General.ssh.public.key']
+        self.user_info[self.constructKey('endpoint')] = self.ch.config['openstack.endpoint']
+        self.user_info[self.constructKey('tenant.name')] = self.ch.config['openstack.tenant.name']
+        self.user_info[self.constructKey('username')] = self.ch.config['openstack.username']
+        self.user_info[self.constructKey('password')] = self.ch.config['openstack.password']
+
+        self.user_info[self.constructKey('service.type')] = self.ch.config['openstack.service.type']
+        self.user_info[self.constructKey('service.name')] = self.ch.config['openstack.service.name']
+        self.user_info[self.constructKey('service.region')] = self.ch.config['openstack.service.region']
 
         security_groups = self.ch.config['openstack.security.groups']
         image_id = self.ch.config['openstack.imageid']
+        node_name = 'test_node'
+
         self.multiplicity = 2
-        self.node_info = {
-            'multiplicity': self.multiplicity,
-            'nodename': 'test_node',
-            'image': {
-                'cloud_parameters': {
-                    'openstack': {
-                        'openstack.instance.type': 'm1.tiny',
-                        'openstack.security.groups': security_groups
-                    },
-                    'Cloud': {'network': 'private'}
-                },
-                'attributes': {
-                    'imageId': image_id,
-                    'platform': 'Ubuntu'
-                },
-                'targets': {
-                    'prerecipe':
+
+        self.node_instances = {}
+        for i in range(1, self.multiplicity+1):
+            node_instance_name = node_name + '.' + str(i)
+            self.node_instances[node_instance_name] = {
+                'nodename': node_name,
+                'name': node_instance_name,
+                #'index': i,
+                'image.platform': 'Ubuntu',
+                'image.imageId': image_id,
+                'image.id': image_id,
+                self.constructKey('instance.type'): 'm1.tiny',
+                self.constructKey('security.groups'): security_groups,
+                'network': 'private',
+                'image.prerecipe':
 """#!/bin/sh
 set -e
 set -x
@@ -97,18 +103,16 @@ set -x
 ls -l /tmp
 dpkg -l | egrep "nano|lvm" || true
 """,
-                    'recipe':
+                'image.packages' : ['lvm2','nano'],
+                'image.recipe':
 """#!/bin/sh
 set -e
 set -x
 
 dpkg -l | egrep "nano|lvm" || true
 lvs
-""",
-                    'packages' : ['lvm2','nano']
-                }
-            },
-        }
+"""
+            }
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -116,10 +120,10 @@ lvs
         self.client = None
         self.ch = None
 
-    def xtest_1_startStopImages(self):
+    def test_1_startStopImages(self):
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
-        self.client.startNodesAndClients(self.user_info, [self.node_info])
+        self.client.startNodesAndClients(self.user_info, self.node_instances)
 
         util.printAndFlush('Instances started')
 
@@ -131,7 +135,7 @@ lvs
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE
 
-        image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
+        image_info = self.client._extractImageInfoFromNodeInfo(self.node_instances)
 
         self.client.startImage(self.user_info, image_info)
         instancesDetails = self.client.getVmsDetails()

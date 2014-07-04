@@ -209,7 +209,7 @@ class BaseWrapper(object):
         key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
         self.clientSlipStream.setRuntimeParameter(key, scale_state)
 
-    def get_scale_state(self, scale_state):
+    def get_scale_state(self):
         '''Set scale state for this node instances.
         '''
         key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)

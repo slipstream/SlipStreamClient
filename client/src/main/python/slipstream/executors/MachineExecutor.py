@@ -79,7 +79,7 @@ class MachineExecutor(object):
             if state != newState:
                 return newState
             else:
-                if self._is_timeout_not_needed(state):
+                if self._is_timeout_not_needed(state) and not self._is_mutable():
                     time.sleep(timeSleep * 12)
                 else:
                     time.sleep(timeSleep)
@@ -88,12 +88,11 @@ class MachineExecutor(object):
                                    'current state: %s' % state)
 
     def _is_timeout_not_needed(self, state):
-        return state == 'Ready' and not self.wrapper.needToStopImages() and\
-            not self._is_mutable()
+        return state == 'Ready' and \
+            (not self.wrapper.needToStopImages() or self._is_mutable())
 
     def _is_mutable(self):
-        self.wrapper.is_mutable()
-        return False
+        return self.wrapper.is_mutable()
 
     def onInitializing(self):
         pass
