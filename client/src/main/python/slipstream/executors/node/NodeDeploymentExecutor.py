@@ -131,6 +131,7 @@ class NodeDeploymentExecutor(MachineExecutor):
                     pass
                 break
             time.sleep(TARGET_POLL_INTERVAL)
+        util.printDetail("End of the target script")
 
     def _addSshPubkeyIfNeeded(self):
         if util.needToAddSshPubkey():

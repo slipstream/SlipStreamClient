@@ -119,7 +119,7 @@ lvs
         self.client = None
         self.ch = None
 
-    def test_1_startStopImages(self):
+    def xtest_1_startStopImages(self):
         self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 

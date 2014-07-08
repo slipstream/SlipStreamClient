@@ -32,9 +32,10 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
         self._cleanup_provisioning_info()
 
-        util.printStep('Starting instances')
         try:
+            util.printStep('Starting instances')
             self.wrapper.start_node_instances()
+            util.printStep('Removing instances')
             self.wrapper.stop_node_instances()
         except Exceptions.AbortException:
             pass

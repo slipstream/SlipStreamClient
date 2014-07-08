@@ -142,7 +142,7 @@ class SlipStreamHttpClient(object):
         rootElement = etree.fromstring(run)
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
-    def get_nodes_instances(self, cloud_service_name):
+    def get_nodes_instances(self, cloud_service_name=None):
         '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
         '''
         self._retrieveAndSetRun()
@@ -313,7 +313,7 @@ class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
 
     @staticmethod
-    def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=''):
+    def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
         '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
         '''
         nodes_instances = {}
@@ -328,9 +328,10 @@ class DomExtractor(object):
                 node_instance[key] = rtp.text
             nodes_instances[node_instance_name] = node_instance
 
-        for node_instance_name in nodes_instances.keys():
-            if cloud_service_name != nodes_instances[node_instance_name][NodeDecorator.CLOUDSERVICE_KEY]:
-                del nodes_instances[node_instance_name]
+        if cloud_service_name is not None:
+            for node_instance_name in nodes_instances.keys():
+                if cloud_service_name != nodes_instances[node_instance_name][NodeDecorator.CLOUDSERVICE_KEY]:
+                    del nodes_instances[node_instance_name]
 
         return nodes_instances
 
@@ -345,7 +346,7 @@ class DomExtractor(object):
         image = DomExtractor.extract_node_image(run_dom, nodename)
         attributes = {}
 
-        if image:
+        if image is not None:
             attributes = DomExtractor.getAttributes(image)
 
         return attributes

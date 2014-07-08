@@ -120,7 +120,7 @@ lvs
         self.client = None
         self.ch = None
 
-    def test_1_startStopImages(self):
+    def xtest_1_startStopImages(self):
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
         self.client.startNodesAndClients(self.user_info, self.node_instances)

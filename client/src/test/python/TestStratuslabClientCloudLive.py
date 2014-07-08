@@ -122,7 +122,7 @@ lvs
         self.client = None
         self.ch = None
 
-    def test_1_startStopImages(self):
+    def xtest_1_startStopImages(self):
 
         self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
 
@@ -136,7 +136,7 @@ lvs
         finally:
             self.client.stopDeployment()
 
-    def test_2_buildImage(self):
+    def xtest_2_buildImage(self):
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
         self.client._prepareMachineForBuildImage = Mock()
         self.client.buildImage(self.user_info, image_info)
