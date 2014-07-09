@@ -60,6 +60,7 @@ class BaseWrapper(object):
 
     def __init__(self, configHolder):
         self.clientSlipStream = SlipStreamHttpClient(configHolder)
+        self.clientSlipStream.set_http_max_retries(self.is_mutable() and -5 or 5)
         self.clientSlipStream.ignoreAbort = True
         self.configHolder = configHolder
 
