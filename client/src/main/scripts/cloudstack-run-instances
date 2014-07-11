@@ -47,7 +47,7 @@ class MainProgram(CloudStackCommand):
         self.parser.add_option('--network-type', dest='network_type',
                                help='Network type (public or private)',
                                default='public', metavar='NETWORK-TYPE')
-        
+
         self.parser.add_option('--networks', dest='networks',
                                help='Networks (comma separated)',
                                default='', metavar='NETWORKS')
@@ -63,7 +63,7 @@ class MainProgram(CloudStackCommand):
         self.parser.add_option('--context-script', dest='context_script',
                                help='Context script',
                                default='', metavar='SCRIPT')
-        
+
         self.parser.add_option('--zone-type', dest='zone_type',
                                help='Type of the zone (Basic [default], Advanced)',
                                default='Basic', metavar='ZONE-TYPE')
@@ -99,8 +99,8 @@ class MainProgram(CloudStackCommand):
                 'extra_disks': {}
             },
         }
-        os.environ['context_script'] = self.options.context_script or ''
-        
+        os.environ['context_script'] = self.options.context_script
+
         with nostdouterr():
             node = self._startImage(ss_node)
         #print '%s, %s' % (node['id'], node['ip'])
@@ -120,7 +120,7 @@ class MainProgram(CloudStackCommand):
         CloudStackClientCloud._getBootstrapScript = _getBootstrapScript
         CloudStackClientCloud._generateNodeName = _generateNodeName
         CloudStackClientCloud.publishVmInfo = publishVmInfo
-            
+
         vms = cc.startNodesAndClients(self.userInfo, [ss_node])
         vm = vms[0].itervalues().next()
         return vm

@@ -28,6 +28,7 @@ from slipstream.SlipStreamHttpClient import UserInfo
 from slipstream.NodeDecorator import (NodeDecorator, RUN_CATEGORY_IMAGE,
                                       RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY)
 from slipstream import util
+from slipstream.NodeInstance import NodeInstance
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__),
                            'pyunit.credentials.properties')
@@ -42,6 +43,9 @@ openstack.ssh.username = ubuntu
 openstack.ssh.password = yyy
 """
 
+def publish_vm_info(self, vm, node_instance):
+    print '%s, %s' % (self._vm_get_id(vm), self._vm_get_ip(vm))
+
 
 class TestOpenStackClientCloud(unittest.TestCase):
 
@@ -51,7 +55,7 @@ class TestOpenStackClientCloud(unittest.TestCase):
         return self.connector_instance_name + '.' + name
 
     def setUp(self):
-        BaseCloudConnector.publishVmInfo = Mock()
+        BaseCloudConnector._publish_vm_info = Mock()
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = self.connector_instance_name
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
@@ -63,6 +67,8 @@ class TestOpenStackClientCloud(unittest.TestCase):
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
         self.ch.set(KEY_RUN_CATEGORY, '')
 
+
+        OpenStackClientCloud._publish_vm_info = publish_vm_info
         self.client = OpenStackClientCloud(self.ch)
 
         self.user_info = UserInfo(self.connector_instance_name)
@@ -85,9 +91,10 @@ class TestOpenStackClientCloud(unittest.TestCase):
         self.node_instances = {}
         for i in range(1, self.multiplicity+1):
             node_instance_name = node_name + '.' + str(i)
-            self.node_instances[node_instance_name] = {
+            self.node_instances[node_instance_name] = NodeInstance({
                 'nodename': node_name,
                 'name': node_instance_name,
+                'cloudservice': self.connector_instance_name,
                 #'index': i,
                 'image.platform': 'Ubuntu',
                 'image.imageId': image_id,
@@ -112,7 +119,7 @@ set -x
 dpkg -l | egrep "nano|lvm" || true
 lvs
 """
-            }
+            })
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -120,17 +127,17 @@ lvs
         self.client = None
         self.ch = None
 
-    def xtest_1_startStopImages(self):
+    def test_1_startStopImages(self):
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
-        self.client.startNodesAndClients(self.user_info, self.node_instances)
+        self.client.start_nodes_and_clients(self.user_info, self.node_instances)
 
         util.printAndFlush('Instances started')
 
-        vms = self.client.getVms()
+        vms = self.client.get_vms()
         assert len(vms) == self.multiplicity
 
-        self.client.stopDeployment()
+        self.client._stop_deployment()
 
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE
@@ -138,7 +145,7 @@ lvs
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_instances)
 
         self.client.startImage(self.user_info, image_info)
-        instancesDetails = self.client.getVmsDetails()
+        instancesDetails = self.client.get_vms_details()
 
         assert instancesDetails
         assert instancesDetails[0][NodeDecorator.MACHINE_NAME]

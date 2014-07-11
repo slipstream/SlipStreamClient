@@ -29,7 +29,7 @@ from stratuslab.Creator import Creator
 from stratuslab.Creator import CreatorBaseListener
 from stratuslab.vm_manager.Runner import Runner
 from stratuslab.volume_manager.volume_manager_factory import VolumeManagerFactory
-from stratuslab.Exceptions import OneException 
+from stratuslab.Exceptions import OneException
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 import slipstream.exceptions.Exceptions as Exceptions
@@ -65,43 +65,43 @@ class StratuslabClientCloud(BaseCloudConnector):
         patchStratuslab()
 
     def startImage(self, user_info, image_info):
-        
+
         self._prepareMachineForBuildImage()
-        
+
         self.slConfigHolder.set('marketplaceEndpoint',
                                 user_info.get_cloud('marketplace.endpoint'))
-        
+
         manifestDownloader = ManifestDownloader(self.slConfigHolder)
 
         imageId = self.getImageId(image_info)
         image_info['imageVersion'] = manifestDownloader.getImageVersion(imageId=imageId)
-        
+
         self._updateStratuslabConfigHolderForBuildImage(user_info, image_info)
-        
+
         self.creator = Creator(imageId, self.slConfigHolder)
         self.creator.setListener(self.listener)
 
         createImageTemplateDict = self.creator._getCreateImageTemplateDict()
         msgData = StratuslabClientCloud._getCreateImageTemplateMessaging(image_info,
-                                                      self._getCloudInstanceName())
+                                                      self.get_cloud_service_name())
 
         def ourCreateTemplateDict():
             createImageTemplateDict.update(msgData)
             return createImageTemplateDict
 
         self.creator._getCreateImageTemplateDict = ourCreateTemplateDict
-        
+
         self.creator.createStep1()
-        
+
         self.addVm(NodeDecorator.MACHINE_NAME, self.creator.runner, image_info)
-        
+
         return self.getVmsDetails()
 
     def _buildImage(self, userInfo, imageInfo):
 
         #self.creator.create()
         self.creator.createStep2()
-        
+
         #
         # if messaging is set to 'pdisk', then try polling for the new image
         # identifier from the storage system; otherwise will just return empty
@@ -261,13 +261,13 @@ class StratuslabClientCloud(BaseCloudConnector):
         try:
             runner.runInstance()
         except OneException as ex:
-            # Retry once on a machine allocation error. OpenNebula has a problem 
+            # Retry once on a machine allocation error. OpenNebula has a problem
             # in authorization module which on a heavy load may through this error.
             if str(ex).strip().startswith('[VirtualMachineAllocate]'):
                 time.sleep(2)
                 runner.runInstance()
             else:
-                raise 
+                raise
         return runner
 
     def _getStratusLabRunner(self, imageId, configHolder):

@@ -923,7 +923,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
        'recipe': recipe}
 
         dom = etree.fromstring(image_module_xml)
-        targets = DomExtractor.getBuildTargets(dom)
+        targets = DomExtractor.get_build_targets(dom)
 
         failMsg = "Failure getting '%s' build target."
         assert targets['prerecipe'] == prerecipe, failMsg % 'prerecipe'

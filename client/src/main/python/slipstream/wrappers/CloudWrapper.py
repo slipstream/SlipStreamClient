@@ -38,8 +38,7 @@ class CloudWrapper(BaseWrapper):
         self.imagesStopped = False
 
     def initCloudConnector(self, configHolder=None):
-        self.cloudProxy = CloudConnectorFactory. \
-            createConnector(configHolder or self.configHolder)
+        self.cloudProxy = CloudConnectorFactory.createConnector(configHolder or self.configHolder)
 
     def publishDeploymentInitializationInfo(self):
         for instanceDetail in self.instancesDetail:
@@ -59,16 +58,12 @@ class CloudWrapper(BaseWrapper):
         self.cloudProxy.buildImage(userInfo, imageInfo)
 
     def start_node_instances(self):
-        userInfo = self.getUserInfo(self.cloudProxy.cloud)
-        nodes = self._get_node_instances_to_start()
-        self.instancesDetail = self.cloudProxy.startNodesAndClients(
-            userInfo, nodes)
+        userInfo = self.getUserInfo(self.cloudProxy.get_cloud_service_name())
+        nodes_instances = self._get_node_instances_to_start()
+        self.instancesDetail = self.cloudProxy.start_nodes_and_clients(userInfo, nodes_instances)
 
     def _getUserAndImageInfo(self):
-        return self.getUserInfo(self.cloudProxy.cloud), self.getImageInfo()
-
-    def _get_node_instances_to_gone(self):
-        return self._get_node_instances_in_scale_state(self.SCALE_STATE_REMOVED)
+        return self.getUserInfo(self.cloudProxy.get_cloud_service_name()), self.getImageInfo()
 
     def _get_node_instances_to_start(self):
         return self._get_node_instances_in_scale_state(self.SCALE_STATE_CREATING)
@@ -78,21 +73,20 @@ class CloudWrapper(BaseWrapper):
 
     def _get_node_instances_in_scale_state(self, scale_state):
         instances = {}
-        for instance_name, instance in self._get_nodes_instances(self.cloudProxy.cloud).iteritems():
-            if instance.get(NodeDecorator.SCALE_STATE_KEY, None) == scale_state:
+        for instance_name, instance in self._get_nodes_instances(self.cloudProxy.get_cloud_service_name()).iteritems():
+            if instance.get_scale_state() == scale_state:
                 instances[instance_name] = instance
         return instances
 
     def stop_node_instances(self):
         ids = []
         node_instances_to_stop = self._get_node_instances_to_stop()
-        for instance in node_instances_to_stop.values():
-            ids.append(instance[NodeDecorator.INSTANCEID_KEY])
-        self.cloudProxy.stopVmsByIds(ids)
+        for node_instance in node_instances_to_stop.values():
+            ids.append(node_instance.get_instance_id())
+        self.cloudProxy._stop_vms_by_ids(ids)
 
         instance_names_removed = node_instances_to_stop.keys()
-        self.set_scale_state_on_node_instances(instance_names_removed,
-                             self.SCALE_STATE_REMOVED)
+        self.set_scale_state_on_node_instances(instance_names_removed, self.SCALE_STATE_REMOVED)
 
         # Cache instance names that are to be set as 'gone' at Ready state.
         self._instance_names_to_be_gone = instance_names_removed
@@ -100,8 +94,7 @@ class CloudWrapper(BaseWrapper):
     def set_removed_instances_as_gone(self):
         '''Using cached list of instance names that were set as 'removed'.
         '''
-        self.set_scale_state_on_node_instances(self._instance_names_to_be_gone,
-                             self.SCALE_STATE_GONE)
+        self.set_scale_state_on_node_instances(self._instance_names_to_be_gone, self.SCALE_STATE_GONE)
         self._instance_names_to_be_gone = {}
 
     def stopCreator(self):
@@ -109,14 +102,14 @@ class CloudWrapper(BaseWrapper):
             creator_id = self.getCreatorVmId()
             if creator_id:
                 if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
-                    self.cloudProxy.stopVmsByIds([creator_id])
+                    self.cloudProxy._stop_vms_by_ids([creator_id])
                 elif not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
-                    self.cloudProxy.stopVappsByIds([creator_id])
+                    self.cloudProxy._stop_vapps_by_ids([creator_id])
 
     def stopNodes(self):
         if self.needToStopImages():
             if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
-                self.cloudProxy.stopDeployment()
+                self.cloudProxy._stop_deployment()
             self.imagesStopped = True
 
     def stopOrchestrator(self, is_build_image=False):
@@ -132,30 +125,30 @@ class CloudWrapper(BaseWrapper):
             if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
                 if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
                     if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
-                        self.cloudProxy.stopDeployment()
+                        self.cloudProxy._stop_deployment()
                     else:
-                        self.cloudProxy.stopVappsByIds([orch_id])
+                        self.cloudProxy._stop_vapps_by_ids([orch_id])
                 else:
-                    self.terminateRunServerSide()
+                    self.terminate_run_server_side()
             else:
                 if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-                    self.cloudProxy.stopVmsByIds([orch_id])
+                    self.cloudProxy._stop_vms_by_ids([orch_id])
                 else:
-                    self.terminateRunServerSide()
+                    self.terminate_run_server_side()
 
     def stopOrchestratorDeployment(self):
         if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP) and self.needToStopImages():
             if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-                self.cloudProxy.stopDeployment()
+                self.cloudProxy._stop_deployment()
             else:
-                self.terminateRunServerSide()
+                self.terminate_run_server_side()
         elif self.needToStopImages() and not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-            self.terminateRunServerSide()
+            self.terminate_run_server_side()
         else:
             orch_id = self.getMachineCloudInstanceId()
-            self.cloudProxy.stopVmsByIds([orch_id])
+            self.cloudProxy._stop_vms_by_ids([orch_id])
 
-    def terminateRunServerSide(self):
+    def terminate_run_server_side(self):
         self._deleteRunResource()
 
     def needToStopImages(self, ignore_on_success_run_forever=False):
@@ -185,7 +178,6 @@ class CloudWrapper(BaseWrapper):
 
         self._updateSlipStreamImage(self.cloudProxy.getResourceUri(image_info), newImageId)
 
-    # REMARK: LS: I think it's a better idea to create a dedicated function in the cloud connector
     def _updateSlipStreamImage(self, resourceUri, newImageId):
         resourceUri = '%s/%s' % (resourceUri, self.getCloudInstanceName())
         self.putNewImageId(resourceUri, newImageId)
@@ -209,6 +201,4 @@ class CloudWrapper(BaseWrapper):
             self._nodes_info = self.clientSlipStream.get_nodes_instances(cloud_service_name)
         return self._nodes_info
 
-    @deprecated
-    def isTerminateRunServerSide(self):
-        return self.cloudProxy.isTerminateRunServerSide()
+

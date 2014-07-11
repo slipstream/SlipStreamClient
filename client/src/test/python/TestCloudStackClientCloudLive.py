@@ -50,7 +50,7 @@ cloudstack.max.iaas.workers = 2
 
 class TestCloudStackClientCloud(unittest.TestCase):
     def setUp(self):
-        BaseCloudConnector.publishVmInfo = Mock()
+        BaseCloudConnector._publish_vm_info = Mock()
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'cloudstack'
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
@@ -128,10 +128,10 @@ lvs
 
             util.printAndFlush('Instances started')
 
-            vms = self.client.getVms()
+            vms = self.client.get_vms()
             assert len(vms) == self.multiplicity
         finally:
-            self.client.stopDeployment()
+            self.client._stop_deployment()
 
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE
@@ -139,7 +139,7 @@ lvs
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
 
         self.client.startImage(self.user_info, image_info)
-        instancesDetails = self.client.getVmsDetails()
+        instancesDetails = self.client.get_vms_details()
 
         assert instancesDetails
         assert instancesDetails[0][NodeDecorator.MACHINE_NAME]

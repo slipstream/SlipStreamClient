@@ -19,10 +19,13 @@ from __future__ import print_function
 
 import os
 
-from slipstream.NodeDecorator import NodeDecorator
-import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
+import slipstream.exceptions.Exceptions as Exceptions
+
+from slipstream.util import deprecated
 from slipstream.HttpClient import HttpClient
+from slipstream.NodeInstance import NodeInstance
+from slipstream.NodeDecorator import NodeDecorator
 
 etree = util.importETree()
 
@@ -50,6 +53,9 @@ class UserInfo(dict):
                 ', '.join(self.qualifires))
         dict.__setitem__(self, key, val)
 
+    def get_public_keys(self):
+        return self.get_general('ssh.public.key')
+
 
 class SlipStreamHttpClient(object):
     URL_IGNORE_ABORT_ATTRIBUTE_QUERY = '?ignoreabort=true'
@@ -58,23 +64,16 @@ class SlipStreamHttpClient(object):
         self.category = None
         self.run_dom = None
         self.ignoreAbort = False
-
         self.username = ''
         self.diid = ''
-
         self.nodename = ''
-
         self.serviceurl = ''
-
         self.verboseLevel = None
+        self.http_max_retries = 2
 
         configHolder.assign(self)
-
         self._assemble_endpoints()
-
         self.httpClient = HttpClient(configHolder=configHolder)
-
-        self.http_max_retries = 4
 
     def set_http_max_retries(self, http_max_retries):
         self.http_max_retries = http_max_retries
@@ -125,7 +124,7 @@ class SlipStreamHttpClient(object):
 
     def _getImageInfoFromImageDom(self, imageDom):
         info = {}
-        info['attributes'] = DomExtractor.getAttributes(imageDom)
+        info['attributes'] = DomExtractor.get_attributes(imageDom)
         info['targets'] = self._getTargets(imageDom)
         info['cloud_parameters'] = DomExtractor.getImageCloudParametersFromImageDom(imageDom)
         info['extra_disks'] = DomExtractor.getExtraDisksFromImageDom(imageDom)
@@ -148,29 +147,29 @@ class SlipStreamHttpClient(object):
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
     def get_nodes_instances(self, cloud_service_name=None):
-        '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
+        '''Return dict {<nodename>: NodeInstance, }
         '''
-        self._retrieveAndSetRun()
-        nodes_instances = DomExtractor.extract_nodes_instances_runtime_parameters(self.run_dom, cloud_service_name)
+        nodes_instances = {}
 
-        for node_instance_name, node_instance in nodes_instances.items():
-            node_name = node_instance.get(NodeDecorator.NODE_NAME_KEY,'')
-            for key, value in DomExtractor.extract_node_image_attributes(self.run_dom, node_name).items():
-                nodes_instances[node_instance_name]['image.%s' % key] = value
-            if not util.str2bool(node_instance[NodeDecorator.IS_ORCHESTRATOR_KEY]):
-                for key, value in DomExtractor.extract_node_image_targets(self.run_dom, node_name).items():
-                    nodes_instances[node_instance_name]['image.%s' % key] = value
+        self._retrieveAndSetRun()
+        nodes_instances_runtime_parameters = DomExtractor.extract_nodes_instances_runtime_parameters(self.run_dom,
+                                                                                                     cloud_service_name)
+
+        for node_instance_name, node_instance_runtime_parameters in nodes_instances_runtime_parameters.items():
+
+            node_instance = NodeInstance(node_instance_runtime_parameters)
+            node_name = node_instance.get_node_name()
+
+            image_attributes = DomExtractor.extract_node_image_attributes(self.run_dom, node_name)
+            node_instance.set_image_attributes(image_attributes)
+
+            if not node_instance.is_orchestrator():
+                image_targets = DomExtractor.extract_node_image_targets(self.run_dom, node_name)
+                node_instance.set_image_targets(image_targets)
+
+            nodes_instances[node_instance_name] = node_instance
 
         return nodes_instances
-
-    def _getTargets(self, image_dom):
-        category = self.getRunCategory()
-        if category == NodeDecorator.IMAGE:
-            return DomExtractor.getBuildTargets(image_dom)
-        if category == NodeDecorator.DEPLOYMENT:
-            return DomExtractor.getDeploymentTargetsFromImageDom(image_dom)
-        else:
-            raise Exceptions.ClientError("Unknown category: %s" % category)
 
     def _getGenericNodename(self):
         'Nodename w/o multiplicity'
@@ -192,7 +191,7 @@ class SlipStreamHttpClient(object):
 
     def _get_run_mutable(self):
         self._retrieveAndSetRun()
-        return DomExtractor.extractMutableFromRun(self.run_dom)
+        return DomExtractor.extract_mutable_from_run(self.run_dom)
 
     def getDefaultCloudServiceName(self):
         return self._getDefaultCloudServiceName()
@@ -351,7 +350,7 @@ class DomExtractor(object):
         attributes = {}
 
         if image is not None:
-            attributes = DomExtractor.getAttributes(image)
+            attributes = DomExtractor.get_attributes(image)
 
         return attributes
 
@@ -377,7 +376,7 @@ class DomExtractor(object):
 
         category = DomExtractor.get_module_category(run_dom)
         if category == NodeDecorator.IMAGE:
-            targets = DomExtractor.getBuildTargets(image_dom)
+            targets = DomExtractor.get_build_targets(image_dom)
         if category == NodeDecorator.DEPLOYMENT:
             targets = DomExtractor.getDeploymentTargetsFromImageDom(image_dom)
         else:
@@ -420,23 +419,23 @@ class DomExtractor(object):
         return cloudParameters
 
     @staticmethod
-    def getElementValueFromElementTree(elementTree, elementName):
-        element = elementTree.find(elementName)
+    def get_element_value_from_element_tree(element_tree, element_name):
+        element = element_tree.find(element_name)
         value = getattr(element, 'text', '')
         if value is None:
             value = ''
         return value
 
     @staticmethod
-    def getAttributes(dom):
+    def get_attributes(dom):
         return dom.attrib
 
     @staticmethod
-    def getBuildTargets(dom):
+    def get_build_targets(dom):
         targets = {}
 
         for target in ['prerecipe', 'recipe']:
-            targets[target] = DomExtractor.getElementValueFromElementTree(dom, target)
+            targets[target] = DomExtractor.get_element_value_from_element_tree(dom, target)
 
         targets['packages'] = []
         packages = dom.findall('packages/package')
@@ -456,7 +455,7 @@ class DomExtractor(object):
         return run_dom.attrib['type']
 
     @staticmethod
-    def extractMutableFromRun(run_dom):
+    def extract_mutable_from_run(run_dom):
         return run_dom.attrib['mutable']
 
     @staticmethod

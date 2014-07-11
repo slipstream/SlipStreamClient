@@ -169,7 +169,7 @@ class BaseWrapper(object):
 
     def getUserSshPubkey(self):
         userInfo = self.getUserInfo('')
-        return userInfo.get_general('ssh.public.key')
+        return userInfo.get_public_keys()
 
     def putNewImageId(self, resourceUri, newImageId):
         self.clientSlipStream.putNewImageId(resourceUri, newImageId)
@@ -200,8 +200,7 @@ class BaseWrapper(object):
 
     def set_scale_state_on_node_instances(self, instance_names, scale_state):
         for instance_name in instance_names:
-            key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-                NodeDecorator.SCALE_STATE_KEY
+            key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + NodeDecorator.SCALE_STATE_KEY
             self.clientSlipStream.setRuntimeParameter(key, scale_state)
 
     def set_scale_state(self, scale_state):

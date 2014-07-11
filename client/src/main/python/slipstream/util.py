@@ -605,19 +605,34 @@ def nostdouterr(override=False):
 
 
 def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emmitted
-    when the function is used."""
-    def newFunc(*args, **kwargs):
+    """This is a decorator which can be used to mark functions as deprecated.
+    It will result in a warning being emmitted when the function is used."""
+
+    def new_func(*args, **kwargs):
         warnings.warn("Call to deprecated function %s." % func.__name__,
                       category=DeprecationWarning, stacklevel=2)
         return func(*args, **kwargs)
+
     # warnings.simplefilter('default', DeprecationWarning)
-    newFunc.__name__ = func.__name__
-    newFunc.__doc__ = func.__doc__
-    newFunc.__dict__.update(func.__dict__)
-    return newFunc
+    new_func.__name__ = func.__name__
+    new_func.__doc__ = func.__doc__
+    new_func.__dict__.update(func.__dict__)
+    return new_func
+
+
+def override(func):
+    """This is a decorator which can be used to check that a method override a method of the base class.
+    If not the case it will result in a warning being emmitted."""
+
+    def overrided_func(self, *args, **kwargs):
+        if func.__name__ not in dir(self.__class__.__bases__[0]):
+            warnings.warn("The method '%s' should override a method of the base class '%s'." %
+                          (func.__name__, self.__class__.__bases__[0].__name__), category=SyntaxWarning, stacklevel=2)
+        return func(self, *args, **kwargs)
+
+    return overrided_func
 
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
+

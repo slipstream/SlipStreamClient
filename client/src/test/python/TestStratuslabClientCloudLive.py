@@ -55,7 +55,7 @@ class TestStratusLabClientCloud(unittest.TestCase):
         os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = self.ch.config['SLIPSTREAM_MESSAGING_QUEUE']
 
         self.client = StratuslabClientCloud(self.ch)
-        self.client.publishVmInfo = Mock()
+        self.client._publish_vm_info = Mock()
 
         self.user_info = UserInfo('stratuslab')
         self.user_info['stratuslab.endpoint'] = self.ch.config['stratuslab.endpoint']
@@ -131,10 +131,10 @@ lvs
 
             util.printAndFlush('Instances started\n')
 
-            vms = self.client.getVms()
+            vms = self.client.get_vms()
             assert len(vms) == int(self.multiplicity)
         finally:
-            self.client.stopDeployment()
+            self.client._stop_deployment()
 
     def xtest_2_buildImage(self):
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)

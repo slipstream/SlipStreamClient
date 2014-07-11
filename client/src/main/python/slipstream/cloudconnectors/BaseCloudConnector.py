@@ -22,26 +22,80 @@ import time
 import tempfile
 import random
 import string
+
 from threading import local
 
-from slipstream.listeners.SlipStreamClientListenerAdapter import \
-    SlipStreamClientListenerAdapter
-from slipstream.listeners.SimplePrintListener import SimplePrintListener
-from slipstream.Client import Client
-from slipstream.util import deprecated
-from slipstream import util, SlipStreamHttpClient
-from slipstream.utils.ssh import remoteRunScriptNohup, \
-    waitUntilSshCanConnectOrTimeout, remoteRunScript, remoteInstallPackages, \
-    generateKeyPair
-from slipstream.utils.tasksrunner import TasksRunner
-from slipstream.NodeDecorator import NodeDecorator
 import slipstream.exceptions.Exceptions as Exceptions
+
+from slipstream import util, SlipStreamHttpClient
+from slipstream.util import deprecated
+from slipstream.Client import Client
+from slipstream.NodeInstance import NodeInstance
+from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY
+from slipstream.listeners.SimplePrintListener import SimplePrintListener
+from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
+from slipstream.utils.ssh import remoteRunScriptNohup, waitUntilSshCanConnectOrTimeout, remoteRunScript, \
+                                 remoteInstallPackages, generateKeyPair
+from slipstream.utils.tasksrunner import TasksRunner
 from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
 from winrm.winrm_service import WinRMWebService
 from winrm.exceptions import WinRMTransportError
 
 
 class BaseCloudConnector(object):
+
+#   ----- METHODS THAT CAN/SHOULD BE IMPLEMENTED IN CONNECTORS -----
+
+    def _initialization(self, user_info):
+        """This method is called once before calling any others methods of the connector.
+        This method can be used to some _initialization tasks like configuring the Cloud driver."""
+        pass
+
+    def _finalization(self, user_info):
+        """This method is called once when all instances have been started or if an exception has occurred."""
+        pass
+
+    def _start_image(self, user_info, node_instance, instance_name, cloud_specific_data=None):
+        """Cloud specific VM provisioning.
+        Returns: node - cloud specific representation of a started VM."""
+        raise NotImplementedError()
+
+    def _wait_and_get_instance_ip_address(self, vm):
+        """This method needs to be implemented by the connector if the latter not define the capability
+        'direct_ip_assignment'."""
+        return vm
+
+    def _stop_deployment(self):
+        """This method should terminate the full vapp if the connector has the vapp capability.
+        This method should terminate all instances except the orchestrator if the connector don't has the vapp
+        capability."""
+        pass
+
+    def _stop_vms_by_ids(self, ids):
+        """This method should destroy all VMs corresponding to VMs IDs of the list."""
+        raise NotImplementedError()
+
+    def _stop_vapps_by_ids(self, ids):
+        """This method is used to destroy a full vApp if the capability 'vapp' is set."""
+        pass
+
+    def _vm_get_id(self, vm_instance):
+        """Retrieve the VM ID from the vm_instance object returned by _start_image().
+        Returns: cloud ID of the instance."""
+        raise NotImplementedError()
+
+    def _vm_get_ip(self, vm_instance):
+        """Retrieve an IP from the vm_instance object returned by _start_image().
+        Returns: one IP - Public or Private."""
+        raise NotImplementedError()
+
+    def _vm_get_password(self, vm_instance):
+        """Retrieve the password of the VM from the vm_instance object returned by _start_image().
+        Returns: the password needed to connect to the VM"""
+        pass
+
+#   ----------------------------------------------------------------
+
     TIMEOUT_CONNECT = 10 * 60
 
     DISK_VOLATILE_PARAMETER_NAME = \
@@ -63,40 +117,44 @@ class BaseCloudConnector(object):
     CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP = 'orchestratorCanKillItselfOrItsVapp'
 
     def __init__(self, configHolder):
+        """Constructor.
+        All connectors need to call this constructor from their own constructor.
+        Moreover all connectors need to define their capabilities with the method _set_capabilities().
+        """
         self.verboseLevel = 0
         configHolder.assign(self)
         self.configHolder = configHolder
+
+        self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
 
         self.sshPrivKeyFile = '%s/.ssh/id_rsa' % os.path.expanduser("~")
         self.sshPubKeyFile = self.sshPrivKeyFile + '.pub'
 
         self.listener = SimplePrintListener(verbose=(self.verboseLevel > 1))
 
-        self._vms = {}
+        self.__vms = {}
 
-        self.cloud = os.environ['SLIPSTREAM_CONNECTOR_INSTANCE']
+        self.__cloud = os.environ['SLIPSTREAM_CONNECTOR_INSTANCE']
 
         # For image creation.
         self._newImageId = ''  # created image ID on a Cloud
         self._creatorVmId = ''  # image ID of creator instance
-
-        self._terminateRunServerSide = False
 
         self._init_threading_related()
 
         self.tempPrivateKeyFileName = ''
         self.tempPublicKey = ''
 
-        self._capabilities = []
+        self.__capabilities = []
 
     def _init_threading_related(self):
-        self.tasks_runnner = None
+        self.__tasks_runnner = None
 
         # This parameter is thread local
         self._thread_local = local()
         self._thread_local.isWindows = False
 
-    def setCapabilities(self, vapp=False, build_in_single_vapp=False,
+    def _set_capabilities(self, vapp=False, build_in_single_vapp=False,
                         contextualization=False,
                         windows_contextualization=False,
                         generate_password=False,
@@ -104,36 +162,29 @@ class BaseCloudConnector(object):
                         need_to_add_ssh_public_key_on_node=False,
                         orchestrator_can_kill_itself_or_its_vapp=False):
         if vapp:
-            self._capabilities.append(self.CAPABILITY_VAPP)
+            self.__capabilities.append(self.CAPABILITY_VAPP)
         if build_in_single_vapp:
-            self._capabilities.append(self.CAPABILITY_BUILD_IN_SINGLE_VAPP)
+            self.__capabilities.append(self.CAPABILITY_BUILD_IN_SINGLE_VAPP)
         if contextualization:
-            self._capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
+            self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
         if windows_contextualization:
-            self._capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+            self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
         if generate_password:
-            self._capabilities.append(self.CAPABILITY_GENERATE_PASSWORD)
+            self.__capabilities.append(self.CAPABILITY_GENERATE_PASSWORD)
         if direct_ip_assignment:
-            self._capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
+            self.__capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
         if need_to_add_ssh_public_key_on_node:
-            self._capabilities.append(
+            self.__capabilities.append(
                 self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE)
         if orchestrator_can_kill_itself_or_its_vapp:
-            self._capabilities.append(
+            self.__capabilities.append(
                 self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
     def hasCapability(self, capability):
-        return capability in self._capabilities
+        return capability in self.__capabilities
 
-    @staticmethod
-    def extractAllTargets(node_instance):
-        """Return: three tuple of strings (prerecipe, recipe, packages).
-        packages - space separated list of packages to install.
-        """
-        prerecipe = node_instance.get('image.prerecipe', '').strip()
-        recipe = node_instance.get('image.recipe', '').strip()
-        packages = ' '.join(node_instance.get('image.packages', '')).strip()
-        return prerecipe, recipe, packages
+    def is_build_image(self):
+        return self.run_category == NodeDecorator.IMAGE
 
     @staticmethod
     def getResourceUri(imageInfo):
@@ -172,32 +223,8 @@ class BaseCloudConnector(object):
             ss.ignoreAbort = True
             return ss.getRuntimeParameter('max.iaas.workers')
         except Exception as ex:
-            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex),
-                             verboseThreshold=0)
+            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex), verboseThreshold=0)
             return None
-
-    @staticmethod
-    def getImageId(node_instance):
-        image_id = node_instance.get('image.id', None)
-        if not image_id:
-            raise Exceptions.ExecutionException("Couldn't get image ID.")
-        return image_id
-
-    @staticmethod
-    def setPlatform(imageInfo, platform):
-        imageInfo['attributes']['platform'] = platform
-
-    @staticmethod
-    def getPlatform(node_instance):
-        return node_instance['image.platform']
-
-    @staticmethod
-    def setArchitecture(imageInfo, arch):
-        imageInfo['attributes']['arch'] = arch
-
-    @staticmethod
-    def getArchitecture(image_info):
-        return image_info['attributes']['arch']
 
     @staticmethod
     def getExtraDisks(image_info):
@@ -212,213 +239,112 @@ class BaseCloudConnector(object):
     def _userInfoSetKeypairName(self, user_info, kp_name):
         user_info[user_info.cloud + 'keypair.name'] = kp_name
 
-    def isWindows(self):
-        return self._thread_local.isWindows
-
-    def _setIsWindows(self, node_instance):
-        self._thread_local.isWindows = \
-            self.getPlatform(node_instance).lower() == 'windows'
-
-    @deprecated
-    def setRunBootstrapScript(self, run=True):
-        self.RUN_BOOTSTRAP_SCRIPT = run
-
-    @deprecated
-    def needRunBootstrapScript(self):
-        return self.RUN_BOOTSTRAP_SCRIPT is True
-
-    @deprecated
-    def setWaitIp(self):
-        self.WAIT_IP = True
-
-    @deprecated
-    def needWaitIp(self):
-        return self.WAIT_IP is True
-
     def startImage(self, user_info, image_info):
         name = NodeDecorator.MACHINE_NAME
 
-        self.initialization(user_info)
+        self._initialization(user_info)
 
         try:
-            vm = self._startImage(user_info, image_info, name)
-            self.addVm(name, vm, image_info)
+            vm = self._start_image(user_info, image_info, name)
+            self.__add_vm(name, vm, image_info)
 
-            self._creatorVmId = self.vmGetId(vm)
+            self._creatorVmId = self._vm_get_id(vm)
 
             if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
-                vm = self._waitAndGetInstanceIpAddress(vm)
-                self.addVm(name, vm, image_info)
+                vm = self._wait_and_get_instance_ip_address(vm)
+                self.__add_vm(name, vm, image_info)
 
         finally:
-            self.finalization(user_info)
+            self._finalization(user_info)
 
-        return self.getVmsDetails()
+        return self.get_vms_details()
 
-    def startNodesAndClients(self, user_info, nodes_info):
-        self.initialization(user_info)
+    def start_nodes_and_clients(self, user_info, nodes_instances):
 
+        self._initialization(user_info)
         try:
-            self._startNodeInstantiationTasksWaitFinished(user_info, nodes_info)
+            self.__start_nodes_instantiation_tasks_wait_finished(user_info, nodes_instances)
         finally:
-            self.finalization(user_info)
+            self._finalization(user_info)
 
-        return self.getVmsDetails()
+        return self.get_vms_details()
 
-    def _startNodeInstantiationTasksWaitFinished(self, user_info, nodes_info):
-        self._startNodesInstancesAndClients(user_info, nodes_info)
+    def __start_nodes_instantiation_tasks_wait_finished(self, user_info, nodes_instances):
+        self.__start_nodes_instances_and_clients(user_info, nodes_instances)
+        self.__wait_nodes_startup_tasks_finished()
 
-        self._waitNodesStartupTasksFinished()
-
-    def _startNodesInstancesAndClients(self, user_info, nodes_instances):
+    def __start_nodes_instances_and_clients(self, user_info, nodes_instances):
         max_workers = self._get_max_workers(self.configHolder)
-        self.tasks_runnner = TasksRunner(self._startNodeInstanceAndClient,
-                                         max_workers=max_workers,
-                                         verbose=self.verboseLevel)
+
+        self.__tasks_runnner = TasksRunner(self.__start_node_instance_and_client,
+                                           max_workers=max_workers,
+                                           verbose=self.verboseLevel)
+
         for node_instance in nodes_instances.values():
-            self.tasks_runnner.put_task(user_info, node_instance)
-        self.tasks_runnner.run_tasks()
+            self.__tasks_runnner.put_task(user_info, node_instance)
 
-    def _waitNodesStartupTasksFinished(self):
-        if self.tasks_runnner != None:
-            self.tasks_runnner.wait_tasks_processed()
+        self.__tasks_runnner.run_tasks()
 
-    def _startNodeInstanceAndClient(self, user_info, node_instance):
-        node_instance_name = node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY]
+    def __wait_nodes_startup_tasks_finished(self):
+        if self.__tasks_runnner != None:
+            self.__tasks_runnner.wait_tasks_processed()
 
-        self._setIsWindows(node_instance)
+    def __start_node_instance_and_client(self, user_info, node_instance):
+        node_instance_name = node_instance.get_name()
 
-        self._printDetail("Starting instance: %s" % node_instance_name)
+        self._print_detail("Starting instance: %s" % node_instance_name)
 
-        cloudSpecificData = self._getCloudSpecificData(user_info,
-                                                       node_instance)
-        vm = self._startImage(user_info,
-                              node_instance,
-                              self._generateVmName(node_instance_name),
-                              cloudSpecificData)
+        vm = self._start_image(user_info,
+                               node_instance,
+                               self.__generate_vm_name(node_instance_name))
 
-        self.addVm(node_instance_name, vm, node_instance)
+        self.__add_vm(vm, node_instance)
 
         if not self.hasCapability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
-            vm = self._waitAndGetInstanceIpAddress(vm)
-            self.addVm(node_instance_name, vm, node_instance)
+            vm = self._wait_and_get_instance_ip_address(vm)
+            self.__add_vm(vm, node_instance)
 
-        if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and \
-            not self.isWindows():
-            self._secureSshAccessAndRunBootstrapScript(user_info, node_instance,
-                                                       node_instance_name,
-                                                       self.vmGetIp(vm))
-        elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) \
-            and self.isWindows():
-            self._launchWindowsBootstrapScript(node_instance, node_instance_name,
-                                               self.vmGetIp(vm))
+        if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and not node_instance.is_windows():
+            self.__secure_ssh_access_and_run_bootstrap_script(user_info, node_instance, self._vm_get_ip(vm))
+        elif not self.hasCapability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) and node_instance.is_windows():
+            self._launchWindowsBootstrapScript(node_instance, self._vm_get_ip(vm))
 
-    def _startImage(self, user_info, node_instance, instance_name,
-                    cloudSpecificData=None):
-        """Cloud specific VM provisioning.
-        Returns: node - cloud specific representation of a started VM."""
-        raise NotImplementedError()
+    def __add_vm(self, vm, node_instance):
+        name = node_instance.get_name()
+        self.__vms[name] = vm
+        self._publish_vm_info(vm, node_instance)
 
-    def initialization(self, user_info):
-        pass
-
-    def finalization(self, user_info):
-        """This method is called once when all instances have been started or
-        if an exception has occurred."""
-        pass
-
-    def _getCloudSpecificData(self, user_info, node_instance):
-        # TODO: Consider providing user_info as well. Current use-case is
-        #       cloud-init based context in OCCI connector.
-        return None
-
-    def _waitAndGetInstanceIpAddress(self, vm):
-        """This method needs to be implemented by the connector if the latter
-        not define the capability 'direct_ip_assignment'."""
-        return vm
-
-    def vmGetIp(self, vm_instance):
-        """Cloud specific getter.
-        Returns: one IP - Public or Private."""
-        raise NotImplementedError()
-
-    def vmGetId(self, vm_instance):
-        """Cloud specific getter.
-        Returns: cloud ID of the instance."""
-        raise NotImplementedError()
-
-    def vmGetPassword(self, vm_name):
-        return None
-
-    def stopDeployment(self):
-        """This method should terminate all instances except the orchestrator if
-        the connector don't has the vapp capability.
-        This method should terminate the full vapp if the connector has the vapp
-        capability."""
-        pass
-
-    # please use stopDeployment instead
-    @deprecated
-    def stopImages(self):
-        """Please use stopDeployment instead"""
-        return self.stopDeployment()
-
-    @deprecated
-    def stopImagesByIds(self, ids):
-        """Please use stopVmsByIds instead"""
-        return self.stopVmsByIds(ids)
-
-    def stopVmsByIds(self, ids):
-        pass
-
-    def stopVappsByIds(self, ids):
-        pass
-
-    @deprecated
-    def setTerminateRunServerSide(self):
-        self._terminateRunServerSide = True
-
-    @deprecated
-    def isTerminateRunServerSide(self):
-        return self._terminateRunServerSide
-
-    def addVm(self, name, vm, node_instance=None):
-        self._vms[name] = vm
-        self.publishVmInfo(name, vm, node_instance)
-
-    def publishVmInfo(self, instance_name, vm, node_instance):
-        self.publishVmId(instance_name, self.vmGetId(vm))
-        self.publishVmIp(instance_name, self.vmGetIp(vm))
+    def _publish_vm_info(self, vm, node_instance):
+        instance_name = node_instance.get_name()
+        self.__publish_vm_id(instance_name, self._vm_get_id(vm))
+        self.__publish_vm_ip(instance_name, self._vm_get_ip(vm))
         if node_instance:
-            self.publishUrlSsh(instance_name, vm, node_instance)
+            self.__publish_url_ssh(vm, node_instance)
 
-    def publishVmId(self, instance_name, vm_id):
+    def __publish_vm_id(self, instance_name, vm_id):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_instanceid(instance_name,
-                                                                str(vm_id))
+        NodeInfoPublisher(self.configHolder).publish_instanceid(instance_name, str(vm_id))
 
-    def publishVmIp(self, instance_name, vm_ip):
+    def __publish_vm_ip(self, instance_name, vm_ip):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_hostname(instance_name,
-                                                              vm_ip)
+        NodeInfoPublisher(self.configHolder).publish_hostname(instance_name, vm_ip)
 
-    def publishUrlSsh(self, instance_name, vm, node_instance):
+    def __publish_url_ssh(self, vm, node_instance):
         if not node_instance:
             return
-        vm_ip = self.vmGetIp(vm)
-        ssh_username, _ = self._getSshUsernamePassword(node_instance)
+        instance_name = node_instance.get_name()
+        vm_ip = self._vm_get_ip(vm)
+        ssh_username, _ = self.__get_vm_username_password(node_instance)
 
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_url_ssh(instance_name,
-                                                             vm_ip,
-                                                             ssh_username)
+        NodeInfoPublisher(self.configHolder).publish_url_ssh(instance_name, vm_ip, ssh_username)
 
-    def getVms(self):
-        return self._vms
+    def get_vms(self):
+        return self.__vms
 
-    def getVm(self, name):
+    def _get_vm(self, name):
         try:
-            return self._vms[name]
+            return self.__vms[name]
         except KeyError:
             raise Exceptions.NotFoundError("VM '%s' not found." % name)
 
@@ -434,11 +360,11 @@ class BaseCloudConnector(object):
 
     def buildImage(self, user_info, image_info):
         if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION):
-            username, password = self._getSshUsernamePassword(image_info)
+            username, password = self.__get_vm_username_password(image_info)
             privateKey, publicKey = generateKeyPair()
             privateKey = util.filePutContentInTempFile(privateKey)
             self._setTempPrivateKeyAndPublicKey(privateKey, publicKey)
-            ip = self.vmGetIp(self.getVm(NodeDecorator.MACHINE_NAME))
+            ip = self._vm_get_ip(self._get_vm(NodeDecorator.MACHINE_NAME))
             self._secureSshAccess(ip, username, password, publicKey)
 
         new_id = self._buildImage(user_info, image_info)
@@ -457,13 +383,14 @@ class BaseCloudConnector(object):
         return self._creatorVmId
 
     def _buildImageIncrement(self, user_info, node_instance, host):
-        prerecipe, recipe, packages = self.extractAllTargets(node_instance)
+        prerecipe = node_instance.get_prerecipe()
+        recipe = node_instance.get_recipe()
+        packages = ' '.join(node_instance.get_packages()).strip()
         try:
             machine_name = NodeDecorator.MACHINE_NAME
 
             username, password, sshPrivateKeyFile = \
-                self._getSshCredentials(node_instance, user_info,
-                                        machine_name)
+                self._getSshCredentials(node_instance, user_info, machine_name)
 
             if not self.hasCapability(self.CAPABILITY_CONTEXTUALIZATION) and \
                 not sshPrivateKeyFile:
@@ -484,7 +411,7 @@ class BaseCloudConnector(object):
                 util.printStep('Installing Packages')
                 self.listener.write_for(machine_name, 'Installing Packages')
                 remoteInstallPackages(username, host, packages,
-                                      self.getPlatform(node_instance),
+                                      node_instance.get_platform(),
                                       sshKey=sshPrivateKeyFile,
                                       password=password)
             if recipe:
@@ -502,11 +429,11 @@ class BaseCloudConnector(object):
             except:
                 pass
 
-    def _getCloudInstanceName(self):
-        return self.cloud
+    def get_cloud_service_name(self):
+        return self.__cloud
 
-    def _getSshCredentials(self, node_instance, user_info, vm_name=None):
-        username, password = self._getSshUsernamePassword(node_instance, vm_name)
+    def _getSshCredentials(self, node_instance, user_info):
+        username, password = self.__get_vm_username_password(node_instance)
         if password:
             sshPrivateKeyFile = None
         else:
@@ -520,87 +447,53 @@ class BaseCloudConnector(object):
         os.chmod(sshPrivateKeyFile, 0400)
         return sshPrivateKeyFile
 
-    def _getInstanceType(self, node_instance):
-        return self._getCloudParameter(node_instance, 'instance.type')
 
-    def _getImageCpu(self, image):
-        return self._getCloudParameter(image, 'cpu')
-
-    def _getImageRam(self, image):
-        return self._getCloudParameter(image, 'ram')
-
-    def _getImageSmp(self, image):
-        return self._getCloudParameter(image, 'smp')
-
-    def _getImageNetworkType(self, image):
-        return self._getCloudParameter(image, 'network')
-
-    def _getSshUsernamePassword(self, node_instance, vm_name=None):
-        user = self._getSshUsername(node_instance)
-        password = self._getSshPassword(node_instance, vm_name)
+    def __get_vm_username_password(self, node_instance):
+        user = node_instance.get_username('root')
+        password = self.__get_vm_password(node_instance)
         return user, password
 
-    def _getSshUsername(self, node_instance):
-        user = node_instance.get('image.loginUser', 'root')
-        if not user:
-            user = 'root'
-        return user
-
-    def _getSshPassword(self, node_instance, vm_name=None):
-        password = None
-        try:
-            password = self._getCloudParameter(node_instance, 'login.password')
-        except Exceptions.ParameterNotFoundException:
+    def __get_vm_password(self, node_instance):
+        password = node_instance.get_password()
+        if not password:
+            instance_name = node_instance.get_name()
             try:
-                password = self.vmGetPassword(vm_name)
+                vm = self._get_vm(instance_name)
+                password = self._vm_get_password(vm)
             except:
                 pass
         return password
 
-    def _getCloudParameter(self, node_instance, parameter):
-        param = '%s.%s' % (self.cloud, parameter)
-        try:
-            return node_instance[param]
-        except KeyError:
-            raise Exceptions.ParameterNotFoundException("Cloud parameter '%s' not found" % param)
+    def __generate_vm_name(self, instance_name):
+        vm_name = instance_name
+        run_id = self.__get_run_id()
+        if run_id:
+            vm_name = vm_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + run_id
+        return vm_name
 
-    @deprecated
-    def _generateInstanceName(self, instance_name, instance_number):
-        return instance_name + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
-                str(instance_number)
-
-    def _generateVmName(self, instance_name):
-        return instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-            '%s' % self._getRunId()
-
-    @staticmethod
-    def _get_instance_name_from_vm_name(vm_name):
-        return vm_name.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)[0]
-
-    def _getRunId(self):
-        return os.environ.get('SLIPSTREAM_DIID', '???')
+    def __get_run_id(self):
+        return os.environ.get('SLIPSTREAM_DIID', None)
 
     @staticmethod
     def isStartOrchestrator():
         return os.environ.get('CLI_ORCHESTRATOR', 'False') == 'True'
 
-    def _secureSshAccessAndRunBootstrapScript(self, userInfo, image_info,
-                                              instance_name, ip):
-        username, password = self._getSshUsernamePassword(image_info,
-                                                          instance_name)
+    def __secure_ssh_access_and_run_bootstrap_script(self, userInfo, node_instance, ip):
+        username, password = self.__get_vm_username_password(node_instance)
+
         privateKey, publicKey = generateKeyPair()
         privateKey = util.filePutContentInTempFile(privateKey)
 
         self._secureSshAccess(ip, username, password, publicKey, userInfo)
-        self._launchBootstrapScript(instance_name, ip, username, privateKey)
+        self.__launch_bootstrap_script(node_instance, ip, username, privateKey)
 
     def _secureSshAccess(self, ip, username, password, publicKey, userInfo=None):
         self._waitCanConnectWithSshOrAbort(ip, username, password)
         script = self.getObfuscationScript(publicKey, username, userInfo)
-        self._printDetail("Securing SSH access to %s with:\n%s\n" % (ip,
+        self._print_detail("Securing SSH access to %s with:\n%s\n" % (ip,
                                                                      script))
         _, output = self._runScript(ip, username, script, password=password)
-        self._printDetail("Secured SSH access to %s. Output:\n%s\n" % (ip,
+        self._print_detail("Secured SSH access to %s. Output:\n%s\n" % (ip,
                                                                        output))
 
     def _revertSshSecurity(self, ip, username, privateKey, orchestratorPublicKey):
@@ -615,32 +508,31 @@ class BaseCloudConnector(object):
         script += "sed -i -r 's/^#?[\\t ]*(PasswordAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
         script += "sync\nsleep 2\n"
         script += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
-        self._printDetail("Reverting security of SSH access to %s with:\n%s\n" % (ip, script))
+        self._print_detail("Reverting security of SSH access to %s with:\n%s\n" % (ip, script))
         _, output = self._runScript(ip, username, script, sshKey=privateKey)
-        self._printDetail("Reverted security of SSH access to %s. Output:\n%s\n" % (ip, output))
+        self._print_detail("Reverted security of SSH access to %s. Output:\n%s\n" % (ip, output))
 
-    def _launchBootstrapScript(self, instance_name, ip, username, privateKey):
+    def __launch_bootstrap_script(self, node_instance, ip, username, privateKey):
         self._waitCanConnectWithSshOrAbort(ip, username, sshKey=privateKey)
-        script = self._getBootstrapScript(instance_name)
-        self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip,
+        script = self._get_bootstrap_script(node_instance)
+        self._print_detail("Launching bootstrap script on %s:\n%s\n" % (ip,
                                                                        script))
         _, output = self._runScriptOnBackgroud(ip, username, script,
                                                sshKey=privateKey)
-        self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip,
+        self._print_detail("Launched bootstrap script on %s:\n%s\n" % (ip,
                                                                       output))
 
-    def _launchWindowsBootstrapScript(self, image_info, instance_name, ip):
-        username, password = self._getSshUsernamePassword(image_info,
-                                                          instance_name)
-        script = self._getBootstrapScript(instance_name, username=username)
+    def _launchWindowsBootstrapScript(self, node_instance, ip):
+        username, password = self.__get_vm_username_password(node_instance)
+        script = self._get_bootstrap_script(node_instance, username=username)
         winrm = self._getWinrm(ip, username, password)
         self._waitCanConnectWithWinrmOrAbort(winrm)
-        self._printDetail("Launching bootstrap script on %s:\n%s\n" % (ip,
+        self._print_detail("Launching bootstrap script on %s:\n%s\n" % (ip,
                                                                        script))
         util.printAndFlush(script)
         winrm.timeout = winrm.set_timeout(600)
         output = self._runScriptWithWinrm(winrm, script)
-        self._printDetail("Launched bootstrap script on %s:\n%s\n" % (ip,
+        self._print_detail("Launched bootstrap script on %s:\n%s\n" % (ip,
                                                                       output))
 
     def _getWinrm(self, ip, username, password):
@@ -722,12 +614,14 @@ class BaseCloudConnector(object):
         command += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
         return command
 
-    def _getBootstrapScript(self, node_instance_name, preExport=None,
-                            preBootstrap=None, postBootstrap=None,
-                            username=None):
+    def _get_bootstrap_script(self, node_instance,
+                              preExport=None, preBootstrap=None, postBootstrap=None,
+                              username=None):
         script = ''
         addEnvironmentVariableCommand = ''
-        if self.isWindows():
+        node_instance_name = node_instance.get_name()
+
+        if node_instance.is_windows():
             addEnvironmentVariableCommand = 'set'
         else:
             addEnvironmentVariableCommand = 'export'
@@ -739,7 +633,7 @@ class BaseCloudConnector(object):
 
         for var, val in os.environ.items():
             if var.startswith('SLIPSTREAM_') and var != 'SLIPSTREAM_NODENAME':
-                if var == 'SLIPSTREAM_REPORT_DIR' and self.isWindows():
+                if var == 'SLIPSTREAM_REPORT_DIR' and node_instance.is_windows():
                     val = Client.WINDOWS_REPORTSDIR
                 if re.search(' ', val):
                     val = '"%s"' % val
@@ -756,7 +650,7 @@ class BaseCloudConnector(object):
         if preBootstrap:
             script += '%s\n' % preBootstrap
 
-        script += '%s\n' % self._buildSlipStreamBootstrapCommand(node_instance_name,
+        script += '%s\n' % self._buildSlipStreamBootstrapCommand(node_instance,
                                                                  username)
 
         if postBootstrap:
@@ -764,10 +658,11 @@ class BaseCloudConnector(object):
 
         return script
 
-    def _buildSlipStreamBootstrapCommand(self, instance_name, username=None):
-        if self.isWindows():
-            return self._buildSlipStreamBootstrapCommandForWindows(instance_name,
-                                                                   username)
+    def _buildSlipStreamBootstrapCommand(self, node_instance, username=None):
+        instance_name = node_instance.get_name()
+
+        if node_instance.is_windows():
+            return self._buildSlipStreamBootstrapCommandForWindows(instance_name, username)
         else:
             return self._buildSlipStreamBootstrapCommandForLinux(instance_name)
 
@@ -835,9 +730,8 @@ class BaseCloudConnector(object):
             'targetScript': targetScript
         }
 
-    def _waitCanConnectWithSshOrAbort(self, host, username='', password='',
-                                      sshKey=None):
-        self._printDetail('Check if we can connect to %s' % host)
+    def _waitCanConnectWithSshOrAbort(self, host, username='', password='', sshKey=None):
+        self._print_detail('Check if we can connect to %s' % host)
         try:
             waitUntilSshCanConnectOrTimeout(host,
                                             self.TIMEOUT_CONNECT,
@@ -856,19 +750,15 @@ class BaseCloudConnector(object):
         return remoteRunScriptNohup(username, ip, script,
                                     sshKey=sshKey, password=password)
 
-    @deprecated
-    def _extractImageInfoFromNodeInfo(self, node_info):
-        return node_info['image']
-
     def setSlipStreamClientAsListener(self, client):
         self.listener = SlipStreamClientListenerAdapter(client)
 
-    def _printDetail(self, message):
+    def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)
 
-    def getVmsDetails(self):
+    def get_vms_details(self):
         vms_details = []
-        for name, vm in self.getVms().items():
-            vms_details.append({name: {'id': self.vmGetId(vm),
-                                       'ip': self.vmGetIp(vm)}})
+        for name, vm in self.get_vms().items():
+            vms_details.append({name: {'id': self._vm_get_id(vm),
+                                       'ip': self._vm_get_ip(vm)}})
         return vms_details

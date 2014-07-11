@@ -26,11 +26,13 @@ from libcloud.compute.types import NodeState
 from libcloud.compute.providers import get_driver
 import libcloud.security
 
+import slipstream.util as util
+import slipstream.exceptions.Exceptions as Exceptions
+
+from slipstream.util import override
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 from slipstream.NodeDecorator import NodeDecorator, RUN_CATEGORY_IMAGE, \
     RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY
-import slipstream.util as util
-import slipstream.exceptions.Exceptions as Exceptions
 
 
 def getConnector(configHolder):
@@ -54,21 +56,19 @@ class OpenStackClientCloud(BaseCloudConnector):
     cloudName = 'openstack'
 
     def __init__(self, configHolder):
-        self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
-
         libcloud.security.VERIFY_SSL_CERT = False
 
         super(OpenStackClientCloud, self).__init__(configHolder)
 
-        self.setCapabilities(contextualization=True,
-                             orchestrator_can_kill_itself_or_its_vapp=True)
+        self._set_capabilities(contextualization=True,
+                               orchestrator_can_kill_itself_or_its_vapp=True)
 
         self.flavors = []
         self.images = []
         self.securit_groups = []
 
-
-    def initialization(self, user_info):
+    @override
+    def _initialization(self, user_info):
         util.printStep('Initialize the OpenStack connector.')
         self._thread_local.driver = self._getDriver(user_info)
         self.flavors = self._thread_local.driver.list_sizes()
@@ -80,7 +80,8 @@ class OpenStackClientCloud(BaseCloudConnector):
         elif self.run_category == RUN_CATEGORY_IMAGE:
             self._createKeypairAndSetOnUserInfo(user_info)
 
-    def finalization(self, user_info):
+    @override
+    def _finalization(self, user_info):
         try:
             kp_name = self._userInfoGetKeypairName(user_info)
             self._deleteKeypair(kp_name)
@@ -96,13 +97,13 @@ class OpenStackClientCloud(BaseCloudConnector):
 
         machine_name = NodeDecorator.MACHINE_NAME
 
-        vm = self.getVm(machine_name)
+        vm = self._get_vm(machine_name)
 
         util.printAndFlush("\n  node_instance: %s \n" % str(node_instance))
         util.printAndFlush("\n  VM: %s \n" % str(vm))
 
-        ipAddress = self.vmGetIp(vm)
-        self._creatorVmId = self.vmGetId(vm)
+        ipAddress = self._vm_get_ip(vm)
+        self._creatorVmId = self._vm_get_id(vm)
         instance = vm['instance']
 
         self._waitInstanceInRunningState(self._creatorVmId)
@@ -120,26 +121,25 @@ class OpenStackClientCloud(BaseCloudConnector):
 
         self._newImageId = newImg.id
 
-    def _startImage(self, user_info, node_instance, vm_name, cloudSpecificData=None):
+    @override
+    def _start_image(self, user_info, node_instance, vm_name):
         self._thread_local.driver = self._getDriver(user_info)
-        return self._startImageOnOpenStack(user_info, node_instance, vm_name, cloudSpecificData)
+        return self._startImageOnOpenStack(user_info, node_instance, vm_name)
 
-    def _startImageOnOpenStack(self, user_info, node_instance, vm_name, cloudSpecificData=None):
-        imageId = self.getImageId(node_instance)
-        instanceType = self._getInstanceType(node_instance)
+    def _startImageOnOpenStack(self, user_info, node_instance, vm_name):
+        imageId = node_instance.get_image_id()
+        instanceType = node_instance.get_instance_type()
         keypair = self._userInfoGetKeypairName(user_info)
-        _sec_groups = self._getCloudParameter(node_instance, 'security.groups').split(',')
+        _sec_groups = node_instance.get_security_groups()
         securityGroups = [[i for i in self.securit_groups if i.name == x.strip()][0] for x in _sec_groups if x]
         flavor = searchInObjectList(self.flavors, 'name', instanceType)
         image = searchInObjectList(self.images, 'id', imageId)
-        contextualizationScript = cloudSpecificData or ''
+        contextualizationScript = self.is_build_image() and '' or self._get_bootstrap_script(node_instance)
 
         if flavor == None:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s"
-                                                        % instanceType)
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instanceType)
         if image == None:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s"
-                                                        % imageId)
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
 
         instance = self._thread_local.driver.create_node(name=vm_name,
                                                          size=flavor,
@@ -148,23 +148,22 @@ class OpenStackClientCloud(BaseCloudConnector):
                                                          ex_userdata=contextualizationScript,
                                                          ex_security_groups=securityGroups)
 
-        vm = dict(networkType=self.getCloudParameters(node_instance)['network'],
+        vm = dict(networkType=node_instance.get_network_type(),
                   instance=instance,
                   ip='',
                   id=instance.id)
         return vm
 
-    def _getCloudSpecificData(self, user_info, node_instance):
-        return self._getBootstrapScript(node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY])
-
-    def listInstances(self):
+    def list_instances(self):
         return self._thread_local.driver.list_nodes()
 
-    def stopDeployment(self):
-        for _, vm in self.getVms().items():
+    @override
+    def _stop_deployment(self):
+        for _, vm in self.get_vms().items():
             vm['instance'].destroy()
 
-    def stopVmsByIds(self, ids):
+    @override
+    def _stop_vms_by_ids(self, ids):
         for node in self._thread_local.driver.list_nodes():
             if node.id in ids:
                 node.destroy()
@@ -183,10 +182,12 @@ class OpenStackClientCloud(BaseCloudConnector):
                                ex_force_service_name=userInfo.get_cloud('service.name'),
                                ex_force_service_region=userInfo.get_cloud('service.region'))
 
-    def vmGetIp(self, vm):
+    @override
+    def _vm_get_ip(self, vm):
         return vm['ip']
 
-    def vmGetId(self, vm):
+    @override
+    def _vm_get_id(self, vm):
         return vm['id']
 
     def _getInstanceIpAddress(self, instance, ipType, strict=True):
@@ -197,7 +198,8 @@ class OpenStackClientCloud(BaseCloudConnector):
         else:
             return (len(instance.public_ips) != 0) and instance.public_ips[0] or (len(instance.private_ips) != 0) and instance.private_ips[0] or ''
 
-    def _waitAndGetInstanceIpAddress(self, vm):
+    @override
+    def _wait_and_get_instance_ip_address(self, vm):
         timeWait = 120
         timeStop = time.time() + timeWait
 

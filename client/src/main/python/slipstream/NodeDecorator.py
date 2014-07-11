@@ -58,9 +58,11 @@ class NodeDecorator(object):
     COMPLETE_KEY = 'complete'
     STATECUSTOM_KEY = 'statecustom'
 
+    IMAGE_PLATFORM_KEY = 'image.platform'
     SCALE_STATE_KEY = 'scale.state'
     INSTANCEID_KEY = 'instanceid'
     CLOUDSERVICE_KEY = 'cloudservice'
+    SECURITY_GROUPS_KEY = 'security.groups'
 
     urlIgnoreAbortAttributeFragment = '?ignoreabort=true'
 

@@ -53,7 +53,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         super(CloudStackClientCloud, self).__init__(configHolder)
         self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
 
-        self.setCapabilities(contextualization=True,
+        self._set_capabilities(contextualization=True,
                              generate_password=True,
                              direct_ip_assignment=True,
                              orchestrator_can_kill_itself_or_its_vapp=True)
@@ -143,9 +143,9 @@ class CloudStackClientCloud(BaseCloudConnector):
         return vm
 
     def _getCloudSpecificData(self, node_info, node_number, nodename):
-        return self._getBootstrapScript(nodename)
+        return self._get_bootstrap_script(nodename)
 
-    def listInstances(self):
+    def list_instances(self):
         return self._thread_local.driver.list_nodes()
 
     def _stopInstances(self, instances):
@@ -168,7 +168,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         self._stopInstances(instances)
 
     def stopVmsByIds(self, ids):
-        instances = [i for i in self.listInstances() if i.id in ids]
+        instances = [i for i in self.list_instances() if i.id in ids]
         self._stopInstances(instances)
 
     @staticmethod
@@ -185,8 +185,7 @@ class CloudStackClientCloud(BaseCloudConnector):
                           port=url.port,
                           path=url.path)
 
-    def vmGetPassword(self, vm_name):
-        vm = self.getVm(vm_name)
+    def _vm_get_password(self, vm):
         print 'VM Password: ', vm['instance'].extra.get('password', None)
         return vm['instance'].extra.get('password', None)
 

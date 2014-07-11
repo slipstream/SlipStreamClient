@@ -154,12 +154,6 @@ class MachineExecutor(object):
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
 
-    def _killItselfServerSide(self):
-        self.wrapper.terminateRunServerSide()
-
     def _getMyCloudInstanceId(self):
         return self.wrapper.getMachineCloudInstanceId()
 
-    @deprecated
-    def isTerminateRunServerSide(self):
-        return self.wrapper.isTerminateRunServerSide()
