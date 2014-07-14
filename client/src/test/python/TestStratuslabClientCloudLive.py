@@ -139,7 +139,7 @@ lvs
     def xtest_2_buildImage(self):
         image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
         self.client._prepareMachineForBuildImage = Mock()
-        self.client.buildImage(self.user_info, image_info)
+        self.client.build_image(self.user_info, image_info)
         # StratusLab doesn't provide us with image ID
         assert '' == self.client.getNewImageId()
 

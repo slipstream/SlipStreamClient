@@ -55,7 +55,7 @@ def generateSshKeyPair(keyFilename):
     execute(sshCmd, shell=True)
 
 
-def generateKeyPair(bits=2048):
+def generate_keypair(bits=2048):
     pyCryptoPatch()
     private = RSA.generate(bits)
     public = private.publickey()

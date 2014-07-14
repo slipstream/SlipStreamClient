@@ -61,7 +61,7 @@ class MachineExecutor(object):
             traceback.print_exc()
             self.wrapper.fail(str(ex))
 
-        self.wrapper.advance()
+        self.wrapper.complete_state()
         state = self._waitForNextState(state)
         self._execute(state)
 
@@ -89,7 +89,7 @@ class MachineExecutor(object):
 
     def _is_timeout_not_needed(self, state):
         return state == 'Ready' and \
-            (not self.wrapper.needToStopImages() or self._is_mutable())
+            (not self.wrapper.need_to_stop_images() or self._is_mutable())
 
     def _is_mutable(self):
         return self.wrapper.is_mutable()
@@ -145,8 +145,7 @@ class MachineExecutor(object):
 
     def _abort_running_in_final_state(self):
         time.sleep(60)
-        raise ExecutionException('The run is in a final state but the VM is '
-                                 'still running !')
+        raise ExecutionException('The run is in a final state but the VM is still running !')
 
     def _nodename(self):
         return self.wrapper.nodename()

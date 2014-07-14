@@ -97,7 +97,7 @@ class StratuslabClientCloud(BaseCloudConnector):
 
         return self.getVmsDetails()
 
-    def _buildImage(self, userInfo, imageInfo):
+    def _build_image(self, userInfo, imageInfo):
 
         #self.creator.create()
         self.creator.createStep2()
@@ -234,7 +234,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         configHolder.extraContextData = '#'.join(
             ['%s=%s' % (k, v) for (k, v) in os.environ.items() if k.startswith('SLIPSTREAM_')])
         configHolder.extraContextData += '#SLIPSTREAM_NODENAME=%s' % nodename
-        configHolder.extraContextData += '#SCRIPT_EXEC=%s' % self._buildSlipStreamBootstrapCommand(nodename)
+        configHolder.extraContextData += '#SCRIPT_EXEC=%s' % self.__build_slipstream_bootstrap_command(nodename)
 
     def _setVmNameOnConfigHolder(self, configHolder, nodename):
         configHolder.vmName = nodename
@@ -287,9 +287,9 @@ class StratuslabClientCloud(BaseCloudConnector):
         #            machine = SystemFactory.getSystem('ubuntu', self.slConfigHolder)
         #            machine.installPackages(packages)
 
-    def _buildSlipStreamBootstrapCommand(self, nodename):
+    def __build_slipstream_bootstrap_command(self, nodename):
         return "sleep 15; " + \
-               super(StratuslabClientCloud, self)._buildSlipStreamBootstrapCommand(nodename)
+               super(StratuslabClientCloud, self).__build_slipstream_bootstrap_command(nodename)
 
     def stopDeployment(self):
         errors = []
@@ -320,7 +320,7 @@ class StratuslabClientCloud(BaseCloudConnector):
         title = "SlipStream-%s" % os.environ.get('SLIPSTREAM_DIID', 'undefined diid')
         self.slConfigHolder.set('title', title)
 
-        self._setUserInfoOnStratuslabConfigHolder(userInfo, buildImage=True)
+        self._setUserInfoOnStratuslabConfigHolder(userInfo, build_image=True)
         self._setImageInfoOnStratuslabConfigHolder(imageInfo)
 
         self._setInstanceSizeOnConfigHolder(self.slConfigHolder, imageInfo)
@@ -348,9 +348,9 @@ class StratuslabClientCloud(BaseCloudConnector):
         self.slConfigHolder.set('newImageGroupVersion', newVersion)
         self.slConfigHolder.set('newImageGroupVersionWithManifestId', True)
 
-    def _setUserInfoOnStratuslabConfigHolder(self, userInfo, buildImage=False):
+    def _setUserInfoOnStratuslabConfigHolder(self, userInfo, build_image=False):
         try:
-            if buildImage:
+            if build_image:
                 self.slConfigHolder.set('author',
                                         '%s %s' % (userInfo.get_user('firstName'),
                                                    userInfo.get_user('lastName')))

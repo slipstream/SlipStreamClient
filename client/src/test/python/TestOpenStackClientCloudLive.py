@@ -84,15 +84,15 @@ class TestOpenStackClientCloud(unittest.TestCase):
 
         security_groups = self.ch.config['openstack.security.groups']
         image_id = self.ch.config['openstack.imageid']
-        node_name = 'test_node'
+        self.node_name = 'test_node'
 
         self.multiplicity = 2
 
         self.node_instances = {}
         for i in range(1, self.multiplicity+1):
-            node_instance_name = node_name + '.' + str(i)
+            node_instance_name = self.node_name + '.' + str(i)
             self.node_instances[node_instance_name] = NodeInstance({
-                'nodename': node_name,
+                'nodename': self.node_name,
                 'name': node_instance_name,
                 'cloudservice': self.connector_instance_name,
                 #'index': i,
@@ -101,8 +101,19 @@ class TestOpenStackClientCloud(unittest.TestCase):
                 'image.id': image_id,
                 self.constructKey('instance.type'): 'm1.tiny',
                 self.constructKey('security.groups'): security_groups,
-                'network': 'private',
-                'image.prerecipe':
+                'network': 'private'
+            })
+
+        self.node_instance = NodeInstance({
+            'name': NodeDecorator.MACHINE_NAME,
+            'cloudservice': self.connector_instance_name,
+            'image.platform': 'Ubuntu',
+            'image.imageId': image_id,
+            'image.id': image_id,
+            self.constructKey('instance.type'): 'm1.tiny',
+            self.constructKey('security.groups'): security_groups,
+            'network': 'private',
+            'image.prerecipe':
 """#!/bin/sh
 set -e
 set -x
@@ -119,7 +130,7 @@ set -x
 dpkg -l | egrep "nano|lvm" || true
 lvs
 """
-            })
+        })
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -127,7 +138,7 @@ lvs
         self.client = None
         self.ch = None
 
-    def test_1_startStopImages(self):
+    def xtest_1_startStopImages(self):
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
         self.client.start_nodes_and_clients(self.user_info, self.node_instances)
@@ -137,21 +148,19 @@ lvs
         vms = self.client.get_vms()
         assert len(vms) == self.multiplicity
 
-        self.client._stop_deployment()
+        self.client.stop_deployment()
 
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE
 
-        image_info = self.client._extractImageInfoFromNodeInfo(self.node_instances)
+        instances_details = self.client.start_nodes_and_clients(self.user_info,
+                                                                {NodeDecorator.MACHINE_NAME: self.node_instance})
 
-        self.client.startImage(self.user_info, image_info)
-        instancesDetails = self.client.get_vms_details()
+        assert instances_details
+        assert instances_details[0][NodeDecorator.MACHINE_NAME]
 
-        assert instancesDetails
-        assert instancesDetails[0][NodeDecorator.MACHINE_NAME]
-
-        self.client.buildImage(self.user_info, image_info)
-        assert self.client.getNewImageId()
+        new_id = self.client.build_image(self.user_info, self.node_instance)
+        assert new_id
 
 
 if __name__ == '__main__':

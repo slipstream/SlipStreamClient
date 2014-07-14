@@ -182,9 +182,9 @@ class Client(object):
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
         self.httpClient.setRuntimeParameter(abort, message)
 
-    def advance(self):
+    def complete_state(self):
         nodeName = self._getNodeName()
-        self.httpClient.advance(nodeName)
+        self.httpClient.complete_state(nodeName)
 
     def terminateRun(self):
         self.httpClient._httpDelete(self.httpClient.run_url)

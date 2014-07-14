@@ -22,6 +22,8 @@ def publish_vm_info(self, vm, node_instance):
         self._orig_publish_vm_info(vm, node_instance)
     except Exception as e:
         pass
+        #print >> sys.stderr, e
+        #print >> sys.stderr, traceback.format_exc()
 
 def get_bootstrap_script(self, node_instance):
     return os.environ['context_script']
@@ -62,7 +64,7 @@ class MainProgram(OpenStackCommand):
 
         self.parser.add_option('--slipstream-endpoint', dest='slipstream_endpoint',
                                help='SlipStream endpoint',
-                               default='http://localhos:8182', metavar='URL')
+                               default='http://localhost:8182', metavar='URL')
 
     def checkOptions(self):
         if not all((self.options.imageId, self.options.instance_type, self.options.region,
@@ -87,8 +89,8 @@ class MainProgram(OpenStackCommand):
             'network': self.options.network_type,
         })
 
-        #with nostdouterr():
-        vm = self._startImage(node_instance)
+        with nostdouterr():
+            vm = self._startImage(node_instance)
 
         print '%s, %s' % (vm['id'], vm['ip'])
 

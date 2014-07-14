@@ -68,9 +68,9 @@ class BaseWrapper(object):
         self._imageInfo = None
         self._runParameters = None
 
-    def advance(self):
+    def complete_state(self):
         nodeName = self._getNodeName()
-        self.clientSlipStream.advance(nodeName)
+        self.clientSlipStream.complete_state(nodeName)
 
     def reset(self):
         self.clientSlipStream.reset()
@@ -143,23 +143,17 @@ class BaseWrapper(object):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
         return self.clientSlipStream.getRuntimeParameter(key)
 
-    def getRunResourceUri(self):
-        return self.clientSlipStream.run_url
-
-    def _deleteRunResource(self):
-        self.clientSlipStream._httpDelete(self.getRunResourceUri())
-
     def discard_user_info_locally(self):
         self._userInfo = None
 
-    def getUserInfo(self, cloud_service_name):
+    def get_user_info(self, cloud_service_name):
         if self._userInfo is None:
-            self._userInfo = self.clientSlipStream.getUserInfo(cloud_service_name)
+            self._userInfo = self.clientSlipStream.get_user_info(cloud_service_name)
         return self._userInfo
 
-    def getRunParameters(self):
+    def get_run_parameters(self):
         if self._runParameters is None:
-            self._runParameters = self.clientSlipStream.getRunParameters()
+            self._runParameters = self.clientSlipStream.get_run_parameters()
         return self._runParameters
 
     def getImageInfo(self):
@@ -167,28 +161,12 @@ class BaseWrapper(object):
             self._imageInfo = self.clientSlipStream.getImageInfo()
         return self._imageInfo
 
-    def getUserSshPubkey(self):
-        userInfo = self.getUserInfo('')
+    def get_user_ssh_pubkey(self):
+        userInfo = self.get_user_info('')
         return userInfo.get_public_keys()
 
-    def putNewImageId(self, resourceUri, newImageId):
-        self.clientSlipStream.putNewImageId(resourceUri, newImageId)
-
-    def publishNodeInitializationInfo(self, nodename, vm_id, vm_ip):
-        self.setInstanceId(nodename, vm_id)
-        self.setInstanceIp(nodename, vm_ip)
-
-    def setInstanceId(self, nodename, vm_id):
-        self._setRuntimeParameter(nodename, 'instanceid', vm_id)
-
-    def setInstanceIp(self, nodename, vm_ip):
-        self._setRuntimeParameter(nodename, 'hostname', vm_ip)
-
-    def _setRuntimeParameter(self, nodename, key, value):
-        parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
-        self.clientSlipStream.setRuntimeParameter(parameter, value)
-
-    def needToStopImages(self, ignore_on_success_run_forever=False):
+    def need_to_stop_images(self, ignore_on_success_run_forever=False):
+        # pylint: disable=unused-argument
         return False
 
     def is_mutable(self):

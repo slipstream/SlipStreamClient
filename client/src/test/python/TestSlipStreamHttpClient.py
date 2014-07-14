@@ -945,7 +945,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USERPARAMETRS_XML)
-        userInfo = client.getUserInfo('')
+        userInfo = client.get_user_info('')
         assert 'Test' == userInfo.get_user('firstName')
         assert 'User' == userInfo.get_user('lastName')
         assert 'test@sixsq.com' == userInfo.get_user('email')
@@ -954,7 +954,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USERPARAMETRS_XML)
-        userInfo = client.getUserInfo('StratusLab')
+        userInfo = client.get_user_info('StratusLab')
 
         assert 'test@sixsq.com' == userInfo.get_user('email')
 

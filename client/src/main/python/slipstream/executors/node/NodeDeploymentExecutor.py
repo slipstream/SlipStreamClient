@@ -26,7 +26,7 @@ from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.MachineExecutor import MachineExecutor
 import slipstream.util as util
 from slipstream.exceptions.Exceptions import ExecutionException
-from slipstream.util import appendSshPubkeyToAuthorizedKeys
+from slipstream.util import appendSshPubkeyToAuthorizedKeys, override
 
 TARGET_POLL_INTERVAL = 10  # Time to wait (in seconds) between to server call
                            # while executing a target script.
@@ -37,18 +37,20 @@ def getExecutor(wrapper, configHolder):
 
 
 class NodeDeploymentExecutor(MachineExecutor):
+
     def __init__(self, wrapper, configHolder=ConfigHolder()):
         self.verboseLevel = 0
         super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
         self.targets = {}
 
+    @override
     def onProvisioning(self):
         super(NodeDeploymentExecutor, self).onProvisioning()
 
         scale_state = self.wrapper.get_scale_state()
 
         if scale_state == self.wrapper.SCALE_STATE_CREATING:
-            self._addSshPubkeyIfNeeded()
+            self._add_ssh_pubkey_if_needed()
 
             self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_CREATED)
 
@@ -62,10 +64,12 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail('Target: %s' % target)
             util.printDetail('Script:\n%s\n' % script[0])
 
+    @override
     def onExecuting(self):
         util.printAction('Executing')
         self._executeTarget('execute')
 
+    @override
     def onSendingReports(self):
         util.printAction('Sending report')
         try:
@@ -78,8 +82,14 @@ class NodeDeploymentExecutor(MachineExecutor):
         finally:
             super(NodeDeploymentExecutor, self).onSendingReports()
 
+    @override
     def onFinalizing(self):
         super(NodeDeploymentExecutor, self).onSendingReports()
+
+    @override
+    def onReady(self):
+        super(NodeDeploymentExecutor, self).onReady()
+        self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_OPERATIONAL)
 
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)
@@ -133,18 +143,15 @@ class NodeDeploymentExecutor(MachineExecutor):
             time.sleep(TARGET_POLL_INTERVAL)
         util.printDetail("End of the target script")
 
-    def _addSshPubkeyIfNeeded(self):
-        if util.needToAddSshPubkey():
-            self._addSshPubkey()
+    def _add_ssh_pubkey_if_needed(self):
+        #if util.needToAddSshPubkey():
+        self._add_ssh_pubkey()
 
-    def _addSshPubkey(self):
-        util.printStep('Adding the public key')
-        appendSshPubkeyToAuthorizedKeys(self._getUserSshPubkey())
+    def _add_ssh_pubkey(self):
+        util.printStep('Adding the public keys')
+        appendSshPubkeyToAuthorizedKeys(self._get_user_ssh_pubkey())
 
-    def _getUserSshPubkey(self):
-        return self.wrapper.getUserSshPubkey()
+    def _get_user_ssh_pubkey(self):
+        return self.wrapper.get_user_ssh_pubkey()
 
-    def onReady(self):
-        super(NodeDeploymentExecutor, self).onReady()
 
-        self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_OPERATIONAL)

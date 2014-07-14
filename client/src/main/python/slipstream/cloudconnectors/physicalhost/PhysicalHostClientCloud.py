@@ -104,7 +104,7 @@ class PhysicalHostClientCloud(BaseCloudConnector):
             if k.startswith('SLIPSTREAM_') or k.startswith('PHYSICALHOST_'):
                 userData += 'export ' + k + '="' + v + '"' + "; "
         userData += 'export SLIPSTREAM_NODENAME="' + nodename + '"' + "; "
-        userData += self._buildSlipStreamBootstrapCommand(nodename)
+        userData += self.__build_slipstream_bootstrap_command(nodename)
         userData += "'\\'') > /dev/null 2>&1 &' | at now"
         return userData
 
@@ -129,9 +129,9 @@ class PhysicalHostClientCloud(BaseCloudConnector):
     def _runScriptWithPrivateKey(self, host, username, command, password, privateKey):
         sshPrivateKeyFile = None
         if privateKey:
-            sshPrivateKeyFile = util.filePutContentInTempFile(privateKey)
+            sshPrivateKeyFile = util.file_put_content_in_temp_file(privateKey)
         try:
-            self._runScript(host, username, command, password, sshPrivateKeyFile)
+            self._run_script(host, username, command, password, sshPrivateKeyFile)
         finally:
             try:
                 os.unlink(sshPrivateKeyFile)

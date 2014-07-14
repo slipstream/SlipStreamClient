@@ -19,6 +19,7 @@
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.exceptions import Exceptions
 from slipstream.executors.MachineExecutor import MachineExecutor
+from slipstream.util import override
 from slipstream import util
 
 
@@ -27,6 +28,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         super(OrchestratorDeploymentExecutor, self).__init__(wrapper,
                                                              configHolder)
 
+    @override
     def onProvisioning(self):
         super(OrchestratorDeploymentExecutor, self).onProvisioning()
 
@@ -43,17 +45,16 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
             util.printError('Error starting instances with error: %s' % ex)
             raise
 
-        util.printStep('Publishing instance initialization information')
-        self.wrapper.publishDeploymentInitializationInfo()
-
+    @override
     def onReady(self):
         super(OrchestratorDeploymentExecutor, self).onReady()
 
         self.wrapper.set_removed_instances_as_gone()
 
-        if not self.wrapper.needToStopImages() and not self._is_mutable():
+        if not self.wrapper.need_to_stop_images() and not self._is_mutable():
             self._killItself()
 
+    @override
     def onFinalizing(self):
         super(OrchestratorDeploymentExecutor, self).onFinalizing()
 
@@ -66,7 +67,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
             util.printError('Error stopping instances: %s' % ex)
             raise
 
-        self.wrapper.advance()
+        self.wrapper.complete_state()
 
         self._killItself()
 

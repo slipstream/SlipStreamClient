@@ -60,14 +60,14 @@ class CloudStackClientCloud(BaseCloudConnector):
 
     def initialization(self, user_info):
         util.printStep('Initialize the CloudStack connector.')
-        self._thread_local.driver = self._getDriver(user_info)
+        self._thread_local.driver = self._get_driver(user_info)
         self.sizes = self._thread_local.driver.list_sizes()
         self.images = self._thread_local.driver.list_images()
         self.user_info = user_info
 
         if self.run_category == RUN_CATEGORY_DEPLOYMENT:
             try:
-                self._importKeypair(user_info)
+                self._import_keypair(user_info)
             except Exceptions.ExecutionException, e:
                 util.printError(e)
         elif self.run_category == RUN_CATEGORY_IMAGE:
@@ -78,13 +78,13 @@ class CloudStackClientCloud(BaseCloudConnector):
         try:
             kp_name = self._userInfoGetKeypairName(user_info)
             if kp_name:
-                self._deleteKeypair(kp_name)
+                self._delete_keypair(kp_name)
         except:
             pass
 
     def _startImage(self, user_info, image_info, instance_name,
                     cloudSpecificData=None):
-        self._thread_local.driver = self._getDriver(user_info)
+        self._thread_local.driver = self._get_driver(user_info)
         return self._startImageOnCloudStack(user_info, image_info, instance_name,
                                             cloudSpecificData)
 
@@ -132,7 +132,7 @@ class CloudStackClientCloud(BaseCloudConnector):
                 ex_userdata=contextualizationScript,
                 ex_security_groups=securityGroups)
 
-        ip = self._getInstanceIpAddress(instance, ipType)
+        ip = self._get_instance_ip_address(instance, ipType)
         if not ip:
             raise Exceptions.ExecutionException("Couldn't find a '%s' IP" % ipType)
 
@@ -160,7 +160,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         tasksRunnner.wait_tasks_processed()
 
     def __stop_instance(self, instance):
-        driver = self._getDriver(self.user_info)
+        driver = self._get_driver(self.user_info)
         driver.destroy_node(instance)
 
     def stopDeployment(self):
@@ -172,7 +172,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         self._stopInstances(instances)
 
     @staticmethod
-    def _getDriver(userInfo):
+    def _get_driver(userInfo):
         CloudStack = get_driver(Provider.CLOUDSTACK)
 
         url = urlparse(userInfo.get_cloud('endpoint'))
@@ -195,13 +195,13 @@ class CloudStackClientCloud(BaseCloudConnector):
     def vmGetId(self, vm):
         return vm['id']
 
-    def _getInstanceIpAddress(self, instance, ipType):
+    def _get_instance_ip_address(self, instance, ipType):
         if ipType.lower() == 'private':
             return (len(instance.private_ips) != 0) and instance.private_ips[0] or (len(instance.public_ips) != 0) and instance.public_ips[0] or ''
         else:
             return (len(instance.public_ips) != 0) and instance.public_ips[0] or (len(instance.private_ips) != 0) and instance.private_ips[0] or ''
 
-    def _importKeypair(self, user_info):
+    def _import_keypair(self, user_info):
         kp_name = 'ss-key-%i' % int(time.time())
         public_key = self._getPublicSshKey(user_info)
         try:
@@ -215,7 +215,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         self._userInfoSetKeypairName(user_info, kp_name)
         return kp_name
 
-    def _createKeypairAndSetOnUserInfo(self, user_info):
+    def _create_keypair_and_set_on_user_info(self, user_info):
         kp_name = 'ss-build-image-%i' % int(time.time())
         kp = self._thread_local.driver.create_key_pair(kp_name)
         self._userInfoSetPrivateKey(user_info, kp.private_key)
@@ -223,7 +223,7 @@ class CloudStackClientCloud(BaseCloudConnector):
         self._userInfoSetKeypairName(user_info, kp_name)
         return kp_name
 
-    def _deleteKeypair(self, kp_name):
+    def _delete_keypair(self, kp_name):
         kp = KeyPair(name=kp_name, public_key=None, fingerprint=None, driver=self._thread_local.driver)
         return self._thread_local.driver.delete_keypair(kp)
 

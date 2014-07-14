@@ -23,38 +23,12 @@ import slipstream.util as util
 import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream.util import deprecated
+from slipstream.UserInfo import UserInfo
 from slipstream.HttpClient import HttpClient
 from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import NodeDecorator
 
 etree = util.importETree()
-
-
-class UserInfo(dict):
-    def __init__(self, cloud_qualifier):
-        super(UserInfo, self).__init__({})
-        self.cloud = cloud_qualifier + '.'
-        self.user = 'User.'
-        self.general = 'General.'
-        self.qualifires = (self.cloud, self.user, self.general)
-
-    def get_cloud(self, key):
-        return self.__getitem__(self.cloud + key)
-
-    def get_general(self, key):
-        return self.__getitem__(self.general + key)
-
-    def get_user(self, key):
-        return self.__getitem__(self.user + key)
-
-    def __setitem__(self, key, val):
-        if not key.startswith(self.qualifires):
-            raise ValueError('Key should start with one of: %s' %
-                ', '.join(self.qualifires))
-        dict.__setitem__(self, key, val)
-
-    def get_public_keys(self):
-        return self.get_general('ssh.public.key')
 
 
 class SlipStreamHttpClient(object):
@@ -90,7 +64,7 @@ class SlipStreamHttpClient(object):
         self.userEndpoint = '%s/user/%s' % (self.serviceurl,
                                             self.username)
 
-    def getUserInfo(self, cloud_qualifier):
+    def get_user_info(self, cloud_qualifier):
 
         dom = self._getUserElement()
 
@@ -220,11 +194,13 @@ class SlipStreamHttpClient(object):
         url = self.runEndpoint
         return self._httpPost(url, resourceUri, 'text/plain')
 
-    def advance(self, nodeName):
+    def complete_state(self, nodeName):
         url = '%s/%s:%s' % (self.run_url, nodeName,
                             NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
+    def terminate_run(self):
+        return self._httpDelete(self.run_url)
 
     def _fail(self, message):
         self.setRuntimeParameter(
@@ -252,7 +228,7 @@ class SlipStreamHttpClient(object):
         _, content = self._httpGet(url, accept='text/plain')
         return content.strip().strip('"').strip("'")
 
-    def getRunParameters(self):
+    def get_run_parameters(self):
         self._retrieveAndSetRun()
         return DomExtractor.extractRunParametersFromRun(self.run_dom)
 
@@ -293,10 +269,10 @@ class SlipStreamHttpClient(object):
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)
 
-    def putNewImageId(self, resourceUri, imageId):
-        url = self.serviceurl + '/' + resourceUri
-        self._printDetail('Set new image id: %s %s' % (url, imageId))
-        self._httpPut(url, imageId)
+    def put_new_image_id(self, image_resource_uri, image_id):
+        url = self.serviceurl + '/' + image_resource_uri
+        self._printDetail('Set new image id: %s %s' % (url, image_id))
+        self._httpPut(url, image_id)
 
     def launchDeployment(self, params):
         body = '&'.join(params)
@@ -377,10 +353,11 @@ class DomExtractor(object):
         category = DomExtractor.get_module_category(run_dom)
         if category == NodeDecorator.IMAGE:
             targets = DomExtractor.get_build_targets(image_dom)
-        if category == NodeDecorator.DEPLOYMENT:
+        elif category == NodeDecorator.DEPLOYMENT:
             targets = DomExtractor.getDeploymentTargetsFromImageDom(image_dom)
         else:
-            raise Exceptions.ClientError("Unknown category: %s" % category)
+            raise Exceptions.ClientError("Unknown category: '%s'. Possible values: %s" %
+                                         (category, [NodeDecorator.IMAGE, NodeDecorator.DEPLOYMENT]))
 
         return targets
 

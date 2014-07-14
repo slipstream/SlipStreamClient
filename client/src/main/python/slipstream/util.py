@@ -422,7 +422,7 @@ def filePutContent(filename, data):
     fd.close()
 
 
-def filePutContentInTempFile(data):
+def file_put_content_in_temp_file(data):
     _, filename = tempfile.mkstemp()
     filePutContent(filename, data)
     return filename

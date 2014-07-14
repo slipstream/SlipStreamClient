@@ -63,6 +63,15 @@ class NodeInstance(object):
     def get_image_id(self):
         return self.__get('image.id')
 
+    def get_image_resource_uri(self):
+        return self.__get_image_attribute('resourceUri')
+
+    def get_image_short_name(self):
+        return self.__get_image_attribute('shortName')
+
+    def get_extra_disks(self):
+        return self.__get('extra.disk.volatile')
+
     def get_name(self):
         return self.__get(NodeDecorator.NODE_INSTANCE_NAME_KEY)
 
@@ -79,13 +88,13 @@ class NodeInstance(object):
         return self.__parameters.get(NodeDecorator.SCALE_STATE_KEY)
 
     def get_prerecipe(self):
-        return self.__get_image_target('image.prerecipe', '')
+        return self.__get_image_target('prerecipe', '')
 
     def get_recipe(self):
-        return self.__get_image_target('image.recipe', '')
+        return self.__get_image_target('recipe', '')
 
     def get_packages(self):
-        return self.__get_image_target('image.packages', [])
+        return self.__get_image_target('packages', [])
 
     def get_cloud_parameter(self, parameter_name, default_value=None):
         return self.__get('%s.%s' % (self.get_cloud(), parameter_name), default_value)

@@ -70,7 +70,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
 
         cw.clientSlipStream.httpClient._call = Mock(return_value=('', ''))
 
-        cw._updateSlipStreamImage('module/Name', 'ABC')
+        cw._update_slipstream_image('module/Name', 'ABC')
         cw.clientSlipStream.httpClient._call.assert_called_with(
             '%s/module/Name/Test' % self.serviceurl,
             'PUT', 'ABC', 'application/xml',

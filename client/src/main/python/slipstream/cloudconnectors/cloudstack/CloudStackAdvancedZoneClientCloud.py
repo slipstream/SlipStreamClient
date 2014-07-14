@@ -104,7 +104,7 @@ class CloudStackAdvancedZoneClientCloud(CloudStackClientCloud):
                 ex_security_groups=securityGroups,
                 networks=networks)
 
-        ip = self._getInstanceIpAddress(instance, ipType)
+        ip = self._get_instance_ip_address(instance, ipType)
         if not ip:
             raise Exceptions.ExecutionException("Couldn't find a '%s' IP" % ipType)
 

@@ -144,7 +144,7 @@ lvs
         assert instancesDetails
         assert instancesDetails[0][NodeDecorator.MACHINE_NAME]
 
-        self.client.buildImage(self.user_info, image_info)
+        self.client.build_image(self.user_info, image_info)
         assert self.client.getNewImageId()
 
 

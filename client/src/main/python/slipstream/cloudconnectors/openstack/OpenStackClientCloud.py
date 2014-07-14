@@ -31,8 +31,7 @@ import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream.util import override
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
-from slipstream.NodeDecorator import NodeDecorator, RUN_CATEGORY_IMAGE, \
-    RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY
+from slipstream.NodeDecorator import NodeDecorator, RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT
 
 
 def getConnector(configHolder):
@@ -70,66 +69,66 @@ class OpenStackClientCloud(BaseCloudConnector):
     @override
     def _initialization(self, user_info):
         util.printStep('Initialize the OpenStack connector.')
-        self._thread_local.driver = self._getDriver(user_info)
+        self._thread_local.driver = self._get_driver(user_info)
         self.flavors = self._thread_local.driver.list_sizes()
         self.images = self._thread_local.driver.list_images()
         self.securit_groups = self._thread_local.driver.ex_list_security_groups()
 
         if self.run_category == RUN_CATEGORY_DEPLOYMENT:
-            self._importKeypair(user_info)
+            self._import_keypair(user_info)
         elif self.run_category == RUN_CATEGORY_IMAGE:
-            self._createKeypairAndSetOnUserInfo(user_info)
+            self._create_keypair_and_set_on_user_info(user_info)
 
     @override
     def _finalization(self, user_info):
         try:
-            kp_name = self._userInfoGetKeypairName(user_info)
-            self._deleteKeypair(kp_name)
+            kp_name = user_info.get_keypair_name()
+            self._delete_keypair(kp_name)
         # pylint: disable=W0703
         except Exception:
             pass
 
-    def _buildImage(self, userInfo, node_instance):
-        self._buildImageOnOpenStack(userInfo, node_instance)
+    def _build_image(self, user_info, node_instance):
+        return self._build_image_on_openstack(user_info, node_instance)
 
-    def _buildImageOnOpenStack(self, userInfo, node_instance):
-        self._thread_local.driver = self._getDriver(userInfo)
+    def _build_image_on_openstack(self, user_info, node_instance):
+        self._thread_local.driver = self._get_driver(user_info)
 
-        machine_name = NodeDecorator.MACHINE_NAME
+        machine_name = node_instance.get_name()
 
         vm = self._get_vm(machine_name)
 
         util.printAndFlush("\n  node_instance: %s \n" % str(node_instance))
         util.printAndFlush("\n  VM: %s \n" % str(vm))
 
-        ipAddress = self._vm_get_ip(vm)
-        self._creatorVmId = self._vm_get_id(vm)
+        ip_address = self._vm_get_ip(vm)
+        vm_id = self._vm_get_id(vm)
         instance = vm['instance']
 
-        self._waitInstanceInRunningState(self._creatorVmId)
+        self._wait_instance_in_running_state(vm_id)
 
-        self._buildImageIncrement(userInfo, node_instance, ipAddress)
+        self._build_image_increment(user_info, node_instance, ip_address)
 
         util.printStep('Creation of the new Image.')
         self.listener.write_for(machine_name, 'Saving the image')
         newImg = self._thread_local.driver.ex_save_image(instance,
-                                                         node_instance['shortName'],
+                                                         node_instance.get_image_short_name(),
                                                          metadata=None)
 
-        self._waitImageCreationCompleted(newImg.id)
+        self._wait_image_creation_completed(newImg.id)
         self.listener.write_for(machine_name, 'Image saved !')
 
-        self._newImageId = newImg.id
+        return newImg.id
 
     @override
     def _start_image(self, user_info, node_instance, vm_name):
-        self._thread_local.driver = self._getDriver(user_info)
-        return self._startImageOnOpenStack(user_info, node_instance, vm_name)
+        self._thread_local.driver = self._get_driver(user_info)
+        return self._start_image_on_openstack(user_info, node_instance, vm_name)
 
-    def _startImageOnOpenStack(self, user_info, node_instance, vm_name):
+    def _start_image_on_openstack(self, user_info, node_instance, vm_name):
         imageId = node_instance.get_image_id()
         instanceType = node_instance.get_instance_type()
-        keypair = self._userInfoGetKeypairName(user_info)
+        keypair = user_info.get_keypair_name()
         _sec_groups = node_instance.get_security_groups()
         securityGroups = [[i for i in self.securit_groups if i.name == x.strip()][0] for x in _sec_groups if x]
         flavor = searchInObjectList(self.flavors, 'name', instanceType)
@@ -168,7 +167,7 @@ class OpenStackClientCloud(BaseCloudConnector):
             if node.id in ids:
                 node.destroy()
 
-    def _getDriver(self, userInfo):
+    def _get_driver(self, userInfo):
         driverOpenStack = get_driver(Provider.OPENSTACK)
         isHttps = userInfo.get_cloud('endpoint').lower().startswith('https://')
 
@@ -190,7 +189,7 @@ class OpenStackClientCloud(BaseCloudConnector):
     def _vm_get_id(self, vm):
         return vm['id']
 
-    def _getInstanceIpAddress(self, instance, ipType, strict=True):
+    def _get_instance_ip_address(self, instance, ipType, strict=True):
         if ipType.lower() == 'private':
             return (len(instance.private_ips) != 0) and instance.private_ips[0] or (len(instance.public_ips) != 0 and not strict) and instance.public_ips[0] or ''
         elif ipType.lower() == 'public':
@@ -211,13 +210,13 @@ class OpenStackClientCloud(BaseCloudConnector):
 
             instances = self._thread_local.driver.list_nodes()
             instance = searchInObjectList(instances, 'id', vmId)
-            ip = self._getInstanceIpAddress(instance, ipType or '')
+            ip = self._get_instance_ip_address(instance, ipType or '')
             if ip:
                 vm['ip'] = ip
                 return vm
 
         try:
-            ip = self._getInstanceIpAddress(instance, ipType or '', False)
+            ip = self._get_instance_ip_address(instance, ipType or '', False)
         # pylint: disable=W0703
         except Exception:
             pass
@@ -229,7 +228,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         raise Exceptions.ExecutionException(
             'Timed out while waiting for IPs to be assigned to instances: %s' % vmId)
 
-    def _waitInstanceInRunningState(self, instanceId):
+    def _wait_instance_in_running_state(self, instanceId):
         timeWait = 120
         timeStop = time.time() + timeWait
 
@@ -243,7 +242,7 @@ class OpenStackClientCloud(BaseCloudConnector):
             node = self._thread_local.driver.list_nodes()
             state = searchInObjectList(node, 'id', instanceId).state
 
-    def _waitImageCreationCompleted(self, imageId):
+    def _wait_image_creation_completed(self, imageId):
         timeWait = 600
         timeStop = time.time() + timeWait
 
@@ -256,24 +255,25 @@ class OpenStackClientCloud(BaseCloudConnector):
             images = self._thread_local.driver.list_images()
             imgState = searchInObjectList(images, 'id', imageId)
 
-    def _importKeypair(self, user_info):
+    def _import_keypair(self, user_info):
         kp_name = 'ss-key-%i'  % int(time.time())
-        public_key = self._getPublicSshKey(user_info)
+        public_key = user_info.get_public_keys()
         try:
             kp = self._thread_local.driver.ex_import_keypair_from_string(kp_name, public_key)
         except Exception as ex:
             raise Exceptions.ExecutionException('Cannot import the public key. Reason: %s' % ex)
         kp_name = kp.name
-        self._userInfoSetKeypairName(user_info, kp_name)
+        user_info.set_keypair_name(kp_name)
         return kp_name
 
-    def _createKeypairAndSetOnUserInfo(self, user_info):
+    def _create_keypair_and_set_on_user_info(self, user_info):
         kp_name = 'ss-build-image-%i' % int(time.time())
         kp = self._thread_local.driver.ex_create_keypair(kp_name)
-        self._userInfoSetPrivateKey(user_info, kp.private_key)
-        self._userInfoSetKeypairName(user_info, kp.name)
+        user_info.set_private_key(kp.private_key)
+        user_info.set_keypair_name(kp.name)
         return kp.name
 
-    def _deleteKeypair(self, kp_name):
+    def _delete_keypair(self, kp_name):
         kp = searchInObjectList(self._thread_local.driver.ex_list_keypairs(), 'name', kp_name)
         self._thread_local.driver.ex_delete_keypair(kp)
+
