@@ -16,9 +16,9 @@
  limitations under the License.
 """
 
-from slipstream.NodeDecorator import KEY_RUN_CATEGORY
 import slipstream.exceptions.Exceptions as Exceptions
 
+from slipstream.util import override
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 
 import libcloud.security
@@ -40,60 +40,56 @@ class CloudStackAdvancedZoneClientCloud(CloudStackClientCloud):
         libcloud.security.VERIFY_SSL_CERT = False
 
         super(CloudStackAdvancedZoneClientCloud, self).__init__(configHolder)
-        self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
 
         self._capabilities = [] # Remove this workaround
-        self.setCapabilities(contextualization=False,
-                             generate_password=True,
-                             direct_ip_assignment=True,
-                             orchestrator_can_kill_itself_or_its_vapp=True)
+        self._set_capabilities(contextualization=False,
+                               generate_password=True,
+                               direct_ip_assignment=True,
+                               orchestrator_can_kill_itself_or_its_vapp=True)
 
-    def initialization(self, user_info):
-        super(CloudStackAdvancedZoneClientCloud, self).initialization(user_info)
-        self.networks = self._thread_local.driver.ex_list_networks()
+    @override
+    def _initialization(self, user_info):
+        super(CloudStackAdvancedZoneClientCloud, self)._initialization(user_info) # pylint: disable=protected-access
+        self.networks = self._thread_local.driver.ex_list_networks() # pylint: disable=attribute-defined-outside-init
 
-    def _startImageOnCloudStack(self, user_info, image_info, instance_name,
-                                cloudSpecificData=None):
-        imageId = self.getImageId(image_info)
-        instance_name = self.formatInstanceName(instance_name)
-        instanceType = self._getInstanceType(image_info)
-        ipType = self.getCloudParameters(image_info)['network']
+    @override
+    def _start_image_on_cloudstack(self, user_info, node_instance, vm_name):
+        image_id = node_instance.get_image_id()
+        instance_name = self.format_instance_name(vm_name)
+        instance_type = node_instance.get_instance_type()
+        ip_type = node_instance.get_network_type()
 
         keypair = None
-        contextualizationScript = None
-        if not self.isWindows():
-            keypair = self._userInfoGetKeypairName(user_info)
-            contextualizationScript = cloudSpecificData or None
+        if not node_instance.is_windows():
+            keypair = user_info.get_keypair_name()
 
-        securityGroups = None
-        security_groups = self._getCloudParameter(image_info, 'security.groups')
-        if security_groups:
-            securityGroups = [x.strip() for x in security_groups.split(',') if x]
-        
-        _networks = self._getCloudParameter(image_info, 'networks').split(',')
-        try: 
+        security_groups = node_instance.get_security_groups()
+        security_groups = (len(security_groups) > 0) and security_groups or None
+
+        _networks = node_instance.get_networks()
+        try:
             networks = [[i for i in self.networks if i.name == x.strip()][0] for x in _networks if x]
         except IndexError:
             raise Exceptions.ParameterNotFoundException(
                 "Couldn't find one or more of the specified networks: %s" % _networks)
-            
-        try:
-            size = [i for i in self.sizes if i.name == instanceType][0]
-        except IndexError:
-            raise Exceptions.ParameterNotFoundException(
-                "Couldn't find the specified instance type: %s" % instanceType)
-        try:
-            image = [i for i in self.images if i.id == imageId][0]
-        except IndexError:
-            raise Exceptions.ParameterNotFoundException(
-                "Couldn't find the specified image: %s" % imageId)
 
-        if self.isWindows():
+        try:
+            size = [i for i in self.sizes if i.name == instance_type][0]
+        except IndexError:
+            raise Exceptions.ParameterNotFoundException(
+                "Couldn't find the specified instance type: %s" % instance_type)
+        try:
+            image = [i for i in self.images if i.id == image_id][0]
+        except IndexError:
+            raise Exceptions.ParameterNotFoundException(
+                "Couldn't find the specified image: %s" % image_id)
+
+        if node_instance.is_windows():
             instance = self._thread_local.driver.create_node(
                 name=instance_name,
                 size=size,
                 image=image,
-                ex_security_groups=securityGroups,
+                ex_security_groups=security_groups,
                 networks=networks)
         else:
             instance = self._thread_local.driver.create_node(
@@ -101,15 +97,14 @@ class CloudStackAdvancedZoneClientCloud(CloudStackClientCloud):
                 size=size,
                 image=image,
                 ex_keyname=keypair,
-                ex_security_groups=securityGroups,
+                ex_security_groups=security_groups,
                 networks=networks)
 
-        ip = self._get_instance_ip_address(instance, ipType)
+        ip = self._get_instance_ip_address(instance, ip_type)
         if not ip:
-            raise Exceptions.ExecutionException("Couldn't find a '%s' IP" % ipType)
+            raise Exceptions.ExecutionException("Couldn't find a '%s' IP" % ip_type)
 
-        vm = dict(networkType=ipType,
-                  instance=instance,
+        vm = dict(instance=instance,
                   ip=ip,
                   id=instance.id)
-        return vm                
+        return vm

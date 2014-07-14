@@ -2,13 +2,11 @@
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import sys
 
 from slipstream.util import nostdout
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
-
 
 
 class MainProgram(OpenStackCommand):

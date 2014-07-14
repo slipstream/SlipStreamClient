@@ -92,31 +92,12 @@ class SlipStreamHttpClient(object):
         _, content = self._httpGet(url, 'application/xml')
         return content
 
-    def getImageInfo(self):
-        image_dom = self._getImageInfoDom()
-        return self._getImageInfoFromImageDom(image_dom)
-
-    def _getImageInfoFromImageDom(self, imageDom):
-        info = {}
-        info['attributes'] = DomExtractor.get_attributes(imageDom)
-        info['targets'] = self._getTargets(imageDom)
-        info['cloud_parameters'] = DomExtractor.getImageCloudParametersFromImageDom(imageDom)
-        info['extra_disks'] = DomExtractor.getExtraDisksFromImageDom(imageDom)
-        return info
-
-    def _getImageInfoDom(self):
-        return self.run_dom.find('module')
-
     def getNodeDeploymentTargets(self):
         self._retrieveAndSetRun()
         return DomExtractor.getDeploymentTargets(self.run_dom,
                                                  self._getGenericNodename())
 
     def _extractModuleResourceUri(self, run):
-        rootElement = etree.fromstring(run)
-        return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
-
-    def _extractRuntimeParameter(self, key, run):
         rootElement = etree.fromstring(run)
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
@@ -163,7 +144,7 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extractTypeFromRun(self.run_dom)
 
-    def _get_run_mutable(self):
+    def get_run_mutable(self):
         self._retrieveAndSetRun()
         return DomExtractor.extract_mutable_from_run(self.run_dom)
 

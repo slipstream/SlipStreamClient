@@ -19,7 +19,7 @@
 from optparse import OptionParser
 import os
 
-from slipstream.SlipStreamHttpClient import UserInfo
+from slipstream.UserInfo import UserInfo
 
 
 class CloudClientCommand(object):

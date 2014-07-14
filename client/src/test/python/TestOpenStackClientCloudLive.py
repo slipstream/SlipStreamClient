@@ -19,9 +19,7 @@
 
 import os
 import unittest
-from mock import Mock
 
-from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
@@ -41,9 +39,10 @@ openstack.password = xxx
 openstack.imageid =  d02ee717-33f7-478b-ba14-02196978fea8
 openstack.ssh.username = ubuntu
 openstack.ssh.password = yyy
-"""
+""" # pylint: disable=pointless-string-statement
 
 def publish_vm_info(self, vm, node_instance):
+    # pylint: disable=unused-argument, protected-access
     print '%s, %s' % (self._vm_get_id(vm), self._vm_get_ip(vm))
 
 
@@ -55,8 +54,6 @@ class TestOpenStackClientCloud(unittest.TestCase):
         return self.connector_instance_name + '.' + name
 
     def setUp(self):
-        BaseCloudConnector._publish_vm_info = Mock()
-
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = self.connector_instance_name
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
         os.environ['SLIPSTREAM_DIID'] = '00000000-0000-0000-0000-000000000000'
@@ -67,8 +64,7 @@ class TestOpenStackClientCloud(unittest.TestCase):
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
         self.ch.set(KEY_RUN_CATEGORY, '')
 
-
-        OpenStackClientCloud._publish_vm_info = publish_vm_info
+        OpenStackClientCloud._publish_vm_info = publish_vm_info # pylint: disable=protected-access
         self.client = OpenStackClientCloud(self.ch)
 
         self.user_info = UserInfo(self.connector_instance_name)

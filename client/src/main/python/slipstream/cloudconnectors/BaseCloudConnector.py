@@ -30,7 +30,6 @@ import slipstream.exceptions.Exceptions as Exceptions
 from slipstream import util, SlipStreamHttpClient
 from slipstream.util import deprecated
 from slipstream.Client import Client
-from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
 from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
@@ -142,9 +141,6 @@ class BaseCloudConnector(object):
 
         self.__cloud = os.environ['SLIPSTREAM_CONNECTOR_INSTANCE']
 
-        # For image creation.
-        self._creatorVmId = ''  # image ID of creator instance
-
         self._init_threading_related()
 
         self.tempPrivateKeyFileName = ''
@@ -191,13 +187,16 @@ class BaseCloudConnector(object):
     def is_build_image(self):
         return self.run_category == NodeDecorator.IMAGE
 
+    def is_deployment(self):
+        return self.run_category == NodeDecorator.DEPLOYMENT
+
     @staticmethod
     def _get_max_workers(config_holder):
         try:
             ss = Client(config_holder)
             ss.ignoreAbort = True
             return ss.getRuntimeParameter('max.iaas.workers')
-        except Exception as ex:
+        except Exception as ex: # pylint: disable=broad-except
             util.printDetail('Failed to get max.iaas.workers: %s' % str(ex), verboseThreshold=0)
             return None
 
@@ -255,10 +254,11 @@ class BaseCloudConnector(object):
             vm = self._wait_and_get_instance_ip_address(vm)
             self.__add_vm(vm, node_instance)
 
-        if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION) and not node_instance.is_windows():
-            self.__secure_ssh_access_and_run_bootstrap_script(user_info, node_instance, self._vm_get_ip(vm))
-        elif not self.has_capability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION) and node_instance.is_windows():
-            self.__launch_windows_bootstrap_script(node_instance, self._vm_get_ip(vm))
+        if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
+            if not node_instance.is_windows():
+                self.__secure_ssh_access_and_run_bootstrap_script(user_info, node_instance, self._vm_get_ip(vm))
+            else:
+                self.__launch_windows_bootstrap_script(node_instance, self._vm_get_ip(vm))
 
     def __add_vm(self, vm, node_instance):
         name = node_instance.get_name()
@@ -361,7 +361,7 @@ class BaseCloudConnector(object):
         finally:
             try:
                 os.unlink(ssh_private_key_file)
-            except:
+            except:  # pylint: disable=bare-except
                 pass
 
     def get_cloud_service_name(self):
@@ -395,7 +395,7 @@ class BaseCloudConnector(object):
             try:
                 vm = self._get_vm(instance_name)
                 password = self._vm_get_password(vm)
-            except:
+            except: # pylint: disable=bare-except
                 pass
         return password
 
@@ -519,9 +519,8 @@ class BaseCloudConnector(object):
         util.printAndFlush('\nwinrm.get_command_output\n')
         if not runAndContinue:
             try:
-                stdout, stderr, returnCode = winrm.get_command_output(_shellId,
-                                                                      commandId)
-            except Exception as e:
+                stdout, stderr, returnCode = winrm.get_command_output(_shellId, commandId)
+            except Exception as e: # pylint: disable=broad-except
                 print 'WINRM Exception: %s' % str(e)
         util.printAndFlush('\nwinrm.cleanup_command\n')
         if not runAndContinue:
@@ -552,6 +551,8 @@ class BaseCloudConnector(object):
     def _get_bootstrap_script(self, node_instance,
                               pre_export=None, pre_bootstrap=None, post_bootstrap=None,
                               username=None):
+        """This method can be redefined by connectors if they need a specific bootstrap script
+        with the SSH contextualization."""
         script = ''
         addEnvironmentVariableCommand = ''
         node_instance_name = node_instance.get_name()

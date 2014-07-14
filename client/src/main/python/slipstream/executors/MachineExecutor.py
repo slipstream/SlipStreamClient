@@ -153,6 +153,3 @@ class MachineExecutor(object):
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
 
-    def _getMyCloudInstanceId(self):
-        return self.wrapper.getMachineCloudInstanceId()
-

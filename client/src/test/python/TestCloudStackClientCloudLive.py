@@ -26,8 +26,8 @@ from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
-from slipstream.NodeDecorator import (NodeDecorator, RUN_CATEGORY_IMAGE,
-                                      RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY)
+from slipstream.NodeInstance import NodeInstance
+from slipstream.NodeDecorator import RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY
 from slipstream import util
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__),
@@ -45,14 +45,20 @@ cloudstack.template = 8c7e60ae-3a30-4031-a3e6-29832d85d7cb
 cloudstack.instance.type = Micro
 cloudstack.security.groups = default
 cloudstack.max.iaas.workers = 2
-"""
+""" # pylint: disable=pointless-string-statement
 
 
 class TestCloudStackClientCloud(unittest.TestCase):
-    def setUp(self):
-        BaseCloudConnector._publish_vm_info = Mock()
 
-        os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'cloudstack'
+    connector_instance_name = 'cloudstack'
+
+    def constructKey(self, name):
+        return self.connector_instance_name + '.' + name
+
+    def setUp(self):
+        BaseCloudConnector._publish_vm_info = Mock() # pylint: disable=protected-access
+
+        os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = self.connector_instance_name
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
         os.environ['SLIPSTREAM_DIID'] = '00000000-0000-0000-0000-%s' % time.time()
 
@@ -65,53 +71,36 @@ class TestCloudStackClientCloud(unittest.TestCase):
 
         self.client = CloudStackClientCloud(self.ch)
 
-        self.user_info = UserInfo('cloudstack')
-        self.user_info['cloudstack.endpoint'] = self.ch.config['cloudstack.endpoint']
-        self.user_info['cloudstack.zone'] = self.ch.config['cloudstack.zone']
-        self.user_info['cloudstack.username'] = self.ch.config['cloudstack.key']
-        self.user_info['cloudstack.password'] = self.ch.config['cloudstack.secret']
+        self.user_info = UserInfo(self.connector_instance_name)
+        self.user_info[self.constructKey('endpoint')] = self.ch.config['cloudstack.endpoint']
+        self.user_info[self.constructKey('zone')] = self.ch.config['cloudstack.zone']
+        self.user_info[self.constructKey('username')] = self.ch.config['cloudstack.key']
+        self.user_info[self.constructKey('password')] = self.ch.config['cloudstack.secret']
+        security_groups = self.ch.config['cloudstack.security.groups']
+        instance_type = self.ch.config['cloudstack.instance.type']
         self.user_info['General.ssh.public.key'] = self.ch.config['General.ssh.public.key']
+        image_id = self.ch.config[self.constructKey('template')]
 
-        image_id = self.ch.config['cloudstack.template']
-        self.multiplicity = 4
+        self.multiplicity = 2
         self.max_iaas_workers = self.ch.config.get('cloudstack.max.iaas.workers',
                                                    str(self.multiplicity))
-        self.node_info = {
-            'multiplicity': self.multiplicity,
-            'nodename': 'test_node',
-            'image': {
-                'cloud_parameters': {
-                    'cloudstack': {
-                        'cloudstack.instance.type': self.ch.config['cloudstack.instance.type'],
-                        'cloudstack.security.groups': self.ch.config['cloudstack.security.groups']
-                     },
-                    'Cloud': {'network': 'public'}
-                },
-                'attributes': {
-                    'imageId': image_id,
-                    'platform': 'Ubuntu'
-                },
-                'targets': {
-                    'prerecipe':
-"""#!/bin/sh
-set -e
-set -x
 
-ls -l /tmp
-dpkg -l | egrep "nano|lvm" || true
-""",
-                    'recipe':
-"""#!/bin/sh
-set -e
-set -x
-
-dpkg -l | egrep "nano|lvm" || true
-lvs
-""",
-                    'packages': ['lvm2', 'nano']
-                }
-            },
-        }
+        self.node_name = 'test_node'
+        self.node_instances = {}
+        for i in range(1, self.multiplicity+1):
+            node_instance_name = self.node_name + '.' + str(i)
+            self.node_instances[node_instance_name] = NodeInstance({
+                'nodename': self.node_name,
+                'name': node_instance_name,
+                'cloudservice': self.connector_instance_name,
+                #'index': i,s
+                'image.platform': 'linux',
+                'image.imageId': image_id,
+                'image.id': image_id,
+                self.constructKey('instance.type'): instance_type,
+                self.constructKey('security.groups'): security_groups,
+                'network': 'private'
+            })
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -119,33 +108,22 @@ lvs
         self.client = None
         self.ch = None
 
-    def xtest_1_startStopImages(self):
-        self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
+    def test_1_startStopImages(self):
+        self.client._get_max_workers = Mock(return_value=self.max_iaas_workers) # pylint: disable=protected-access
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
         try:
-            self.client.startNodesAndClients(self.user_info, [self.node_info])
+            self.client.start_nodes_and_clients(self.user_info, self.node_instances)
 
             util.printAndFlush('Instances started')
 
             vms = self.client.get_vms()
             assert len(vms) == self.multiplicity
         finally:
-            self.client._stop_deployment()
+            self.client.stop_deployment()
 
     def xtest_2_buildImage(self):
-        self.client.run_category = RUN_CATEGORY_IMAGE
-
-        image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
-
-        self.client.startImage(self.user_info, image_info)
-        instancesDetails = self.client.get_vms_details()
-
-        assert instancesDetails
-        assert instancesDetails[0][NodeDecorator.MACHINE_NAME]
-
-        self.client.build_image(self.user_info, image_info)
-        assert self.client.getNewImageId()
+        raise NotImplementedError()
 
 
 if __name__ == '__main__':

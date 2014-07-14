@@ -53,10 +53,6 @@ class CloudWrapper(BaseWrapper):
         nodes_instances = self._get_node_instances_to_start()
         self.cloudProxy.start_nodes_and_clients(user_info, nodes_instances)
 
-    @deprecated
-    def _getUserAndImageInfo(self):
-        return self.get_user_info(self.cloudProxy.get_cloud_service_name()), self.getImageInfo()
-
     def _get_node_instances_to_start(self):
         return self._get_node_instances_in_scale_state(self.SCALE_STATE_CREATING)
 
@@ -112,7 +108,7 @@ class CloudWrapper(BaseWrapper):
 
     def stopOrchestratorBuild(self):
         if self.need_to_stop_images(True):
-            orch_id = self.getMachineCloudInstanceId()
+            orch_id = self.get_cloud_instance_id()
 
             if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_VAPP):
                 if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
@@ -137,7 +133,7 @@ class CloudWrapper(BaseWrapper):
         elif self.need_to_stop_images() and not self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
             self.terminate_run_server_side()
         else:
-            orch_id = self.getMachineCloudInstanceId()
+            orch_id = self.get_cloud_instance_id()
             self.cloudProxy.stop_vms_by_ids([orch_id])
 
     def terminate_run_server_side(self):

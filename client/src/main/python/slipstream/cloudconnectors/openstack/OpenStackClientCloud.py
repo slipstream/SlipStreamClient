@@ -16,8 +16,6 @@
  limitations under the License.
 """
 
-#pylint: disable=C0111
-
 
 import time
 
@@ -31,7 +29,7 @@ import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream.util import override
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
-from slipstream.NodeDecorator import NodeDecorator, RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeDecorator import RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT
 
 
 def getConnector(configHolder):
@@ -74,9 +72,9 @@ class OpenStackClientCloud(BaseCloudConnector):
         self.images = self._thread_local.driver.list_images()
         self.securit_groups = self._thread_local.driver.ex_list_security_groups()
 
-        if self.run_category == RUN_CATEGORY_DEPLOYMENT:
+        if self.is_deployment():
             self._import_keypair(user_info)
-        elif self.run_category == RUN_CATEGORY_IMAGE:
+        elif self.is_build_image():
             self._create_keypair_and_set_on_user_info(user_info)
 
     @override

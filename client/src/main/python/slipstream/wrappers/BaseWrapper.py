@@ -139,7 +139,7 @@ class BaseWrapper(object):
     def getTargets(self):
         return self.clientSlipStream.getNodeDeploymentTargets()
 
-    def getMachineCloudInstanceId(self):
+    def get_cloud_instance_id(self):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
         return self.clientSlipStream.getRuntimeParameter(key)
 
@@ -156,11 +156,6 @@ class BaseWrapper(object):
             self._runParameters = self.clientSlipStream.get_run_parameters()
         return self._runParameters
 
-    def getImageInfo(self):
-        if self._imageInfo is None:
-            self._imageInfo = self.clientSlipStream.getImageInfo()
-        return self._imageInfo
-
     def get_user_ssh_pubkey(self):
         userInfo = self.get_user_info('')
         return userInfo.get_public_keys()
@@ -170,7 +165,7 @@ class BaseWrapper(object):
         return False
 
     def is_mutable(self):
-        mutable = self.clientSlipStream._get_run_mutable()
+        mutable = self.clientSlipStream.get_run_mutable()
         return util.str2bool(mutable)
 
     def discard_run_locally(self):

@@ -57,6 +57,9 @@ class NodeInstance(object):
     def get_cloud(self):
         return self.__get(NodeDecorator.CLOUDSERVICE_KEY)
 
+    def get_cloud_parameter(self, parameter_name, default_value=None):
+        return self.__get('%s.%s' % (self.get_cloud(), parameter_name), default_value)
+
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
 
@@ -81,6 +84,9 @@ class NodeInstance(object):
     def get_network_type(self):
         return self.__get('network')
 
+    def get_networks(self):
+        return self.get_cloud_parameter('networks','').split(',')
+
     def get_platform(self):
         return self.__get(NodeDecorator.IMAGE_PLATFORM_KEY, 'linux')
 
@@ -96,9 +102,6 @@ class NodeInstance(object):
     def get_packages(self):
         return self.__get_image_target('packages', [])
 
-    def get_cloud_parameter(self, parameter_name, default_value=None):
-        return self.__get('%s.%s' % (self.get_cloud(), parameter_name), default_value)
-
     def get_username(self, default_value=None):
         return self.__get_image_attribute('image.loginUser', default_value)
 
@@ -109,7 +112,8 @@ class NodeInstance(object):
         return self.get_cloud_parameter('instance.type')
 
     def get_security_groups(self):
-        return self.get_cloud_parameter(NodeDecorator.SECURITY_GROUPS_KEY, '').split(',')
+        security_groups = self.get_cloud_parameter(NodeDecorator.SECURITY_GROUPS_KEY, '')
+        return [x.strip() for x in security_groups.split(',') if x and x.strip()]
 
     def get_cpu(self):
         return self.get_cloud_parameter('cpu')

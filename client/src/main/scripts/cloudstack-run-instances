@@ -7,6 +7,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from slipstream.util import nostdouterr
 from slipstream.ConfigHolder import ConfigHolder
+from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.cloudconnectors.cloudstack.CloudStackCommand import CloudStackCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
@@ -15,15 +16,11 @@ from slipstream.cloudconnectors.cloudstack.CloudStackAdvancedZoneClientCloud imp
 
 saved_stdout = sys.stdout
 
-def _getBootstrapScript(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None,
-                        username=None):
+def get_bootstrap_script(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None, username=None):
     return os.environ['context_script']
 
-def publishVmInfo(self, nodename, vm, image_info):
-    print >> saved_stdout, '%s, %s' % (self.vmGetId(vm), self.vmGetIp(vm))
-
-def _generateNodeName(self, nodename, node_number):
-    return nodename
+def publish_vm_info(self, vm, node_instance):
+    print >> saved_stdout, '%s, %s' % (self._vm_get_id(vm), self._vm_get_ip(vm))
 
 
 class MainProgram(CloudStackCommand):
@@ -78,52 +75,46 @@ class MainProgram(CloudStackCommand):
         self.userInfo['General.ssh.public.key'] = self.options.public_key
 
     def doWork(self):
-        ss_node = {
-            'nodename': self.options.instance_name,
-            'multiplicity': 1,
-            'image': {
-                'attributes': {
-                    'imageId': self.options.imageId,
-                    'platform' : 'linux'
-                },
-                'cloud_parameters': {
-                    'cloudstack': {
-                        'cloudstack.instance.type': self.options.instance_type,
-                        'cloudstack.security.groups': self.options.security_groups,
-                        'cloudstack.networks': self.options.networks
-                    },
-                    'Cloud': {
-                        'network': self.options.network_type
-                    }
-                },
-                'extra_disks': {}
-            },
-        }
         os.environ['context_script'] = self.options.context_script
 
-        with nostdouterr():
-            node = self._startImage(ss_node)
-        #print '%s, %s' % (node['id'], node['ip'])
+        node_instance = NodeInstance({
+            'name': self.options.instance_name,
+            'image.platform': 'linux',
+            'cloudservice': 'cloudstack',
+            'image.imageId': self.options.imageId,
+            'image.id': self.options.imageId,
+            'cloudstack.instance.type': self.options.instance_type,
+            'cloudstack.security.groups': self.options.security_groups,
+            'cloudstack.networks': self.options.networks,
+            'network': self.options.network_type
+        })
 
-    def _startImage(self, ss_node):
-        nodename = ss_node['nodename']
+        with nostdouterr():
+            vm = self._start_image(node_instance)
+        #print '%s, %s' % (vm['id'], vm['ip'])
+
+    def _start_image(self, node_instance):
+        nodename = node_instance.get_name()
 
         if self.options.zone_type.lower() == 'advanced':
             cc = CloudStackAdvancedZoneClientCloud(ConfigHolder(options={'verboseLevel': 0,
+                                                                         'http_max_retries': 0,
                                                                          KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                                                                          context={'foo': 'bar'}))
         else:
             cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0,
-                                                    KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                                    context={'foo': 'bar'}))
+                                                             'http_max_retries': 0,
+                                                             KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
+                                                             context={'foo': 'bar'}))
 
-        CloudStackClientCloud._getBootstrapScript = _getBootstrapScript
-        CloudStackClientCloud._generateNodeName = _generateNodeName
-        CloudStackClientCloud.publishVmInfo = publishVmInfo
+        CloudStackClientCloud._get_bootstrap_script = get_bootstrap_script
+        CloudStackClientCloud._publish_vm_info = publish_vm_info
 
-        vms = cc.startNodesAndClients(self.userInfo, [ss_node])
+        vms = cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
         vm = vms[0].itervalues().next()
-        return vm
+
+        return {'id': cc._vm_get_id(vm), 'ip': cc._vm_get_ip(vm)}
+
 
 if __name__ == "__main__":
     try:
@@ -133,3 +124,4 @@ if __name__ == "__main__":
     except Exception as e:
         print >> sys.stderr, e
         exit(1)
+
