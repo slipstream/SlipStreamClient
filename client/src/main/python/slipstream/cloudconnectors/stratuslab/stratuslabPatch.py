@@ -1,5 +1,6 @@
 from stratuslab.Creator import Creator
 
+# pylint: disable=protected-access
 
 def createStep1(self):
     self._imageExists()
@@ -19,9 +20,9 @@ def createStep2(self):
     finally:
         self._shutdownNode()
     self._localCleanUp()
-    
 
-def patchStratuslab():
+
+def patch_stratuslab():
     Creator.createStep1 = createStep1
     Creator.createStep2 = createStep2
-    
+

@@ -104,7 +104,7 @@ class PhysicalHostClientCloud(BaseCloudConnector):
             if k.startswith('SLIPSTREAM_') or k.startswith('PHYSICALHOST_'):
                 userData += 'export ' + k + '="' + v + '"' + "; "
         userData += 'export SLIPSTREAM_NODENAME="' + nodename + '"' + "; "
-        userData += self.__build_slipstream_bootstrap_command(nodename)
+        userData += self._build_slipstream_bootstrap_command(nodename)
         userData += "'\\'') > /dev/null 2>&1 &' | at now"
         return userData
 

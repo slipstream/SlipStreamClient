@@ -25,6 +25,8 @@ from slipstream.cloudconnectors.stratuslab.StratuslabClientCloud import Stratusl
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
 from slipstream import util
+from slipstream.NodeInstance import NodeInstance
+from slipstream.NodeDecorator import NodeDecorator, RUN_CATEGORY_IMAGE
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__),
                            'pyunit.credentials.properties')
@@ -34,10 +36,13 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__),
 stratuslab.username = konstan@sixsq.com
 stratuslab.password = xxx
 stratuslab.imageid =  HZTKYZgX7XzSokCHMB60lS0wsiv
-"""
+""" # pylint: disable=pointless-string-statement
 
 
 class TestStratusLabClientCloud(unittest.TestCase):
+
+    # pylint: disable=protected-access
+
     def setUp(self):
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'stratuslab'
@@ -70,32 +75,43 @@ class TestStratusLabClientCloud(unittest.TestCase):
 
         extra_disk_volatile = self.ch.config['stratuslab.extra.disk.volatile']
         image_id = self.ch.config['stratuslab.imageid']
-        self.multiplicity = self.ch.config['stratuslab.multiplicity']
-        self.max_iaas_workers = self.ch.config['stratuslab.max.iaas.workers']
-        self.node_info = {
-            'multiplicity': self.multiplicity,
-            'nodename': 'test_node',
-            'image': {
-                'extra_disks': {},
-                'cloud_parameters': {
-                    'stratuslab': {
-                        'stratuslab.instance.type': 'm1.small',
-                        'stratuslab.disks.bus.type': 'virtio',
-                        'stratuslab.cpu': '',
-                        'stratuslab.ram': ''
-                    },
-                    'Cloud': {
-                        'network': 'public',
-                        'extra.disk.volatile': extra_disk_volatile
-                    }
-                },
-                'attributes': {
-                    'resourceUri': '',
-                    'imageId': image_id,
-                    'platform': 'Ubuntu'
-                },
-                'targets': {
-                    'prerecipe':
+        self.multiplicity = int(self.ch.config.get('stratuslab.multiplicity', 2))
+        self.max_iaas_workers = self.ch.config.get('stratuslab.max.iaas.workers', 10)
+
+        self.node_name = 'test_node'
+        self.node_instances = {}
+        for i in range(1, self.multiplicity+1):
+            node_instance_name = self.node_name + '.' + str(i)
+            self.node_instances[node_instance_name] = NodeInstance({
+                'nodename': self.node_name,
+                'name': node_instance_name,
+                'cloudservice': 'stratuslab',
+                'extra.disk.volatile': extra_disk_volatile,
+                'image.resourceUri': '',
+                'image.platform': 'Ubuntu',
+                'image.imageId': image_id,
+                'image.id': image_id,
+                'stratuslab.instance.type': 'm1.small',
+                'stratuslab.disks,bus.type': 'virtio',
+                'stratuslab.cpu': '',
+                'stratuslab.ram': '',
+                'network': 'public'
+            })
+
+        self.node_instance = NodeInstance({
+            'name': NodeDecorator.MACHINE_NAME,
+            'cloudservice': 'stratuslab',
+            'extra.disk.volatile': extra_disk_volatile,
+            'image.resourceUri': '',
+            'image.platform': 'Ubuntu',
+            'image.imageId': image_id,
+            'image.id': image_id,
+            'stratuslab.instance.type': 'm1.small',
+            'stratuslab.disks,bus.type': 'virtio',
+            'stratuslab.cpu': '',
+            'stratuslab.ram': '',
+            'network': 'public',
+            'image.prerecipe':
 """#!/bin/sh
 set -e
 set -x
@@ -103,18 +119,16 @@ set -x
 ls -l /tmp
 dpkg -l | egrep "nano|lvm" || true
 """,
-                    'recipe':
+            'image.packages' : ['lvm2','nano'],
+            'image.recipe':
 """#!/bin/sh
 set -e
 set -x
 
 dpkg -l | egrep "nano|lvm" || true
 lvs
-""",
-                    'packages': ['lvm2', 'nano']
-                }
-            },
-        }
+"""
+        })
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -127,7 +141,7 @@ lvs
         self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
 
         try:
-            self.client.startNodesAndClients(self.user_info, [self.node_info])
+            self.client.start_nodes_and_clients(self.user_info, self.node_instances)
 
             util.printAndFlush('Instances started\n')
 
@@ -137,11 +151,19 @@ lvs
             self.client._stop_deployment()
 
     def xtest_2_buildImage(self):
-        image_info = self.client._extractImageInfoFromNodeInfo(self.node_info)
-        self.client._prepareMachineForBuildImage = Mock()
-        self.client.build_image(self.user_info, image_info)
+
+        self.client.run_category = RUN_CATEGORY_IMAGE
+        self.client._prepare_machine_for_build_image = Mock()
+
+        instances_details = self.client.start_nodes_and_clients(self.user_info,
+                                                                {NodeDecorator.MACHINE_NAME: self.node_instance})
+
+        assert instances_details
+        assert instances_details[0][NodeDecorator.MACHINE_NAME]
+
+        new_id = self.client.build_image(self.user_info, self.node_instance)
         # StratusLab doesn't provide us with image ID
-        assert '' == self.client.getNewImageId()
+        assert new_id == ''
 
 if __name__ == '__main__':
     unittest.main()

@@ -45,14 +45,14 @@ SSH_CONNECTION_RETRY_SLEEP_MAX = 5
 CONNECT_TIMEOUT = 10
 
 
-def generateSshKeyPair(keyFilename):
+def generate_ssh_keypair(key_filename):
     try:
-        os.remove(keyFilename)
-        os.remove(keyFilename + '.pub')
+        os.remove(key_filename)
+        os.remove(key_filename + '.pub')
     except(OSError):
         pass
-    sshCmd = 'ssh-keygen -f %s -N "" -q' % keyFilename
-    execute(sshCmd, shell=True)
+    ssh_cmd = 'ssh-keygen -f %s -N "" -q' % key_filename
+    execute(ssh_cmd, shell=True)
 
 
 def generate_keypair(bits=2048):
@@ -261,7 +261,7 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
     time_stop = time.time() + timeout
     timeout_connect = 3
     auth_failures = 20
-    
+
     reason = 'Unknown'
     while (time_stop - time.time()) >= 0:
         kwargs_ = copy.copy(kwargs)
@@ -310,7 +310,7 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
             reason = 'exceptions.EOFError'
             time.sleep(5)
 
-    raise Exceptions.TimeoutException('Failed to connect after %s sec. \nReason: %s' 
+    raise Exceptions.TimeoutException('Failed to connect after %s sec. \nReason: %s'
                                       % (timeout, reason))
 
 
