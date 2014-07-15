@@ -39,6 +39,24 @@ class UserInfo(dict):
                 ', '.join(self.qualifires))
         dict.__setitem__(self, key, val)
 
+    def get_first_name(self):
+        return self.get_user('firstName')
+
+    def get_last_name(self):
+        return self.get_user('lastName')
+
+    def get_email(self):
+        return self.get_user('email')
+
+    def get_cloud_username(self):
+        return self.get_cloud('username')
+
+    def get_cloud_password(self):
+        return self.get_cloud('password')
+
+    def get_cloud_endpoint(self):
+        return self.get_cloud('endpoint')
+
     def get_public_keys(self):
         return self.get_general('ssh.public.key')
 

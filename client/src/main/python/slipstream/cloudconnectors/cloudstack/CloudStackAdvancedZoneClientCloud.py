@@ -41,7 +41,7 @@ class CloudStackAdvancedZoneClientCloud(CloudStackClientCloud):
 
         super(CloudStackAdvancedZoneClientCloud, self).__init__(configHolder)
 
-        self._capabilities = [] # Remove this workaround
+        self._reset_capabilities()
         self._set_capabilities(contextualization=False,
                                generate_password=True,
                                direct_ip_assignment=True,

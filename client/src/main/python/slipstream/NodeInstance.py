@@ -29,15 +29,19 @@ class NodeInstance(object):
         self.__parameters = runtime_parameters
 
     def __get(self, parameter_name, default_value=None):
-        return self.__parameters.get(parameter_name, default_value)
+        parameter = self.__parameters.get(parameter_name, default_value)
+        # If the parameter exist but is None, we return the default value
+        if parameter is None:
+            parameter = default_value
+        return parameter
 
     def __set(self, parameter_name, value):
         self.__parameters[parameter_name] = value
 
-    def __get_image_attribute(self, attribute_name, default_value=None):
+    def __get_image_target(self, attribute_name, default_value=None):
         return self.__get('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name), default_value)
 
-    def __get_image_target(self, attribute_name, default_value=None):
+    def get_image_attribute(self, attribute_name, default_value=None):
         return self.__get('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name), default_value)
 
     def set_image_attributes(self, image_attributes):
@@ -67,12 +71,15 @@ class NodeInstance(object):
         return self.__get('image.id')
 
     def get_image_resource_uri(self):
-        return self.__get_image_attribute('resourceUri')
+        return self.get_image_attribute('resourceUri')
 
     def get_image_short_name(self):
-        return self.__get_image_attribute('shortName')
+        return self.get_image_attribute('shortName')
 
-    def get_extra_disks(self):
+    def get_image_version(self):
+        return self.get_image_attribute('version')
+
+    def get_extra_disk(self):
         return self.__get('extra.disk.volatile')
 
     def get_name(self):
@@ -103,7 +110,7 @@ class NodeInstance(object):
         return self.__get_image_target('packages', [])
 
     def get_username(self, default_value=None):
-        return self.__get_image_attribute('image.loginUser', default_value)
+        return self.get_image_attribute('image.loginUser', default_value)
 
     def get_password(self):
         return self.get_cloud_parameter('login.password')

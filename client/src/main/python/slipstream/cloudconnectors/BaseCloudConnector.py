@@ -135,7 +135,7 @@ class BaseCloudConnector(object):
         self.sshPrivKeyFile = '%s/.ssh/id_rsa' % os.path.expanduser("~")
         self.sshPubKeyFile = self.sshPrivKeyFile + '.pub'
 
-        self.listener = SimplePrintListener(verbose=(self.verboseLevel > 1))
+        self.__listener = SimplePrintListener(verbose=(self.verboseLevel > 1))
 
         self.__vms = {}
 
@@ -180,6 +180,9 @@ class BaseCloudConnector(object):
         if orchestrator_can_kill_itself_or_its_vapp:
             self.__capabilities.append(
                 self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
+
+    def _reset_capabilities(self):
+        self.__capabilities = []
 
     def has_capability(self, capability):
         return capability in self.__capabilities
@@ -254,7 +257,7 @@ class BaseCloudConnector(object):
             vm = self._wait_and_get_instance_ip_address(vm)
             self.__add_vm(vm, node_instance)
 
-        if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
+        if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION) and not self.is_build_image():
             if not node_instance.is_windows():
                 self.__secure_ssh_access_and_run_bootstrap_script(user_info, node_instance, self._vm_get_ip(vm))
             else:
@@ -331,8 +334,7 @@ class BaseCloudConnector(object):
 
             username, password, ssh_private_key_file = self._get_ssh_credentials(node_instance, user_info)
 
-            if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION) and \
-                not ssh_private_key_file:
+            if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION) and not ssh_private_key_file:
                 password = ''
                 ssh_private_key_file, publicKey = self._get_temp_private_key_file_name_and_public_key()
 
@@ -342,18 +344,18 @@ class BaseCloudConnector(object):
 
             if prerecipe:
                 util.printStep('Running Pre-recipe')
-                self.listener.write_for(machine_name, 'Running Pre-recipe')
+                self.__listener.write_for(machine_name, 'Running Pre-recipe')
                 remoteRunScript(username, host, prerecipe, sshKey=ssh_private_key_file, password=password)
             if packages:
                 util.printStep('Installing Packages')
-                self.listener.write_for(machine_name, 'Installing Packages')
+                self.__listener.write_for(machine_name, 'Installing Packages')
                 remoteInstallPackages(username, host, packages,
                                       node_instance.get_platform(),
                                       sshKey=ssh_private_key_file,
                                       password=password)
             if recipe:
                 util.printStep('Running Recipe')
-                self.listener.write_for(machine_name, 'Running Recipe')
+                self.__listener.write_for(machine_name, 'Running Recipe')
                 remoteRunScript(username, host, recipe, sshKey=ssh_private_key_file, password=password)
 
             if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
@@ -586,7 +588,7 @@ class BaseCloudConnector(object):
         if pre_bootstrap:
             script += '%s\n' % pre_bootstrap
 
-        script += '%s\n' % self.__build_slipstream_bootstrap_command(node_instance,
+        script += '%s\n' % self._build_slipstream_bootstrap_command(node_instance,
                                                                  username)
 
         if post_bootstrap:
@@ -594,7 +596,7 @@ class BaseCloudConnector(object):
 
         return script
 
-    def __build_slipstream_bootstrap_command(self, node_instance, username=None):
+    def _build_slipstream_bootstrap_command(self, node_instance, username=None):
         instance_name = node_instance.get_name()
 
         if node_instance.is_windows():
@@ -685,7 +687,13 @@ class BaseCloudConnector(object):
         return remoteRunScriptNohup(username, ip, script, sshKey=sshKey, password=password)
 
     def set_slipstream_client_as_listener(self, client):
-        self.listener = SlipStreamClientListenerAdapter(client)
+        self._set_listener(SlipStreamClientListenerAdapter(client))
+
+    def _set_listener(self, listener):
+        self.__listener = listener
+
+    def _get_listener(self):
+        return self.__listener
 
     def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)

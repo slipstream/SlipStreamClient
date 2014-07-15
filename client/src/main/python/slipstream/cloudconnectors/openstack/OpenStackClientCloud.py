@@ -29,7 +29,6 @@ import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream.util import override
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
-from slipstream.NodeDecorator import RUN_CATEGORY_IMAGE, RUN_CATEGORY_DEPLOYMENT
 
 
 def getConnector(configHolder):
@@ -91,6 +90,7 @@ class OpenStackClientCloud(BaseCloudConnector):
 
     def _build_image_on_openstack(self, user_info, node_instance):
         self._thread_local.driver = self._get_driver(user_info)
+        listener = self._get_listener()
 
         machine_name = node_instance.get_name()
 
@@ -108,13 +108,13 @@ class OpenStackClientCloud(BaseCloudConnector):
         self._build_image_increment(user_info, node_instance, ip_address)
 
         util.printStep('Creation of the new Image.')
-        self.listener.write_for(machine_name, 'Saving the image')
+        listener.write_for(machine_name, 'Saving the image')
         newImg = self._thread_local.driver.ex_save_image(instance,
                                                          node_instance.get_image_short_name(),
                                                          metadata=None)
 
         self._wait_image_creation_completed(newImg.id)
-        self.listener.write_for(machine_name, 'Image saved !')
+        listener.write_for(machine_name, 'Image saved !')
 
         return newImg.id
 
@@ -124,19 +124,19 @@ class OpenStackClientCloud(BaseCloudConnector):
         return self._start_image_on_openstack(user_info, node_instance, vm_name)
 
     def _start_image_on_openstack(self, user_info, node_instance, vm_name):
-        imageId = node_instance.get_image_id()
-        instanceType = node_instance.get_instance_type()
+        image_id = node_instance.get_image_id()
+        instance_type = node_instance.get_instance_type()
         keypair = user_info.get_keypair_name()
         _sec_groups = node_instance.get_security_groups()
         securityGroups = [[i for i in self.securit_groups if i.name == x.strip()][0] for x in _sec_groups if x]
-        flavor = searchInObjectList(self.flavors, 'name', instanceType)
-        image = searchInObjectList(self.images, 'id', imageId)
+        flavor = searchInObjectList(self.flavors, 'name', instance_type)
+        image = searchInObjectList(self.images, 'id', image_id)
         contextualizationScript = self.is_build_image() and '' or self._get_bootstrap_script(node_instance)
 
         if flavor == None:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instanceType)
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified flavor: %s" % instance_type)
         if image == None:
-            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % imageId)
+            raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % image_id)
 
         instance = self._thread_local.driver.create_node(name=vm_name,
                                                          size=flavor,
@@ -165,19 +165,19 @@ class OpenStackClientCloud(BaseCloudConnector):
             if node.id in ids:
                 node.destroy()
 
-    def _get_driver(self, userInfo):
+    def _get_driver(self, user_info):
         driverOpenStack = get_driver(Provider.OPENSTACK)
-        isHttps = userInfo.get_cloud('endpoint').lower().startswith('https://')
+        isHttps = user_info.get_cloud_endpoint().lower().startswith('https://')
 
-        return driverOpenStack(userInfo.get_cloud('username'),
-                               userInfo.get_cloud('password'),
+        return driverOpenStack(user_info.get_cloud_username(),
+                               user_info.get_cloud_password(),
                                secure=isHttps,
-                               ex_tenant_name=userInfo.get_cloud('tenant.name'),
-                               ex_force_auth_url=userInfo.get_cloud('endpoint'),
+                               ex_tenant_name=user_info.get_cloud('tenant.name'),
+                               ex_force_auth_url=user_info.get_cloud_endpoint(),
                                ex_force_auth_version='2.0_password',
-                               ex_force_service_type=userInfo.get_cloud('service.type'),
-                               ex_force_service_name=userInfo.get_cloud('service.name'),
-                               ex_force_service_region=userInfo.get_cloud('service.region'))
+                               ex_force_service_type=user_info.get_cloud('service.type'),
+                               ex_force_service_name=user_info.get_cloud('service.name'),
+                               ex_force_service_region=user_info.get_cloud('service.region'))
 
     @override
     def _vm_get_ip(self, vm):

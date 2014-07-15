@@ -165,14 +165,14 @@ class CloudStackClientCloud(BaseCloudConnector):
         self._stop_instances(instances)
 
     @staticmethod
-    def _get_driver(userInfo):
+    def _get_driver(user_info):
         CloudStack = get_driver(Provider.CLOUDSTACK)
 
-        url = urlparse(userInfo.get_cloud('endpoint'))
+        url = urlparse(user_info.get_cloud_endpoint())
         secure = (url.scheme == 'https')
 
-        return CloudStack(userInfo.get_cloud('username'),
-                          userInfo.get_cloud('password'),
+        return CloudStack(user_info.get_cloud_username(),
+                          user_info.get_cloud_password(),
                           secure=secure,
                           host=url.hostname,
                           port=url.port,
