@@ -25,9 +25,11 @@ import os
 from mock import Mock
 
 from slipstream.ConfigHolder import ConfigHolder
+from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.wrappers.CloudWrapper import CloudWrapper
 from slipstream.util import CONFIGPARAM_CONNECTOR_MODULE_NAME
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeInstance import NodeInstance
 
 from TestCloudConnectorsBase import TestCloudConnectorsBase
 
@@ -47,6 +49,8 @@ class TestCloudWrapper(TestCloudConnectorsBase):
             config={'foo': 'bar'})
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'Test'
+
+        BaseWrapper.is_mutable = Mock(return_value=False)
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -72,11 +76,11 @@ class TestCloudWrapper(TestCloudConnectorsBase):
 
         cw.clientSlipStream.httpClient._call = Mock(return_value=('', ''))
 
-        cw._update_slipstream_image('module/Name', 'ABC')
+        cw._update_slipstream_image(NodeInstance({'image.resourceUri': 'module/Name'}), 'ABC')
         cw.clientSlipStream.httpClient._call.assert_called_with(
             '%s/module/Name/Test' % self.serviceurl,
             'PUT', 'ABC', 'application/xml',
-            'application/xml')
+            'application/xml', retry_number=5)
 
 if __name__ == "__main__":
     unittest.main()
