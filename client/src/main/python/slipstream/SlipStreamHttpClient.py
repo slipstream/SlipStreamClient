@@ -148,13 +148,6 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extract_mutable_from_run(self.run_dom)
 
-    def getDefaultCloudServiceName(self):
-        return self._getDefaultCloudServiceName()
-
-    def _getDefaultCloudServiceName(self):
-        self._retrieveAndSetRun()
-        return DomExtractor.extractDefaultCloudServiceNameFromRun(self.run_dom)
-
     def discard_run(self):
         self.run_dom = None
 

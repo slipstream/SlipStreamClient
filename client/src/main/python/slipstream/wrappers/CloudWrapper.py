@@ -71,7 +71,8 @@ class CloudWrapper(BaseWrapper):
         node_instances_to_stop = self._get_node_instances_to_stop()
         for node_instance in node_instances_to_stop.values():
             ids.append(node_instance.get_instance_id())
-        self.cloudProxy.stop_vms_by_ids(ids)
+        if len(ids) > 0:
+            self.cloudProxy.stop_vms_by_ids(ids)
 
         instance_names_removed = node_instances_to_stop.keys()
         self.set_scale_state_on_node_instances(instance_names_removed, self.SCALE_STATE_REMOVED)

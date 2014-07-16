@@ -46,11 +46,11 @@ class NodeInstance(object):
 
     def set_image_attributes(self, image_attributes):
         for key, value in image_attributes.items():
-            self.__set('image.%s' % key, value)
+            self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
     def set_image_targets(self, image_targets):
         for key, value in image_targets.items():
-            self.__set('image.%s' % key, value)
+            self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
     def is_orchestrator(self):
         return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY, 'False'))

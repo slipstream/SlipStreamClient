@@ -60,9 +60,11 @@ class TestCloudWrapper(TestCloudConnectorsBase):
             cw = CloudWrapper(self.configHolder)
             cw.initCloudConnector()
 
-            assert cw.getCloudInstanceName() == 'Test'
+            assert cw.cloudProxy.get_cloud_service_name() == 'Test'
 
     def test_putImageId(self):
+        # pylint: disable=protected-access
+
         self.configHolder.set(CONFIGPARAM_CONNECTOR_MODULE_NAME,
                               self.get_cloudconnector_modulename_by_cloudname('local'))
         cw = CloudWrapper(self.configHolder)

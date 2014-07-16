@@ -606,7 +606,7 @@ def nostdouterr(override=False):
 
 def deprecated(func):
     """This is a decorator which can be used to mark functions as deprecated.
-    It will result in a warning being emmitted when the function is used."""
+    It will result in a warning being emitted when the function is used."""
 
     def new_func(*args, **kwargs):
         warnings.warn("Call to deprecated function %s." % func.__name__,
@@ -622,7 +622,7 @@ def deprecated(func):
 
 def override(func):
     """This is a decorator which can be used to check that a method override a method of the base class.
-    If not the case it will result in a warning being emmitted."""
+    If not the case it will result in a warning being emitted."""
 
     def overrided_func(self, *args, **kwargs):
         if func.__name__ not in dir(self.__class__.__bases__[0]):

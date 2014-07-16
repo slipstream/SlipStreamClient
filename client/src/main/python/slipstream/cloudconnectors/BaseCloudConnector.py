@@ -141,14 +141,14 @@ class BaseCloudConnector(object):
 
         self.__cloud = os.environ['SLIPSTREAM_CONNECTOR_INSTANCE']
 
-        self._init_threading_related()
+        self.__init_threading_related()
 
         self.tempPrivateKeyFileName = ''
         self.tempPublicKey = ''
 
         self.__capabilities = []
 
-    def _init_threading_related(self):
+    def __init_threading_related(self):
         self.__tasks_runnner = None
 
         # This parameter is thread local
@@ -156,12 +156,12 @@ class BaseCloudConnector(object):
         self._thread_local.isWindows = False
 
     def _set_capabilities(self, vapp=False, build_in_single_vapp=False,
-                        contextualization=False,
-                        windows_contextualization=False,
-                        generate_password=False,
-                        direct_ip_assignment=False,
-                        need_to_add_ssh_public_key_on_node=False,
-                        orchestrator_can_kill_itself_or_its_vapp=False):
+                          contextualization=False,
+                          windows_contextualization=False,
+                          generate_password=False,
+                          direct_ip_assignment=False,
+                          need_to_add_ssh_public_key_on_node=False,
+                          orchestrator_can_kill_itself_or_its_vapp=False):
         if vapp:
             self.__capabilities.append(self.CAPABILITY_VAPP)
         if build_in_single_vapp:
@@ -589,7 +589,7 @@ class BaseCloudConnector(object):
             script += '%s\n' % pre_bootstrap
 
         script += '%s\n' % self._build_slipstream_bootstrap_command(node_instance,
-                                                                 username)
+                                                                    username)
 
         if post_bootstrap:
             script += '%s\n' % post_bootstrap

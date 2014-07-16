@@ -82,10 +82,9 @@ class StratuslabClientCloud(BaseCloudConnector):
         self.creator.setListener(self._get_listener())
 
         createImageTemplateDict = self.creator._getCreateImageTemplateDict() # pylint: disable=protected-access
-        msg_data = StratuslabClientCloud._get_create_image_template_messaging(node_instance)
 
         def our_create_template_dict():
-            createImageTemplateDict.update(msg_data)
+            createImageTemplateDict.update({})
             return createImageTemplateDict
 
         self.creator._getCreateImageTemplateDict = our_create_template_dict # pylint: disable=protected-access
@@ -111,61 +110,36 @@ class StratuslabClientCloud(BaseCloudConnector):
     def _poll_storage_for_new_image(self, slConfigHolder):
         new_image_id = ''
 
-        msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
-        msg_endpoint = os.environ.get('SLIPSTREAM_MESSAGING_ENDPOINT', None)
+        msg_endpoint = os.environ.get('SLIPSTREAM_PDISK_ENDPOINT', None)
 
-        if msg_type and msg_endpoint:
-            if msg_type == 'pdisk':
+        if msg_endpoint:
+            diid = os.environ.get('SLIPSTREAM_DIID', None)
+            if diid:
+                tag = "SlipStream-%s" % diid
+                filters = {'tag': [tag, ]}
 
-                diid = os.environ.get('SLIPSTREAM_DIID', None)
-                if diid:
-                    tag = "SlipStream-%s" % diid
-                    filters = {'tag': [tag, ]}
+                slConfigHolder.set('pdiskEndpoint', msg_endpoint)
 
-                    slConfigHolder.set('pdiskEndpoint', msg_endpoint)
+                pdisk = VolumeManagerFactory.create(slConfigHolder)
 
-                    pdisk = VolumeManagerFactory.create(slConfigHolder)
+                print >> sys.stdout, "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                sys.stdout.flush()
 
-                    print >> sys.stdout, "Searching on %s for disk with tag %s." % (msg_endpoint, tag)
+                # hardcoded polling for 30' at 1' intervals
+                for i in range(30):
+                    print >> sys.stdout, "Search iteration %d" % i
                     sys.stdout.flush()
-
-                    # hardcoded polling for 30' at 1' intervals
-                    for i in range(30):
-                        print >> sys.stdout, "Search iteration %d" % i
-                        sys.stdout.flush()
-                        volumes = pdisk.describeVolumes(filters)
-                        if len(volumes) > 0:
-                            try:
-                                new_image_id = volumes[0]['identifier']
-                            except Exception as e: # pylint: disable=broad-except
-                                print "Exception occurred looking for volume: %s" % e
-                            break
-                        time.sleep(60)
+                    volumes = pdisk.describeVolumes(filters)
+                    if len(volumes) > 0:
+                        try:
+                            new_image_id = volumes[0]['identifier']
+                        except Exception as e: # pylint: disable=broad-except
+                            print "Exception occurred looking for volume: %s" % e
+                        break
+                    time.sleep(60)
 
         print "Returning new image ID value: %s" % new_image_id
         return new_image_id
-
-    @staticmethod
-    def _get_create_image_template_messaging(node_instance):
-        msg_type = os.environ.get('SLIPSTREAM_MESSAGING_TYPE', None)
-
-        if msg_type:
-            image_resource_uri = node_instance.get_image_resource_uri() + '/' + node_instance.get_cloud()
-            message = StratuslabClientCloud._get_create_image_messaging_message(image_resource_uri)
-            msg_data = {Runner.CREATE_IMAGE_KEY_MSG_TYPE: msg_type,
-                       Runner.CREATE_IMAGE_KEY_MSG_ENDPOINT: os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'],
-                       Runner.CREATE_IMAGE_KEY_MSG_MESSAGE: message}
-            if msg_type in ('amazonsqs', 'dirq'):
-                msg_data.update({Runner.CREATE_IMAGE_KEY_MSG_QUEUE: os.environ['SLIPSTREAM_MESSAGING_QUEUE']})
-            elif msg_type == 'rest':
-                msg_data.update({Runner.CREATE_IMAGE_KEY_MSG_QUEUE: image_resource_uri})
-            elif msg_type == 'pdisk':
-                msg_data = {}
-            else:
-                raise Exceptions.ExecutionException('Unsupported messaging type: %s' % msg_type)
-        else:
-            msg_data = {}
-        return msg_data
 
     @staticmethod
     def _get_create_image_messaging_message(image_resource_uri):
