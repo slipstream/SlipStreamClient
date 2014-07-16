@@ -25,7 +25,7 @@ class NodeInstance(object):
 
     IMAGE_ATTRIBUTE_PREFIX = 'image'
 
-    def __init__(self, runtime_parameters = None):
+    def __init__(self, runtime_parameters=None):
         self.__parameters = runtime_parameters
 
     def __get(self, parameter_name, default_value=None):
@@ -92,7 +92,7 @@ class NodeInstance(object):
         return self.__get('network')
 
     def get_networks(self):
-        return self.get_cloud_parameter('networks','').split(',')
+        return self.get_cloud_parameter('networks', '').split(',')
 
     def get_platform(self):
         return self.__get(NodeDecorator.IMAGE_PLATFORM_KEY, 'linux')

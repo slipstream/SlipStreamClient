@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+
 
 class UserInfo(dict):
     def __init__(self, cloud_qualifier):
@@ -71,4 +72,3 @@ class UserInfo(dict):
 
     def set_keypair_name(self, keypair_name):
         self[self.cloud + 'keypair.name'] = keypair_name
-
