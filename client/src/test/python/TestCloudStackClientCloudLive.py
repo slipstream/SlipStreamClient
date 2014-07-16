@@ -45,7 +45,9 @@ cloudstack.template = 8c7e60ae-3a30-4031-a3e6-29832d85d7cb
 cloudstack.instance.type = Micro
 cloudstack.security.groups = default
 cloudstack.max.iaas.workers = 2
-""" # pylint: disable=pointless-string-statement
+"""  # pylint: disable=pointless-string-statement
+
+# pylint: disable=protected-access
 
 
 class TestCloudStackClientCloud(unittest.TestCase):
@@ -56,7 +58,7 @@ class TestCloudStackClientCloud(unittest.TestCase):
         return self.connector_instance_name + '.' + name
 
     def setUp(self):
-        BaseCloudConnector._publish_vm_info = Mock() # pylint: disable=protected-access
+        BaseCloudConnector._publish_vm_info = Mock()  # pylint: disable=protected-access
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = self.connector_instance_name
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
@@ -87,13 +89,13 @@ class TestCloudStackClientCloud(unittest.TestCase):
 
         self.node_name = 'test_node'
         self.node_instances = {}
-        for i in range(1, self.multiplicity+1):
+        for i in range(1, self.multiplicity + 1):
             node_instance_name = self.node_name + '.' + str(i)
             self.node_instances[node_instance_name] = NodeInstance({
                 'nodename': self.node_name,
                 'name': node_instance_name,
                 'cloudservice': self.connector_instance_name,
-                #'index': i,s
+                # 'index': i,s
                 'image.platform': 'linux',
                 'image.imageId': image_id,
                 'image.id': image_id,
@@ -108,8 +110,8 @@ class TestCloudStackClientCloud(unittest.TestCase):
         self.client = None
         self.ch = None
 
-    def test_1_startStopImages(self):
-        self.client._get_max_workers = Mock(return_value=self.max_iaas_workers) # pylint: disable=protected-access
+    def xtest_1_startStopImages(self):
+        self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
         self.client.run_category = RUN_CATEGORY_DEPLOYMENT
 
         try:
