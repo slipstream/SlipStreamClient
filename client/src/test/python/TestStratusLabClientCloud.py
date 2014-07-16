@@ -50,35 +50,6 @@ class TestStratusLabClientCloud(unittest.TestCase):
         assert {'uri': '/foo/bar', 'imageid': ''} == json.loads(
             base64.b64decode(msg))
 
-    def test__getCreateImageTemplateMessaging(self):
-        # no messaging type set
-        node_instance = NodeInstance({'image.resourceUri': '',
-                                      'cloudservice': 'stratuslab'})
-        assert {} == StratuslabClientCloud._get_create_image_template_messaging(node_instance)
-
-        resourceUri = '/resource/uri'
-        node_instance = NodeInstance({'image.resourceUri': resourceUri,
-                                      'cloudservice': 'stratuslab'})
-
-        # AmazonSQS
-        os.environ['SLIPSTREAM_MESSAGING_TYPE'] = 'amazonsqs'
-        os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = 'http://amazon.com'
-        os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = '/123/queue'
-        tmpl = StratuslabClientCloud._get_create_image_template_messaging(node_instance)
-        assert tmpl['MSG_TYPE'] == 'amazonsqs'
-        assert tmpl['MSG_ENDPOINT'] == 'http://amazon.com'
-        assert tmpl['MSG_QUEUE'] == '/123/queue'
-        assert resourceUri + '/stratuslab' == json.loads(base64.b64decode(tmpl['MSG_MESSAGE']))['uri']
-
-        # REST
-        os.environ['SLIPSTREAM_MESSAGING_TYPE'] = 'rest'
-        os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = 'http://slipstream.sixsq.com'
-        os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = '/123/queue'
-        tmpl = StratuslabClientCloud._get_create_image_template_messaging(node_instance)
-        assert tmpl['MSG_TYPE'] == 'rest'
-        assert tmpl['MSG_ENDPOINT'] == 'http://slipstream.sixsq.com'
-        assert tmpl['MSG_QUEUE'] == resourceUri + '/stratuslab'
-
     def test_runInstanceMaxAttempts(self):
         # pylint: disable=star-args
 

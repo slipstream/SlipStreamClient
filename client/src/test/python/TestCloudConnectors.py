@@ -41,7 +41,7 @@ class TestCloudConnectors(TestCloudConnectorsBase):
             setattr(self.ch, CONFIGPARAM_CONNECTOR_MODULE_NAME, module_name)
             cc = CloudConnectorFactory.createConnector(self.ch)
             assert isinstance(cc, BaseCloudConnector)
-            assert cc.cloud == 'Test'
+            assert cc.get_cloud_service_name() == 'Test'
 
     def test_vmGetIdIpImplemented(self):
         for module_name in self.get_cloudconnector_modulenames():

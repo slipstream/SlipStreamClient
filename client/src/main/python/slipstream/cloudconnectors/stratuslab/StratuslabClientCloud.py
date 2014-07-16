@@ -54,6 +54,8 @@ class StratuslabClientCloud(BaseCloudConnector):
     cloudName = 'stratuslab'
 
     def __init__(self, slipstreamConfigHolder):
+        self.creator = None
+
         super(StratuslabClientCloud, self).__init__(slipstreamConfigHolder)
 
         self.slConfigHolder = StratuslabConfigHolder(slipstreamConfigHolder.options,
@@ -78,16 +80,16 @@ class StratuslabClientCloud(BaseCloudConnector):
 
         self._update_stratuslab_config_holder_for_build_image(user_info, node_instance)
 
-        self.creator = Creator(image_id, self.slConfigHolder) # pylint: disable=attribute-defined-outside-init
+        self.creator = Creator(image_id, self.slConfigHolder)
         self.creator.setListener(self._get_listener())
 
-        createImageTemplateDict = self.creator._getCreateImageTemplateDict() # pylint: disable=protected-access
+        createImageTemplateDict = self.creator._getCreateImageTemplateDict()  # pylint: disable=protected-access
 
         def our_create_template_dict():
             createImageTemplateDict.update({})
             return createImageTemplateDict
 
-        self.creator._getCreateImageTemplateDict = our_create_template_dict # pylint: disable=protected-access
+        self.creator._getCreateImageTemplateDict = our_create_template_dict  # pylint: disable=protected-access
 
         self.creator.createStep1()
 
@@ -97,7 +99,7 @@ class StratuslabClientCloud(BaseCloudConnector):
     @override
     def _build_image(self, user_info, node_instance):
 
-        #self.creator.create()
+        # self.creator.create()
         self.creator.createStep2()
 
         #
@@ -133,8 +135,8 @@ class StratuslabClientCloud(BaseCloudConnector):
                     if len(volumes) > 0:
                         try:
                             new_image_id = volumes[0]['identifier']
-                        except Exception as e: # pylint: disable=broad-except
-                            print "Exception occurred looking for volume: %s" % e
+                        except Exception as ex:
+                            print "Exception occurred looking for volume: %s" % ex
                         break
                     time.sleep(60)
 
@@ -155,9 +157,9 @@ class StratuslabClientCloud(BaseCloudConnector):
         if self.is_build_image():
             return self._start_image_for_build(user_info, node_instance)
         else:
-            return self._start_image_for_deployment(user_info, node_instance, vm_name)
+            return self._start_image_for_deployment(node_instance, vm_name)
 
-    def _start_image_for_deployment(self, user_info, node_instance, vm_name): # pylint: disable=unused-argument
+    def _start_image_for_deployment(self, node_instance, vm_name):
         configHolder = self.slConfigHolder.deepcopy()
 
         self._set_instance_params_on_config_holder(configHolder, node_instance)
