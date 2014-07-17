@@ -137,8 +137,3 @@ class NodeInstance(object):
 
     def get_smp(self):
         return self.get_cloud_parameter('smp')
-
-
-
-
-
