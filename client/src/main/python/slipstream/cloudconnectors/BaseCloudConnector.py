@@ -152,7 +152,6 @@ class BaseCloudConnector(object):
 
         # This parameter is thread local
         self._thread_local = local()
-        self._thread_local.isWindows = False
 
     def _set_capabilities(self, vapp=False, build_in_single_vapp=False,
                           contextualization=False,
