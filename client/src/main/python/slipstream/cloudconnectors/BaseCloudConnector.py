@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -199,7 +199,8 @@ class BaseCloudConnector(object):
             ss.ignoreAbort = True
             return ss.getRuntimeParameter('max.iaas.workers')
         except Exception as ex:  # pylint: disable=broad-except
-            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex), verboseThreshold=0)
+            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex),
+                             verboseThreshold=0)
             return None
 
     def stop_deployment(self):
@@ -215,13 +216,15 @@ class BaseCloudConnector(object):
 
         self._initialization(user_info)
         try:
-            self.__start_nodes_instantiation_tasks_wait_finished(user_info, nodes_instances)
+            self.__start_nodes_instantiation_tasks_wait_finished(user_info,
+                                                                 nodes_instances)
         finally:
             self._finalization(user_info)
 
         return self.get_vms_details()
 
-    def __start_nodes_instantiation_tasks_wait_finished(self, user_info, nodes_instances):
+    def __start_nodes_instantiation_tasks_wait_finished(self, user_info,
+                                                        nodes_instances):
         self.__start_nodes_instances_and_clients(user_info, nodes_instances)
         self.__wait_nodes_startup_tasks_finished()
 
@@ -258,9 +261,11 @@ class BaseCloudConnector(object):
 
         if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION) and not self.is_build_image():
             if not node_instance.is_windows():
-                self.__secure_ssh_access_and_run_bootstrap_script(user_info, node_instance, self._vm_get_ip(vm))
+                self.__secure_ssh_access_and_run_bootstrap_script(
+                    user_info, node_instance, self._vm_get_ip(vm))
             else:
-                self.__launch_windows_bootstrap_script(node_instance, self._vm_get_ip(vm))
+                self.__launch_windows_bootstrap_script(node_instance,
+                                                       self._vm_get_ip(vm))
 
     def __add_vm(self, vm, node_instance):
         name = node_instance.get_name()
@@ -276,11 +281,13 @@ class BaseCloudConnector(object):
 
     def __publish_vm_id(self, instance_name, vm_id):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_instanceid(instance_name, str(vm_id))
+        NodeInfoPublisher(self.configHolder).publish_instanceid(instance_name,
+                                                                str(vm_id))
 
     def __publish_vm_ip(self, instance_name, vm_ip):
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_hostname(instance_name, vm_ip)
+        NodeInfoPublisher(self.configHolder).publish_hostname(instance_name,
+                                                              vm_ip)
 
     def __publish_url_ssh(self, vm, node_instance):
         if not node_instance:
@@ -290,7 +297,8 @@ class BaseCloudConnector(object):
         ssh_username, _ = self.__get_vm_username_password(node_instance)
 
         # Needed for thread safety
-        NodeInfoPublisher(self.configHolder).publish_url_ssh(instance_name, vm_ip, ssh_username)
+        NodeInfoPublisher(self.configHolder).publish_url_ssh(instance_name,
+                                                             vm_ip, ssh_username)
 
     def get_vms(self):
         return self.__vms

@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -39,10 +39,14 @@ class NodeInstance(object):
         self.__parameters[parameter_name] = value
 
     def __get_image_target(self, attribute_name, default_value=None):
-        return self.__get('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name), default_value)
+        return self.__get('%s.%s' %
+                          (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name),
+                          default_value)
 
     def get_image_attribute(self, attribute_name, default_value=None):
-        return self.__get('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name), default_value)
+        return self.__get('%s.%s' %
+                          (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name),
+                          default_value)
 
     def set_image_attributes(self, image_attributes):
         for key, value in image_attributes.items():
@@ -53,7 +57,8 @@ class NodeInstance(object):
             self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
     def is_orchestrator(self):
-        return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY, 'False'))
+        return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY,
+                                        'False'))
 
     def is_windows(self):
         return self.get_platform().lower() == 'windows'
@@ -62,7 +67,8 @@ class NodeInstance(object):
         return self.__get(NodeDecorator.CLOUDSERVICE_KEY)
 
     def get_cloud_parameter(self, parameter_name, default_value=None):
-        return self.__get('%s.%s' % (self.get_cloud(), parameter_name), default_value)
+        return self.__get('%s.%s' % (self.get_cloud(), parameter_name),
+                          default_value)
 
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
@@ -119,8 +125,9 @@ class NodeInstance(object):
         return self.get_cloud_parameter('instance.type')
 
     def get_security_groups(self):
-        security_groups = self.get_cloud_parameter(NodeDecorator.SECURITY_GROUPS_KEY, '')
-        return [x.strip() for x in security_groups.split(',') if x and x.strip()]
+        security_groups = self.get_cloud_parameter(
+            NodeDecorator.SECURITY_GROUPS_KEY, '').split(',')
+        return [x.strip() for x in security_groups if x and x.strip()]
 
     def get_cpu(self):
         return self.get_cloud_parameter('cpu')

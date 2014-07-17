@@ -19,7 +19,6 @@
 from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.cloudconnectors.CloudConnectorFactory import CloudConnectorFactory
 from slipstream import util
-from slipstream.util import deprecated
 from slipstream.NodeDecorator import NodeDecorator
 
 
