@@ -34,8 +34,10 @@ from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 def getConnector(configHolder):
     return getConnectorClass()(configHolder)
 
+
 def getConnectorClass():
     return OpenStackClientCloud
+
 
 def searchInObjectList(list_, propertyName, propertyValue):
     for element in list_:
@@ -254,7 +256,7 @@ class OpenStackClientCloud(BaseCloudConnector):
             imgState = searchInObjectList(images, 'id', imageId)
 
     def _import_keypair(self, user_info):
-        kp_name = 'ss-key-%i'  % int(time.time())
+        kp_name = 'ss-key-%i' % int(time.time())
         public_key = user_info.get_public_keys()
         try:
             kp = self._thread_local.driver.ex_import_keypair_from_string(kp_name, public_key)

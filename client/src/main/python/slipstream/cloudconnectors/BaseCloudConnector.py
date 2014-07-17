@@ -28,7 +28,6 @@ from threading import local
 import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream import util, SlipStreamHttpClient
-from slipstream.util import deprecated
 from slipstream.Client import Client
 from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
@@ -199,7 +198,7 @@ class BaseCloudConnector(object):
             ss = Client(config_holder)
             ss.ignoreAbort = True
             return ss.getRuntimeParameter('max.iaas.workers')
-        except Exception as ex: # pylint: disable=broad-except
+        except Exception as ex:  # pylint: disable=broad-except
             util.printDetail('Failed to get max.iaas.workers: %s' % str(ex), verboseThreshold=0)
             return None
 
@@ -384,7 +383,6 @@ class BaseCloudConnector(object):
         os.chmod(ssh_private_key_file, 0400)
         return ssh_private_key_file
 
-
     def __get_vm_username_password(self, node_instance):
         user = node_instance.get_username('root')
         password = self.__get_vm_password(node_instance)
@@ -397,7 +395,7 @@ class BaseCloudConnector(object):
             try:
                 vm = self._get_vm(instance_name)
                 password = self._vm_get_password(vm)
-            except: # pylint: disable=bare-except
+            except:  # pylint: disable=bare-except
                 pass
         return password
 
@@ -522,7 +520,7 @@ class BaseCloudConnector(object):
         if not runAndContinue:
             try:
                 stdout, stderr, returnCode = winrm.get_command_output(_shellId, commandId)
-            except Exception as e: # pylint: disable=broad-except
+            except Exception as e:  # pylint: disable=broad-except
                 print 'WINRM Exception: %s' % str(e)
         util.printAndFlush('\nwinrm.cleanup_command\n')
         if not runAndContinue:
