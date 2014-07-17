@@ -204,7 +204,7 @@ class StratuslabClientCloud(BaseCloudConnector):
 
     def _set_extra_disks_on_config_holder(self, configHolder, node_instance):
         # 'extra_disk_volatile' is given in GB - 'extraDiskSize' needs to be in MB
-        configHolder.extraDiskSize = int(node_instance.get_extra_disk() or 0) * 1024
+        configHolder.extraDiskSize = int(node_instance.get_volatile_extra_disk_size() or 0) * 1024
         configHolder.persistentDiskUUID = node_instance.get_cloud_parameter('extra_disk_persistent', '')
         configHolder.readonlyDiskId = node_instance.get_cloud_parameter('extra_disk_readonly', '')
 

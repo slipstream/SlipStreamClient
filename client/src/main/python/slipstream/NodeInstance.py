@@ -79,7 +79,7 @@ class NodeInstance(object):
     def get_image_version(self):
         return self.get_image_attribute('version')
 
-    def get_extra_disk(self):
+    def get_volatile_extra_disk_size(self):
         return self.__get('extra.disk.volatile')
 
     def get_name(self):
