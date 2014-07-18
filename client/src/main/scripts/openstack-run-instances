@@ -5,13 +5,13 @@ import re
 import time
 import warnings
 import traceback
-from slipstream.NodeInstance import NodeInstance
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 
 from slipstream.util import nostdouterr
 from slipstream.util import nostdout
 from slipstream.ConfigHolder import ConfigHolder
+from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud

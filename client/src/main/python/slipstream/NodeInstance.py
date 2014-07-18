@@ -28,6 +28,9 @@ class NodeInstance(object):
     def __init__(self, runtime_parameters=None):
         self.__parameters = runtime_parameters
 
+    def __str__(self):
+        return 'NodeInstance(%s)' % self.__parameters
+
     def __get(self, parameter_name, default_value=None):
         parameter = self.__parameters.get(parameter_name, default_value)
         # If the parameter exist but is None, we return the default value
