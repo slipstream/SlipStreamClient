@@ -23,6 +23,7 @@ import unittest
 from slipstream.cloudconnectors.physicalhost.PhysicalHostClientCloud import PhysicalHostClientCloud
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
+from slipstream.NodeInstance import NodeInstance
 from slipstream import util
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__),
@@ -40,8 +41,8 @@ PHYSICALHOST_ORCHESTRATOR_HOST = 192.168.1.100
 
 
 class TestPhysicalHostClientCloud(unittest.TestCase):
-    def setUp(self):
 
+    def setUp(self):
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'physicalhost'
         os.environ['SLIPSTREAM_BOOTSTRAP_BIN'] = 'http://example.com/bootstrap'
         os.environ['SLIPSTREAM_DIID'] = '00000000-0000-0000-0000-000000000000'
@@ -62,76 +63,26 @@ class TestPhysicalHostClientCloud(unittest.TestCase):
         hosta = self.ch.config['physicalhost.hosta']
         hostb = self.ch.config['physicalhost.hostb']
 
-        self.nodes_info = [
-            {
-                'multiplicity': 1,
-                'nodename': 'test_node_a',
-                'image': {
-                    'cloud_parameters': {
-                        'physicalhost': {},
-                        'Cloud': {
-                            'network': 'private'
-                        }
-                    },
-                    'attributes': {
-                        'imageId': hosta,
-                        'platform': 'Ubuntu'
-                    },
-                    'targets': {
-                        'prerecipe':
-"""#!/bin/sh
-set -e
-set -x
+        node_instance_name_a = 'test_node_a'
+        node_instance_name_b = 'test_node_b'
 
-ls -l /tmp
-dpkg -l | egrep "nano|lvm" || true
-""",
-                        'recipe':
-"""#!/bin/sh
-set -e
-set -x
-
-dpkg -l | egrep "nano|lvm" || true
-lvs
-""",
-                        'packages': ['lvm2', 'nano']
-                    }
-                },
-            }, {
-                'multiplicity': 1,
-                'nodename': 'test_node_b',
-                'image': {
-                    'cloud_parameters': {
-                        'physicalhost': {},
-                        'Cloud': {
-                            'network': 'private'
-                        }
-                    },
-                    'attributes': {
-                        'imageId': hostb,
-                        'platform': 'Ubuntu'
-                    },
-                    'targets': {
-                        'prerecipe':
-"""#!/bin/sh
-set -e
-set -x
-
-ls -l /tmp
-dpkg -l | egrep "nano|lvm" || true
-""",
-                        'recipe':
-"""#!/bin/sh
-set -e
-set -x
-
-dpkg -l | egrep "nano|lvm" || true
-lvs
-""",
-                        'packages': ['lvm2', 'nano']
-                    }
-                },
-            }]
+        self.node_instances = {}
+        self.node_instances[node_instance_name_a] = NodeInstance({
+            'name': node_instance_name_a,
+            'cloudservice': 'physicalhost',
+            'image.platform': 'Ubuntu',
+            'image.imageId': hosta,
+            'image.id': hosta,
+            'network': 'private',
+        })
+        self.node_instances[node_instance_name_b] = NodeInstance({
+            'name': node_instance_name_b,
+            'cloudservice': 'physicalhost',
+            'image.platform': 'Ubuntu',
+            'image.imageId': hostb,
+            'image.id': hostb,
+            'network': 'private',
+        })
 
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
@@ -141,15 +92,15 @@ lvs
 
     def xtest_1_startStopImages(self):
 
-        self.client.startNodesAndClients(self.user_info, self.nodes_info)
+        self.client.start_nodes_and_clients(self.user_info, self.nodes_instances)
 
         util.printAndFlush('Instances started')
 
-        vms = self.client.getVms()
+        vms = self.client.get_vms()
         assert len(vms) == 3
 
         # You need to put a breakpoint on the next line and manually check /tmp/slipstream* on the two nodes
-        self.client.stopDeployment()
+        self.client._stop_deployment()
 
 
 if __name__ == '__main__':

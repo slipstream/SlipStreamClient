@@ -51,8 +51,8 @@ class PhysicalHostClientCloud(BaseCloudConnector):
 #                raise Exceptions.ExecutionException('Multiplicity not yet supported by this connector.')
 
         # TODO: username, password and private_key should be taken from Image Info
-        self.username = user_info.get_cloud('username')
-        self.password = user_info.get_cloud('password')
+        self.username = user_info.get_cloud_username()
+        self.password = user_info.get_cloud_password()
         self.private_key = user_info.get_private_key()
 
         # TODO: check if this is needed. The orchestrator should be handled server side.
@@ -68,7 +68,7 @@ class PhysicalHostClientCloud(BaseCloudConnector):
               'id': os.environ['PHYSICALHOST_ORCHESTRATOR_HOST'],
               'ip': os.environ['PHYSICALHOST_ORCHESTRATOR_HOST']}
 
-        super(PhysicalHostClientCloud, self).__add_vm(vm, node_instance)
+        super(PhysicalHostClientCloud, self).__add_vm(vm, node_instance)  # pylint: disable=protected-access
 
     @override
     def _start_image(self, user_info, node_instance, vm_name):

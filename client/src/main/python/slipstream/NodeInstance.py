@@ -76,8 +76,14 @@ class NodeInstance(object):
     def get_image_short_name(self):
         return self.get_image_attribute('shortName')
 
+    def get_image_name(self):
+        return self.get_image_attribute('name')
+
     def get_image_version(self):
         return self.get_image_attribute('version')
+
+    def get_image_description(self, default_value=None):
+        return self.get_image_attribute('description', default_value)
 
     def get_volatile_extra_disk_size(self):
         return self.__get('extra.disk.volatile')
@@ -88,8 +94,8 @@ class NodeInstance(object):
     def get_node_name(self):
         return self.__get(NodeDecorator.NODE_NAME_KEY)
 
-    def get_network_type(self):
-        return self.__get('network')
+    def get_network_type(self, default_value=None):
+        return self.__get('network', default_value)
 
     def get_networks(self):
         return self.get_cloud_parameter('networks', '').split(',')
@@ -110,7 +116,7 @@ class NodeInstance(object):
         return self.__get_image_target('packages', [])
 
     def get_username(self, default_value=None):
-        return self.get_image_attribute('image.loginUser', default_value)
+        return self.get_image_attribute('loginUser', default_value)
 
     def get_password(self):
         return self.get_cloud_parameter('login.password')

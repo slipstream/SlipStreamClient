@@ -56,13 +56,17 @@ class CloudStackClientCloud(BaseCloudConnector):
                                direct_ip_assignment=True,
                                orchestrator_can_kill_itself_or_its_vapp=True)
 
+        self.sizes = []
+        self.images = []
+        self.user_info = []
+
     @override
     def _initialization(self, user_info):
         util.printStep('Initialize the CloudStack connector.')
         self._thread_local.driver = self._get_driver(user_info)
-        self.sizes = self._thread_local.driver.list_sizes() # pylint: disable=attribute-defined-outside-init
-        self.images = self._thread_local.driver.list_images() # pylint: disable=attribute-defined-outside-init
-        self.user_info = user_info # pylint: disable=attribute-defined-outside-init
+        self.sizes = self._thread_local.driver.list_sizes()
+        self.images = self._thread_local.driver.list_images()
+        self.user_info = user_info
 
         if self.is_build_image():
             raise NotImplementedError('The run category "%s" is not yet implemented' % self.run_category)
