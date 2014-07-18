@@ -48,14 +48,14 @@ class TestCloudConnectors(TestCloudConnectorsBase):
             setattr(self.ch, CONFIGPARAM_CONNECTOR_MODULE_NAME, module_name)
             cc = CloudConnectorFactory.createConnector(self.ch)
             try:
-                cc.vmGetId(object)
+                cc._vm_get_id(object)
             except NotImplementedError:
-                self.fail('Connector %s: vmGetId should be implemented.' % module_name)
+                self.fail('Connector %s: _vm_get_id should be implemented.' % module_name)
             except Exception:
                 pass
             try:
-                cc.vmGetIp(object)
+                cc._vm_get_ip(object)
             except NotImplementedError:
-                self.fail('Connector %s: vmGetIp should be implemented.' % module_name)
+                self.fail('Connector %s: _vm_get_ip should be implemented.' % module_name)
             except Exception:
                 pass

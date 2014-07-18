@@ -45,8 +45,8 @@ class DummyClientCloud(BaseCloudConnector):
     def getNewImageId(self):
         return '1234abcd'
 
-    def vmGetId(self):
+    def _vm_get_id(self):
         return 'id1'
 
-    def vmGetIp(self):
+    def _vm_get_ip(self):
         return 'ip1'
