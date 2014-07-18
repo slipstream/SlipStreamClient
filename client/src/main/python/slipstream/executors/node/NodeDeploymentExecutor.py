@@ -106,7 +106,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             return
 
         tmpfilesuffix = ''
-        if util.isWindows():
+        if util.is_windows():
             tmpfilesuffix = '.ps1'
         fn = tempfile.mktemp(suffix=tmpfilesuffix)
         if isinstance(target_script, unicode):

@@ -84,7 +84,7 @@ def get_cloudconnector_modulename_by_cloudname(cloudname):
 
 def needToAddSshPubkey():
     return (os.environ.get(ENV_NEED_TO_ADD_SSHPUBKEY, '').lower() == 'true') \
-        and not isWindows()
+        and not is_windows()
 
 
 def configureLogger():
@@ -95,7 +95,7 @@ def configureLogger():
                         filename=filename)
 
 
-def isWindows():
+def is_windows():
     return sys.platform == 'win32'
 
 
@@ -114,7 +114,7 @@ def execute(commandAndArgsList, **kwargs):
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
 
-    if isWindows():
+    if is_windows():
         commandAndArgsList.insert(0, '-File')
         commandAndArgsList.insert(0, 'Bypass')
         commandAndArgsList.insert(0, '-ExecutionPolicy')
@@ -325,11 +325,11 @@ def _extractVerboseThreshold(kwargs):
     return _extractAndDeleteKey('verboseThreshold', 2, kwargs)
 
 
-def _extractAndDeleteKey(key, default, dict):
+def _extractAndDeleteKey(key, default, dictionary):
     value = default
-    if key in dict:
-        value = dict[key]
-        del dict[key]
+    if key in dictionary:
+        value = dictionary[key]
+        del dictionary[key]
     return value
 
 
