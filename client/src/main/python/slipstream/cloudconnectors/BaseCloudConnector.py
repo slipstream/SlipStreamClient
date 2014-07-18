@@ -46,7 +46,7 @@ class BaseCloudConnector(object):
 
     def _initialization(self, user_info):
         """This method is called once before calling any others methods of the connector.
-        This method can be used to some _initialization tasks like configuring the Cloud driver."""
+        This method can be used to some initialization tasks like configuring the Cloud driver."""
         pass
 
     def _finalization(self, user_info):
@@ -555,8 +555,8 @@ class BaseCloudConnector(object):
         command += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
         return command
 
-    def _get_bootstrap_script(self, node_instance,
-                              pre_export=None, pre_bootstrap=None, post_bootstrap=None,
+    def _get_bootstrap_script(self, node_instance, pre_export=None,
+                              pre_bootstrap=None, post_bootstrap=None,
                               username=None):
         """This method can be redefined by connectors if they need a specific bootstrap script
         with the SSH contextualization."""
