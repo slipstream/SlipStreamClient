@@ -46,7 +46,7 @@ class BaseCloudConnector(object):
 
     def _initialization(self, user_info):
         """This method is called once before calling any others methods of the connector.
-        This method can be used to some _initialization tasks like configuring the Cloud driver."""
+        This method can be used to some initialization tasks like configuring the Cloud driver."""
         pass
 
     def _finalization(self, user_info):
@@ -250,7 +250,7 @@ class BaseCloudConnector(object):
 
         vm = self._start_image(user_info,
                                node_instance,
-                               self.__generate_vm_name(node_instance_name))
+                               self._generate_vm_name(node_instance_name))
 
         self.__add_vm(vm, node_instance)
 
@@ -273,17 +273,17 @@ class BaseCloudConnector(object):
 
     def _publish_vm_info(self, vm, node_instance):
         instance_name = node_instance.get_name()
-        self.__publish_vm_id(instance_name, self._vm_get_id(vm))
-        self.__publish_vm_ip(instance_name, self._vm_get_ip(vm))
+        self._publish_vm_id(instance_name, self._vm_get_id(vm))
+        self._publish_vm_ip(instance_name, self._vm_get_ip(vm))
         if node_instance:
             self.__publish_url_ssh(vm, node_instance)
 
-    def __publish_vm_id(self, instance_name, vm_id):
+    def _publish_vm_id(self, instance_name, vm_id):
         # Needed for thread safety
         NodeInfoPublisher(self.configHolder).publish_instanceid(instance_name,
                                                                 str(vm_id))
 
-    def __publish_vm_ip(self, instance_name, vm_ip):
+    def _publish_vm_ip(self, instance_name, vm_ip):
         # Needed for thread safety
         NodeInfoPublisher(self.configHolder).publish_hostname(instance_name,
                                                               vm_ip)
@@ -406,15 +406,13 @@ class BaseCloudConnector(object):
                 pass
         return password
 
-    def __generate_vm_name(self, instance_name):
+    @staticmethod
+    def _generate_vm_name(instance_name):
         vm_name = instance_name
-        run_id = self.__get_run_id()
+        run_id = os.environ.get('SLIPSTREAM_DIID', None)
         if run_id:
             vm_name = vm_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + run_id
         return vm_name
-
-    def __get_run_id(self):
-        return os.environ.get('SLIPSTREAM_DIID', None)
 
     @staticmethod
     def isStartOrchestrator():
@@ -449,7 +447,7 @@ class BaseCloudConnector(object):
         script += "restorecon -Rv ~/.ssh || true\n"
         script += "sed -i -r 's/^#?[\\t ]*(PasswordAuthentication[\\t ]+)((yes)|(no))/\\1yes/' /etc/ssh/sshd_config\n"
         script += "sync\nsleep 2\n"
-        script += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
+        script += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload || /etc/init.d/ssh reload; }\n"
         self._print_detail("Reverting security of SSH access to %s with:\n%s\n" % (ip, script))
         _, output = self._run_script(ip, username, script, sshKey=privateKey)
         self._print_detail("Reverted security of SSH access to %s. Output:\n%s\n" % (ip, output))
@@ -555,8 +553,8 @@ class BaseCloudConnector(object):
         command += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
         return command
 
-    def _get_bootstrap_script(self, node_instance,
-                              pre_export=None, pre_bootstrap=None, post_bootstrap=None,
+    def _get_bootstrap_script(self, node_instance, pre_export=None,
+                              pre_bootstrap=None, post_bootstrap=None,
                               username=None):
         """This method can be redefined by connectors if they need a specific bootstrap script
         with the SSH contextualization."""
