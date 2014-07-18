@@ -173,6 +173,7 @@ class SlipStreamHttpClient(object):
                             NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
+
     def terminate_run(self):
         return self._httpDelete(self.run_url)
 

@@ -2,7 +2,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -20,7 +20,8 @@
 import os
 import unittest
 
-from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
+from slipstream.cloudconnectors.openstack.OpenStackClientCloud import \
+    OpenStackClientCloud
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
 from slipstream.NodeDecorator import (NodeDecorator, RUN_CATEGORY_IMAGE,
@@ -39,7 +40,8 @@ openstack.password = xxx
 openstack.imageid =  d02ee717-33f7-478b-ba14-02196978fea8
 openstack.ssh.username = ubuntu
 openstack.ssh.password = yyy
-""" # pylint: disable=pointless-string-statement
+"""  # pylint: disable=pointless-string-statement
+
 
 def publish_vm_info(self, vm, node_instance):
     # pylint: disable=unused-argument, protected-access
@@ -64,7 +66,7 @@ class TestOpenStackClientCloud(unittest.TestCase):
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
         self.ch.set(KEY_RUN_CATEGORY, '')
 
-        OpenStackClientCloud._publish_vm_info = publish_vm_info # pylint: disable=protected-access
+        OpenStackClientCloud._publish_vm_info = publish_vm_info  # pylint: disable=protected-access
         self.client = OpenStackClientCloud(self.ch)
 
         self.user_info = UserInfo(self.connector_instance_name)
@@ -80,18 +82,18 @@ class TestOpenStackClientCloud(unittest.TestCase):
 
         security_groups = self.ch.config['openstack.security.groups']
         image_id = self.ch.config['openstack.imageid']
-        self.node_name = 'test_node'
+        node_name = 'test_node'
 
         self.multiplicity = 2
 
         self.node_instances = {}
-        for i in range(1, self.multiplicity+1):
-            node_instance_name = self.node_name + '.' + str(i)
+        for i in range(1, self.multiplicity + 1):
+            node_instance_name = node_name + '.' + str(i)
             self.node_instances[node_instance_name] = NodeInstance({
-                'nodename': self.node_name,
+                'nodename': node_name,
                 'name': node_instance_name,
                 'cloudservice': self.connector_instance_name,
-                #'index': i,
+                # 'index': i,
                 'image.platform': 'Ubuntu',
                 'image.imageId': image_id,
                 'image.id': image_id,
@@ -117,7 +119,7 @@ set -x
 ls -l /tmp
 dpkg -l | egrep "nano|lvm" || true
 """,
-                'image.packages' : ['lvm2','nano'],
+                'image.packages': ['lvm2', 'nano'],
                 'image.recipe':
 """#!/bin/sh
 set -e
@@ -149,8 +151,8 @@ lvs
     def xtest_2_buildImage(self):
         self.client.run_category = RUN_CATEGORY_IMAGE
 
-        instances_details = self.client.start_nodes_and_clients(self.user_info,
-                                                                {NodeDecorator.MACHINE_NAME: self.node_instance})
+        instances_details = self.client.start_nodes_and_clients(
+            self.user_info, {NodeDecorator.MACHINE_NAME: self.node_instance})
 
         assert instances_details
         assert instances_details[0][NodeDecorator.MACHINE_NAME]
