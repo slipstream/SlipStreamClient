@@ -273,9 +273,11 @@ class BaseCloudConnector(object):
 
     def _publish_vm_info(self, vm, node_instance):
         instance_name = node_instance.get_name()
-        self._publish_vm_id(instance_name, self._vm_get_id(vm))
-        self._publish_vm_ip(instance_name, self._vm_get_ip(vm))
-        if node_instance:
+        vm_id = self._vm_get_id(vm)
+        vm_ip = self._vm_get_ip(vm)
+        self._publish_vm_id(instance_name, vm_id)
+        self._publish_vm_ip(instance_name, vm_ip)
+        if node_instance and vm_ip:
             self.__publish_url_ssh(vm, node_instance)
 
     def _publish_vm_id(self, instance_name, vm_id):
@@ -292,7 +294,7 @@ class BaseCloudConnector(object):
         if not node_instance:
             return
         instance_name = node_instance.get_name()
-        vm_ip = self._vm_get_ip(vm)
+        vm_ip = self._vm_get_ip(vm) or ''
         ssh_username, _ = self.__get_vm_username_password(node_instance)
 
         # Needed for thread safety
