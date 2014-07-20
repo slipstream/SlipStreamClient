@@ -23,6 +23,7 @@ import slipstream.util as util
 from slipstream.util import override
 from slipstream.NodeInstance import NodeInstance
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
+from slipstream.exceptions.Exceptions import ExecutionException
 
 
 def getConnector(configHolder):
@@ -126,11 +127,11 @@ class PhysicalHostClientCloud(BaseCloudConnector):
         sudo = self._get_sudo(username)
 
         command = sudo + " bash -c '"
-        #command = "echo '(sudo bash -c '\\''"
-        #command += 'kill -9 `ps -Af | grep python | grep slipstream | grep -v grep | awk "{print $2}"`; ';
+        # command = "echo '(sudo bash -c '\\''"
+        # command += 'kill -9 `ps -Af | grep python | grep slipstream | grep -v grep | awk "{print $2}"`; ';
         command += "rm -R /tmp/slipstream*; rm /tmp/tmp*; rm -R /opt/slipstream; rm -R /opt/paramiko; "
         command += "'"
-        #command += "'\\'') > /dev/null 2>&1 &' | at now"
+        # command += "'\\'') > /dev/null 2>&1 &' | at now"
 
         self._run_script_with_private_key(host, username, command, password, privateKey)
 
@@ -151,3 +152,7 @@ class PhysicalHostClientCloud(BaseCloudConnector):
                 os.unlink(sshPrivateKeyFile)
             except:
                 pass
+
+    def _build_image(self, user_info, node_instance):
+        raise ExecutionException("%s doesn't implement build image feature." %
+                                 self.__class__.__name__)

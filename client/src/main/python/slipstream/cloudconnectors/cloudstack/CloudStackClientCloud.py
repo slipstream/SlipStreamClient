@@ -82,7 +82,7 @@ class CloudStackClientCloud(BaseCloudConnector):
             kp_name = user_info.get_keypair_name()
             if kp_name:
                 self._delete_keypair(kp_name)
-        except: # pylint: disable=bare-except
+        except:  # pylint: disable=bare-except
             pass
 
     @override
@@ -223,7 +223,8 @@ class CloudStackClientCloud(BaseCloudConnector):
         return kp_name
 
     def _delete_keypair(self, kp_name):
-        kp = KeyPair(name=kp_name, public_key=None, fingerprint=None, driver=self._thread_local.driver)
+        kp = KeyPair(name=kp_name, public_key=None, fingerprint=None,
+                     driver=self._thread_local.driver)
         return self._thread_local.driver.delete_keypair(kp)
 
     def format_instance_name(self, name):
@@ -248,3 +249,7 @@ class CloudStackClientCloud(BaseCloudConnector):
                 'through "9", and the hyphen ("-"), must be between 1 and 63 '
                 'characters long, and can\'t start or end with "-" '
                 'and can\'t start with digit' % name)
+
+    def _build_image(self, user_info, node_instance):
+        raise Exceptions.ExecutionException("%s doesn't implement build image feature." %
+                                            self.__class__.__name__)
