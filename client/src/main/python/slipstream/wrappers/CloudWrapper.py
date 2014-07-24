@@ -20,6 +20,7 @@ from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.cloudconnectors.CloudConnectorFactory import CloudConnectorFactory
 from slipstream import util
 from slipstream.NodeDecorator import NodeDecorator
+from slipstream.exceptions.Exceptions import ExecutionException
 
 
 class CloudWrapper(BaseWrapper):
@@ -41,7 +42,11 @@ class CloudWrapper(BaseWrapper):
     def build_image(self):
         self.cloudProxy.set_slipstream_client_as_listener(self.clientSlipStream)
         user_info = self.get_user_info(self.cloudProxy.get_cloud_service_name())
+
         node_instance = self._get_node_instances_to_start().get(NodeDecorator.MACHINE_NAME)
+        if node_instance is None:
+            raise ExecutionException('Failed to get node instance for instance named "%s"' %
+                                     NodeDecorator.MACHINE_NAME)
 
         new_id = self.cloudProxy.build_image(user_info, node_instance)
 
@@ -60,9 +65,13 @@ class CloudWrapper(BaseWrapper):
 
     def _get_node_instances_in_scale_state(self, scale_state):
         instances = {}
-        for instance_name, instance in self._get_nodes_instances(self.cloudProxy.get_cloud_service_name()).iteritems():
+        cloud_service_name = self.cloudProxy.get_cloud_service_name()
+
+        nodes_instances = self._get_nodes_instances(cloud_service_name)
+        for instance_name, instance in nodes_instances.iteritems():
             if instance.get_scale_state() == scale_state:
                 instances[instance_name] = instance
+
         return instances
 
     def stop_node_instances(self):
