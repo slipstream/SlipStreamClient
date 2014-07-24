@@ -71,7 +71,7 @@ class BaseCloudConnector(object):
 
     def _stop_deployment(self):
         """This method should terminate the full vapp if the connector has the vapp capability.
-        This method should terminate all instances except the orchestrator if the connector don't has the vapp
+        This method should terminate all instances except the orchestrator if the connector doesn't have the vapp
         capability."""
         pass
 
