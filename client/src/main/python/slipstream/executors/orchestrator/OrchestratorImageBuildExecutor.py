@@ -34,7 +34,6 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
 
         util.printStep('Starting instance')
         try:
-            #self.wrapper.startImage()
             self.wrapper.start_node_instances()
         except Exceptions.AbortException:
             pass

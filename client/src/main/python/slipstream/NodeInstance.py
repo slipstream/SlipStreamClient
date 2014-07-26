@@ -25,7 +25,7 @@ class NodeInstance(object):
 
     IMAGE_ATTRIBUTE_PREFIX = 'image'
 
-    def __init__(self, runtime_parameters=None):
+    def __init__(self, runtime_parameters={}):
         self.__parameters = runtime_parameters
 
     def __str__(self):
