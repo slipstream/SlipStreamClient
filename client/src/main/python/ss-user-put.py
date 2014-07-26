@@ -87,7 +87,7 @@ class MainProgram(CommandBase):
             sys.exit(-1)
 
         dom = self.read_xml_and_exit_on_error(self.user)
-        attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+        attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
 
         user = attrs['name']
         uri = util.USER_RESOURCE_PATH + '/' + user

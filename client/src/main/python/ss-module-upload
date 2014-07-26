@@ -97,7 +97,7 @@ class MainProgram(CommandBase):
                 contents = f.read()
 
                 dom = self._read_module_as_xml(contents)
-                attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+                attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
 
                 root_node_name = dom.tag
                 if root_node_name == 'list':
