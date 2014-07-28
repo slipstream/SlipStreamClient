@@ -43,7 +43,7 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''usage: %prog [options] [<module-url>]
+        usage = '''usage: %prog [options] <module-url>
 
 <module-uri>    Name of the root module.'''
 
