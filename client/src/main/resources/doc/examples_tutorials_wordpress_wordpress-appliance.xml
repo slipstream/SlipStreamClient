@@ -1,8 +1,8 @@
 <imageModule category="Image" creation="2013-11-16 08:43:14.5 CET" deleted="false" description="installs and configures WordPress using Puppet" isBase="false" lastModified="2013-11-24 11:46:55.637 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/wordpress" platform="ubuntu" shortName="wordpress-appliance" version="81">
-   <parameters class="org.hibernate.collection.internal.PersistentMap">
+   <parameters >
       <entry>
          <string>stratuslab.disks.bus.type</string>
-         <parameter category="stratuslab" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="true" mandatory="true" name="stratuslab.disks.bus.type" readonly="false" type="Enum">
+         <parameter category="stratuslab" description="VM disks bus type" isSet="true" mandatory="true" name="stratuslab.disks.bus.type" readonly="false" type="Enum">
             <enumValues length="2">
                <string>virtio</string>
                <string>scsi</string>
@@ -13,22 +13,22 @@
       </entry>
       <entry>
          <string>admin_password</string>
-         <parameter category="Input" class="com.sixsq.slipstream.persistence.ModuleParameter" description="admin password" isSet="false" mandatory="false" name="admin_password" readonly="false" type="String" />
+         <parameter category="Input" description="admin password" isSet="false" mandatory="false" name="admin_password" readonly="false" type="String" />
       </entry>
       <entry>
          <string>LLR.ram</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested RAM (in GB)" isSet="false" mandatory="true" name="LLR.ram" readonly="false" type="String" />
+         <parameter category="LLR" description="Requested RAM (in GB)" isSet="false" mandatory="true" name="LLR.ram" readonly="false" type="String" />
       </entry>
       <entry>
          <string>interoute.login.password</string>
-         <parameter category="interoute" class="com.sixsq.slipstream.persistence.ModuleParameter" description="SSH login password for the image" isSet="true" mandatory="false" name="interoute.login.password" readonly="false" type="Password">
+         <parameter category="interoute" description="SSH login password for the image" isSet="true" mandatory="false" name="interoute.login.password" readonly="false" type="Password">
             <value>rootpass</value>
             <defaultValue>rootpass</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>network</string>
-         <parameter category="Cloud" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Network type" isSet="true" mandatory="true" name="network" readonly="false" type="Enum">
+         <parameter category="Cloud" description="Network type" isSet="true" mandatory="true" name="network" readonly="false" type="Enum">
             <enumValues length="2">
                <string>Public</string>
                <string>Private</string>
@@ -39,7 +39,7 @@
       </entry>
       <entry>
          <string>LLR.instance.type</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
+         <parameter category="LLR" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
             <enumValues length="7">
                <string>m1.small</string>
                <string>c1.medium</string>
@@ -55,32 +55,32 @@
       </entry>
       <entry>
          <string>CC-IN2P3.security.groups</string>
-         <parameter category="CC-IN2P3" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Security Groups (comma separated list)" isSet="true" mandatory="true" name="CC-IN2P3.security.groups" readonly="false" type="String">
+         <parameter category="CC-IN2P3" description="Security Groups (comma separated list)" isSet="true" mandatory="true" name="CC-IN2P3.security.groups" readonly="false" type="String">
             <value>default</value>
             <defaultValue>default</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>interoute.ram</string>
-         <parameter category="interoute" class="com.sixsq.slipstream.persistence.ModuleParameter" description="RAM in GB" isSet="true" mandatory="false" name="interoute.ram" readonly="false" type="String">
+         <parameter category="interoute" description="RAM in GB" isSet="true" mandatory="false" name="interoute.ram" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>cloudsigma.cpu</string>
-         <parameter category="cloudsigma" class="com.sixsq.slipstream.persistence.ModuleParameter" description="CPU in GHz" isSet="true" mandatory="false" name="cloudsigma.cpu" readonly="false" type="String">
+         <parameter category="cloudsigma" description="CPU in GHz" isSet="true" mandatory="false" name="cloudsigma.cpu" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>atos.instance.type</string>
-         <parameter category="atos" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="false" mandatory="false" name="atos.instance.type" readonly="false" type="Enum" />
+         <parameter category="atos" description="Cloud instance type" isSet="false" mandatory="false" name="atos.instance.type" readonly="false" type="Enum" />
       </entry>
       <entry>
          <string>LLR.disks.bus.type</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="true" mandatory="true" name="LLR.disks.bus.type" readonly="false" type="Enum">
+         <parameter category="LLR" description="VM disks bus type" isSet="true" mandatory="true" name="LLR.disks.bus.type" readonly="false" type="Enum">
             <enumValues length="2">
                <string>virtio</string>
                <string>scsi</string>
@@ -91,33 +91,33 @@
       </entry>
       <entry>
          <string>extra.disk.volatile</string>
-         <parameter category="Cloud" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Volatile extra disk in GB" isSet="false" mandatory="true" name="extra.disk.volatile" readonly="false" type="String" />
+         <parameter category="Cloud" description="Volatile extra disk in GB" isSet="false" mandatory="true" name="extra.disk.volatile" readonly="false" type="String" />
       </entry>
       <entry>
          <string>CC-IN2P3.instance.type</string>
-         <parameter category="CC-IN2P3" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Instance type (flavor)" isSet="true" mandatory="true" name="CC-IN2P3.instance.type" readonly="false" type="String">
+         <parameter category="CC-IN2P3" description="Instance type (flavor)" isSet="true" mandatory="true" name="CC-IN2P3.instance.type" readonly="false" type="String">
             <value>m1.tiny</value>
             <defaultValue>m1.tiny</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>mysql_password</string>
-         <parameter category="Input" class="com.sixsq.slipstream.persistence.ModuleParameter" description="MySQL password" isSet="false" mandatory="false" name="mysql_password" readonly="false" type="String" />
+         <parameter category="Input" description="MySQL password" isSet="false" mandatory="false" name="mysql_password" readonly="false" type="String" />
       </entry>
       <entry>
          <string>cloudsigma.ram</string>
-         <parameter category="cloudsigma" class="com.sixsq.slipstream.persistence.ModuleParameter" description="RAM in GB" isSet="true" mandatory="false" name="cloudsigma.ram" readonly="false" type="String">
+         <parameter category="cloudsigma" description="RAM in GB" isSet="true" mandatory="false" name="cloudsigma.ram" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>wordpress_title</string>
-         <parameter category="Input" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Title (name) to give to the WordPress instance" isSet="false" mandatory="false" name="wordpress_title" readonly="false" type="String" />
+         <parameter category="Input" description="Title (name) to give to the WordPress instance" isSet="false" mandatory="false" name="wordpress_title" readonly="false" type="String" />
       </entry>
       <entry>
          <string>stratuslab.instance.type</string>
-         <parameter category="stratuslab" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance type" isSet="true" mandatory="true" name="stratuslab.instance.type" readonly="false" type="Enum">
+         <parameter category="stratuslab" description="Cloud instance type" isSet="true" mandatory="true" name="stratuslab.instance.type" readonly="false" type="Enum">
             <enumValues length="7">
                <string>m1.small</string>
                <string>c1.medium</string>
@@ -133,87 +133,87 @@
       </entry>
       <entry>
          <string>LLR.cpu</string>
-         <parameter category="LLR" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested CPUs" isSet="false" mandatory="true" name="LLR.cpu" readonly="false" type="String" />
+         <parameter category="LLR" description="Requested CPUs" isSet="false" mandatory="true" name="LLR.cpu" readonly="false" type="String" />
       </entry>
       <entry>
          <string>hostname</string>
-         <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="hostname/ip of the image" isSet="false" mandatory="true" name="hostname" readonly="false" type="String" />
+         <parameter category="Output" description="hostname/ip of the image" isSet="false" mandatory="true" name="hostname" readonly="false" type="String" />
       </entry>
       <entry>
          <string>cloudsigma.login.password</string>
-         <parameter category="cloudsigma" class="com.sixsq.slipstream.persistence.ModuleParameter" description="SSH login password for the image" isSet="true" mandatory="false" name="cloudsigma.login.password" readonly="false" type="Password">
+         <parameter category="cloudsigma" description="SSH login password for the image" isSet="true" mandatory="false" name="cloudsigma.login.password" readonly="false" type="Password">
             <value>ubuntupass</value>
             <defaultValue>ubuntupass</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>admin_email</string>
-         <parameter category="Input" class="com.sixsq.slipstream.persistence.ModuleParameter" description="admin email" isSet="false" mandatory="false" name="admin_email" readonly="false" type="String" />
+         <parameter category="Input" description="admin email" isSet="false" mandatory="false" name="admin_email" readonly="false" type="String" />
       </entry>
       <entry>
          <string>atos.ram</string>
-         <parameter category="atos" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested RAM (in GB)" isSet="true" mandatory="false" name="atos.ram" readonly="false" type="String">
+         <parameter category="atos" description="Requested RAM (in GB)" isSet="true" mandatory="false" name="atos.ram" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>stratuslab.ram</string>
-         <parameter category="stratuslab" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested RAM (in GB)" isSet="true" mandatory="true" name="stratuslab.ram" readonly="false" type="String">
+         <parameter category="stratuslab" description="Requested RAM (in GB)" isSet="true" mandatory="true" name="stratuslab.ram" readonly="false" type="String">
             <value>2</value>
             <defaultValue>2</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>atos.cpu</string>
-         <parameter category="atos" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested CPUs" isSet="true" mandatory="false" name="atos.cpu" readonly="false" type="String">
+         <parameter category="atos" description="Requested CPUs" isSet="true" mandatory="false" name="atos.cpu" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>atos.disks.bus.type</string>
-         <parameter category="atos" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="false" mandatory="false" name="atos.disks.bus.type" readonly="false" type="Enum" />
+         <parameter category="atos" description="VM disks bus type" isSet="false" mandatory="false" name="atos.disks.bus.type" readonly="false" type="Enum" />
       </entry>
       <entry>
          <string>interoute.cpu</string>
-         <parameter category="interoute" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Number of CPUs" isSet="true" mandatory="false" name="interoute.cpu" readonly="false" type="String">
+         <parameter category="interoute" description="Number of CPUs" isSet="true" mandatory="false" name="interoute.cpu" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>cloudsigma.smp</string>
-         <parameter category="cloudsigma" class="com.sixsq.slipstream.persistence.ModuleParameter" description="SMP (number of virtual CPUs)" isSet="true" mandatory="false" name="cloudsigma.smp" readonly="false" type="String">
+         <parameter category="cloudsigma" description="SMP (number of virtual CPUs)" isSet="true" mandatory="false" name="cloudsigma.smp" readonly="false" type="String">
             <value>1</value>
             <defaultValue>1</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>stratuslab.cpu</string>
-         <parameter category="stratuslab" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Requested CPUs" isSet="true" mandatory="true" name="stratuslab.cpu" readonly="false" type="String">
+         <parameter category="stratuslab" description="Requested CPUs" isSet="true" mandatory="true" name="stratuslab.cpu" readonly="false" type="String">
             <value>2</value>
             <defaultValue>2</defaultValue>
          </parameter>
       </entry>
       <entry>
          <string>interoute.network</string>
-         <parameter category="interoute" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Network types to start the image on" isSet="false" mandatory="false" name="interoute.network" readonly="false" type="Enum" />
+         <parameter category="interoute" description="Network types to start the image on" isSet="false" mandatory="false" name="interoute.network" readonly="false" type="Enum" />
       </entry>
       <entry>
          <string>instanceid</string>
-         <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Cloud instance id" isSet="false" mandatory="true" name="instanceid" readonly="false" type="String" />
+         <parameter category="Output" description="Cloud instance id" isSet="false" mandatory="true" name="instanceid" readonly="false" type="String" />
       </entry>
       <entry>
          <string>admin_username</string>
-         <parameter category="Input" class="com.sixsq.slipstream.persistence.ModuleParameter" description="admin username" isSet="true" mandatory="false" name="admin_username" readonly="false" type="String">
+         <parameter category="Input" description="admin username" isSet="true" mandatory="false" name="admin_username" readonly="false" type="String">
             <value>admin</value>
             <defaultValue>admin</defaultValue>
          </parameter>
       </entry>
    </parameters>
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
-      <groupMembers class="java.util.ArrayList" />
+      <groupMembers />
    </authz>
    <commit author="sixsq">
       <comment />
@@ -223,7 +223,7 @@
       <string>default</string>
    </cloudNames>
    <runs />
-   <targets class="org.hibernate.collection.internal.PersistentSet">
+   <targets >
       <target name="execute" runInBackground="false">#!/bin/sh
 
 set -e
@@ -294,8 +294,8 @@ ss-set ss:url.service "http://${hname}"
 
 </target>
    </targets>
-   <packages class="org.hibernate.collection.internal.PersistentSet" />
+   <packages />
    <prerecipe />
    <recipe />
-   <cloudImageIdentifiers class="org.hibernate.collection.internal.PersistentSet" />
+   <cloudImageIdentifiers />
 </imageModule>
