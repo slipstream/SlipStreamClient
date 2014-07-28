@@ -1,5 +1,5 @@
 <deploymentModule category="Deployment" creation="2013-11-08 14:49:25.427 CET" deleted="false" description="simple, single node deployment of WordPress" lastModified="2013-11-24 11:46:56.435 CET" parentUri="module/examples/tutorials/wordpress" shortName="wordpress" version="85">
-   <parameters class="org.hibernate.collection.PersistentMap" />
+   <parameters class="org.hibernate.collection.internal.PersistentMap" />
    <authz groupCreateChildren="false" groupDelete="false" groupGet="false" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
       <groupMembers class="java.util.ArrayList" />
    </authz>
@@ -11,11 +11,11 @@
       <string>default</string>
    </cloudNames>
    <runs />
-   <nodes class="org.hibernate.collection.PersistentMap">
+   <nodes class="org.hibernate.collection.internal.PersistentMap">
       <entry>
          <string>wp</string>
          <node cloudService="stratuslab" creation="2013-11-15 13:47:49.339 CET" deleted="false" imageUri="module/examples/tutorials/wordpress/wordpress-appliance" multiplicity="1" name="wp" network="Public">
-            <parameters class="org.hibernate.collection.PersistentMap">
+            <parameters class="org.hibernate.collection.internal.PersistentMap">
                <entry>
                   <string>mysql_password</string>
                   <parameter category="General" class="com.sixsq.slipstream.persistence.NodeParameter" description="" isMappedValue="false" mandatory="false" name="mysql_password" readonly="false" type="String">
@@ -47,7 +47,7 @@
                   </parameter>
                </entry>
             </parameters>
-            <parameterMappings class="org.hibernate.collection.PersistentMap">
+            <parameterMappings class="org.hibernate.collection.internal.PersistentMap">
                <entry>
                   <string>mysql_password</string>
                   <nodeParameter category="General" description="" isMappedValue="false" mandatory="false" name="mysql_password" readonly="false" type="String">
@@ -80,7 +80,7 @@
                </entry>
             </parameterMappings>
             <image category="Image" creation="2013-11-16 08:43:14.5 CET" deleted="false" description="installs and configures WordPress using Puppet" imageId="MwetUnCvDFNFA1CyHrqTb6c5kQk" isBase="false" lastModified="2013-11-24 11:46:55.637 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/wordpress/wordpress-appliance" parentUri="module/examples/tutorials/wordpress" platform="ubuntu" shortName="wordpress-appliance" version="81">
-               <parameters class="org.hibernate.collection.PersistentMap">
+               <parameters class="org.hibernate.collection.internal.PersistentMap">
                   <entry>
                      <string>stratuslab.disks.bus.type</string>
                      <parameter category="stratuslab" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="true" mandatory="true" name="stratuslab.disks.bus.type" readonly="false" type="Enum">
@@ -299,7 +299,7 @@
                <commit author="sixsq">
                   <comment />
                </commit>
-               <targets class="org.hibernate.collection.PersistentBag">
+               <targets class="org.hibernate.collection.internal.PersistentBag">
                   <target name="execute" runInBackground="false">#!/bin/sh
 
 set -e
@@ -366,11 +366,11 @@ puppet apply -v init.pp
 ss-display "WordPress ready to go!"
 </target>
                </targets>
-               <packages class="org.hibernate.collection.PersistentBag" />
+               <packages class="org.hibernate.collection.internal.PersistentBag" />
                <prerecipe />
                <recipe />
-               <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
-               <extraDisks class="org.hibernate.collection.PersistentBag" />
+               <cloudImageIdentifiers class="org.hibernate.collection.internal.PersistentBag" />
+               <extraDisks class="org.hibernate.collection.internal.PersistentBag" />
             </image>
          </node>
       </entry>

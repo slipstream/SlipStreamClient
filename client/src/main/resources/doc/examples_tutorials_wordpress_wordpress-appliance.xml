@@ -1,5 +1,5 @@
-<imageModule category="Image" creation="2013-11-16 08:43:14.5 CET" deleted="false" description="installs and configures WordPress using Puppet" imageId="MwetUnCvDFNFA1CyHrqTb6c5kQk" isBase="false" lastModified="2013-11-24 11:46:55.637 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/wordpress" platform="ubuntu" shortName="wordpress-appliance" version="81">
-   <parameters class="org.hibernate.collection.PersistentMap">
+<imageModule category="Image" creation="2013-11-16 08:43:14.5 CET" deleted="false" description="installs and configures WordPress using Puppet" isBase="false" lastModified="2013-11-24 11:46:55.637 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/wordpress" platform="ubuntu" shortName="wordpress-appliance" version="81">
+   <parameters class="org.hibernate.collection.internal.PersistentMap">
       <entry>
          <string>stratuslab.disks.bus.type</string>
          <parameter category="stratuslab" class="com.sixsq.slipstream.persistence.ModuleParameter" description="VM disks bus type" isSet="true" mandatory="true" name="stratuslab.disks.bus.type" readonly="false" type="Enum">
@@ -223,7 +223,7 @@
       <string>default</string>
    </cloudNames>
    <runs />
-   <targets class="org.hibernate.collection.PersistentBag">
+   <targets class="org.hibernate.collection.internal.PersistentSet">
       <target name="execute" runInBackground="false">#!/bin/sh
 
 set -e
@@ -294,9 +294,8 @@ ss-set ss:url.service "http://${hname}"
 
 </target>
    </targets>
-   <packages class="org.hibernate.collection.PersistentBag" />
+   <packages class="org.hibernate.collection.internal.PersistentSet" />
    <prerecipe />
    <recipe />
-   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
-   <extraDisks class="org.hibernate.collection.PersistentBag" />
+   <cloudImageIdentifiers class="org.hibernate.collection.internal.PersistentSet" />
 </imageModule>

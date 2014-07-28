@@ -1,5 +1,5 @@
-<imageModule category="Image" creation="2013-11-16 08:43:51.658 CET" deleted="false" description="Apache web server appliance with custom landing page." imageId="MwetUnCvDFNFA1CyHrqTb6c5kQk" isBase="false" lastModified="2013-11-24 11:46:54.916 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="77">
-   <parameters class="org.hibernate.collection.PersistentMap">
+<imageModule category="Image" creation="2013-11-16 08:43:51.658 CET" deleted="false" description="Apache web server appliance with custom landing page." isBase="false" lastModified="2013-11-24 11:46:54.916 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="77">
+   <parameters class="org.hibernate.collection.internal.PersistentMap">
       <entry>
          <string>port</string>
          <parameter category="Output" class="com.sixsq.slipstream.persistence.ModuleParameter" description="Port" isSet="true" mandatory="false" name="port" readonly="false" type="String">
@@ -130,7 +130,7 @@
       <string>default</string>
    </cloudNames>
    <runs />
-   <targets class="org.hibernate.collection.PersistentBag">
+   <targets class="org.hibernate.collection.internal.PersistentSet">
       <target name="execute" runInBackground="false">#!/bin/sh -xe
 apt-get update -y
 apt-get install -y apache2
@@ -148,9 +148,8 @@ ss-set ready true</target>
 cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
 cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR</target>
    </targets>
-   <packages class="org.hibernate.collection.PersistentBag" />
+   <packages class="org.hibernate.collection.internal.PersistentSet" />
    <prerecipe />
    <recipe />
-   <cloudImageIdentifiers class="org.hibernate.collection.PersistentBag" />
-   <extraDisks class="org.hibernate.collection.PersistentBag" />
+   <cloudImageIdentifiers class="org.hibernate.collection.internal.PersistentSet" />
 </imageModule>
