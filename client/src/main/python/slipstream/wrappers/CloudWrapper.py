@@ -83,7 +83,8 @@ class CloudWrapper(BaseWrapper):
             self.cloudProxy.stop_vms_by_ids(ids)
 
         instance_names_removed = node_instances_to_stop.keys()
-        self.set_scale_state_on_node_instances(instance_names_removed, self.SCALE_STATE_REMOVED)
+        self.set_scale_state_on_node_instances(instance_names_removed,
+                                               self.SCALE_STATE_REMOVED)
 
         # Cache instance names that are to be set as 'gone' at Ready state.
         self._instance_names_to_be_gone = instance_names_removed
@@ -91,21 +92,22 @@ class CloudWrapper(BaseWrapper):
     def set_removed_instances_as_gone(self):
         '''Using cached list of instance names that were set as 'removed'.
         '''
-        self.set_scale_state_on_node_instances(self._instance_names_to_be_gone, self.SCALE_STATE_GONE)
+        self.set_scale_state_on_node_instances(self._instance_names_to_be_gone,
+                                               self.SCALE_STATE_GONE)
         self._instance_names_to_be_gone = {}
 
     def stopCreator(self):
         if self.need_to_stop_images(True):
             creator_id = self.cloudProxy.get_creator_vm_id()
             if creator_id:
-                if not self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_VAPP):
+                if not self._is_vapp():
                     self.cloudProxy.stop_vms_by_ids([creator_id])
-                elif not self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
+                elif not self._is_build_in_single_vapp():
                     self.cloudProxy.stop_vapps_by_ids([creator_id])
 
     def stopNodes(self):
         if self.need_to_stop_images():
-            if not self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_VAPP):
+            if not self._is_vapp():
                 self.cloudProxy.stop_deployment()
             self.imagesStopped = True
 
@@ -119,27 +121,27 @@ class CloudWrapper(BaseWrapper):
         if self.need_to_stop_images(True):
             orch_id = self.get_cloud_instance_id()
 
-            if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_VAPP):
-                if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-                    if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
+            if self._is_vapp():
+                if self._orchestrator_can_kill_itself_or_its_vapp():
+                    if self._is_build_in_single_vapp():
                         self.cloudProxy.stop_deployment()
                     else:
                         self.cloudProxy.stop_vapps_by_ids([orch_id])
                 else:
                     self.terminate_run_server_side()
             else:
-                if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+                if self._orchestrator_can_kill_itself_or_its_vapp():
                     self.cloudProxy.stop_vms_by_ids([orch_id])
                 else:
                     self.terminate_run_server_side()
 
     def stopOrchestratorDeployment(self):
-        if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_VAPP) and self.need_to_stop_images():
-            if self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+        if self._is_vapp() and self.need_to_stop_images():
+            if self._orchestrator_can_kill_itself_or_its_vapp():
                 self.cloudProxy.stop_deployment()
             else:
                 self.terminate_run_server_side()
-        elif self.need_to_stop_images() and not self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
+        elif self.need_to_stop_images() and not self._orchestrator_can_kill_itself_or_its_vapp():
             self.terminate_run_server_side()
         else:
             orch_id = self.get_cloud_instance_id()
@@ -147,6 +149,17 @@ class CloudWrapper(BaseWrapper):
 
     def terminate_run_server_side(self):
         self.clientSlipStream.terminate_run()
+
+    def _is_build_in_single_vapp(self):
+        return self.cloudProxy.has_capability(
+            self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP)
+
+    def _is_vapp(self):
+        return self.cloudProxy.has_capability(self.cloudProxy.CAPABILITY_VAPP)
+
+    def _orchestrator_can_kill_itself_or_its_vapp(self):
+        return self.cloudProxy.has_capability(
+            self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
         runParameters = self.get_run_parameters()
