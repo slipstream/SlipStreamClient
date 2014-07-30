@@ -22,6 +22,7 @@ import os
 import slipstream.util as util
 import slipstream.exceptions.Exceptions as Exceptions
 
+from slipstream.util import deprecated
 from slipstream.UserInfo import UserInfo
 from slipstream.HttpClient import HttpClient
 from slipstream.NodeInstance import NodeInstance
