@@ -95,7 +95,7 @@ class MainProgram(CommandBase):
                 ids.remove(id)
 
     def _retrieveModuleAsXml(self, client, module):
-        uri = util.MODULE_URL_PATH
+        uri = util.MODULE_RESOURCE_PATH
         uri += '/' + module
 
         url = self.options.endpoint + uri
