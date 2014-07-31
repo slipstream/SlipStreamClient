@@ -306,15 +306,16 @@ def uuid():
     return str(uuidModule.uuid4())
 
 
-def printDetail(message, verboseLevel=1, verboseThreshold=1):
+def printDetail(message, verboseLevel=1, verboseThreshold=1, timestamp=True):
     if verboseLevel >= verboseThreshold:
-        printAndFlush('\n    %s\n' % message)
+        printAndFlush('\n    %s\n' % message, timestamp=timestamp)
 
 
 def _printDetail(message, kwargs={}):
     verboseLevel = _extractVerboseLevel(kwargs)
     verboseThreshold = _extractVerboseThreshold(kwargs)
-    printDetail(message, verboseLevel, verboseThreshold)
+    timestamp = _extractTimestamp(kwargs)
+    printDetail(message, verboseLevel, verboseThreshold, timestamp)
 
 
 def _extractVerboseLevel(kwargs):
@@ -323,6 +324,10 @@ def _extractVerboseLevel(kwargs):
 
 def _extractVerboseThreshold(kwargs):
     return _extractAndDeleteKey('verboseThreshold', 2, kwargs)
+
+
+def _extractTimestamp(kwargs):
+    return _extractAndDeleteKey('timestamp', False, kwargs)
 
 
 def _extractAndDeleteKey(key, default, dictionary):
@@ -345,8 +350,9 @@ def printStep(message):
     printAndFlush('\n==== %s\n' % message)
 
 
-def printAndFlush(message):
-    message = _prepend_current_time_to_message(message)
+def printAndFlush(message, timestamp=True):
+    if timestamp:
+        message = _prepend_current_time_to_message(message)
     output = _get_print_stream()
     output.flush()
     _print(output, message)

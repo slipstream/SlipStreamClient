@@ -54,15 +54,14 @@ class NodeDeploymentExecutor(MachineExecutor):
 
             self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_CREATED)
 
-        util.printStep('Getting deployment targets')
+        util.printStep('Getting execution targets')
 
         self.targets = self.wrapper.getTargets()
 
-        util.printDetail('Deployment targets:')
+        util.printDetail('Available execution targets:')
         for target, script in self.targets.items():
-            util.printAndFlush('-' * 25)
             util.printDetail('Target: %s' % target)
-            util.printDetail('Script:\n%s\n' % script[0])
+            util.printDetail('Script:\n%s\n' % script[0], timestamp=False)
 
     @override
     def onExecuting(self):
@@ -144,7 +143,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printDetail("End of the target script")
 
     def _add_ssh_pubkey_if_needed(self):
-        #if util.needToAddSshPubkey():
+        # if util.needToAddSshPubkey():
         self._add_ssh_pubkey()
 
     def _add_ssh_pubkey(self):
