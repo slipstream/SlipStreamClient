@@ -27,7 +27,6 @@ from slipstream.exceptions.Exceptions import TimeoutException, \
     AbortException, TerminalStateException, ExecutionException
 from slipstream import util
 from slipstream.Client import Client
-from slipstream.util import deprecated
 
 
 class MachineExecutor(object):

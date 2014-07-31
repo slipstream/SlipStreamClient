@@ -187,4 +187,3 @@ class BaseWrapper(object):
         '''
         key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
         return self.clientSlipStream.getRuntimeParameter(key)
-
