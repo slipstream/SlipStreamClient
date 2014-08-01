@@ -41,11 +41,6 @@ class NodeInstance(object):
     def __set(self, parameter_name, value):
         self.__parameters[parameter_name] = value
 
-    def __get_image_target(self, attribute_name, default_value=None):
-        return self.__get('%s.%s' %
-                          (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name),
-                          default_value)
-
     def get_image_attribute(self, attribute_name, default_value=None):
         return self.__get('%s.%s' %
                           (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name),
@@ -77,7 +72,7 @@ class NodeInstance(object):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
 
     def get_image_id(self):
-        return self.__get('image.id')
+        return self.get_image_attribute('id')
 
     def get_image_resource_uri(self):
         return self.get_image_attribute('resourceUri')
@@ -116,13 +111,13 @@ class NodeInstance(object):
         return self.__parameters.get(NodeDecorator.SCALE_STATE_KEY)
 
     def get_prerecipe(self):
-        return self.__get_image_target('prerecipe', '')
+        return self.get_image_attribute('prerecipe', '')
 
     def get_recipe(self):
-        return self.__get_image_target('recipe', '')
+        return self.get_image_attribute('recipe', '')
 
     def get_packages(self):
-        return self.__get_image_target('packages', [])
+        return self.get_image_attribute('packages', [])
 
     def get_username(self, default_value=None):
         return self.get_image_attribute('loginUser', default_value)
