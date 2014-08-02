@@ -92,9 +92,9 @@ class SlipStreamHttpClient(object):
         _, content = self._httpGet(url, 'application/xml')
         return content
 
-    def getNodeDeploymentTargets(self):
+    def get_node_deployment_targets(self):
         self._retrieveAndSetRun()
-        return DomExtractor.getDeploymentTargets(self.run_dom,
+        return DomExtractor.get_deployment_targets(self.run_dom,
                                                  self._getGenericNodename())
 
     def _extractModuleResourceUri(self, run):
@@ -107,8 +107,9 @@ class SlipStreamHttpClient(object):
         nodes_instances = {}
 
         self._retrieveAndSetRun()
-        nodes_instances_runtime_parameters = DomExtractor.extract_nodes_instances_runtime_parameters(self.run_dom,
-                                                                                                     cloud_service_name)
+        nodes_instances_runtime_parameters = \
+            DomExtractor.extract_nodes_instances_runtime_parameters(
+                self.run_dom, cloud_service_name)
 
         for node_instance_name, node_instance_runtime_parameters in nodes_instances_runtime_parameters.items():
 
@@ -130,17 +131,11 @@ class SlipStreamHttpClient(object):
         'Nodename w/o multiplicity'
         return self.nodename.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
 
-    def getRunCategory(self):
-        return self._getRunCategory()
-
-    def _getRunCategory(self):
+    def get_run_category(self):
         self._retrieveAndSetRun()
         return DomExtractor.extractCategoryFromRun(self.run_dom)
 
-    def getRunType(self):
-        return self._getRunType()
-
-    def _getRunType(self):
+    def get_run_type(self):
         self._retrieveAndSetRun()
         return DomExtractor.extractTypeFromRun(self.run_dom)
 
@@ -265,6 +260,9 @@ class SlipStreamHttpClient(object):
 
 class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
+    EXTRADISK_VOLATILE_KEY = EXTRADISK_PREFIX + '.volatile'
+
+    PATH_TO_NODE_ON_RUN = 'module/nodes/entry/node'
 
     @staticmethod
     def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
@@ -274,7 +272,11 @@ class DomExtractor(object):
         for node_instance_name in run_dom.attrib['nodeNames'].split(','):
             node_instance_name = node_instance_name.strip()
 
-            node_instance = {NodeDecorator.NODE_INSTANCE_NAME_KEY: node_instance_name}
+            if node_instance_name.startswith('orchestrator-'):
+                continue
+
+            node_instance = {}
+            node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY] = node_instance_name
 
             query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
             for rtp in run_dom.findall(query):
@@ -314,7 +316,7 @@ class DomExtractor(object):
         if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
             image = run_dom.find('module')
         else:
-            for node in run_dom.findall('module/nodes/entry/node'):
+            for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
                 if node.get('name') == nodename:
                     image = node.find('image')
 
@@ -329,7 +331,7 @@ class DomExtractor(object):
         if category == NodeDecorator.IMAGE:
             targets = DomExtractor.get_build_targets(image_dom)
         elif category == NodeDecorator.DEPLOYMENT:
-            targets = DomExtractor.getDeploymentTargetsFromImageDom(image_dom)
+            targets = DomExtractor.get_deployment_targets_from_image(image_dom)
         else:
             raise Exceptions.ClientError("Unknown category: '%s'. Possible values: %s" %
                                          (category, [NodeDecorator.IMAGE, NodeDecorator.DEPLOYMENT]))
@@ -341,7 +343,7 @@ class DomExtractor(object):
         return run_dom.find('module').get('category')
 
     @staticmethod
-    def getExtraDisksFromImageDom(image_dom):
+    def get_extra_disks_from_image(image_dom):
         extra_disks = {}
 
         for entry in image_dom.findall('parameters/entry'):
@@ -383,14 +385,14 @@ class DomExtractor(object):
         return dom.attrib
 
     @staticmethod
-    def get_build_targets(dom):
+    def get_build_targets(run_dom):
         targets = {}
 
         for target in ['prerecipe', 'recipe']:
-            targets[target] = DomExtractor.get_element_value_from_element_tree(dom, target)
+            targets[target] = DomExtractor.get_element_value_from_element_tree(run_dom, target)
 
         targets['packages'] = []
-        packages = dom.findall('packages/package')
+        packages = run_dom.findall('packages/package')
         for package in packages:
             name = package.get('name')
             if name:
@@ -423,21 +425,23 @@ class DomExtractor(object):
         return parameters
 
     @staticmethod
-    def getDeploymentTargets(run_dom, nodename):
-        "Get deployment targets for node with name 'nodename'"
+    def get_deployment_targets(run_dom, nodename):
+        '''Return deployment targets from the image of the node 'nodename'.
+        '''
         module = run_dom.find('module')
 
         if module.get('category') == 'Image':
-            return DomExtractor.getDeploymentTargetsFromImageDom(module)
+            return DomExtractor.get_deployment_targets_from_image(module)
         else:
-            for node in run_dom.findall('module/nodes/entry/node'):
+            for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
                 if node.get('name') == nodename:
-                    return DomExtractor.getDeploymentTargetsFromImageDom(node.find('image'))
+                    return DomExtractor.get_deployment_targets_from_image(node.find('image'))
         return {}
 
     @staticmethod
-    def getDeploymentTargetsFromImageDom(image_dom):
-        "Get deployment targets for the given image."
+    def get_deployment_targets_from_image(image_dom):
+        '''Return deployment targets of the given image.
+        '''
         targets = {}
         for targetNode in image_dom.findall('targets/target'):
             runInBackgroundStr = targetNode.get('runInBackground')

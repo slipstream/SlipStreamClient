@@ -176,7 +176,7 @@ class Client(object):
         util.printDetail(message, self.verboseLevel, self.verboseThreshold)
 
     def getCategory(self):
-        return self.httpClient.getRunCategory()
+        return self.httpClient.get_run_category()
 
     def fail(self, message):
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)

@@ -60,7 +60,7 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         util.printDetail('Available execution targets:')
         for target, script in self.targets.items():
-            util.printDetail('Target: %s' % target)
+            util.printDetail('Target: %s' % target, timestamp=False)
             util.printDetail('Script:\n%s\n' % script[0], timestamp=False)
 
     @override

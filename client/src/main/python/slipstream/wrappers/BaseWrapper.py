@@ -93,11 +93,11 @@ class BaseWrapper(object):
             value = ''
         return (value and True) or False
 
-    def getRunCategory(self):
-        return self.clientSlipStream.getRunCategory()
+    def get_run_category(self):
+        return self.clientSlipStream.get_run_category()
 
-    def getRunType(self):
-        return self.clientSlipStream.getRunType()
+    def get_run_type(self):
+        return self.clientSlipStream.get_run_type()
 
     def _qualifyKey(self, key):
         """Qualify the key, if not already done, with the right nodename"""
@@ -137,7 +137,7 @@ class BaseWrapper(object):
         return self._getNodeName()
 
     def getTargets(self):
-        return self.clientSlipStream.getNodeDeploymentTargets()
+        return self.clientSlipStream.get_node_deployment_targets()
 
     def get_cloud_instance_id(self):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
