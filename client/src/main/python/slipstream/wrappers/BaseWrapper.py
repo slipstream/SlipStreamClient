@@ -181,6 +181,9 @@ class BaseWrapper(object):
             key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + NodeDecorator.SCALE_STATE_KEY
             self.ss_client.setRuntimeParameter(key, scale_state)
 
+    def is_scale_state_operational(self):
+        return self.SCALE_STATE_OPERATIONAL == self.get_scale_state()
+
     def is_scale_state_creating(self):
         return self.SCALE_STATE_CREATING == self.get_scale_state()
 
@@ -218,7 +221,7 @@ class BaseWrapper(object):
         Return {scale_state: [node_instance_name, ], }
         '''
         states_instances = {}
-        for node_instance_name, node_instance in self._get_nodes_instances():
+        for node_instance_name, node_instance in self._get_nodes_instances().iteritems():
             state = node_instance.get_scale_state()
             if not self._is_scale_state_terminal(state):
                 state = self._get_effective_scale_state(node_instance_name)

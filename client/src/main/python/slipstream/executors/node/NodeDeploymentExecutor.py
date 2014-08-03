@@ -69,25 +69,15 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printAction('Executing')
 
         if not self.wrapper.is_scale_state_operational():
-            self._executeTarget('execute')
+            self._execute_target('execute')
         else:
-            scale_action = self.wrapper.get_global_scale_action()
-            if scale_action:
-                target = self._get_target_on_scale_action(scale_action)
-                if target:
-                    self._executeTarget(target)
-                else:
-                    util.printDetail("Deployment is scaling. No target to "
-                                     "execute on action %s" % scale_action)
-            else:
-                util.printDetail("WARNING: deployment is scaling, but no "
-                                 "scaling action defined.")
+            self._execute_scale_action_target()
 
     @override
     def onSendingReports(self):
         util.printAction('Sending report')
         try:
-            self._executeTarget('report')
+            self._execute_target('report')
         except ExecutionException as ex:
             util.printDetail("Failed executing 'report' with: \n%s" % str(ex),
                              verboseLevel=self.verboseLevel,
@@ -108,7 +98,21 @@ class NodeDeploymentExecutor(MachineExecutor):
     def _get_target_on_scale_action(self, action):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
 
-    def _executeTarget(self, target):
+    def _execute_scale_action_target(self):
+        scale_action = self.wrapper.get_global_scale_action()
+        if scale_action:
+            # TODO: Add local scale actions (ondiskresize, etc)
+            target = self._get_target_on_scale_action(scale_action)
+            if target:
+                self._execute_target(target)
+            else:
+                util.printDetail("Deployment is scaling. No target to "
+                                 "execute on action %s" % scale_action)
+        else:
+            util.printDetail("WARNING: deployment is scaling, but no "
+                             "scaling action defined.")
+
+    def _execute_target(self, target):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
             self._run_target_script(self.targets[target][0])
