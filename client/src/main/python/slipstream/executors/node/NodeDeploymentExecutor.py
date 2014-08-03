@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -43,6 +43,11 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
         self.targets = {}
 
+        self.SCALE_ACTION_TO_TARGET = \
+            {self.wrapper.SCALE_ACTION_CREATION: 'onvmadd',
+             self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove',
+             self.wrapper.SCALE_ACTION_DISK_RESIZE: 'ondiskresize'}
+
     @override
     def onProvisioning(self):
         super(NodeDeploymentExecutor, self).onProvisioning()
@@ -62,7 +67,21 @@ class NodeDeploymentExecutor(MachineExecutor):
     @override
     def onExecuting(self):
         util.printAction('Executing')
-        self._executeTarget('execute')
+
+        if not self.wrapper.is_scale_state_operational():
+            self._executeTarget('execute')
+        else:
+            scale_action = self.wrapper.get_global_scale_action()
+            if scale_action:
+                target = self._get_target_on_scale_action(scale_action)
+                if target:
+                    self._executeTarget(target)
+                else:
+                    util.printDetail("Deployment is scaling. No target to "
+                                     "execute on action %s" % scale_action)
+            else:
+                util.printDetail("WARNING: deployment is scaling, but no "
+                                 "scaling action defined.")
 
     @override
     def onSendingReports(self):
@@ -86,6 +105,9 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).onReady()
         self.wrapper.set_scale_state_operational()
 
+    def _get_target_on_scale_action(self, action):
+        return self.SCALE_ACTION_TO_TARGET.get(action, None)
+
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
@@ -93,7 +115,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             sys.stdout.flush()
             sys.stderr.flush()
         else:
-            util.printAndFlush('Nothing to do\n')
+            util.printAndFlush('Nothing to do on target: %s\n' % target)
 
     def _run_target_script(self, target_script):
         if not target_script:

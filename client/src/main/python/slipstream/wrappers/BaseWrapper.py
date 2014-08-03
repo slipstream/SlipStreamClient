@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -18,10 +18,11 @@
 
 import traceback
 
+from slipstream import util
 from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 from slipstream.NodeDecorator import NodeDecorator
 from slipstream.exceptions.Exceptions import NotYetSetException
-from slipstream import util
+from slipstream.exceptions import Exceptions
 
 
 class NodeInfoPublisher(SlipStreamHttpClient):
@@ -51,11 +52,25 @@ class BaseWrapper(object):
 
     SCALE_STATE_CREATING = 'creating'
     SCALE_STATE_CREATED = 'created'
+
+    SCALE_STATE_DISK_RESIZING = 'disk_resizing'
+    SCALE_STATE_DISK_RESIZED = 'disk_resized'
+
     SCALE_STATE_OPERATIONAL = 'operational'
 
     SCALE_STATE_REMOVING = 'removing'
     SCALE_STATE_REMOVED = 'removed'
     SCALE_STATE_GONE = 'gone'
+
+    SCALE_STATES_TERMINAL = (SCALE_STATE_OPERATIONAL, SCALE_STATE_GONE)
+
+    SCALE_ACTION_CREATION = 'creation'
+    SCALE_ACTION_REMOVAL = 'removal'
+    SCALE_ACTION_DISK_RESIZE = 'disk_resize'
+
+    STATE_TO_ACTION = {SCALE_STATE_CREATED: SCALE_ACTION_CREATION,
+                       SCALE_STATE_REMOVED: SCALE_ACTION_REMOVAL,
+                       SCALE_STATE_DISK_RESIZED: SCALE_ACTION_DISK_RESIZE}
 
     def __init__(self, configHolder):
         self.ss_client = SlipStreamHttpClient(configHolder)
@@ -65,7 +80,7 @@ class BaseWrapper(object):
 
         self._user_info = None
         self._run_parameters = None
-        self._nodes_info = {}
+        self._nodes_instances = {}
 
     def get_slipstream_client(self):
         return self.ss_client
@@ -86,12 +101,12 @@ class BaseWrapper(object):
 
     def getState(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
-        return self.ss_client.getRuntimeParameter(key)
+        return self._get_runtime_parameter(key)
 
     def isAbort(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
         try:
-            value = self.ss_client.getRuntimeParameter(key, True)
+            value = self._get_runtime_parameter(key, True)
         except NotYetSetException:
             value = ''
         return (value and True) or False
@@ -144,11 +159,14 @@ class BaseWrapper(object):
 
     def get_cloud_instance_id(self):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
-        return self.ss_client.getRuntimeParameter(key)
+        return self._get_runtime_parameter(key)
 
     def get_user_ssh_pubkey(self):
         userInfo = self._get_user_info('')
         return userInfo.get_public_keys()
+
+    def _get_runtime_parameter(self, key, ignore_abort=False):
+        self.ss_client.getRuntimeParameter(key, ignoreAbort=ignore_abort)
 
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
         # pylint: disable=unused-argument
@@ -166,6 +184,9 @@ class BaseWrapper(object):
     def is_scale_state_creating(self):
         return self.SCALE_STATE_CREATING == self.get_scale_state()
 
+    def _is_scale_state_terminal(self, state):
+        return state in self.SCALE_STATES_TERMINAL
+
     def set_scale_state_operational(self):
         self.set_scale_state(self.SCALE_STATE_OPERATIONAL)
 
@@ -182,13 +203,54 @@ class BaseWrapper(object):
         '''Get scale state for this node instances.
         '''
         key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
-        return self.ss_client.getRuntimeParameter(key)
+        return self._get_runtime_parameter(key)
 
-#     def _get_current_not_operational_scale_states(self):
-#         '''Return {node_instance_name: scale_state, } dictionary.
-#         '''
-#         node_instances_not_op = {}
-#         for name, instance in self.ss_client.get_nodes_instances().iteritems():
+    def _get_effective_scale_state(self, node_instance_name):
+        '''Get effective node instance scale state from the server.
+        '''
+        key = node_instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+            NodeDecorator.SCALE_STATE_KEY
+        return self._get_runtime_parameter(key)
+
+    def _get_effective_scale_states(self):
+        '''Extract node instances in scaling states and update their effective
+        states from the server.
+        Return {scale_state: [node_instance_name, ], }
+        '''
+        states_instances = {}
+        for node_instance_name, node_instance in self._get_nodes_instances():
+            state = node_instance.get_scale_state()
+            if not self._is_scale_state_terminal(state):
+                state = self._get_effective_scale_state(node_instance_name)
+                if state in states_instances:
+                    states_instances[state].append(node_instance_name)
+                else:
+                    states_instances[state] = [node_instance_name, ]
+        return states_instances
+
+    def _get_global_scale_state(self):
+        '''Return scale state all the node instances are in, or None.
+        Raise ExecutionException if there are instances in different states.
+        For consistency reasons, only single scalability action is allowed.
+        '''
+        states_node_instances = self._get_effective_scale_states()
+
+        if len(states_node_instances) == 0:
+            return None
+
+        if len(states_node_instances) == 1:
+            return states_node_instances.keys()[0]
+
+        msg = "Inconsistent scaling situation. Single scaling action allowed," \
+            " found: %s" % states_node_instances
+        raise Exceptions.ExecutionException(msg)
+
+    def get_global_scale_action(self):
+        state = self._get_global_scale_state()
+        return self._state_to_action(state)
+
+    def _state_to_action(self, state):
+        return self.STATE_TO_ACTION.get(state, None)
 
     def get_node_instances_in_scale_state(self, scale_state, cloud_service_name=None):
         instances = {}
@@ -207,14 +269,14 @@ class BaseWrapper(object):
     # Local cache of NodesInstances, Run, Run Parameters and User.
     #
     def discard_nodes_info_locally(self):
-        self._nodes_info = {}
+        self._nodes_instances = {}
 
     def _get_nodes_instances(self, cloud_service_name=None):
         '''Return dict {<node-name>: {<runtime-param-name>: <value>, }, }
         '''
-        if not self._nodes_info:
-            self._nodes_info = self.ss_client.get_nodes_instances(cloud_service_name)
-        return self._nodes_info
+        if not self._nodes_instances:
+            self._nodes_instances = self.ss_client.get_nodes_instances(cloud_service_name)
+        return self._nodes_instances
 
     def discard_run_locally(self):
         self.ss_client.discard_run()
