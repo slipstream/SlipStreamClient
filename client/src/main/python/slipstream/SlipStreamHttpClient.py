@@ -278,10 +278,13 @@ class DomExtractor(object):
             node_instance = {}
             node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY] = node_instance_name
 
-            query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
+            # Unfortunately, this doesn't work on Python 2.6.6
+            # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
+            query = "runtimeParameters/entry/runtimeParameter"
             for rtp in run_dom.findall(query):
-                key = DomExtractor._get_key_from_runtimeparameter(rtp)
-                node_instance[key] = rtp.text
+                if rtp.get('group') == node_instance_name:
+                    key = DomExtractor._get_key_from_runtimeparameter(rtp)
+                    node_instance[key] = rtp.text
             nodes_instances[node_instance_name] = node_instance
 
         if cloud_service_name is not None:
