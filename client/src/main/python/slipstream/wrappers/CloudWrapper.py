@@ -28,7 +28,6 @@ class CloudWrapper(BaseWrapper):
     def __init__(self, configHolder):
         super(CloudWrapper, self).__init__(configHolder)
 
-        self._nodes_info = {}
         self._instance_names_to_be_gone = []
 
         # Explicitly call initCloudConnector() to set the cloud connector.
@@ -40,8 +39,8 @@ class CloudWrapper(BaseWrapper):
         self.cloudProxy = CloudConnectorFactory.createConnector(configHolder or self.configHolder)
 
     def build_image(self):
-        self.cloudProxy.set_slipstream_client_as_listener(self.clientSlipStream)
-        user_info = self.get_user_info(self.cloudProxy.get_cloud_service_name())
+        self.cloudProxy.set_slipstream_client_as_listener(self.get_slipstream_client())
+        user_info = self._get_user_info(self._get_cloud_service_name())
 
         node_instance = self._get_node_instances_to_start().get(NodeDecorator.MACHINE_NAME)
         if node_instance is None:
@@ -53,26 +52,17 @@ class CloudWrapper(BaseWrapper):
         self._update_slipstream_image(node_instance, new_id)
 
     def start_node_instances(self):
-        user_info = self.get_user_info(self.cloudProxy.get_cloud_service_name())
+        user_info = self._get_user_info(self._get_cloud_service_name())
         nodes_instances = self._get_node_instances_to_start()
         self.cloudProxy.start_nodes_and_clients(user_info, nodes_instances)
 
     def _get_node_instances_to_start(self):
-        return self._get_node_instances_in_scale_state(self.SCALE_STATE_CREATING)
+        return self.get_node_instances_in_scale_state(
+            self.SCALE_STATE_CREATING, self._get_cloud_service_name())
 
     def _get_node_instances_to_stop(self):
-        return self._get_node_instances_in_scale_state(self.SCALE_STATE_REMOVING)
-
-    def _get_node_instances_in_scale_state(self, scale_state):
-        instances = {}
-        cloud_service_name = self.cloudProxy.get_cloud_service_name()
-
-        nodes_instances = self._get_nodes_instances(cloud_service_name)
-        for instance_name, instance in nodes_instances.iteritems():
-            if instance.get_scale_state() == scale_state:
-                instances[instance_name] = instance
-
-        return instances
+        return self.get_node_instances_in_scale_state(
+            self.SCALE_STATE_REMOVING, self._get_cloud_service_name())
 
     def stop_node_instances(self):
         ids = []
@@ -128,27 +118,24 @@ class CloudWrapper(BaseWrapper):
                     else:
                         self.cloudProxy.stop_vapps_by_ids([orch_id])
                 else:
-                    self.terminate_run_server_side()
+                    self._terminate_run_server_side()
             else:
                 if self._orchestrator_can_kill_itself_or_its_vapp():
                     self.cloudProxy.stop_vms_by_ids([orch_id])
                 else:
-                    self.terminate_run_server_side()
+                    self._terminate_run_server_side()
 
     def stopOrchestratorDeployment(self):
         if self._is_vapp() and self.need_to_stop_images():
             if self._orchestrator_can_kill_itself_or_its_vapp():
                 self.cloudProxy.stop_deployment()
             else:
-                self.terminate_run_server_side()
+                self._terminate_run_server_side()
         elif self.need_to_stop_images() and not self._orchestrator_can_kill_itself_or_its_vapp():
-            self.terminate_run_server_side()
+            self._terminate_run_server_side()
         else:
             orch_id = self.get_cloud_instance_id()
             self.cloudProxy.stop_vms_by_ids([orch_id])
-
-    def terminate_run_server_side(self):
-        self.clientSlipStream.terminate_run()
 
     def _is_build_in_single_vapp(self):
         return self.cloudProxy.has_capability(
@@ -162,7 +149,7 @@ class CloudWrapper(BaseWrapper):
             self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
-        runParameters = self.get_run_parameters()
+        runParameters = self._get_run_parameters()
 
         onErrorRunForever = runParameters.get('General.On Error Run Forever', 'false')
         onSuccessRunForever = runParameters.get('General.On Success Run Forever', 'false')
@@ -179,20 +166,9 @@ class CloudWrapper(BaseWrapper):
     def _update_slipstream_image(self, node_instance, new_image_id):
         util.printStep("Updating SlipStream image run")
 
-        cloud_service_name = self.cloudProxy.get_cloud_service_name()
-        image_resource_uri = node_instance.get_image_resource_uri()
+        url = '%s/%s' % (node_instance.get_image_resource_uri(),
+                         self._get_cloud_service_name())
+        self._put_new_image_id(url, new_image_id)
 
-        url = '%s/%s' % (image_resource_uri, cloud_service_name)
-        self.clientSlipStream.put_new_image_id(url, new_image_id)
-
-    def discard_nodes_info_locally(self):
-        self._nodes_info = {}
-
-    def _get_nodes_instances(self, cloud_service_name):
-        '''Return dict {<node-name>: {<runtime-param-name>: <value>, }, }
-        '''
-        if not self._nodes_info:
-            self._nodes_info = self.clientSlipStream.get_nodes_instances(cloud_service_name)
-        return self._nodes_info
-
-
+    def _get_cloud_service_name(self):
+        return self.cloudProxy.get_cloud_service_name()

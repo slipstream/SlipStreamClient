@@ -99,10 +99,13 @@ class MachineExecutor(object):
     def onProvisioning(self):
         util.printAction('Provisioning')
 
-        self._discard_run_locally()
+        self._clean_local_cache()
 
-    def _discard_run_locally(self):
+    def _clean_local_cache(self):
         self.wrapper.discard_run_locally()
+        self.wrapper.discard_user_info_locally()
+        self.wrapper.discard_nodes_info_locally()
+        self.wrapper.discard_run_parameters_locally()()
 
     def onExecuting(self):
         util.printAction('Executing')
@@ -120,7 +123,7 @@ class MachineExecutor(object):
             raise RuntimeError("Failed to bundle reports:\n%s" % e)
         archive.close()
 
-        self.wrapper.clientSlipStream.sendReport(reportFileName)
+        self.wrapper.send_report(reportFileName)
 
     def onReady(self):
         util.printAction('Ready')

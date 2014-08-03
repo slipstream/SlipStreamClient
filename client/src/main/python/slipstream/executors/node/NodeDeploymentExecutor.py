@@ -47,15 +47,11 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onProvisioning(self):
         super(NodeDeploymentExecutor, self).onProvisioning()
 
-        scale_state = self.wrapper.get_scale_state()
-
-        if scale_state == self.wrapper.SCALE_STATE_CREATING:
+        if self.wrapper.is_scale_state_creating():
             self._add_ssh_pubkey_if_needed()
-
-            self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_CREATED)
+            self.wrapper.set_scale_state_created()
 
         util.printStep('Getting execution targets')
-
         self.targets = self.wrapper.getTargets()
 
         util.printDetail('Available execution targets:')
@@ -88,7 +84,7 @@ class NodeDeploymentExecutor(MachineExecutor):
     @override
     def onReady(self):
         super(NodeDeploymentExecutor, self).onReady()
-        self.wrapper.set_scale_state(self.wrapper.SCALE_STATE_OPERATIONAL)
+        self.wrapper.set_scale_state_operational()
 
     def _executeTarget(self, target):
         util.printStep("Executing target '%s'" % target)

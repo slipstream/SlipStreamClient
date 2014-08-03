@@ -57,14 +57,14 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         self.configHolder = None
         shutil.rmtree('%s/.cache/' % os.getcwd(), ignore_errors=True)
 
-    def test_getCloudName(self):
+    def test_get_cloud_name(self):
         for module_name in self.get_cloudconnector_modulenames():
             setattr(self.configHolder, CONFIGPARAM_CONNECTOR_MODULE_NAME, module_name)
             setattr(self.configHolder, KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT)
             cw = CloudWrapper(self.configHolder)
             cw.initCloudConnector()
 
-            assert cw.cloudProxy.get_cloud_service_name() == 'Test'
+            assert cw._get_cloud_service_name() == 'Test'
 
     def test_putImageId(self):
         # pylint: disable=protected-access
@@ -74,10 +74,10 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw = CloudWrapper(self.configHolder)
         cw.initCloudConnector()
 
-        cw.clientSlipStream.httpClient._call = Mock(return_value=('', ''))
+        cw.ss_client.httpClient._call = Mock(return_value=('', ''))
 
         cw._update_slipstream_image(NodeInstance({'image.resourceUri': 'module/Name'}), 'ABC')
-        cw.clientSlipStream.httpClient._call.assert_called_with(
+        cw.ss_client.httpClient._call.assert_called_with(
             '%s/module/Name/Test' % self.serviceurl,
             'PUT', 'ABC', 'application/xml',
             'application/xml', retry_number=5)

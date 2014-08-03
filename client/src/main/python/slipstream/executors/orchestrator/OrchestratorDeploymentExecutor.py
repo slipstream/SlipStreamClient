@@ -32,8 +32,6 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def onProvisioning(self):
         super(OrchestratorDeploymentExecutor, self).onProvisioning()
 
-        self._cleanup_provisioning_info()
-
         try:
             util.printStep('Starting instances')
             self.wrapper.start_node_instances()
@@ -70,7 +68,3 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         self.wrapper.complete_state()
 
         self._killItself()
-
-    def _cleanup_provisioning_info(self):
-        self.wrapper.discard_user_info_locally()
-        self.wrapper.discard_nodes_info_locally()

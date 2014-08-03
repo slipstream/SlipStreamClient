@@ -86,4 +86,4 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         self.wrapper.stopCreator()
 
     def _complete_machine_state(self):
-        self.wrapper.clientSlipStream.complete_state(NodeDecorator.MACHINE_NAME)
+        self.wrapper.complete_state(NodeDecorator.MACHINE_NAME)
