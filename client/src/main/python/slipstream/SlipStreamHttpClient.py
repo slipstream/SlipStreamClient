@@ -22,7 +22,6 @@ import os
 import slipstream.util as util
 import slipstream.exceptions.Exceptions as Exceptions
 
-from slipstream.util import deprecated
 from slipstream.UserInfo import UserInfo
 from slipstream.HttpClient import HttpClient
 from slipstream.NodeInstance import NodeInstance
@@ -200,7 +199,7 @@ class SlipStreamHttpClient(object):
 
     def get_run_parameters(self):
         self._retrieveAndSetRun()
-        return DomExtractor.extractRunParametersFromRun(self.run_dom)
+        return DomExtractor.extract_run_parameters_from_run(self.run_dom)
 
     def getRuntimeParameter(self, key, ignoreAbort=False):
 
@@ -263,6 +262,7 @@ class DomExtractor(object):
     EXTRADISK_VOLATILE_KEY = EXTRADISK_PREFIX + '.volatile'
 
     PATH_TO_NODE_ON_RUN = 'module/nodes/entry/node'
+    PATH_TO_PARAMETER = 'parameters/entry/parameter'
 
     @staticmethod
     def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
@@ -272,7 +272,7 @@ class DomExtractor(object):
         for node_instance_name in run_dom.attrib['nodeNames'].split(','):
             node_instance_name = node_instance_name.strip()
 
-            if node_instance_name.startswith('orchestrator-'):
+            if NodeDecorator.is_orchestrator_name(node_instance_name):
                 continue
 
             node_instance = {}
@@ -357,22 +357,6 @@ class DomExtractor(object):
         return extra_disks
 
     @staticmethod
-    def getImageCloudParametersFromImageDom(image_dom):
-        cloudParameters = {}
-        parameters = image_dom.findall('parameters/entry/parameter')
-        for param in parameters:
-            category = param.attrib['category']
-            if not category in ('Input', 'Output'):
-                name = param.attrib['name']
-                # extra disks go on the node level
-                if not name.startswith(DomExtractor.EXTRADISK_PREFIX):
-                    if category not in cloudParameters:
-                        cloudParameters.update({category: {}})
-                    cloudParameters[category][name] = param.findtext('value')
-
-        return cloudParameters
-
-    @staticmethod
     def get_element_value_from_element_tree(element_tree, element_name):
         element = element_tree.find(element_name)
         value = getattr(element, 'text', '')
@@ -417,9 +401,9 @@ class DomExtractor(object):
         return run_dom.attrib['cloudServiceName']
 
     @staticmethod
-    def extractRunParametersFromRun(run_dom):
+    def extract_run_parameters_from_run(run_dom):
         parameters = {}
-        for node in run_dom.findall('parameters/entry/parameter'):
+        for node in run_dom.findall(DomExtractor.PATH_TO_PARAMETER):
             value = node.find('value')
             parameters[node.get('name')] = value.text if value is not None else None
         return parameters

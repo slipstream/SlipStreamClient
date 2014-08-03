@@ -25,6 +25,7 @@ from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 from slipstream.SlipStreamHttpClient import DomExtractor
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream import util
+from slipstream.NodeDecorator import NodeDecorator
 
 etree = util.importETree()
 
@@ -87,13 +88,14 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         nodes = DomExtractor.extract_nodes_instances_runtime_parameters(
             RUN_ETREE, CLOUD_NAME)
         self.assertEquals(NODE_INSTANCES_NUM, len(nodes))
+        assert False == any(map(NodeDecorator.is_orchestrator_name, nodes.keys()))
         for node_instance_name, node_instance in nodes.iteritems():
             assert node_instance_name == node_instance['name']
             assert isinstance(node_instance, dict)
             self.assertEquals('myCloud', node_instance['cloudservice'])
             self.assertEquals('false', node_instance['is.orchestrator'])
 
-    def test_getBuildTargetsFromImageModule(self):
+    def test_get_build_targets_from_image_module(self):
         package1 = 'vim-enhanced'
         package2 = 'yum-utils'
         prerecipe = 'echo prerecipe'
@@ -133,30 +135,6 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
             elif node.get('name') == 'apache':
                 assert '1' == extra_disks[DomExtractor.EXTRADISK_VOLATILE_KEY]
 
-    def test_getUserInfoUser(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('')
-        assert 'Test' == userInfo.get_user('firstName')
-        assert 'User' == userInfo.get_user('lastName')
-        assert 'test@sixsq.com' == userInfo.get_user('email')
-
-    def test_getUserInfo(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('StratusLab')
-
-        assert 'test@sixsq.com' == userInfo.get_user('email')
-
-        assert 'cloud.lal.stratuslab.eu' == userInfo.get_cloud('endpoint')
-        assert 'public' == userInfo.get_cloud('ip.type')
-        assert 'ssh-rsa abc' == userInfo.get_general('ssh.public.key')
-
-        assert 'on' == userInfo.get_general('On Error Run Forever')
-        assert '3' == userInfo.get_general('Verbosity Level')
-
     def test_cloud_params_and_network(self):
         client = SlipStreamHttpClient(ConfigHolder(context=self.context,
                                                    config={'foo': 'bar'}))
@@ -182,7 +160,32 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         for nodes_instance in nodes_instances:
             for key in node_keys:
                 if nodes_instances[nodes_instance].is_orchestrator() == 'false':
-                    self.assertTrue(key in nodes_instances[nodes_instance], 'No element %s' % key)
+                    self.assertTrue(key in nodes_instances[nodes_instance],
+                                    'No element %s' % key)
+
+    def test_getUserInfoUser(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        userInfo = client.get_user_info('')
+        assert 'Test' == userInfo.get_user('firstName')
+        assert 'User' == userInfo.get_user('lastName')
+        assert 'test@sixsq.com' == userInfo.get_user('email')
+
+    def test_getUserInfo(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        userInfo = client.get_user_info('StratusLab')
+
+        assert 'test@sixsq.com' == userInfo.get_user('email')
+
+        assert 'cloud.lal.stratuslab.eu' == userInfo.get_cloud('endpoint')
+        assert 'public' == userInfo.get_cloud('ip.type')
+        assert 'ssh-rsa abc' == userInfo.get_general('ssh.public.key')
+
+        assert 'on' == userInfo.get_general('On Error Run Forever')
+        assert '3' == userInfo.get_general('Verbosity Level')
 
 if __name__ == '__main__':
     unittest.main()

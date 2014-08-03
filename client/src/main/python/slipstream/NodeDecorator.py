@@ -16,6 +16,8 @@
  limitations under the License.
 """
 
+import re
+
 RUN_CATEGORY_IMAGE = 'Image'
 RUN_CATEGORY_DEPLOYMENT = 'Deployment'
 KEY_RUN_CATEGORY = 'run_category'
@@ -40,6 +42,7 @@ class NodeDecorator(object):
 
     # Orchestrator name
     orchestratorName = 'orchestrator'
+    ORCHESTRATOR_NODENAME_RE = re.compile('orchestrator(-\w[-\w]*)?$')
 
     # Name given to the machine being built for node state
     MACHINE_NAME = 'machine'
@@ -72,3 +75,7 @@ class NodeDecorator(object):
     DEPLOYMENT = RUN_CATEGORY_DEPLOYMENT
 
     MODULE_RESOURCE_URI = 'moduleResourceUri'
+
+    @staticmethod
+    def is_orchestrator_name(name):
+        return True if NodeDecorator.ORCHESTRATOR_NODENAME_RE.match(name) else False
