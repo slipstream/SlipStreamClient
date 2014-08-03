@@ -63,9 +63,8 @@ class BaseWrapper(object):
         self.ss_client.ignoreAbort = True
         self.configHolder = configHolder
 
-        self._userInfo = None
-        self._imageInfo = None
-        self._runParameters = None
+        self._user_info = None
+        self._run_parameters = None
         self._nodes_info = {}
 
     def get_slipstream_client(self):
@@ -221,20 +220,20 @@ class BaseWrapper(object):
         self.ss_client.discard_run()
 
     def discard_user_info_locally(self):
-        self._userInfo = None
+        self._user_info = None
 
     def _get_user_info(self, cloud_service_name):
-        if self._userInfo is None:
-            self._userInfo = self.ss_client.get_user_info(cloud_service_name)
-        return self._userInfo
+        if self._user_info is None:
+            self._user_info = self.ss_client.get_user_info(cloud_service_name)
+        return self._user_info
 
     def discard_run_parameters_locally(self):
-        self._runParameters = None
+        self._run_parameters = None
 
     def _get_run_parameters(self):
-        if self._runParameters is None:
-            self._runParameters = self.ss_client.get_run_parameters()
-        return self._runParameters
+        if self._run_parameters is None:
+            self._run_parameters = self.ss_client.get_run_parameters()
+        return self._run_parameters
 
     #
     # Helpers
