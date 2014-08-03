@@ -166,7 +166,7 @@ class BaseWrapper(object):
         return userInfo.get_public_keys()
 
     def _get_runtime_parameter(self, key, ignore_abort=False):
-        self.ss_client.getRuntimeParameter(key, ignoreAbort=ignore_abort)
+        return self.ss_client.getRuntimeParameter(key, ignoreAbort=ignore_abort)
 
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
         # pylint: disable=unused-argument

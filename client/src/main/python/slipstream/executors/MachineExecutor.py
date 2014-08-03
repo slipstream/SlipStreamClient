@@ -105,7 +105,7 @@ class MachineExecutor(object):
         self.wrapper.discard_run_locally()
         self.wrapper.discard_user_info_locally()
         self.wrapper.discard_nodes_info_locally()
-        self.wrapper.discard_run_parameters_locally()()
+        self.wrapper.discard_run_parameters_locally()
 
     def onExecuting(self):
         util.printAction('Executing')
