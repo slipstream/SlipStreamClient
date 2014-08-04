@@ -73,9 +73,9 @@ class BaseWrapper(object):
                        SCALE_STATE_DISK_RESIZED: SCALE_ACTION_DISK_RESIZE}
 
     def __init__(self, configHolder):
-        self.ss_client = SlipStreamHttpClient(configHolder)
-        self.ss_client.set_http_max_retries(self.is_mutable() and -5 or 5)
-        self.ss_client.ignoreAbort = True
+        self._ss_client = SlipStreamHttpClient(configHolder)
+        self._ss_client.set_http_max_retries(self.is_mutable() and -5 or 5)
+        self._ss_client.ignoreAbort = True
         self.configHolder = configHolder
 
         self._user_info = None
@@ -83,21 +83,21 @@ class BaseWrapper(object):
         self._nodes_instances = {}
 
     def get_slipstream_client(self):
-        return self.ss_client
+        return self._ss_client
 
     def complete_state(self, node_instance_name=None):
         if not node_instance_name:
             node_instance_name = self._get_node_instance_name()
-        self.ss_client.complete_state(node_instance_name)
+        self._ss_client.complete_state(node_instance_name)
 
     def reset(self):
-        self.ss_client.reset()
+        self._ss_client.reset()
 
     def fail(self, message):
         util.printError('Failing... %s' % message)
         traceback.print_exc()
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
-        self.ss_client.setRuntimeParameter(abort, message)
+        self._ss_client.setRuntimeParameter(abort, message)
 
     def getState(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
@@ -112,10 +112,10 @@ class BaseWrapper(object):
         return (value and True) or False
 
     def get_run_category(self):
-        return self.ss_client.get_run_category()
+        return self._ss_client.get_run_category()
 
     def get_run_type(self):
-        return self.ss_client.get_run_type()
+        return self._ss_client.get_run_type()
 
     def _qualifyKey(self, key):
         """Qualify the key, if not already done, with the right nodename"""
@@ -155,7 +155,7 @@ class BaseWrapper(object):
         return self._get_node_instance_name()
 
     def getTargets(self):
-        return self.ss_client.get_node_deployment_targets()
+        return self._ss_client.get_node_deployment_targets()
 
     def get_cloud_instance_id(self):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
@@ -166,20 +166,20 @@ class BaseWrapper(object):
         return userInfo.get_public_keys()
 
     def _get_runtime_parameter(self, key, ignore_abort=False):
-        return self.ss_client.getRuntimeParameter(key, ignoreAbort=ignore_abort)
+        return self._ss_client.getRuntimeParameter(key, ignoreAbort=ignore_abort)
 
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
         # pylint: disable=unused-argument
         return False
 
     def is_mutable(self):
-        mutable = self.ss_client.get_run_mutable()
+        mutable = self._ss_client.get_run_mutable()
         return util.str2bool(mutable)
 
     def set_scale_state_on_node_instances(self, instance_names, scale_state):
         for instance_name in instance_names:
             key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + NodeDecorator.SCALE_STATE_KEY
-            self.ss_client.setRuntimeParameter(key, scale_state)
+            self._ss_client.setRuntimeParameter(key, scale_state)
 
     def is_scale_state_operational(self):
         return self.SCALE_STATE_OPERATIONAL == self.get_scale_state()
@@ -200,7 +200,7 @@ class BaseWrapper(object):
         '''Set scale state for this node instances.
         '''
         key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
-        self.ss_client.setRuntimeParameter(key, scale_state)
+        self._ss_client.setRuntimeParameter(key, scale_state)
 
     def get_scale_state(self):
         '''Get scale state for this node instances.
@@ -266,7 +266,7 @@ class BaseWrapper(object):
         return instances
 
     def send_report(self, filename):
-        self.ss_client.sendReport(filename)
+        self._ss_client.sendReport(filename)
 
     #
     # Local cache of NodesInstances, Run, Run Parameters and User.
@@ -278,18 +278,18 @@ class BaseWrapper(object):
         '''Return dict {<node-name>: {<runtime-param-name>: <value>, }, }
         '''
         if not self._nodes_instances:
-            self._nodes_instances = self.ss_client.get_nodes_instances(cloud_service_name)
+            self._nodes_instances = self._ss_client.get_nodes_instances(cloud_service_name)
         return self._nodes_instances
 
     def discard_run_locally(self):
-        self.ss_client.discard_run()
+        self._ss_client.discard_run()
 
     def discard_user_info_locally(self):
         self._user_info = None
 
     def _get_user_info(self, cloud_service_name):
         if self._user_info is None:
-            self._user_info = self.ss_client.get_user_info(cloud_service_name)
+            self._user_info = self._ss_client.get_user_info(cloud_service_name)
         return self._user_info
 
     def discard_run_parameters_locally(self):
@@ -297,14 +297,14 @@ class BaseWrapper(object):
 
     def _get_run_parameters(self):
         if self._run_parameters is None:
-            self._run_parameters = self.ss_client.get_run_parameters()
+            self._run_parameters = self._ss_client.get_run_parameters()
         return self._run_parameters
 
     #
     # Helpers
     #
     def _terminate_run_server_side(self):
-        self.ss_client.terminate_run()
+        self._ss_client.terminate_run()
 
     def _put_new_image_id(self, url, new_image_id):
-        self.ss_client.put_new_image_id(url, new_image_id)
+        self._ss_client.put_new_image_id(url, new_image_id)
