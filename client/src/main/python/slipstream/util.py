@@ -27,6 +27,7 @@ import time
 import urllib2
 import uuid as uuidModule
 import warnings
+from itertools import chain
 from ConfigParser import SafeConfigParser
 
 import slipstream.exceptions.Exceptions as Exceptions
@@ -130,6 +131,10 @@ def execute(commandAndArgsList, **kwargs):
     if isinstance(commandAndArgsList, list) and kwargs.get('shell', False):
         commandAndArgsList = ' '.join(commandAndArgsList)
 
+    extra_env = kwargs.pop('extra_env', {})
+    if extra_env:
+        kwargs['env'] = dict(chain(os.environ.copy().iteritems(),
+                                   extra_env.iteritems()))
     process = subprocess.Popen(commandAndArgsList, **kwargs)
 
     if not wait:

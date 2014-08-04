@@ -225,10 +225,7 @@ class BaseWrapper(object):
             state = node_instance.get_scale_state()
             if not self._is_scale_state_terminal(state):
                 state = self._get_effective_scale_state(node_instance_name)
-                if state in states_instances:
-                    states_instances[state].append(node_instance_name)
-                else:
-                    states_instances[state] = [node_instance_name, ]
+                states_instances.setdefault(state, []).append(node_instance_name)
         return states_instances
 
     def _get_global_scale_state(self):
@@ -251,6 +248,27 @@ class BaseWrapper(object):
     def get_global_scale_action(self):
         state = self._get_global_scale_state()
         return self._state_to_action(state)
+
+    def get_scaling_node_and_instance_names(self):
+        '''Return name of the node and the corresponding instances that are
+        currently being scaled.
+        Return tuple: node_name, [node_instance_name, ]
+        '''
+        node_names = set()
+        node_instance_names = []
+
+        for node_instance_name, node_instance in self._get_nodes_instances().iteritems():
+            state = node_instance.get_scale_state()
+            if not self._is_scale_state_terminal(state):
+                node_names.add(node_instance.get_node_name())
+                node_instance_names.append(node_instance_name)
+
+        if len(node_names) != 1:
+            msg = "Inconsistent scaling situation. Scaling of only single" \
+                " node type is allowed, found: %s" % ', '.join(node_names)
+            raise Exceptions.ExecutionException(msg)
+
+        return node_names.pop(), node_instance_names
 
     def _state_to_action(self, state):
         return self.STATE_TO_ACTION.get(state, None)

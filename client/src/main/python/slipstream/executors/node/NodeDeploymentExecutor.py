@@ -104,7 +104,8 @@ class NodeDeploymentExecutor(MachineExecutor):
             # TODO: Add local scale actions (ondiskresize, etc)
             target = self._get_target_on_scale_action(scale_action)
             if target:
-                self._execute_target(target)
+                exports = self._get_scaling_exports()
+                self._execute_target(target, exports)
             else:
                 util.printDetail("Deployment is scaling. No target to "
                                  "execute on action %s" % scale_action)
@@ -112,16 +113,23 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target):
+    def _execute_target(self, target, exports={}):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
-            self._run_target_script(self.targets[target][0])
+            self._run_target_script(self.targets[target][0], exports)
             sys.stdout.flush()
             sys.stderr.flush()
         else:
             util.printAndFlush('Nothing to do on target: %s\n' % target)
 
-    def _run_target_script(self, target_script):
+    def _get_scaling_exports(self):
+        node_name, node_instance_names = \
+            self.wrapper.get_scaling_node_and_instance_names()
+        exports = {'SLIPSTREAM_SCALING_NODE': node_name,
+                   'SLIPSTREAM_SCALING_VMS': ' '.join(node_instance_names)}
+        return exports
+
+    def _run_target_script(self, target_script, exports={}):
         if not target_script:
             util.printAndFlush('Script is empty\n')
             return
@@ -140,7 +148,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         currentDir = os.getcwd()
         os.chdir(tempfile.gettempdir() + os.sep)
         try:
-            process = util.execute(fn, noWait=True)
+            process = util.execute(fn, noWait=True, extra_env=exports)
         finally:
             os.chdir(currentDir)
 
@@ -174,5 +182,3 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _get_user_ssh_pubkey(self):
         return self.wrapper.get_user_ssh_pubkey()
-
-
