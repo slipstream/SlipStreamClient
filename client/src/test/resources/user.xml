@@ -1,0 +1,84 @@
+<user deleted="false" resourceUri="user/test" name="test" email="test@sixsq.com" firstName="Test" lastName="User" organization="SixSq" issuper="false" state="ACTIVE" creation="2012-10-22 11:38:28.683 UTC">
+   <parameters class="org.hibernate.collection.PersistentMap">
+      <entry>
+         <string><![CDATA[General.On Success Run Forever]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.On Success Run Forever" description="If no errors occur, keep the execution running. Useful for deployment or long tests." category="General" mandatory="true" type="Boolean" readonly="false">
+            <value><![CDATA[on]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[StratusLab.endpoint]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.endpoint" description="" category="StratusLab" mandatory="true" type="String" readonly="false">
+            <value><![CDATA[cloud.lal.stratuslab.eu]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[General.Verbosity Level]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.Verbosity Level" description="Level of verbosity. 0 - Actions, 1 - Steps, 2 - Details data, 3 - Debugging." category="General" mandatory="true" type="Enum" readonly="false">
+            <value><![CDATA[3]]></value>
+            <enumValues length="4">
+               <string>0</string>
+               <string>1</string>
+               <string>2</string>
+               <string>3</string>
+            </enumValues>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[General.default_cloud_service]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.default_cloud_service" description="Select which cloud you want to use." category="General" mandatory="true" type="Enum" readonly="false">
+            <value><![CDATA[StratusLab]]></value>
+            <enumValues length="1">
+               <string>StratusLab</string>
+            </enumValues>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[StratusLab.ip.type]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.ip.type" description="IP type: public, local, private" category="StratusLab" mandatory="true" type="Enum" readonly="false">
+            <value><![CDATA[public]]></value>
+            <enumValues length="3">
+               <string>public</string>
+               <string>local</string>
+               <string>private</string>
+            </enumValues>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[General.On Error Run Forever]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.On Error Run Forever" description="If an error occurs, keep the execution running for investigation." category="General" mandatory="true" type="Boolean" readonly="false">
+            <value><![CDATA[on]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[General.timeout]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.timeout" description="Minutes - When this timeout is reached, the execution is forcefully terminated." category="General" mandatory="true" type="String" readonly="false">
+            <value><![CDATA[30]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[StratusLab.password]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.password" description="StratusLab account password" category="StratusLab" mandatory="true" type="Password" readonly="false">
+            <value><![CDATA[UZgsxOjJSxA2]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[StratusLab.username]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.username" description="StratusLab account username" category="StratusLab" mandatory="true" type="RestrictedString" readonly="false">
+            <value><![CDATA[sixsqdev]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[StratusLab.marketplace.endpoint]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.marketplace.endpoint" description="Default marketplace endpoint" category="StratusLab" mandatory="true" type="String" readonly="false">
+            <value><![CDATA[http://marketplace.stratuslab.eu]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string><![CDATA[General.ssh.public.key]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.ssh.public.key" description="SSH Public Key(s) (keys must be separated by new line)" category="General" mandatory="true" type="RestrictedText" readonly="false">
+            <value><![CDATA[ssh-rsa abc]]></value>
+         </parameter>
+      </entry>
+   </parameters>
+</user>

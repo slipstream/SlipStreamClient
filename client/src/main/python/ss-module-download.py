@@ -1,8 +1,8 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ class MainProgram(CommandBase):
                                help='SlipStream password', metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
-        self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
+        self.parser.add_option('-e', '--endpoint', dest='endpoint', metavar='URL',
                                help='SlipStream server endpoint',
                                default=default_endpoint)
 
@@ -95,7 +95,7 @@ class MainProgram(CommandBase):
                 ids.remove(id)
 
     def _retrieveModuleAsXml(self, client, module):
-        uri = util.MODULE_URL_PATH
+        uri = util.MODULE_RESOURCE_PATH
         uri += '/' + module
 
         url = self.options.endpoint + uri

@@ -1,7 +1,7 @@
 <projectModule category="Project" creation="2013-10-30 10:54:53.756 CET" deleted="false" description="Tutorials highlighting specific features of SlipStream.  See User Guide on the documentation page." lastModified="2013-11-24 11:46:53.767 CET" parentUri="module/examples" shortName="tutorials" version="69">
-   <parameters class="org.hibernate.collection.PersistentMap" />
+   <parameters />
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-      <groupMembers class="java.util.ArrayList" />
+      <groupMembers />
    </authz>
    <commit author="sixsq">
       <comment />
@@ -11,25 +11,25 @@
       <string>default</string>
    </cloudNames>
    <runs />
-   <children class="java.util.ArrayList">
+   <children >
       <item category="Project" description="RStudio provides a web-based statistical analysis platform." name="rstudio" version="70">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-            <groupMembers class="java.util.ArrayList" />
+            <groupMembers />
          </authz>
       </item>
       <item category="Project" description="Demo of complete service testing using Apache as an example." name="service-testing" version="71">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-            <groupMembers class="java.util.ArrayList" />
+            <groupMembers />
          </authz>
       </item>
       <item category="Project" description="Definition and deployment of an analysis cluster using the Torque batch system." name="torque" version="72">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-            <groupMembers class="java.util.ArrayList" />
+            <groupMembers />
          </authz>
       </item>
       <item category="Project" description="WordPress demo highlighting installation with Puppet." name="wordpress" version="73">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
-            <groupMembers class="java.util.ArrayList" />
+            <groupMembers />
          </authz>
       </item>
    </children>

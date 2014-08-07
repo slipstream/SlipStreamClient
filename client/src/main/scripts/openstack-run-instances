@@ -1,22 +1,38 @@
 #!/usr/bin/env python
 
+import os
 import re
 import time
 import warnings
+import traceback
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 
 from slipstream.util import nostdouterr
 from slipstream.util import nostdout
 from slipstream.ConfigHolder import ConfigHolder
+from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
-from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand 
+from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
+
+
+def publish_vm_info(self, vm, node_instance):
+    try:
+        self._orig_publish_vm_info(vm, node_instance)
+    except Exception as e:
+        pass
+        # print >> sys.stderr, e
+        # print >> sys.stderr, traceback.format_exc()
+
+def get_bootstrap_script(self, node_instance):
+    return os.environ['context_script']
+
 
 class MainProgram(OpenStackCommand):
     def __init__(self):
         super(MainProgram, self).__init__()
-    
+
     def setProgramOptions(self):
         self.parser.add_option('--image-id', dest='imageId',
                                help='Image ID. Mandatory.',
@@ -46,56 +62,57 @@ class MainProgram(OpenStackCommand):
                                help='Context script',
                                default='', metavar='SCRIPT')
 
+        self.parser.add_option('--slipstream-endpoint', dest='slipstream_endpoint',
+                               help='SlipStream endpoint',
+                               default='http://localhost:8182', metavar='URL')
+
     def checkOptions(self):
-        if not all((self.options.imageId, self.options.instance_type, self.options.region, 
+        if not all((self.options.imageId, self.options.instance_type, self.options.region,
                     self.options.instance_name)):
             self.parser.error('Some mandatory options were not given values.')
-            
+
     def _setUserInfo(self):
         super(MainProgram, self)._setUserInfo()
-        
+
         self.userInfo['General.ssh.public.key'] = self.options.public_key
 
     def doWork(self):
-        ss_node = {'nodename' : self.options.instance_name,
-                   'image' : {'attributes' : {'imageId' : self.options.imageId},
-                              'cloud_parameters' : {'openstack':{'openstack.security.groups' : self.options.security_groups,
-                                                                'openstack.instance.type' : self.options.instance_type}
-                                                    ,'Cloud': {'network' : self.options.network_type} 
-                                                    },
-                               'extra_disks' : {}
-                             },
-                   }
+
+        node_instance = NodeInstance({
+            'name': self.options.instance_name,
+            # 'image.platform': 'Ubuntu',
+            'cloudservice': 'openstack',
+            'image.imageId': self.options.imageId,
+            'image.id': self.options.imageId,
+            'openstack.instance.type': self.options.instance_type,
+            'openstack.security.groups': self.options.security_groups,
+            'network': self.options.network_type,
+        })
 
         with nostdouterr():
-            node = self._startImage(ss_node)
-        #print '%s, %s' % (node['id'], node['ip'])
-        
-        try:
-            with nostdouterr():
-                node['ip'] = self._waitAndGetIp(node)
-        finally:
-            print '%s, %s' % (node['id'], node['ip'])
+            vm = self._startImage(node_instance)
 
-    def _startImage(self, ss_node):
-        nodename = ss_node['nodename']
+        print '%s, %s' % (vm['id'], vm['ip'])
 
-        cc = OpenStackClientCloud(ConfigHolder(options={'verboseLevel':0, 
-                                               KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                               context={'foo':'bar'}))
-        try:
-            cc.initialization(self.userInfo)
-            node = cc._startImage(self.userInfo, 
-                                  cc._extractImageInfoFromNodeInfo(ss_node), 
-                                  nodename, self.options.context_script)
-        finally:
-            cc.finalization(self.userInfo)
+    def _startImage(self, node_instance):
+        nodename = node_instance.get_name()
 
-        return {'id': node['id'], 'ip': 'Unknown', 'cc': cc, 'node': node}
+        OpenStackClientCloud._orig_publish_vm_info = OpenStackClientCloud._publish_vm_info
+        OpenStackClientCloud._publish_vm_info = publish_vm_info
+        OpenStackClientCloud._get_bootstrap_script = get_bootstrap_script
+        os.environ['context_script'] = self.options.context_script or ''
 
-    def _waitAndGetIp(self, node):
-        cc = node['cc']
-        return cc._waitAndGetInstanceIpAddress(node['node'])['ip']
+        cc = OpenStackClientCloud(ConfigHolder(options={
+                                                        'verboseLevel': 0,
+                                                        'http_max_retries': 0,
+                                                        'serviceurl': self.options.slipstream_endpoint,
+                                                        KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
+                                               context={'foo': 'bar'}))
+
+        vms = cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
+        vm = vms[0].itervalues().next()
+
+        return {'id': cc._vm_get_id(vm), 'ip': cc._vm_get_ip(vm)}
 
 
 if __name__ == "__main__":
@@ -105,4 +122,5 @@ if __name__ == "__main__":
         print '\n\nExecution interrupted by the user... goodbye!'
     except Exception as e:
         print >> sys.stderr, e
+        print >> sys.stderr, traceback.format_exc()
         exit(1)

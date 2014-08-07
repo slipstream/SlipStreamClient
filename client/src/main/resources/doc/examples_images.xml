@@ -1,7 +1,7 @@
 <projectModule category="Project" creation="2013-10-30 10:54:53.598 CET" deleted="false" description="Standard minimal images of common operating systems." lastModified="2013-11-24 11:46:53.660 CET" parentUri="module/examples" shortName="images" version="68">
-   <parameters class="org.hibernate.collection.PersistentMap" />
+   <parameters />
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-      <groupMembers class="java.util.ArrayList" />
+      <groupMembers />
    </authz>
    <commit author="sixsq">
       <comment />
@@ -11,15 +11,15 @@
       <string>default</string>
    </cloudNames>
    <runs />
-   <children class="java.util.ArrayList">
+   <children >
       <item category="Image" description="Minimal installation of the CentOS 6 operating system." name="centos-6" version="86">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-            <groupMembers class="java.util.ArrayList" />
+            <groupMembers />
          </authz>
       </item>
       <item category="Image" description="Minimal installation of the Ubuntu 12.04 (LTS) operating system." name="ubuntu-12.04" version="87">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-            <groupMembers class="java.util.ArrayList" />
+            <groupMembers />
          </authz>
       </item>
    </children>

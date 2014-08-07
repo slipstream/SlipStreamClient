@@ -38,7 +38,7 @@ class NodeExecutorFactory:
     @staticmethod
     def createExecutor(configHolder):
         wrapper = BaseWrapper(configHolder)
-        runType = wrapper.getRunType()
+        runType = wrapper.get_run_type()
 
         return loadModule(get_executor_module_name(runType)). \
             getExecutor(wrapper, configHolder)

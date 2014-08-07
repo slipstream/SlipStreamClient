@@ -3,7 +3,7 @@
     <description>SlipStream Python Client</description>
 
     <!-- Allow configuration properties to be overridden via an external file.
-	     See the section below for the properties that can be defined in the 
+	     See the section below for the properties that can be defined in the
 	     local.properties file. -->
     <property file="${basedir}/slipstream.conf" />
 
@@ -16,6 +16,10 @@
     <property name="s3.external" location="${external}/s3-python" />
     <property name="pyunit.credentials.properties"
               value="pyunit.credentials.properties" />
+    <property name="pyunit.credentials.properties.ref.location"
+              location="${basedir}/src/test/resources/${pyunit.credentials.properties}.ref" />
+    <property name="pyunit.run.xml.location"
+              location="${basedir}/src/test/resources/${pyunit.credentials.properties}.ref" />
     <property name="pyunit.credentials.properties.ref.location"
               location="${basedir}/src/test/resources/${pyunit.credentials.properties}.ref" />
     <property name="test.credentials.properties"
@@ -97,7 +101,7 @@
     </target>
 
     <target name="test" depends="init">
-        <!-- NOTE:  The standard python socket library does not appear to do 
+        <!-- NOTE:  The standard python socket library does not appear to do
                     any verification of certificates.  Hence there is no reason
                     to configure the client SSL parameters. -->
 
@@ -205,9 +209,13 @@
                   value="${target}/main/scripts" />
         <property name="maven.test.python"
                   value="${basedir}/src/test/python" />
+        <property name="maven.test.resourses"
+                  value="${basedir}/src/test/resources" />
         <property name="maven.target.test.python"
                   value="${target}/test/python" />
-        
+        <property name="maven.target.test.resourses"
+                  value="${target}/test/resourses" />
+
         <!-- standard python sources; rename only ss-*.py files -->
         <copy todir="${maven.target.python}">
             <fileset dir="${maven.src.python}">
@@ -253,6 +261,11 @@
             <fileset dir="${maven.test.python}">
                 <include name="**/*" />
                 <exclude name="**/*.pyc" />
+            </fileset>
+        </copy>
+        <copy todir="${maven.target.test.resourses}">
+            <fileset dir="${maven.test.resourses}">
+                <include name="**/*.xml" />
             </fileset>
         </copy>
 

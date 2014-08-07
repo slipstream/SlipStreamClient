@@ -27,6 +27,7 @@ import time
 import urllib2
 import uuid as uuidModule
 import warnings
+from itertools import chain
 from ConfigParser import SafeConfigParser
 
 import slipstream.exceptions.Exceptions as Exceptions
@@ -45,9 +46,9 @@ REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR',
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
 HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 
-RUN_URL_PATH = '/run'
-MODULE_URL_PATH = '/module'
-USER_URL_PATH = '/user'
+RUN_RESOURCE_PATH = '/run'
+MODULE_RESOURCE_PATH = '/module'
+USER_RESOURCE_PATH = '/user'
 
 CONFIGPARAM_CONNECTOR_MODULE_NAME = 'cloudconnector'
 
@@ -84,7 +85,7 @@ def get_cloudconnector_modulename_by_cloudname(cloudname):
 
 def needToAddSshPubkey():
     return (os.environ.get(ENV_NEED_TO_ADD_SSHPUBKEY, '').lower() == 'true') \
-        and not isWindows()
+        and not is_windows()
 
 
 def configureLogger():
@@ -95,7 +96,7 @@ def configureLogger():
                         filename=filename)
 
 
-def isWindows():
+def is_windows():
     return sys.platform == 'win32'
 
 
@@ -114,7 +115,7 @@ def execute(commandAndArgsList, **kwargs):
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
 
-    if isWindows():
+    if is_windows():
         commandAndArgsList.insert(0, '-File')
         commandAndArgsList.insert(0, 'Bypass')
         commandAndArgsList.insert(0, '-ExecutionPolicy')
@@ -130,6 +131,10 @@ def execute(commandAndArgsList, **kwargs):
     if isinstance(commandAndArgsList, list) and kwargs.get('shell', False):
         commandAndArgsList = ' '.join(commandAndArgsList)
 
+    extra_env = kwargs.pop('extra_env', {})
+    if extra_env:
+        kwargs['env'] = dict(chain(os.environ.copy().iteritems(),
+                                   extra_env.iteritems()))
     process = subprocess.Popen(commandAndArgsList, **kwargs)
 
     if not wait:
@@ -306,15 +311,16 @@ def uuid():
     return str(uuidModule.uuid4())
 
 
-def printDetail(message, verboseLevel=1, verboseThreshold=1):
+def printDetail(message, verboseLevel=1, verboseThreshold=1, timestamp=True):
     if verboseLevel >= verboseThreshold:
-        printAndFlush('\n    %s\n' % message)
+        printAndFlush('\n    %s\n' % message, timestamp=timestamp)
 
 
 def _printDetail(message, kwargs={}):
     verboseLevel = _extractVerboseLevel(kwargs)
     verboseThreshold = _extractVerboseThreshold(kwargs)
-    printDetail(message, verboseLevel, verboseThreshold)
+    timestamp = _extractTimestamp(kwargs)
+    printDetail(message, verboseLevel, verboseThreshold, timestamp)
 
 
 def _extractVerboseLevel(kwargs):
@@ -325,11 +331,15 @@ def _extractVerboseThreshold(kwargs):
     return _extractAndDeleteKey('verboseThreshold', 2, kwargs)
 
 
-def _extractAndDeleteKey(key, default, dict):
+def _extractTimestamp(kwargs):
+    return _extractAndDeleteKey('timestamp', False, kwargs)
+
+
+def _extractAndDeleteKey(key, default, dictionary):
     value = default
-    if key in dict:
-        value = dict[key]
-        del dict[key]
+    if key in dictionary:
+        value = dictionary[key]
+        del dictionary[key]
     return value
 
 
@@ -345,8 +355,9 @@ def printStep(message):
     printAndFlush('\n==== %s\n' % message)
 
 
-def printAndFlush(message):
-    message = _prepend_current_time_to_message(message)
+def printAndFlush(message, timestamp=True):
+    if timestamp:
+        message = _prepend_current_time_to_message(message)
     output = _get_print_stream()
     output.flush()
     _print(output, message)
@@ -422,7 +433,7 @@ def filePutContent(filename, data):
     fd.close()
 
 
-def filePutContentInTempFile(data):
+def file_put_content_in_temp_file(data):
     _, filename = tempfile.mkstemp()
     filePutContent(filename, data)
     return filename
@@ -605,15 +616,34 @@ def nostdouterr(override=False):
 
 
 def deprecated(func):
-    """This is a decorator which can be used to mark functions
-    as deprecated. It will result in a warning being emmitted
-    when the function is used."""
-    def newFunc(*args, **kwargs):
+    """This is a decorator which can be used to mark functions as deprecated.
+    It will result in a warning being emitted when the function is used."""
+
+    def new_func(*args, **kwargs):
         warnings.warn("Call to deprecated function %s." % func.__name__,
                       category=DeprecationWarning, stacklevel=2)
         return func(*args, **kwargs)
+
     # warnings.simplefilter('default', DeprecationWarning)
-    newFunc.__name__ = func.__name__
-    newFunc.__doc__ = func.__doc__
-    newFunc.__dict__.update(func.__dict__)
-    return newFunc
+    new_func.__name__ = func.__name__
+    new_func.__doc__ = func.__doc__
+    new_func.__dict__.update(func.__dict__)
+    return new_func
+
+
+def override(func):
+    """This is a decorator which can be used to check that a method override a method of the base class.
+    If not the case it will result in a warning being emitted."""
+
+    def overrided_func(self, *args, **kwargs):
+        if func.__name__ not in dir(self.__class__.__bases__[0]):
+            warnings.warn("The method '%s' should override a method of the base class '%s'." %
+                          (func.__name__, self.__class__.__bases__[0].__name__), category=SyntaxWarning, stacklevel=2)
+        return func(self, *args, **kwargs)
+
+    return overrided_func
+
+
+def str2bool(v):
+    return v.lower() in ("yes", "true", "t", "1")
+

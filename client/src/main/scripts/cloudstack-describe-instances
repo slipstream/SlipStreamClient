@@ -22,16 +22,14 @@ class MainProgram(CloudStackCommand):
 
     def doWork(self):
         with nostdouterr():
-            nodes = self._listInstances()
+            nodes = self._list_instances()
         self._printResults(nodes)
 
-    def _listInstances(self):
+    def _list_instances(self):
         cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0},
                                                 context={'foo': 'bar'}))
-        cc.initialization(self.userInfo)
-        nodes = cc.listInstances()
-
-        return nodes
+        cc._initialization(self.userInfo)
+        return cc.list_instances()
 
     def _printResults(self, nodes):
         print "id state"

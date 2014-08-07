@@ -19,6 +19,7 @@
 from slipstream.executors.MachineExecutor import MachineExecutor
 from slipstream.NodeDecorator import NodeDecorator
 from slipstream.exceptions import Exceptions
+from slipstream.util import override
 from slipstream import util
 
 
@@ -27,61 +28,62 @@ class OrchestratorImageBuildExecutor(MachineExecutor):
         super(OrchestratorImageBuildExecutor, self).__init__(wrapper,
                                                              configHolder)
 
+    @override
     def onProvisioning(self):
         super(OrchestratorImageBuildExecutor, self).onProvisioning()
 
         util.printStep('Starting instance')
         try:
-            self.wrapper.startImage()
+            self.wrapper.start_node_instances()
         except Exceptions.AbortException:
             pass
         except Exception as ex:
             util.printError('Error starting instance with error: %s' % ex)
             raise
         finally:
-            self._advanceMachine()
+            self._complete_machine_state()
 
-        util.printStep('Publishing instance initialization information')
-        self.wrapper.publishDeploymentInitializationInfo()
-
+    @override
     def onExecuting(self):
         super(OrchestratorImageBuildExecutor, self).onExecuting()
         if self.wrapper.isAbort():
             util.printError('Abort set, skipping Running')
-            self._advanceMachine()
+            self._complete_machine_state()
             return
 
         util.printStep('Building new image')
 
         try:
-            self.wrapper.buildImage()
-            self.wrapper.updateSlipStreamImage()
+            self.wrapper.build_image()
         except KeyboardInterrupt:
             raise
         except Exception as ex:
             self.wrapper.fail(str(ex))
         finally:
-            self._advanceMachine()
+            self._complete_machine_state()
 
+    @override
     def onSendingReports(self):
         super(OrchestratorImageBuildExecutor, self).onSendingReports()
-        self._advanceMachine()
-        
+        self._complete_machine_state()
+
+    @override
     def onReady(self):
         super(OrchestratorImageBuildExecutor, self).onReady()
-        self._advanceMachine()
+        self._complete_machine_state()
 
+    @override
     def onFinalizing(self):
         super(OrchestratorImageBuildExecutor, self).onFinalizing()
         self._killCreator()
-        self._advanceMachine()
-        
-        self.wrapper.advance()
-        
+        self._complete_machine_state()
+
+        self.wrapper.complete_state()
+
         self._killItself(True)
 
     def _killCreator(self):
         self.wrapper.stopCreator()
 
-    def _advanceMachine(self):
-        self.wrapper.clientSlipStream.advance(NodeDecorator.MACHINE_NAME)
+    def _complete_machine_state(self):
+        self.wrapper.complete_state(NodeDecorator.MACHINE_NAME)

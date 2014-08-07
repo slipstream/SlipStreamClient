@@ -91,7 +91,7 @@ class MainProgram(CommandBase):
         client.verboseLevel = self.verboseLevel
 
         dom = self.read_xml_and_exit_on_error(self.module)
-        attrs = SlipStreamHttpClient.DomExtractor.getAttributes(dom)
+        attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
 
         root_node_name = dom.tag
         if root_node_name == 'list':
