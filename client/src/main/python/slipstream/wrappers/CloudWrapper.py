@@ -31,15 +31,15 @@ class CloudWrapper(BaseWrapper):
         self._instance_names_to_be_gone = []
 
         # Explicitly call initCloudConnector() to set the cloud connector.
-        self._cc = None
+        self._cloud_client = None
         self.configHolder = configHolder
         self.imagesStopped = False
 
     def initCloudConnector(self, configHolder=None):
-        self._cc = CloudConnectorFactory.createConnector(configHolder or self.configHolder)
+        self._cloud_client = CloudConnectorFactory.createConnector(configHolder or self.configHolder)
 
     def build_image(self):
-        self._cc.set_slipstream_client_as_listener(self.get_slipstream_client())
+        self._cloud_client.set_slipstream_client_as_listener(self.get_slipstream_client())
         user_info = self._get_user_info(self._get_cloud_service_name())
 
         node_instance = self._get_node_instances_to_start().get(NodeDecorator.MACHINE_NAME)
@@ -47,14 +47,14 @@ class CloudWrapper(BaseWrapper):
             raise ExecutionException('Failed to get node instance for instance named "%s"' %
                                      NodeDecorator.MACHINE_NAME)
 
-        new_id = self._cc.build_image(user_info, node_instance)
+        new_id = self._cloud_client.build_image(user_info, node_instance)
 
         self._update_slipstream_image(node_instance, new_id)
 
     def start_node_instances(self):
         user_info = self._get_user_info(self._get_cloud_service_name())
         nodes_instances = self._get_node_instances_to_start()
-        self._cc.start_nodes_and_clients(user_info, nodes_instances)
+        self._cloud_client.start_nodes_and_clients(user_info, nodes_instances)
 
     def _get_node_instances_to_start(self):
         return self.get_node_instances_in_scale_state(
@@ -70,7 +70,7 @@ class CloudWrapper(BaseWrapper):
         for node_instance in node_instances_to_stop.values():
             ids.append(node_instance.get_instance_id())
         if len(ids) > 0:
-            self._cc.stop_vms_by_ids(ids)
+            self._cloud_client.stop_vms_by_ids(ids)
 
         instance_names_removed = node_instances_to_stop.keys()
         self.set_scale_state_on_node_instances(instance_names_removed,
@@ -88,17 +88,17 @@ class CloudWrapper(BaseWrapper):
 
     def stopCreator(self):
         if self.need_to_stop_images(True):
-            creator_id = self._cc.get_creator_vm_id()
+            creator_id = self._cloud_client.get_creator_vm_id()
             if creator_id:
                 if not self._is_vapp():
-                    self._cc.stop_vms_by_ids([creator_id])
+                    self._cloud_client.stop_vms_by_ids([creator_id])
                 elif not self._is_build_in_single_vapp():
-                    self._cc.stop_vapps_by_ids([creator_id])
+                    self._cloud_client.stop_vapps_by_ids([creator_id])
 
     def stopNodes(self):
         if self.need_to_stop_images():
             if not self._is_vapp():
-                self._cc.stop_deployment()
+                self._cloud_client.stop_deployment()
             self.imagesStopped = True
 
     def stopOrchestrator(self, is_build_image=False):
@@ -114,39 +114,39 @@ class CloudWrapper(BaseWrapper):
             if self._is_vapp():
                 if self._orchestrator_can_kill_itself_or_its_vapp():
                     if self._is_build_in_single_vapp():
-                        self._cc.stop_deployment()
+                        self._cloud_client.stop_deployment()
                     else:
-                        self._cc.stop_vapps_by_ids([orch_id])
+                        self._cloud_client.stop_vapps_by_ids([orch_id])
                 else:
                     self._terminate_run_server_side()
             else:
                 if self._orchestrator_can_kill_itself_or_its_vapp():
-                    self._cc.stop_vms_by_ids([orch_id])
+                    self._cloud_client.stop_vms_by_ids([orch_id])
                 else:
                     self._terminate_run_server_side()
 
     def stopOrchestratorDeployment(self):
         if self._is_vapp() and self.need_to_stop_images():
             if self._orchestrator_can_kill_itself_or_its_vapp():
-                self._cc.stop_deployment()
+                self._cloud_client.stop_deployment()
             else:
                 self._terminate_run_server_side()
         elif self.need_to_stop_images() and not self._orchestrator_can_kill_itself_or_its_vapp():
             self._terminate_run_server_side()
         else:
             orch_id = self.get_cloud_instance_id()
-            self._cc.stop_vms_by_ids([orch_id])
+            self._cloud_client.stop_vms_by_ids([orch_id])
 
     def _is_build_in_single_vapp(self):
-        return self._cc.has_capability(
-            self._cc.CAPABILITY_BUILD_IN_SINGLE_VAPP)
+        return self._cloud_client.has_capability(
+            self._cloud_client.CAPABILITY_BUILD_IN_SINGLE_VAPP)
 
     def _is_vapp(self):
-        return self._cc.has_capability(self._cc.CAPABILITY_VAPP)
+        return self._cloud_client.has_capability(self._cloud_client.CAPABILITY_VAPP)
 
     def _orchestrator_can_kill_itself_or_its_vapp(self):
-        return self._cc.has_capability(
-            self._cc.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
+        return self._cloud_client.has_capability(
+            self._cloud_client.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
         runParameters = self._get_run_parameters()
@@ -171,4 +171,4 @@ class CloudWrapper(BaseWrapper):
         self._put_new_image_id(url, new_image_id)
 
     def _get_cloud_service_name(self):
-        return self._cc.get_cloud_service_name()
+        return self._cloud_client.get_cloud_service_name()
