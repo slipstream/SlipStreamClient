@@ -31,6 +31,9 @@ class NodeInstance(object):
     def __str__(self):
         return 'NodeInstance(%s)' % self.__parameters
 
+    def __repr__(self):
+        return self.__str__()
+
     def __get(self, parameter_name, default_value=None):
         parameter = self.__parameters.get(parameter_name, default_value)
         # If the parameter exist but is None, we return the default value
