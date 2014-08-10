@@ -572,7 +572,6 @@ class BaseCloudConnector(object):
 
         if pre_export:
             script += '%s\n' % pre_export
-        util.printAndFlush(str(os.environ))
 
         for var, val in os.environ.items():
             if var.startswith('SLIPSTREAM_') and var != 'SLIPSTREAM_NODENAME':
