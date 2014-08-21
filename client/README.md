@@ -41,9 +41,9 @@ function on_C() {
 }
 
 case $SLIPSTREAM_SCALING_NODE in
-    “B" )
+    "B" )
         on_B ;;
-    “C" )
+    "C" )
         on_C ;;
 esac
 ```
