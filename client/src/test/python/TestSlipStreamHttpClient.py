@@ -57,7 +57,6 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         self.context['serviceurl'] = 'endpoint'
         self.context['username'] = 'username'
         self.context['password'] = 'password'
-        self.context['nodename'] = 'apache'
 
     def tearDown(self):
         pass
@@ -76,13 +75,11 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
     def test_get_deployment_targets(self):
         targets = DomExtractor.get_deployment_targets(RUN_ETREE, 'apache')
         self.assertEquals(
-            True, targets['execute'][0].startswith('#!/bin/sh -xe\napt-get update -y\n'))
-        self.assertEquals(False, targets['execute'][1])
+            True, targets['execute'].startswith('#!/bin/sh -xe\napt-get update -y\n'))
 
         targets = DomExtractor.get_deployment_targets(RUN_ETREE, 'testclient')
-        self.assertEquals(targets['execute'][0].startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
+        self.assertEquals(targets['execute'].startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
                           True)
-        self.assertEquals(False, targets['execute'][1])
 
     def test_extract_node_instances_from_run(self):
         nodes = DomExtractor.extract_nodes_instances_runtime_parameters(

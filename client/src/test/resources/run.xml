@@ -294,7 +294,7 @@
                      <comment></comment>
                   </commit>
                   <targets class="org.hibernate.collection.internal.PersistentSet">
-                     <target runInBackground="false" name="execute"><![CDATA[#!/bin/sh -xe
+                     <target name="execute"><![CDATA[#!/bin/sh -xe
 apt-get update -y
 apt-get install -y apache2
 
@@ -307,7 +307,7 @@ sed -i -e 's/^NameVirtualHost.*$/NameVirtualHost *:'$port'/' /etc/apache2/ports.
 sed -i -e 's/^<VirtualHost.*$/<VirtualHost *:'$port'>/' /etc/apache2/sites-available/default
 service apache2 start
 ss-set ready true]]></target>
-                     <target runInBackground="false" name="report"><![CDATA[#!/bin/sh -x
+                     <target name="report"><![CDATA[#!/bin/sh -x
 cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
 cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></target>
                   </targets>
@@ -527,9 +527,9 @@ cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></target>
                      <comment></comment>
                   </commit>
                   <targets class="org.hibernate.collection.internal.PersistentSet">
-                     <target runInBackground="false" name="report"><![CDATA[#!/bin/sh -x
+                     <target name="report"><![CDATA[#!/bin/sh -x
 cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR]]></target>
-                     <target runInBackground="false" name="execute"><![CDATA[#!/bin/sh -xe
+                     <target name="execute"><![CDATA[#!/bin/sh -xe
 # Wait for the metadata to be resolved
 web_server_ip=$(ss-get --timeout 360 webserver.hostname)
 web_server_port=$(ss-get --timeout 360 webserver.port)

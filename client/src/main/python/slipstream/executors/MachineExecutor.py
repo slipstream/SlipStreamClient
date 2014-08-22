@@ -40,7 +40,10 @@ class MachineExecutor(object):
         self.reportFilesAndDirsList = [self.ssLogDir]
 
     def execute(self):
-        self._execute()
+        try:
+            self._execute()
+        except Exception as ex:
+            self._fail_global(ex)
 
     def _execute(self, state=None):
         state = (state and state) or self.wrapper.getState()
@@ -58,15 +61,18 @@ class MachineExecutor(object):
         except (SystemExit, Exception) as ex:
             util.printError('Error executing node, with detail: %s' % ex)
             traceback.print_exc()
-            self.wrapper.fail(str(ex))
+            self._fail(ex)
 
         self.wrapper.complete_state()
         state = self._waitForNextState(state)
         self._execute(state)
 
     def _fail(self, exception):
-        self.wrapper.fail("Exception %s with detail %s" % (exception.__class__,
+        self.wrapper.fail("Exception %s with detail: %s" % (exception.__class__,
                                                            str(exception)))
+    def _fail_global(self, exception):
+        self.wrapper.fail_global("Exception %s with detail: %s" % (exception.__class__,
+                                                                  str(exception)))
 
     def _waitForNextState(self, state):
         timeSleep = 5
@@ -113,7 +119,7 @@ class MachineExecutor(object):
     def onSendingReports(self):
         util.printAction('Sending reports')
         reportFileName = '%s_report_%s.tgz' % (
-            self._nodename(), util.toTimeInIso8601NoColon(time.time()))
+            self._get_my_node_instance_name(), util.toTimeInIso8601NoColon(time.time()))
         reportFileName = os.path.join(tempfile.gettempdir(), reportFileName)
         try:
             archive = tarfile.open(reportFileName, 'w:gz')
@@ -149,8 +155,8 @@ class MachineExecutor(object):
         time.sleep(60)
         raise ExecutionException('The run is in a final state but the VM is still running !')
 
-    def _nodename(self):
-        return self.wrapper.nodename()
+    def _get_my_node_instance_name(self):
+        return self.wrapper.get_my_node_instance_name()
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)

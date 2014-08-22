@@ -21,7 +21,6 @@ import traceback
 from slipstream import util
 from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 from slipstream.NodeDecorator import NodeDecorator
-from slipstream.exceptions.Exceptions import NotYetSetException
 from slipstream.exceptions import Exceptions
 
 
@@ -72,32 +71,49 @@ class BaseWrapper(object):
                        SCALE_STATE_REMOVED: SCALE_ACTION_REMOVAL,
                        SCALE_STATE_DISK_RESIZED: SCALE_ACTION_DISK_RESIZE}
 
-    def __init__(self, configHolder):
-        self._ss_client = SlipStreamHttpClient(configHolder)
+    def __init__(self, config_holder):
+        self._ss_client = SlipStreamHttpClient(config_holder)
         self._ss_client.set_http_max_retries(self.is_mutable() and -5 or 5)
         self._ss_client.ignoreAbort = True
-        self.configHolder = configHolder
+
+        self.my_node_instance_name = self._get_my_node_instance_name(config_holder)
 
         self._user_info = None
         self._run_parameters = None
         self._nodes_instances = {}
+
+    def _get_my_node_instance_name(self, config_holder):
+        try:
+            return config_holder.node_instance_name
+        except Exception:
+            raise Exceptions.ExecutionException('Failed to get the node instance name of the the current VM')
+
+    def get_my_node_instance_name(self):
+        return self.my_node_instance_name
 
     def get_slipstream_client(self):
         return self._ss_client
 
     def complete_state(self, node_instance_name=None):
         if not node_instance_name:
-            node_instance_name = self._get_node_instance_name()
+            node_instance_name = self.get_my_node_instance_name()
         self._ss_client.complete_state(node_instance_name)
 
     def reset(self):
         self._ss_client.reset()
 
     def fail(self, message):
+        key = self._qualifyKey(NodeDecorator.ABORT_KEY)
+        self._fail(key, message)
+
+    def fail_global(self, message):
+        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
+        self._fail(key, message)
+
+    def _fail(self, key, message):
         util.printError('Failing... %s' % message)
         traceback.print_exc()
-        abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
-        self._ss_client.setRuntimeParameter(abort, message)
+        self._ss_client.setRuntimeParameter(key, message)
 
     def getState(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
@@ -107,7 +123,7 @@ class BaseWrapper(object):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
         try:
             value = self._get_runtime_parameter(key, True)
-        except NotYetSetException:
+        except Exceptions.NotYetSetException:
             value = ''
         return (value and True) or False
 
@@ -144,15 +160,9 @@ class BaseWrapper(object):
                     propertyPart
             return _key
 
-        _key = self._get_node_instance_name() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
+        _key = self.get_my_node_instance_name() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
 
         return _key
-
-    def _get_node_instance_name(self):
-        return self.configHolder.nodename
-
-    def nodename(self):
-        return self._get_node_instance_name()
 
     def getTargets(self):
         return self._ss_client.get_node_deployment_targets()
@@ -298,6 +308,12 @@ class BaseWrapper(object):
         if not self._nodes_instances:
             self._nodes_instances = self._ss_client.get_nodes_instances(cloud_service_name)
         return self._nodes_instances
+
+    def get_my_node_instance(self):
+        node_name = self.get_my_node_instance_name()
+        util.printAndFlush('My node name: %s' % node_name)
+        util.printAndFlush('Nodes instances: %s' % self._get_nodes_instances())
+        return self._get_nodes_instances().get(node_name)
 
     def discard_run_locally(self):
         self._ss_client.discard_run()

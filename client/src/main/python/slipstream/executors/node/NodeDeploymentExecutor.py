@@ -26,7 +26,7 @@ from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.MachineExecutor import MachineExecutor
 import slipstream.util as util
 from slipstream.exceptions.Exceptions import ExecutionException
-from slipstream.util import appendSshPubkeyToAuthorizedKeys, override
+from slipstream.util import append_ssh_pubkey_to_authorized_keys, override
 
 TARGET_POLL_INTERVAL = 10  # Time to wait (in seconds) between to server call
                            # while executing a target script.
@@ -41,7 +41,8 @@ class NodeDeploymentExecutor(MachineExecutor):
     def __init__(self, wrapper, configHolder=ConfigHolder()):
         self.verboseLevel = 0
         super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
-        self.targets = {}
+
+        self.retreive_my_node_instance()
 
         self.SCALE_ACTION_TO_TARGET = \
             {self.wrapper.SCALE_ACTION_CREATION: 'onvmadd',
@@ -53,16 +54,8 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).onProvisioning()
 
         if self.wrapper.is_scale_state_creating():
-            self._add_ssh_pubkey_if_needed()
+            self._add_ssh_pubkey(self.node_instance.get_username())
             self.wrapper.set_scale_state_created()
-
-        util.printStep('Getting execution targets')
-        self.targets = self.wrapper.getTargets()
-
-        util.printDetail('Available execution targets:')
-        for target, script in self.targets.items():
-            util.printDetail('Target: %s' % target, timestamp=False)
-            util.printDetail('Script:\n%s\n' % script[0], timestamp=False)
 
     @override
     def onExecuting(self):
@@ -95,6 +88,11 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).onReady()
         self.wrapper.set_scale_state_operational()
 
+    def retreive_my_node_instance(self):
+        self.node_instance = self.wrapper.get_my_node_instance()
+        if self.node_instance is None:
+            raise ExecutionException("Couldn't get the node instance for the current VM.")
+
     def _get_target_on_scale_action(self, action):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
 
@@ -113,14 +111,16 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target, exports={}):
-        util.printStep("Executing target '%s'" % target)
-        if target in self.targets:
-            self._run_target_script(self.targets[target][0], exports)
+    def _execute_target(self, target_name, exports={}):
+        util.printStep("Executing target '%s'" % target_name)
+
+        target_script = self.node_instance.get_image_target(target_name)
+        if target_script:
+            self._run_target_script(target_script, exports)
             sys.stdout.flush()
             sys.stderr.flush()
         else:
-            util.printAndFlush('Nothing to do on target: %s\n' % target)
+            util.printAndFlush('Nothing to do on target: %s\n' % target_name)
 
     def _get_scaling_exports(self):
         node_name, node_instance_names = \
@@ -133,6 +133,9 @@ class NodeDeploymentExecutor(MachineExecutor):
         if not target_script:
             util.printAndFlush('Script is empty\n')
             return
+
+        if not isinstance(target_script, basestring):
+            raise ExecutionException('Not a string buffer provided as target script. Type is: %s' % type(target_script))
 
         tmpfilesuffix = ''
         if util.is_windows():
@@ -172,13 +175,9 @@ class NodeDeploymentExecutor(MachineExecutor):
             time.sleep(TARGET_POLL_INTERVAL)
         util.printDetail("End of the target script")
 
-    def _add_ssh_pubkey_if_needed(self):
-        # if util.needToAddSshPubkey():
-        self._add_ssh_pubkey()
-
-    def _add_ssh_pubkey(self):
+    def _add_ssh_pubkey(self, login_user):
         util.printStep('Adding the public keys')
-        appendSshPubkeyToAuthorizedKeys(self._get_user_ssh_pubkey())
+        append_ssh_pubkey_to_authorized_keys(self._get_user_ssh_pubkey(), login_user)
 
     def _get_user_ssh_pubkey(self):
         return self.wrapper.get_user_ssh_pubkey()

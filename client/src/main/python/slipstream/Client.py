@@ -118,20 +118,11 @@ class Client(object):
 
         return _key
 
-    def setNodeName(self, value):
-        self.context['nodename'] = value
-
     def _getNodeName(self):
-        return self.context['nodename']
+        return self.context['node_instance_name']
 
     def _getRuntimeParameter(self, key, ignoreAbort=False):
-        specialKeys = ['nodename']
-        if key in specialKeys:
-            return self.context['key']
-
-        content = self.httpClient.getRuntimeParameter(key)
-
-        return content
+        return self.httpClient.getRuntimeParameter(key)
 
     def setRuntimeParameter(self, key, value):
         _key = self._qualifyKey(key)

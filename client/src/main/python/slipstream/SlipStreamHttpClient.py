@@ -39,7 +39,7 @@ class SlipStreamHttpClient(object):
         self.ignoreAbort = False
         self.username = ''
         self.diid = ''
-        self.nodename = ''
+        self.node_instance_name = ''
         self.serviceurl = ''
         self.verboseLevel = None
         self.http_max_retries = 2
@@ -93,8 +93,7 @@ class SlipStreamHttpClient(object):
 
     def get_node_deployment_targets(self):
         self._retrieveAndSetRun()
-        return DomExtractor.get_deployment_targets(self.run_dom,
-                                                 self._getGenericNodename())
+        return DomExtractor.get_deployment_targets(self.run_dom, self.get_my_node_name())
 
     def _extractModuleResourceUri(self, run):
         rootElement = etree.fromstring(run)
@@ -125,10 +124,6 @@ class SlipStreamHttpClient(object):
             nodes_instances[node_instance_name] = node_instance
 
         return nodes_instances
-
-    def _getGenericNodename(self):
-        'Nodename w/o multiplicity'
-        return self.nodename.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
 
     def get_run_category(self):
         self._retrieveAndSetRun()
@@ -431,10 +426,5 @@ class DomExtractor(object):
         '''
         targets = {}
         for targetNode in image_dom.findall('targets/target'):
-            runInBackgroundStr = targetNode.get('runInBackground')
-            runInBackground = False
-            if runInBackgroundStr:
-                if runInBackgroundStr.lower() == 'true':
-                    runInBackground = True
-            targets[targetNode.get('name')] = (targetNode.text, runInBackground)
+            targets[targetNode.get('name')] = targetNode.text
         return targets

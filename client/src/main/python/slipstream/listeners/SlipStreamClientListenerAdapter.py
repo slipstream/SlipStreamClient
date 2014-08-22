@@ -29,8 +29,8 @@ class SlipStreamClientListenerAdapter(SimplePrintListener):
         self.write = self._write
 
     def _write(self, msg):
-        self.write_for(self._client.nodename, msg)
-        
+        self.write_for(self._client.node_instance_name, msg)
+
     def write_for(self, nodename, msg):
         param = nodename + self._parameter
         self._client.setRuntimeParameter(param, msg)

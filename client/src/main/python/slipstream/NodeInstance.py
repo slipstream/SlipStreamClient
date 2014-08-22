@@ -24,6 +24,7 @@ from slipstream.NodeDecorator import NodeDecorator
 class NodeInstance(object):
 
     IMAGE_ATTRIBUTE_PREFIX = 'image'
+    IMAGE_TARGETS_PREFIX = IMAGE_ATTRIBUTE_PREFIX + '.targets'
 
     def __init__(self, runtime_parameters={}):
         self.__parameters = runtime_parameters
@@ -49,13 +50,18 @@ class NodeInstance(object):
                           (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name),
                           default_value)
 
+    def get_image_target(self, target_name, default_value=None):
+        return self.__get('%s.%s' %
+                          (self.IMAGE_TARGETS_PREFIX, target_name),
+                          default_value)
+
     def set_image_attributes(self, image_attributes):
         for key, value in image_attributes.items():
             self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
     def set_image_targets(self, image_targets):
         for key, value in image_targets.items():
-            self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
+            self.__set('%s.%s' % (self.IMAGE_TARGETS_PREFIX, key), value)
 
     def is_orchestrator(self):
         return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY,
@@ -114,13 +120,13 @@ class NodeInstance(object):
         return self.__parameters.get(NodeDecorator.SCALE_STATE_KEY)
 
     def get_prerecipe(self):
-        return self.get_image_attribute('prerecipe', '')
+        return self.get_image_target('prerecipe')
 
     def get_recipe(self):
-        return self.get_image_attribute('recipe', '')
+        return self.get_image_target('recipe')
 
     def get_packages(self):
-        return self.get_image_attribute('packages', [])
+        return self.get_image_target('packages', [])
 
     def get_username(self, default_value=None):
         return self.get_image_attribute('loginUser', default_value)

@@ -19,13 +19,13 @@
 from optparse import OptionParser
 import os
 
+from slipstream import util
 from slipstream.UserInfo import UserInfo
-from slipstream.util import VERBOSE_LEVEL_QUIET, VERBOSE_LEVEL_DETAILED
+from slipstream.util import VERBOSE_LEVEL_QUIET, VERBOSE_LEVEL_DETAILED, ENV_SLIPSTREAM_SSH_PUB_KEY
+from slipstream.exceptions.Exceptions import ExecutionException
 
 
 class CloudClientCommand(object):
-    # has to be defined by sub-class
-    PROVIDER_NAME = None
 
     def __init__(self):
         self.parser = None
@@ -39,11 +39,11 @@ class CloudClientCommand(object):
         self.doWork()
 
     def _init_user_info(self):
-        if not self.PROVIDER_NAME:
-            raise Exception('PROVIDER_NAME has to be set.')
-        self.userInfo = UserInfo(self.PROVIDER_NAME)
+        self._init_cloud_instance_name()
 
-        os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = self.PROVIDER_NAME
+        self.userInfo = UserInfo(self._cloud_instance_name)
+
+        self.userInfo['General.ssh.public.key'] = os.environ.get(ENV_SLIPSTREAM_SSH_PUB_KEY, '')
 
     def _parse_args(self):
         self._initParser()
@@ -87,3 +87,14 @@ class CloudClientCommand(object):
 
     def doWork(self):
         raise NotImplementedError()
+
+    def set_userinfo_cloud(self, params):
+        self.userInfo.set_cloud_params(params)
+
+    def _init_cloud_instance_name(self):
+        try:
+            self._cloud_instance_name = os.environ[util.ENV_CONNECTOR_INSTANCE]
+        except KeyError:
+            raise ExecutionException('Environment variable %s is required.' %
+                                     util.ENV_CONNECTOR_INSTANCE)
+

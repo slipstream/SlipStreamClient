@@ -18,11 +18,14 @@
 
 
 class UserInfo(dict):
+
+    SEPARATOR = '.'
+
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})
-        self.cloud = cloud_qualifier + '.'
-        self.user = 'User.'
-        self.general = 'General.'
+        self.cloud = cloud_qualifier + self.SEPARATOR
+        self.user = 'User' + self.SEPARATOR
+        self.general = 'General' + self.SEPARATOR
         self.qualifires = (self.cloud, self.user, self.general)
 
     def get_cloud(self, key):
@@ -72,3 +75,7 @@ class UserInfo(dict):
 
     def set_keypair_name(self, keypair_name):
         self[self.cloud + 'keypair.name'] = keypair_name
+
+    def set_cloud_params(self, params):
+        for k,v in params.items():
+            self[self.cloud + k] = v
