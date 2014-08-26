@@ -45,6 +45,9 @@ class NodeInstance(object):
     def __set(self, parameter_name, value):
         self.__parameters[parameter_name] = value
 
+    def get_cloud(self):
+        return self.__get(NodeDecorator.CLOUDSERVICE_KEY)
+
     def get_image_attribute(self, attribute_name, default_value=None):
         return self.__get('%s.%s' %
                           (self.IMAGE_ATTRIBUTE_PREFIX, attribute_name),
@@ -55,6 +58,10 @@ class NodeInstance(object):
                           (self.IMAGE_TARGETS_PREFIX, target_name),
                           default_value)
 
+    def get_cloud_parameter(self, parameter_name, default_value=None):
+        return self.__get('%s.%s' % (self.get_cloud(), parameter_name),
+                          default_value)
+
     def set_image_attributes(self, image_attributes):
         for key, value in image_attributes.items():
             self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
@@ -63,19 +70,16 @@ class NodeInstance(object):
         for key, value in image_targets.items():
             self.__set('%s.%s' % (self.IMAGE_TARGETS_PREFIX, key), value)
 
+    def set_cloud_parameters(self, cloud_parameters):
+        for key, value in cloud_parameters.items():
+            self.__set('%s.%s' % (self.get_cloud(), key), value)
+
     def is_orchestrator(self):
         return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY,
                                         'False'))
 
     def is_windows(self):
         return self.get_platform().lower() == 'windows'
-
-    def get_cloud(self):
-        return self.__get(NodeDecorator.CLOUDSERVICE_KEY)
-
-    def get_cloud_parameter(self, parameter_name, default_value=None):
-        return self.__get('%s.%s' % (self.get_cloud(), parameter_name),
-                          default_value)
 
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)

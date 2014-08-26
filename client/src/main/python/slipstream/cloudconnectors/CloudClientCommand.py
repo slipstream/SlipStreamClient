@@ -21,6 +21,7 @@ import os
 
 from slipstream import util
 from slipstream.UserInfo import UserInfo
+from slipstream.NodeInstance import NodeInstance
 from slipstream.util import VERBOSE_LEVEL_QUIET, VERBOSE_LEVEL_DETAILED, ENV_SLIPSTREAM_SSH_PUB_KEY
 from slipstream.exceptions.Exceptions import ExecutionException
 
@@ -97,4 +98,18 @@ class CloudClientCommand(object):
         except KeyError:
             raise ExecutionException('Environment variable %s is required.' %
                                      util.ENV_CONNECTOR_INSTANCE)
+
+    def get_node_instance(self):
+        return NodeInstance({
+            'name': os.environ.get(util.ENV_NODE_INSTANCE_NAME), #self.get_node_instance_name()
+            'cloudservice': self._cloud_instance_name,
+            'image.platform': self.options.platform,
+            'image.imageId': self.options.imageId,
+            'image.id': self.options.imageId,
+            'network': 'Public'
+        })
+
+
+
+
 
