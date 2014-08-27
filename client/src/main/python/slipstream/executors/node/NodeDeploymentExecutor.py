@@ -80,10 +80,6 @@ class NodeDeploymentExecutor(MachineExecutor):
             super(NodeDeploymentExecutor, self).onSendingReports()
 
     @override
-    def onFinalizing(self):
-        super(NodeDeploymentExecutor, self).onSendingReports()
-
-    @override
     def onReady(self):
         super(NodeDeploymentExecutor, self).onReady()
         self.wrapper.set_scale_state_operational()

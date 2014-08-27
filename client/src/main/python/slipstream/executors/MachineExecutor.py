@@ -63,7 +63,8 @@ class MachineExecutor(object):
             traceback.print_exc()
             self._fail(ex)
 
-        self.wrapper.complete_state()
+        if self._need_to_complete(state):
+            self.wrapper.complete_state()
         state = self._waitForNextState(state)
         self._execute(state)
 
@@ -98,6 +99,9 @@ class MachineExecutor(object):
 
     def _is_mutable(self):
         return self.wrapper.is_mutable()
+
+    def _need_to_complete(self, state):
+        return state not in ['Finalizing', 'Done', 'Cancelled', 'Aborted']
 
     def onInitializing(self):
         pass
