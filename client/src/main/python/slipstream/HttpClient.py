@@ -104,8 +104,10 @@ class HttpClient(object):
                     headers = self._createAuthenticationHeader()
                     return self._call(url, method, body, contentType, accept,
                                       headers, retry=False)
-            msg = "Failed calling method %s on url %s, with reason: %d: %s" % (
-                method, url, resp.status, resp.reason)
+            detail = _extractDetail(content)
+            detail = detail and (" - " + detail) or ''
+            msg = "Failed calling method %s on url %s, with reason: %d: %s%s" % (
+                method, url, resp.status, resp.reason, detail)
             if resp.status == 404:
                 clientEx = Exceptions.NotFoundError(resp.reason)
             else:
