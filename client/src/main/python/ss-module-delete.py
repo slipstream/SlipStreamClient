@@ -83,7 +83,7 @@ class MainProgram(CommandBase):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        uri = util.MODULE_URL_PATH
+        uri = util.MODULE_RESOURCE_PATH
         if self.module:
             uri += '/' + self.module
 

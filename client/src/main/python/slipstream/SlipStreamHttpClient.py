@@ -19,36 +19,15 @@ from __future__ import print_function
 
 import os
 
-from slipstream.NodeDecorator import NodeDecorator
-import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
+import slipstream.exceptions.Exceptions as Exceptions
+
+from slipstream.UserInfo import UserInfo
 from slipstream.HttpClient import HttpClient
+from slipstream.NodeInstance import NodeInstance
+from slipstream.NodeDecorator import NodeDecorator
 
 etree = util.importETree()
-
-
-class UserInfo(dict):
-    def __init__(self, cloud_qualifier):
-        super(UserInfo, self).__init__({})
-        self.cloud = cloud_qualifier + '.'
-        self.user = 'User.'
-        self.general = 'General.'
-        self.qualifires = (self.cloud, self.user, self.general)
-
-    def get_cloud(self, key):
-        return self.__getitem__(self.cloud + key)
-
-    def get_general(self, key):
-        return self.__getitem__(self.general + key)
-
-    def get_user(self, key):
-        return self.__getitem__(self.user + key)
-
-    def __setitem__(self, key, val):
-        if not key.startswith(self.qualifires):
-            raise ValueError('Key should start with one of: %s' %
-                ', '.join(self.qualifires))
-        dict.__setitem__(self, key, val)
 
 
 class SlipStreamHttpClient(object):
@@ -58,37 +37,33 @@ class SlipStreamHttpClient(object):
         self.category = None
         self.run_dom = None
         self.ignoreAbort = False
-
         self.username = ''
         self.diid = ''
-
         self.nodename = ''
-
         self.serviceurl = ''
-
         self.verboseLevel = None
+        self.http_max_retries = 2
 
         configHolder.assign(self)
-
-        self._assembleEndpoints()
-
+        self._assemble_endpoints()
         self.httpClient = HttpClient(configHolder=configHolder)
 
-    def _assembleEndpoints(self):
-        self.serviceRootEndpoint = self.serviceurl
+    def set_http_max_retries(self, http_max_retries):
+        self.http_max_retries = http_max_retries
 
-        self.runEndpoint = self.serviceRootEndpoint + util.RUN_URL_PATH
-        self.runInstanceEndpoint = self.runEndpoint + '/' + self.diid
+    def _assemble_endpoints(self):
+        self.runEndpoint = self.serviceurl + util.RUN_RESOURCE_PATH
+        self.run_url = self.runEndpoint + '/' + self.diid
 
-        self.authnServiceUrl = self.serviceRootEndpoint + '/'
+        self.authnServiceUrl = self.serviceurl + '/'
 
-        self.runReportEndpoint = '%s/reports/%s' % (self.serviceRootEndpoint,
+        self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
                                                     self.diid)
 
-        self.userEndpoint = '%s/user/%s' % (self.serviceRootEndpoint,
+        self.userEndpoint = '%s/user/%s' % (self.serviceurl,
                                             self.username)
 
-    def getUserInfo(self, cloud_qualifier):
+    def get_user_info(self, cloud_qualifier):
 
         dom = self._getUserElement()
 
@@ -116,81 +91,63 @@ class SlipStreamHttpClient(object):
         _, content = self._httpGet(url, 'application/xml')
         return content
 
-    def getImageInfo(self):
-        image_dom = self._getImageInfoDom()
-        return self._getImageInfoFromImageDom(image_dom)
-
-    def _getImageInfoFromImageDom(self, imageDom):
-        info = {}
-        info['attributes'] = DomExtractor.getAttributes(imageDom)
-        info['targets'] = self._getTargets(imageDom)
-        info['cloud_parameters'] = DomExtractor.getImageCloudParametersFromImageDom(imageDom)
-        info['extra_disks'] = DomExtractor.getExtraDisksFromImageDom(imageDom)
-        return info
-
-    def _getImageInfoDom(self):
-        return self.run_dom.find('module')
-
-    def getNodeDeploymentTargets(self):
+    def get_node_deployment_targets(self):
         self._retrieveAndSetRun()
-        return DomExtractor.getDeploymentTargets(self.run_dom,
+        return DomExtractor.get_deployment_targets(self.run_dom,
                                                  self._getGenericNodename())
 
     def _extractModuleResourceUri(self, run):
         rootElement = etree.fromstring(run)
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
-    def _extractRuntimeParameter(self, key, run):
-        rootElement = etree.fromstring(run)
-        return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
+    def get_nodes_instances(self, cloud_service_name=None):
+        '''Return dict {<nodename>: NodeInstance, }
+        '''
+        nodes_instances = {}
 
-    def getNodesInfo(self):
         self._retrieveAndSetRun()
-        return self._getRemoteNodes()
+        nodes_instances_runtime_parameters = \
+            DomExtractor.extract_nodes_instances_runtime_parameters(
+                self.run_dom, cloud_service_name)
 
-    def _getRemoteNodes(self):
-        nodes = DomExtractor.extractNodesFromRun(self.run_dom)
-        for node in nodes:
-            node['image'] = self._getImageInfoFromImageDom(node['image'])
-        return nodes
+        for node_instance_name, node_instance_runtime_parameters in nodes_instances_runtime_parameters.items():
 
-    def _getTargets(self, image_dom):
-        category = self.getRunCategory()
-        if category == NodeDecorator.IMAGE:
-            return DomExtractor.getBuildTargets(image_dom)
-        if category == NodeDecorator.DEPLOYMENT:
-            return DomExtractor.getDeploymentTargetsFromImageDom(image_dom)
-        else:
-            raise Exceptions.ClientError("Unknown category: %s" % category)
+            node_instance = NodeInstance(node_instance_runtime_parameters)
+            node_name = node_instance.get_node_name()
+
+            image_attributes = DomExtractor.extract_node_image_attributes(self.run_dom, node_name)
+            node_instance.set_image_attributes(image_attributes)
+
+            if not node_instance.is_orchestrator():
+                image_targets = DomExtractor.extract_node_image_targets(self.run_dom, node_name)
+                node_instance.set_image_targets(image_targets)
+
+            nodes_instances[node_instance_name] = node_instance
+
+        return nodes_instances
 
     def _getGenericNodename(self):
         'Nodename w/o multiplicity'
         return self.nodename.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
 
-    def getRunCategory(self):
-        return self._getRunCategory()
-
-    def _getRunCategory(self):
+    def get_run_category(self):
         self._retrieveAndSetRun()
         return DomExtractor.extractCategoryFromRun(self.run_dom)
 
-    def getRunType(self):
-        return self._getRunType()
-
-    def _getRunType(self):
+    def get_run_type(self):
         self._retrieveAndSetRun()
         return DomExtractor.extractTypeFromRun(self.run_dom)
 
-    def getDefaultCloudServiceName(self):
-        return self._getDefaultCloudServiceName()
-
-    def _getDefaultCloudServiceName(self):
+    def get_run_mutable(self):
         self._retrieveAndSetRun()
-        return DomExtractor.extractDefaultCloudServiceNameFromRun(self.run_dom)
+        return DomExtractor.extract_mutable_from_run(self.run_dom)
+
+    def discard_run(self):
+        self.run_dom = None
 
     def _retrieveAndSetRun(self):
         if self.run_dom is None:
-            url = self.runInstanceEndpoint
+            url = self.run_url
             _, run = self._retrieve(url)
             self.run_dom = etree.fromstring(run)
 
@@ -198,18 +155,21 @@ class SlipStreamHttpClient(object):
         return self._httpGet(url, 'application/xml')
 
     def reset(self):
-        url = self.runInstanceEndpoint
+        url = self.run_url
         self._httpPost(url, 'reset', 'text/plain')
 
     def execute(self, resourceUri):
         url = self.runEndpoint
         return self._httpPost(url, resourceUri, 'text/plain')
 
-    def advance(self, nodeName):
-        url = '%s/%s:%s' % (self.runInstanceEndpoint, nodeName,
+    def complete_state(self, nodeName):
+        url = '%s/%s:%s' % (self.run_url, nodeName,
                             NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
+
+    def terminate_run(self):
+        return self._httpDelete(self.run_url)
 
     def _fail(self, message):
         self.setRuntimeParameter(
@@ -230,20 +190,20 @@ class SlipStreamHttpClient(object):
         return self.getGlobalAbortMessage() != ''
 
     def getGlobalAbortMessage(self):
-        url = '%s/%s%s' % (self.runInstanceEndpoint,
+        url = '%s/%s%s' % (self.run_url,
                            NodeDecorator.globalNamespacePrefix,
                            NodeDecorator.ABORT_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         _, content = self._httpGet(url, accept='text/plain')
         return content.strip().strip('"').strip("'")
 
-    def getRunParameters(self):
+    def get_run_parameters(self):
         self._retrieveAndSetRun()
-        return DomExtractor.extractRunParametersFromRun(self.run_dom)
+        return DomExtractor.extract_run_parameters_from_run(self.run_dom)
 
     def getRuntimeParameter(self, key, ignoreAbort=False):
 
-        url = self.runInstanceEndpoint + '/' + key
+        url = self.run_url + '/' + key
         if (self.ignoreAbort or ignoreAbort):
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
@@ -254,7 +214,7 @@ class SlipStreamHttpClient(object):
         return content.strip().strip('"').strip("'")
 
     def setRuntimeParameter(self, key, value, ignoreAbort=False):
-        url = self.runInstanceEndpoint + '/' + key
+        url = self.run_url + '/' + key
         if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
 
@@ -264,25 +224,24 @@ class SlipStreamHttpClient(object):
         return content.strip().strip('"').strip("'")
 
     def _httpGet(self, url, accept='application/xml'):
-        return self.httpClient.get(url, accept)
+        return self.httpClient.get(url, accept, retry_number=self.http_max_retries)
 
-    def _httpPut(self, url, body=None, contentType='application/xml',
-                 accept='application/xml'):
-        return self.httpClient.put(url, body, contentType, accept)
+    def _httpPut(self, url, body=None, contentType='application/xml', accept='application/xml'):
+        return self.httpClient.put(url, body, contentType, accept, retry_number=self.http_max_retries)
 
     def _httpPost(self, url, body=None, contentType='application/xml'):
-        return self.httpClient.post(url, body, contentType)
+        return self.httpClient.post(url, body, contentType, retry_number=self.http_max_retries)
 
     def _httpDelete(self, url):
-        return self.httpClient.delete(url)
+        return self.httpClient.delete(url, retry_number=self.http_max_retries)
 
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)
 
-    def putNewImageId(self, resourceUri, imageId):
-        url = self.serviceRootEndpoint + '/' + resourceUri
-        self._printDetail('Set new image id: %s %s' % (url, imageId))
-        self._httpPut(url, imageId)
+    def put_new_image_id(self, image_resource_uri, image_id):
+        url = self.serviceurl + '/' + image_resource_uri
+        self._printDetail('Set new image id: %s %s' % (url, image_id))
+        self._httpPut(url, image_id)
 
     def launchDeployment(self, params):
         body = '&'.join(params)
@@ -294,27 +253,100 @@ class SlipStreamHttpClient(object):
             raise Exceptions.ExecutionException("Run ID should be provided "
                                                 "to get state.")
         state_key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
-        self.runInstanceEndpoint = self.runEndpoint + '/' + (uuid or self.diid)
+        self.run_url = self.runEndpoint + '/' + (uuid or self.diid)
         return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
 
 
 class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
+    EXTRADISK_VOLATILE_KEY = EXTRADISK_PREFIX + '.volatile'
+
+    PATH_TO_NODE_ON_RUN = 'module/nodes/entry/node'
+    PATH_TO_PARAMETER = 'parameters/entry/parameter'
 
     @staticmethod
-    def extractNodesFromRun(run_dom):
-        nodes = []
-        for _node in run_dom.findall('module/nodes/entry/node'):
-            node = {}
-            node['cloudService'] = _node.get('cloudService')
-            node['multiplicity'] = int(_node.get('multiplicity'))
-            node['nodename'] = _node.get('name')
-            node['image'] = _node.find('image')
-            nodes.append(node)
-        return nodes
+    def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
+        '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
+        '''
+        nodes_instances = {}
+        for node_instance_name in run_dom.attrib['nodeNames'].split(','):
+            node_instance_name = node_instance_name.strip()
+
+            if NodeDecorator.is_orchestrator_name(node_instance_name):
+                continue
+
+            node_instance = {}
+            node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY] = node_instance_name
+
+            # Unfortunately, this doesn't work on Python 2.6.6
+            # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
+            query = "runtimeParameters/entry/runtimeParameter"
+            for rtp in run_dom.findall(query):
+                if rtp.get('group') == node_instance_name:
+                    key = DomExtractor._get_key_from_runtimeparameter(rtp)
+                    node_instance[key] = rtp.text
+            nodes_instances[node_instance_name] = node_instance
+
+        if cloud_service_name is not None:
+            for node_instance_name in nodes_instances.keys():
+                if cloud_service_name != nodes_instances[node_instance_name][NodeDecorator.CLOUDSERVICE_KEY]:
+                    del nodes_instances[node_instance_name]
+
+        return nodes_instances
 
     @staticmethod
-    def getExtraDisksFromImageDom(image_dom):
+    def _get_key_from_runtimeparameter(rtp):
+        return rtp.attrib['key'].split(NodeDecorator.NODE_PROPERTY_SEPARATOR, 1)[-1]
+
+    @staticmethod
+    def extract_node_image_attributes(run_dom, nodename):
+        ''' Return image attributes of all nodes.
+        '''
+        image = DomExtractor.extract_node_image(run_dom, nodename)
+        attributes = {}
+
+        if image is not None:
+            attributes = DomExtractor.get_attributes(image)
+
+        return attributes
+
+    @staticmethod
+    def extract_node_image(run_dom, nodename):
+        ''' Return image attributes of all nodes.
+        '''
+        image = None
+
+        if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
+            image = run_dom.find('module')
+        else:
+            for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
+                if node.get('name') == nodename:
+                    image = node.find('image')
+
+        return image
+
+    @staticmethod
+    def extract_node_image_targets(run_dom, node_name):
+        targets = {}
+        image_dom = DomExtractor.extract_node_image(run_dom, node_name)
+
+        category = DomExtractor.get_module_category(run_dom)
+        if category == NodeDecorator.IMAGE:
+            targets = DomExtractor.get_build_targets(image_dom)
+        elif category == NodeDecorator.DEPLOYMENT:
+            targets = DomExtractor.get_deployment_targets_from_image(image_dom)
+        else:
+            raise Exceptions.ClientError("Unknown category: '%s'. Possible values: %s" %
+                                         (category, [NodeDecorator.IMAGE, NodeDecorator.DEPLOYMENT]))
+
+        return targets
+
+    @staticmethod
+    def get_module_category(run_dom):
+        return run_dom.find('module').get('category')
+
+    @staticmethod
+    def get_extra_disks_from_image(image_dom):
         extra_disks = {}
 
         for entry in image_dom.findall('parameters/entry'):
@@ -328,43 +360,26 @@ class DomExtractor(object):
         return extra_disks
 
     @staticmethod
-    def getImageCloudParametersFromImageDom(image_dom):
-        cloudParameters = {}
-        parameters = image_dom.findall('parameters/entry/parameter')
-        for param in parameters:
-            category = param.attrib['category']
-            if not category in ('Input', 'Output'):
-                name = param.attrib['name']
-                # extra disks go on the node level
-                if not name.startswith(DomExtractor.EXTRADISK_PREFIX):
-                    if category not in cloudParameters:
-                        cloudParameters.update({category: {}})
-                    cloudParameters[category][name] = param.findtext('value')
-
-        return cloudParameters
-
-    @staticmethod
-    def getElementValueFromElementTree(elementTree, elementName):
-        element = elementTree.find(elementName)
+    def get_element_value_from_element_tree(element_tree, element_name):
+        element = element_tree.find(element_name)
         value = getattr(element, 'text', '')
         if value is None:
             value = ''
         return value
 
     @staticmethod
-    def getAttributes(dom):
+    def get_attributes(dom):
         return dom.attrib
 
     @staticmethod
-    def getBuildTargets(dom):
+    def get_build_targets(run_dom):
         targets = {}
 
         for target in ['prerecipe', 'recipe']:
-            targets[target] = DomExtractor.getElementValueFromElementTree(dom,
-                                                                          target)
+            targets[target] = DomExtractor.get_element_value_from_element_tree(run_dom, target)
 
         targets['packages'] = []
-        packages = dom.findall('packages/package')
+        packages = run_dom.findall('packages/package')
         for package in packages:
             name = package.get('name')
             if name:
@@ -381,34 +396,39 @@ class DomExtractor(object):
         return run_dom.attrib['type']
 
     @staticmethod
+    def extract_mutable_from_run(run_dom):
+        return run_dom.attrib['mutable']
+
+    @staticmethod
     def extractDefaultCloudServiceNameFromRun(run_dom):
         return run_dom.attrib['cloudServiceName']
 
     @staticmethod
-    def extractRunParametersFromRun(run_dom):
+    def extract_run_parameters_from_run(run_dom):
         parameters = {}
-        for node in run_dom.findall('parameters/entry/parameter'):
+        for node in run_dom.findall(DomExtractor.PATH_TO_PARAMETER):
             value = node.find('value')
             parameters[node.get('name')] = value.text if value is not None else None
         return parameters
 
     @staticmethod
-    def getDeploymentTargets(run_dom, nodename):
-        "Get deployment targets for node with name 'nodename'"
+    def get_deployment_targets(run_dom, nodename):
+        '''Return deployment targets from the image of the node 'nodename'.
+        '''
         module = run_dom.find('module')
 
         if module.get('category') == 'Image':
-            return DomExtractor.getDeploymentTargetsFromImageDom(module)
+            return DomExtractor.get_deployment_targets_from_image(module)
         else:
-            for node in run_dom.findall('module/nodes/entry/node'):
+            for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
                 if node.get('name') == nodename:
-                    return DomExtractor.getDeploymentTargetsFromImageDom(
-                        node.find('image'))
+                    return DomExtractor.get_deployment_targets_from_image(node.find('image'))
         return {}
 
     @staticmethod
-    def getDeploymentTargetsFromImageDom(image_dom):
-        "Get deployment targets for the given image."
+    def get_deployment_targets_from_image(image_dom):
+        '''Return deployment targets of the given image.
+        '''
         targets = {}
         for targetNode in image_dom.findall('targets/target'):
             runInBackgroundStr = targetNode.get('runInBackground')

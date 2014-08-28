@@ -27,7 +27,6 @@ from slipstream.exceptions.Exceptions import TimeoutException, \
     AbortException, TerminalStateException, ExecutionException
 from slipstream import util
 from slipstream.Client import Client
-from slipstream.util import deprecated
 
 
 class MachineExecutor(object):
@@ -61,7 +60,7 @@ class MachineExecutor(object):
             traceback.print_exc()
             self.wrapper.fail(str(ex))
 
-        self.wrapper.advance()
+        self.wrapper.complete_state()
         state = self._waitForNextState(state)
         self._execute(state)
 
@@ -79,7 +78,7 @@ class MachineExecutor(object):
             if state != newState:
                 return newState
             else:
-                if self._is_timeout_not_needed(state):
+                if self._is_timeout_not_needed(state) and not self._is_mutable():
                     time.sleep(timeSleep * 12)
                 else:
                     time.sleep(timeSleep)
@@ -88,13 +87,25 @@ class MachineExecutor(object):
                                    'current state: %s' % state)
 
     def _is_timeout_not_needed(self, state):
-        return state == 'Ready' and not self.wrapper.needToStopImages()
+        return state == 'Ready' and \
+            (not self.wrapper.need_to_stop_images() or self._is_mutable())
+
+    def _is_mutable(self):
+        return self.wrapper.is_mutable()
 
     def onInitializing(self):
         pass
 
     def onProvisioning(self):
         util.printAction('Provisioning')
+
+        self._clean_local_cache()
+
+    def _clean_local_cache(self):
+        self.wrapper.discard_run_locally()
+        self.wrapper.discard_user_info_locally()
+        self.wrapper.discard_nodes_info_locally()
+        self.wrapper.discard_run_parameters_locally()
 
     def onExecuting(self):
         util.printAction('Executing')
@@ -112,7 +123,7 @@ class MachineExecutor(object):
             raise RuntimeError("Failed to bundle reports:\n%s" % e)
         archive.close()
 
-        self.wrapper.clientSlipStream.sendReport(reportFileName)
+        self.wrapper.send_report(reportFileName)
 
     def onReady(self):
         util.printAction('Ready')
@@ -136,8 +147,7 @@ class MachineExecutor(object):
 
     def _abort_running_in_final_state(self):
         time.sleep(60)
-        raise ExecutionException('The run is in a final state but the VM is '
-                                 'still running !')
+        raise ExecutionException('The run is in a final state but the VM is still running !')
 
     def _nodename(self):
         return self.wrapper.nodename()
@@ -145,12 +155,3 @@ class MachineExecutor(object):
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
 
-    def _killItselfServerSide(self):
-        self.wrapper.terminateRunServerSide()
-
-    def _getMyCloudInstanceId(self):
-        return self.wrapper.getMachineCloudInstanceId()
-
-    @deprecated
-    def isTerminateRunServerSide(self):
-        return self.wrapper.isTerminateRunServerSide()

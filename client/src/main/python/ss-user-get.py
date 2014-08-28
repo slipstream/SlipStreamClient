@@ -79,7 +79,7 @@ class MainProgram(CommandBase):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        uri = util.USER_URL_PATH
+        uri = util.USER_RESOURCE_PATH
         if self.user:
             uri += '/' + self.user
 

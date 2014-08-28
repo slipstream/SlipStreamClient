@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -19,85 +19,86 @@
 from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.cloudconnectors.CloudConnectorFactory import CloudConnectorFactory
 from slipstream import util
-from slipstream.util import deprecated
+from slipstream.NodeDecorator import NodeDecorator
+from slipstream.exceptions.Exceptions import ExecutionException
 
 
 class CloudWrapper(BaseWrapper):
+
     def __init__(self, configHolder):
         super(CloudWrapper, self).__init__(configHolder)
 
+        self._instance_names_to_be_gone = []
+
         # Explicitly call initCloudConnector() to set the cloud connector.
-        self.cloudProxy = None
+        self._cloud_client = None
         self.configHolder = configHolder
-        self.instancesDetail = []
         self.imagesStopped = False
 
     def initCloudConnector(self, configHolder=None):
-        self.cloudProxy = CloudConnectorFactory. \
-            createConnector(configHolder or self.configHolder)
+        self._cloud_client = CloudConnectorFactory.createConnector(configHolder or self.configHolder)
 
-    def publishDeploymentInitializationInfo(self):
-        for instanceDetail in self.instancesDetail:
-            for nodename, parameters in instanceDetail.items():
-                self.publishNodeInitializationInfo(nodename,
-                                                   str(parameters['id']),
-                                                   parameters['ip'])
+    def build_image(self):
+        self._cloud_client.set_slipstream_client_as_listener(self.get_slipstream_client())
+        user_info = self._get_user_info(self._get_cloud_service_name())
 
-    def startImage(self):
-        self.cloudProxy.setSlipStreamClientAsListener(self.clientSlipStream)
-        userInfo, imageInfo = self._getUserAndImageInfo()
-        self.instancesDetail = self.cloudProxy.startImage(userInfo, imageInfo)
+        node_instance = self._get_node_instances_to_start().get(NodeDecorator.MACHINE_NAME)
+        if node_instance is None:
+            raise ExecutionException('Failed to get node instance for instance named "%s"' %
+                                     NodeDecorator.MACHINE_NAME)
 
-    def buildImage(self):
-        self.cloudProxy.setSlipStreamClientAsListener(self.clientSlipStream)
-        userInfo, imageInfo = self._getUserAndImageInfo()
-        self.cloudProxy.buildImage(userInfo, imageInfo)
+        new_id = self._cloud_client.build_image(user_info, node_instance)
 
-    def startImages(self):
-        userInfo, nodes = self._getUserAndNodesInfo()
+        self._update_slipstream_image(node_instance, new_id)
 
-        defaultCloud = self.clientSlipStream.getDefaultCloudServiceName()
-        nodesForThisOrchestrator = []
-        for node in nodes:
-            if (node['cloudService'] == self.cloudProxy.cloud
-                    or ((node['cloudService'] == 'default'
-                         or node['cloudService'] == ''
-                         or node['cloudService'] is None)
-                    and self.cloudProxy.cloud == defaultCloud)):
-                nodesForThisOrchestrator.append(node)
+    def start_node_instances(self):
+        user_info = self._get_user_info(self._get_cloud_service_name())
+        nodes_instances = self._get_node_instances_to_start()
+        self._cloud_client.start_nodes_and_clients(user_info, nodes_instances)
 
-        self.instancesDetail = self.cloudProxy.startNodesAndClients(
-            userInfo, nodesForThisOrchestrator)
+    def _get_node_instances_to_start(self):
+        return self.get_node_instances_in_scale_state(
+            self.SCALE_STATE_CREATING, self._get_cloud_service_name())
 
-    def _getUserAndImageInfo(self):
-        return self.getUserInfo(self.cloudProxy.cloud), self.getImageInfo()
+    def _get_node_instances_to_stop(self):
+        return self.get_node_instances_in_scale_state(
+            self.SCALE_STATE_REMOVING, self._get_cloud_service_name())
 
-    def _getUserAndNodesInfo(self):
-        return self.getUserInfo(self.cloudProxy.cloud), self.getNodesInfo()
+    def stop_node_instances(self):
+        ids = []
+        node_instances_to_stop = self._get_node_instances_to_stop()
+        for node_instance in node_instances_to_stop.values():
+            ids.append(node_instance.get_instance_id())
+        if len(ids) > 0:
+            self._cloud_client.stop_vms_by_ids(ids)
 
-    @deprecated
-    def stopImages(self, ids=[]):
+        instance_names_removed = node_instances_to_stop.keys()
+        self.set_scale_state_on_node_instances(instance_names_removed,
+                                               self.SCALE_STATE_REMOVED)
 
-        if self.needToStopImages():
-            if ids:
-                self.cloudProxy.stopImagesByIds(ids)
-            else:
-                self.cloudProxy.stopImages()
-            self.imagesStopped = True
+        # Cache instance names that are to be set as 'gone' at Ready state.
+        self._instance_names_to_be_gone = instance_names_removed
+
+    def set_removed_instances_as_gone(self):
+        '''Using cached list of instance names that were set as 'removed'.
+        '''
+        self.set_scale_state_on_node_instances(self._instance_names_to_be_gone,
+                                               self.SCALE_STATE_GONE)
+        self._instance_names_to_be_gone = {}
 
     def stopCreator(self):
-        if self.needToStopImages(True):
-            creator_id = self.getCreatorVmId()
+        if self.need_to_stop_images(True):
+            creator_id = self._cloud_client.get_creator_vm_id()
             if creator_id:
-                if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
-                    self.cloudProxy.stopVmsByIds([creator_id])
-                elif not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
-                    self.cloudProxy.stopVappsByIds([creator_id])
+                if not self._is_vapp():
+                    self._cloud_client.stop_vms_by_ids([creator_id])
+                elif not self._is_build_in_single_vapp():
+                    self._cloud_client.stop_vapps_by_ids([creator_id])
 
     def stopNodes(self):
-        if self.needToStopImages():
-            if not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
-                self.cloudProxy.stopDeployment()
+        if self.need_to_stop_images():
+            if not self._is_vapp():
+                self._cloud_client.stop_deployment()
             self.imagesStopped = True
 
     def stopOrchestrator(self, is_build_image=False):
@@ -107,40 +108,48 @@ class CloudWrapper(BaseWrapper):
             self.stopOrchestratorDeployment()
 
     def stopOrchestratorBuild(self):
-        if self.needToStopImages(True):
-            orch_id = self.getMachineCloudInstanceId()
+        if self.need_to_stop_images(True):
+            orch_id = self.get_cloud_instance_id()
 
-            if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP):
-                if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-                    if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_BUILD_IN_SINGLE_VAPP):
-                        self.cloudProxy.stopDeployment()
+            if self._is_vapp():
+                if self._orchestrator_can_kill_itself_or_its_vapp():
+                    if self._is_build_in_single_vapp():
+                        self._cloud_client.stop_deployment()
                     else:
-                        self.cloudProxy.stopVappsByIds([orch_id])
+                        self._cloud_client.stop_vapps_by_ids([orch_id])
                 else:
-                    self.terminateRunServerSide()
+                    self._terminate_run_server_side()
             else:
-                if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-                    self.cloudProxy.stopVmsByIds([orch_id])
+                if self._orchestrator_can_kill_itself_or_its_vapp():
+                    self._cloud_client.stop_vms_by_ids([orch_id])
                 else:
-                    self.terminateRunServerSide()
+                    self._terminate_run_server_side()
 
     def stopOrchestratorDeployment(self):
-        if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_VAPP) and self.needToStopImages():
-            if self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-                self.cloudProxy.stopDeployment()
+        if self._is_vapp() and self.need_to_stop_images():
+            if self._orchestrator_can_kill_itself_or_its_vapp():
+                self._cloud_client.stop_deployment()
             else:
-                self.terminateRunServerSide()
-        elif self.needToStopImages() and not self.cloudProxy.hasCapability(self.cloudProxy.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP):
-            self.terminateRunServerSide()
+                self._terminate_run_server_side()
+        elif self.need_to_stop_images() and not self._orchestrator_can_kill_itself_or_its_vapp():
+            self._terminate_run_server_side()
         else:
-            orch_id = self.getMachineCloudInstanceId()
-            self.cloudProxy.stopVmsByIds([orch_id])
+            orch_id = self.get_cloud_instance_id()
+            self._cloud_client.stop_vms_by_ids([orch_id])
 
-    def terminateRunServerSide(self):
-        self._deleteRunResource()
+    def _is_build_in_single_vapp(self):
+        return self._cloud_client.has_capability(
+            self._cloud_client.CAPABILITY_BUILD_IN_SINGLE_VAPP)
 
-    def needToStopImages(self, ignore_on_success_run_forever=False):
-        runParameters = self.getRunParameters()
+    def _is_vapp(self):
+        return self._cloud_client.has_capability(self._cloud_client.CAPABILITY_VAPP)
+
+    def _orchestrator_can_kill_itself_or_its_vapp(self):
+        return self._cloud_client.has_capability(
+            self._cloud_client.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
+
+    def need_to_stop_images(self, ignore_on_success_run_forever=False):
+        runParameters = self._get_run_parameters()
 
         onErrorRunForever = runParameters.get('General.On Error Run Forever', 'false')
         onSuccessRunForever = runParameters.get('General.On Success Run Forever', 'false')
@@ -154,33 +163,12 @@ class CloudWrapper(BaseWrapper):
 
         return stop
 
-    def updateSlipStreamImage(self):
+    def _update_slipstream_image(self, node_instance, new_image_id):
         util.printStep("Updating SlipStream image run")
 
-        image_info = self.getImageInfo()
+        url = '%s/%s' % (node_instance.get_image_resource_uri(),
+                         self._get_cloud_service_name())
+        self._put_new_image_id(url, new_image_id)
 
-        newImageId = self.cloudProxy.getNewImageId()
-
-        if not newImageId:
-            return
-
-        self._updateSlipStreamImage(self.cloudProxy.getResourceUri(image_info),
-                                    newImageId)
-
-    # REMARK: LS: I think it's a better idea to create a dedicated function in the cloud connector
-    def _updateSlipStreamImage(self, resourceUri, newImageId):
-        resourceUri = '%s/%s' % (resourceUri, self.getCloudInstanceName())
-        self.putNewImageId(resourceUri, newImageId)
-
-    def getCreatorVmId(self):
-        return self.cloudProxy.getCreatorVmId()
-
-    def getCloudName(self):
-        return self.cloudProxy.cloudName
-
-    def getCloudInstanceName(self):
-        return self.cloudProxy.cloud
-
-    @deprecated
-    def isTerminateRunServerSide(self):
-        return self.cloudProxy.isTerminateRunServerSide()
+    def _get_cloud_service_name(self):
+        return self._cloud_client.get_cloud_service_name()

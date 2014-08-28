@@ -25,9 +25,11 @@ import os
 from mock import Mock
 
 from slipstream.ConfigHolder import ConfigHolder
+from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.wrappers.CloudWrapper import CloudWrapper
 from slipstream.util import CONFIGPARAM_CONNECTOR_MODULE_NAME
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeInstance import NodeInstance
 
 from TestCloudConnectorsBase import TestCloudConnectorsBase
 
@@ -48,33 +50,37 @@ class TestCloudWrapper(TestCloudConnectorsBase):
 
         os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'Test'
 
+        BaseWrapper.is_mutable = Mock(return_value=False)
+
     def tearDown(self):
         os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
         self.configHolder = None
         shutil.rmtree('%s/.cache/' % os.getcwd(), ignore_errors=True)
 
-    def test_getCloudName(self):
+    def test_get_cloud_name(self):
         for module_name in self.get_cloudconnector_modulenames():
             setattr(self.configHolder, CONFIGPARAM_CONNECTOR_MODULE_NAME, module_name)
             setattr(self.configHolder, KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT)
             cw = CloudWrapper(self.configHolder)
             cw.initCloudConnector()
 
-            assert cw.getCloudInstanceName() == 'Test'
+            assert cw._get_cloud_service_name() == 'Test'
 
     def test_putImageId(self):
+        # pylint: disable=protected-access
+
         self.configHolder.set(CONFIGPARAM_CONNECTOR_MODULE_NAME,
                               self.get_cloudconnector_modulename_by_cloudname('local'))
         cw = CloudWrapper(self.configHolder)
         cw.initCloudConnector()
 
-        cw.clientSlipStream.httpClient._call = Mock(return_value=('', ''))
+        cw._ss_client.httpClient._call = Mock(return_value=('', ''))
 
-        cw._updateSlipStreamImage('module/Name', 'ABC')
-        cw.clientSlipStream.httpClient._call.assert_called_with(
+        cw._update_slipstream_image(NodeInstance({'image.resourceUri': 'module/Name'}), 'ABC')
+        cw._ss_client.httpClient._call.assert_called_with(
             '%s/module/Name/Test' % self.serviceurl,
             'PUT', 'ABC', 'application/xml',
-            'application/xml')
+            'application/xml', retry_number=5)
 
 if __name__ == "__main__":
     unittest.main()

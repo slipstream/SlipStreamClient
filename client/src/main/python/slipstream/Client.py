@@ -176,18 +176,18 @@ class Client(object):
         util.printDetail(message, self.verboseLevel, self.verboseThreshold)
 
     def getCategory(self):
-        return self.httpClient.getRunCategory()
+        return self.httpClient.get_run_category()
 
     def fail(self, message):
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
         self.httpClient.setRuntimeParameter(abort, message)
 
-    def advance(self):
+    def complete_state(self):
         nodeName = self._getNodeName()
-        self.httpClient.advance(nodeName)
+        self.httpClient.complete_state(nodeName)
 
     def terminateRun(self):
-        self.httpClient._httpDelete(self.httpClient.runInstanceEndpoint)
+        self.httpClient._httpDelete(self.httpClient.run_url)
 
     def getGlobalAbortMessage(self):
         return self.httpClient.getGlobalAbortMessage()

@@ -12,25 +12,25 @@ class MainProgram(OpenStackCommand):
         super(MainProgram, self).__init__()
 
     def setProgramOptions(self):
-        self.parser.add_option('--instance-id', dest='instanceId',
-                help='Instance ID',
-                default='', metavar='ID')
+        self.parser.add_option('--instance-id', dest='instance_id',
+                               help='Instance ID',
+                               default='', metavar='ID')
 
     def checkOptions(self):
-        if not self.options.instanceId:
+        if not self.options.instance_id:
             self.parser.error('Some options were not given values. ' + \
                               'All options are mandatory.')
 
     def doWork(self):
-        self._stopInstance(self.options.instanceId)
+        self._stop_instance(self.options.instance_id)
 
-    def _stopInstance(self, node_id):
-        cc = OpenStackClientCloud(ConfigHolder(options={'verboseLevel':0}, 
+    def _stop_instance(self, node_id):
+        cc = OpenStackClientCloud(ConfigHolder(options={'verboseLevel':0},
                                                context={'foo':'bar'}))
         with nostdout():
-            cc.initialization(self.userInfo)
+            cc._initialization(self.userInfo)
         try:
-            cc.stopVmsByIds([node_id])
+            cc._stop_vms_by_ids([node_id])
         except Exception as ex:
             print ex
 

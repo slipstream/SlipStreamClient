@@ -12,7 +12,7 @@ class MainProgram(CloudStackCommand):
 
     def setProgramOptions(self):
         self.parser.add_option('--instance-id', dest='instances_ids',
-                help='Instance ID', action='append',
+                help='Instance ID (can be used multiple times)', action='append',
                 default=[], metavar='ID')
 
     def checkOptions(self):
@@ -22,13 +22,13 @@ class MainProgram(CloudStackCommand):
 
     def doWork(self):
         with nostdouterr():
-            self._stopInstance(self.options.instances_ids)
+            self._stop_instances(self.options.instances_ids)
 
-    def _stopInstance(self, ids):
+    def _stop_instances(self, ids):
         cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0},
                                                 context={'foo': 'bar'}))
-        cc.initialization(self.userInfo)
-        cc.stopVmsByIds(ids)
+        cc._initialization(self.userInfo)
+        cc.stop_vms_by_ids(ids)
 
 if __name__ == "__main__":
     try:

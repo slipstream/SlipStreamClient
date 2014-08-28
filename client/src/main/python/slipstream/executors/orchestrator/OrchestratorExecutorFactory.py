@@ -28,7 +28,7 @@ class OrchestratorExecutorFactory:
     @staticmethod
     def createExecutor(configHolder):
         cloudWrapper = CloudWrapper(configHolder)
-        category = cloudWrapper.getRunCategory()
+        category = cloudWrapper.get_run_category()
 
         configHolder.set(KEY_RUN_CATEGORY, category)
         cloudWrapper.initCloudConnector(configHolder)

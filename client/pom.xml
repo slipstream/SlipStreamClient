@@ -9,7 +9,7 @@
   <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStreamClient</artifactId>
-    <version>2.2.6-SNAPSHOT</version>
+    <version>2.3.1-SNAPSHOT</version>
   </parent>
 
   <build>
@@ -53,7 +53,9 @@
                 <property name="maven.target.python" value="${project.build.directory}/main/python" />
                 <property name="maven.target.scripts" value="${project.build.directory}/main/scripts" />
                 <property name="maven.test.python" value="${basedir}/src/test/python" />
+                <property name="maven.test.resourses" value="${basedir}/src/test/resources" />
                 <property name="maven.target.test.python" value="${project.build.directory}/test/python" />
+                <property name="maven.target.test.resourses" value="${project.build.directory}/test/resources" />
 
                 <ant antfile="${basedir}/build.xml" dir="${basedir}" inheritAll="true" inheritRefs="false">
                   <propertyset>
@@ -63,7 +65,9 @@
                     <propertyref name="maven.target.python" />
                     <propertyref name="maven.target.scripts" />
                     <propertyref name="maven.test.python" />
+                    <propertyref name="maven.test.resourses" />
                     <propertyref name="maven.target.test.python" />
+                    <propertyref name="maven.target.test.resourses" />
                   </propertyset>
                   <target name="copy.and.rename.files" />
                 </ant>
