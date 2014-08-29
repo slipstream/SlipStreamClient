@@ -60,8 +60,8 @@ class BaseCloudConnector(object):
 
     def _build_image(self, user_info, node_instance):
         """This method is called during the Executing state of a build image. In most cases this method should call
-        self._build_image_increment and then ask the Cloud to create an image from the instance.
-        The return value should be the new Cloud image id."""
+        self._build_image_increment() and then ask the Cloud to create an image from the instance.
+        The return value should be the new Cloud image id as a string."""
         raise NotImplementedError()
 
     def _wait_and_get_instance_ip_address(self, vm):
