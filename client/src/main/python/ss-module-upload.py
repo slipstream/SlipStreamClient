@@ -46,7 +46,7 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''usage: %prog [options]'''
+        usage = '''usage: %prog [options] <file> ...'''
 
         self.parser.usage = usage
 
