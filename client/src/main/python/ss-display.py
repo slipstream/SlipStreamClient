@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 

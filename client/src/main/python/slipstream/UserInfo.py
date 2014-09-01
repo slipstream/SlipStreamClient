@@ -20,6 +20,8 @@
 class UserInfo(dict):
 
     SEPARATOR = '.'
+    CLOUD_USERNAME_KEY = 'username'
+    CLOUD_PASSWORD_KEY = 'password'
 
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})
@@ -53,10 +55,10 @@ class UserInfo(dict):
         return self.get_user('email')
 
     def get_cloud_username(self):
-        return self.get_cloud('username')
+        return self.get_cloud(self.CLOUD_USERNAME_KEY)
 
     def get_cloud_password(self):
-        return self.get_cloud('password')
+        return self.get_cloud(self.CLOUD_PASSWORD_KEY)
 
     def get_cloud_endpoint(self):
         return self.get_cloud('endpoint')
@@ -77,5 +79,5 @@ class UserInfo(dict):
         self[self.cloud + 'keypair.name'] = keypair_name
 
     def set_cloud_params(self, params):
-        for k,v in params.items():
+        for k,v in params.iteritems():
             self[self.cloud + k] = v

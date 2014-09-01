@@ -19,7 +19,7 @@
 
 import sys
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.Node import Node
 

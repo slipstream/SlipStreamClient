@@ -23,7 +23,7 @@ import sys
 import time
 import traceback
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.Client import Client
 from slipstream.exceptions.Exceptions import AbortException, TimeoutException

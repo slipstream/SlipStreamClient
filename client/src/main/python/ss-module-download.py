@@ -22,7 +22,7 @@ import os
 import sys
 import xml.etree.ElementTree as ET
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 

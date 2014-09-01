@@ -72,6 +72,8 @@ except KeyboardInterrupt:
 
 
 class CommandBase(object):
+
+
     def __init__(self, dummy):
 
         self.verboseLevel = 0

@@ -16,7 +16,7 @@
  limitations under the License.
 """
 
-from slipstream.cloudconnectors.CloudClientCommand import CloudClientCommand
+from slipstream.command.CloudClientCommand import CloudClientCommand
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
 
 
