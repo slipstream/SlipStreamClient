@@ -50,10 +50,14 @@ class NodeInstance(object):
                           default_value)
 
     def set_image_attributes(self, image_attributes):
+        """image_attributes: dict
+        """
         for key, value in image_attributes.items():
             self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
     def set_image_targets(self, image_targets):
+        """image_targets: dict
+        """
         for key, value in image_targets.items():
             self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
@@ -70,6 +74,13 @@ class NodeInstance(object):
     def get_cloud_parameter(self, parameter_name, default_value=None):
         return self.__get('%s.%s' % (self.get_cloud(), parameter_name),
                           default_value)
+
+    def set_cloud_parameters(self, cloud_params):
+        """cloud_params: dict
+        """
+        cloudname = self.get_cloud()
+        for key, value in cloud_params.items():
+            self.__set('%s.%s' % (cloudname, key), value)
 
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
