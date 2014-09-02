@@ -1,6 +1,7 @@
 *~
 target
 *.pyc
+*.pyo
 *.log
 .idea/
 .coverage
