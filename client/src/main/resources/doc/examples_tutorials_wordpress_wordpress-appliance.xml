@@ -212,7 +212,7 @@
          </parameter>
       </entry>
    </parameters>
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="false" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost=“false” groupPut=“true” inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost=“false” ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet=“true” publicPost="false" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">

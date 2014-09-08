@@ -1,6 +1,6 @@
 <projectModule category="Project" creation="2013-10-30 10:54:53.570 CET" deleted="false" description="Examples highlighting SlipStream features.  See User Guide on the documentation page." lastModified="2013-11-24 11:46:53.524 CET" parentUri="module/" shortName="examples" version="67">
    <parameters />
-   <authz groupCreateChildren="true" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="false" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="true" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="true" groupDelete="false" groupGet="true" groupPost="false" groupPut=“true” inheritedGroupMembers="false" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="true" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">

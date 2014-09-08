@@ -1,6 +1,6 @@
 <deploymentModule category="Deployment" creation="2013-10-30 10:54:54.83 CET" deleted="false" description="Standalone RStudio Server" lastModified="2013-11-24 11:46:55.928 CET" parentUri="module/examples/tutorials/rstudio" shortName="rstudio" version="82">
    <parameters />
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut=“true” inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="">
