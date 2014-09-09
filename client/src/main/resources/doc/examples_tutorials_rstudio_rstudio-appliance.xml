@@ -32,7 +32,7 @@
          <parameter category="Output" description="password for RStudio" isSet="false" mandatory="false" name="rstudio_pswd" readonly="false" type="String" />
       </entry>
    </parameters>
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut=“true” inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost=“false” ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">

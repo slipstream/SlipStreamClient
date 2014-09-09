@@ -1,6 +1,6 @@
 <deploymentModule category="Deployment" creation="2013-11-08 14:49:25.427 CET" deleted="false" description="simple, single node deployment of WordPress" lastModified="2013-11-24 11:46:56.435 CET" parentUri="module/examples/tutorials/wordpress" shortName="wordpress" version="85">
    <parameters />
-   <authz groupCreateChildren="false" groupDelete="false" groupGet=“true” groupPost=“true” groupPut=“true” inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet=“true” publicPost=“true” publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">
