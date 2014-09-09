@@ -128,7 +128,7 @@ service torque-server stop
 # pull in node names of all of the workers
 #
 rm -f /var/spool/torque/server_priv/nodes
-for (( i=1; i &lt;= `ss-get worker.1:multiplicity`; i++ )); do
+for (( i=1; i &lt;= `ss-get worker:multiplicity`; i++ )); do
   worker_ip=`ss-get --timeout 480 worker.$i:hostname`
   cmd="import socket; print socket.getfqdn('$worker_ip')"
   worker_hostname=`python -c "$cmd"`
