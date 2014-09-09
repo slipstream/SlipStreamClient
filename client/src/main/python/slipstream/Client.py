@@ -37,6 +37,8 @@ class Client(object):
     IMAGE = NodeDecorator.IMAGE
     DEPLOYMENT = NodeDecorator.DEPLOYMENT
 
+    VALUE_LENGTH_LIMIT = 4096  # from RuntimeParameter class on server
+
     def __init__(self, configHolder):
         self.noBlock = True
         self.ignoreAbort = False
@@ -141,7 +143,10 @@ class Client(object):
 
     def setRuntimeParameter(self, key, value):
         _key = self._qualifyKey(key)
-        self.httpClient.setRuntimeParameter(_key, util.removeASCIIEscape(value))
+        stripped_value = util.removeASCIIEscape(value)
+        if len(stripped_value) > self.VALUE_LENGTH_LIMIT:
+            raise ClientError("value exceeds maximum length of %d characters" % self.VALUE_LENGTH_LIMIT)
+        self.httpClient.setRuntimeParameter(_key, stripped_value)
 
     def reset(self):
         self.httpClient.reset()
