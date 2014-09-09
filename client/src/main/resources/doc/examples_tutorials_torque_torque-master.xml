@@ -162,7 +162,7 @@ ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`
 #
 # set the service url
 #
-hname=`ss-set hostname`
+hname=`ss-get hostname`
 ss-set ss:url.service "ssh://tuser@${hname}"
 </target>
    </targets>
