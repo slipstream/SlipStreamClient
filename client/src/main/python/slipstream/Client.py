@@ -106,7 +106,8 @@ class Client(object):
             propertyPart = parts[1]  # safe since we've done the test in the if above
             parts = nodenamePart.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
             nodename = parts[0]
-            if len(parts) == 1:
+            # multiplicity parameter should NOT be qualified make an exception
+            if len(parts) == 1 and propertyPart != 'multiplicity':
                 _key = nodename + \
                     NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
                     NodeDecorator.nodeMultiplicityStartIndex + \
@@ -114,7 +115,12 @@ class Client(object):
                     propertyPart
             return _key
 
-        _key = self._getNodeName() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
+        if _key != 'multiplicity':
+            _key = self._getNodeName() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
+        else:
+            parts = self._getNodeName().split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
+            nodename = parts[0]
+            _key = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
 
         return _key
 
