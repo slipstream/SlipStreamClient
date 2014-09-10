@@ -88,6 +88,20 @@ export master_hostname=`python -c "$cmd"`
 ss-set master_hostname $master_hostname
 
 #
+# configuration for ssh access between nodes as user
+#
+su - tuser -c 'mkdir -p /home/tuser/.ssh'
+su - tuser -c 'chmod 0700 /home/tuser/.ssh'
+su - tuser -c 'ssh-keygen -f /home/tuser/.ssh/id_rsa -N ""'
+
+cp /root/.ssh/authorized_keys /home/tuser/.ssh/authorized_keys
+chown tuser:tuser /home/tuser/.ssh/authorized_keys
+chmod 0600 /home/tuser/.ssh/authorized_keys
+su - tuser -c 'cat /home/tuser/.ssh/id_rsa.pub &gt;&gt; /home/tuser/.ssh/authorized_keys'
+
+ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`
+
+#
 # initialize the server configuration with hostname
 #
 touch /var/spool/torque/server_priv/nodes
@@ -98,12 +112,6 @@ echo $master_hostname &gt;  /etc/torque/server_name
 #
 create-munge-key
 service munge start
-
-#
-# set parameter with munge key to be shared with workers
-# value is the base64 encoded value of the binary file
-#
-ss-set munge_key64 `cat /etc/munge/munge.key | base64 --wrap 0`
 
 #
 # ensure server is stopped, remove existing database
@@ -146,18 +154,20 @@ service torque-server restart
 service torque-scheduler restart
 
 #
-# configuration for ssh access between nodes as user
+# set parameter with munge key to be shared with workers
+# value is the base64 encoded value of the binary file
 #
-su - tuser -c 'mkdir -p /home/tuser/.ssh'
-su - tuser -c 'chmod 0700 /home/tuser/.ssh'
-su - tuser -c 'ssh-keygen -f /home/tuser/.ssh/id_rsa -N ""'
+# setting this is delayed until the torque server has
+# been completely configured to act as a synchronization
+# barrier for the startup of the torque-mom services
+#
+ss-set munge_key64 `cat /etc/munge/munge.key | base64 --wrap 0`
 
-cp /root/.ssh/authorized_keys /home/tuser/.ssh/authorized_keys
-chown tuser:tuser /home/tuser/.ssh/authorized_keys
-chmod 0600 /home/tuser/.ssh/authorized_keys
-su - tuser -c 'cat /home/tuser/.ssh/id_rsa.pub &gt;&gt; /home/tuser/.ssh/authorized_keys'
-
-ss-set user_id_rsa64 `cat /home/tuser/.ssh/id_rsa | base64 --wrap 0`
+#
+# set parameter with munge key to be shared with workers
+# value is the base64 encoded value of the binary file
+#
+ss-set munge_key64 `cat /etc/munge/munge.key | base64 --wrap 0`
 
 #
 # set the service url

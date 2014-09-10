@@ -62,32 +62,14 @@ apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold
 #
 
 #
+# ensure torque isn't running
+#
+service torque-mom stop
+
+#
 # create normal user
 #
 adduser --quiet --disabled-password --gecos '' tuser
-
-#
-# import the munge key from the server and start daemon
-#
-export munge_key64=`ss-get --timeout 480 master.1:munge_key64`
-echo $munge_key64 | base64 -d &gt; /etc/munge/munge.key
-chown munge:munge /etc/munge/munge.key
-chmod 0400 /etc/munge/munge.key
-service munge start
-
-#
-# setup the worker daemon with master's hostname
-#
-master_ip=`ss-get master.1:hostname`
-cmd="import socket; print socket.getfqdn('$master_ip')"
-export master_hostname=`python -c "$cmd"`
-
-echo "\$pbsserver " $master_hostname &gt; /var/spool/torque/mom_priv/config
-
-#
-# start the worker daemon
-#
-service torque-mom restart
 
 #
 # setup SSH configuration
@@ -98,7 +80,51 @@ chown tuser:tuser /home/tuser/.ssh/id_rsa
 chmod 0400 /home/tuser/.ssh/id_rsa
 
 ssh-keyscan `ss-get master.1:hostname` &gt;&gt; /home/tuser/.ssh/known_hosts
-ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_hosts</target>
+ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_hosts
+
+#
+# setup the worker daemon with master's hostname
+#
+master_ip=`ss-get master.1:hostname`
+cmd="import socket; print socket.getfqdn('$master_ip')"
+export master_hostname=`python -c "$cmd"`
+
+touch /var/spool/torque/mom_priv/config
+echo "$master_ip $master_hostname torqueserver" &gt;&gt; /etc/hosts
+
+#
+# import the munge key from the server and start daemon
+#
+# publication of the munge key also signals that the torque
+# server has been completely configured and workers can
+# connect
+#
+export munge_key64=`ss-get --timeout 480 master.1:munge_key64`
+echo $munge_key64 | base64 -d &gt; /etc/munge/munge.key
+chown munge:munge /etc/munge/munge.key
+chmod 0400 /etc/munge/munge.key
+service munge start
+
+#
+# start the worker daemon; this tends to randomly fail
+# retry multiple times to start daemon
+#
+PIDFILE=/var/spool/torque/mom_priv/mom.lock
+NEXT_WAIT_TIME=0
+RC=1
+until [ $RC -eq 0 ] || [ $NEXT_WAIT_TIME -eq 9 ]; do
+  sleep $(( NEXT_WAIT_TIME++ ))
+  service torque-mom stop
+  if [ -f ${PIDFILE} ]; then
+    kill `cat ${PIDFILE}`
+    rm -f ${PIDFILE}
+  fi
+  service torque-mom start
+  sleep 10  # give daemon time to fail
+  ps `cat ${PIDFILE}`
+  RC=$?
+done
+</target>
    </targets>
    <packages />
    <prerecipe />
