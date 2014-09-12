@@ -1,6 +1,6 @@
 <deploymentModule category="Deployment" creation="2013-10-30 10:54:53.989 CET" deleted="false" description="Deployment binding the apache server and the test client node(s)." lastModified="2013-11-24 11:46:56.111 CET" parentUri="module/examples/tutorials/service-testing" shortName="system" version="83">
    <parameters />
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">
