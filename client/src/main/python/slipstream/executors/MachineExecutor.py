@@ -58,7 +58,7 @@ class MachineExecutor(object):
         except (SystemExit, Exception) as ex:
             util.printError('Error executing node, with detail: %s' % ex)
             traceback.print_exc()
-            self.wrapper.fail(str(ex))
+            self._fail(ex)
 
         self.wrapper.complete_state()
         state = self._waitForNextState(state)
