@@ -41,7 +41,8 @@ RC_CRITICAL_NAGIOS = 2
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
 
-    REF_QNAME = 'refqname'
+    REF_QNAME = util.RUN_PARAM_REFQNAME
+    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE)
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
@@ -100,6 +101,11 @@ class MainProgram(CommandBase):
         self.parser.add_option('--kill-vms-on-error',
                                dest='kill_vms_on_error',
                                help='Kill VMs on any error.',
+                               default=False, action='store_true')
+
+        self.parser.add_option('--mutable-run',
+                               dest='mutable_run',
+                               help='Launch a mutable run.',
                                default=False, action='store_true')
 
         self.options, self.args = self.parser.parse_args()
@@ -220,11 +226,16 @@ class MainProgram(CommandBase):
         return self.options.nagios and RC_CRITICAL_NAGIOS or RC_CRITICAL_DEFAULT
 
     def _assembleData(self):
-        self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
-        return [self._decorateKey(k) + '=' + v for k, v in self.parameters.items()]
+        self._add_not_node_params()
+        return [self._decorate_node_param_key(k) + '=' + v for k, v in self.parameters.items()]
 
-    def _decorateKey(self, key):
-        if key == self.REF_QNAME:
+    def _add_not_node_params(self):
+        self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
+        if self.options.mutable_run:
+            self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
+
+    def _decorate_node_param_key(self, key):
+        if key in self.RUN_LAUNCH_NOT_NODE_PARAMS:
             return key
         parts = key.split(':')
         if len(parts) != 2:

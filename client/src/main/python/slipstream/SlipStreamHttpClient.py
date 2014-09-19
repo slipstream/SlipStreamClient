@@ -397,7 +397,7 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_mutable_from_run(run_dom):
-        return run_dom.attrib['mutable']
+        return run_dom.attrib[util.RUN_PARAM_MUTABLE]
 
     @staticmethod
     def extractDefaultCloudServiceNameFromRun(run_dom):
