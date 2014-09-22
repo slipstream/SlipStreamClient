@@ -144,7 +144,7 @@ class Client(object):
     def setRuntimeParameter(self, key, value):
         _key = self._qualifyKey(key)
         stripped_value = util.removeASCIIEscape(value)
-        if len(stripped_value) > self.VALUE_LENGTH_LIMIT:
+        if stripped_value and len(stripped_value) > self.VALUE_LENGTH_LIMIT:
             raise ClientError("value exceeds maximum length of %d characters" % self.VALUE_LENGTH_LIMIT)
         self.httpClient.setRuntimeParameter(_key, stripped_value)
 

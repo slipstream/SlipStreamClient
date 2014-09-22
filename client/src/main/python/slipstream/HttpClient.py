@@ -56,8 +56,8 @@ class HttpClient(object):
     def post(self, url, body=None, contentType='application/xml', accept='application/xml', retry_number=None):
         return self._call(url, 'POST', body, contentType, retry_number=retry_number)
 
-    def delete(self, url ,retry_number=None):
-        return self._call(url, 'DELETE', retry_number=retry_number)
+    def delete(self, url, body=None, retry_number=None):
+        return self._call(url, 'DELETE', body, retry_number=retry_number)
 
     def _call(self, url, method,
               body=None,
@@ -104,15 +104,15 @@ class HttpClient(object):
 
             # FIXME: fix the server such that 406 is not returned when cookie expires
             if resp.status == 401 or resp.status == 406:
-                headers = self._createAuthenticationHeader()
+                self._createAuthenticationHeader()
 
             if resp.status == 404:
                 clientEx = Exceptions.NotFoundError(resp.reason)
             else:
                 detail = _extractDetail(content)
-                detail = detail and (" - " + detail) or ''
-                msg = "Failed calling method %s on url %s, with reason: %d: %s" % (
-                    method, url, resp.status, resp.reason)
+                detail = detail and detail or ("%s (%d)" % (resp.reason, resp.status))
+                msg = "Failed calling method %s on url %s, with reason: %s" % (
+                    method, url, detail)
                 clientEx = Exceptions.ClientError(msg)
 
             clientEx.code = resp.status

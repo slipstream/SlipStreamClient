@@ -77,6 +77,8 @@ class TerminalStateException(ClientError):
 class ExecutionException(ClientError):
     pass
 
-
 class ParameterNotFoundException(ClientError):
+    pass
+
+class ValidationException(ClientError):
     pass
