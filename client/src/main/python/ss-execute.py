@@ -47,6 +47,7 @@ class MainProgram(CommandBase):
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = 'Inactive'
+    FINAL_STATES = ['Terminal', 'Detached', 'Done']
 
     def __init__(self, argv=None):
         self.moduleUri = None
@@ -108,11 +109,22 @@ class MainProgram(CommandBase):
                                help='Launch a mutable run.',
                                default=False, action='store_true')
 
+        self.parser.add_option('--final-states', dest='final_states',
+                               help='Comma separated list of final states. ' +
+                               'Default: %s' % ', '.join(self.FINAL_STATES),
+                               type='string', action="callback",
+                               callback=self._final_states_callback,
+                               metavar='FINAL_STATES', default=self.FINAL_STATES)
+
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
 
         self.resourceUrl = self.args[0]
+
+    @staticmethod
+    def _final_states_callback(option, opt, value, parser):
+        setattr(parser.values, option.dest, value.split(','))
 
     def _checkArgs(self):
         if len(self.args) < 1:
@@ -176,12 +188,11 @@ class MainProgram(CommandBase):
         Nagios check or not.
         '''
         rc = self._get_critical_rc()
-        final_states = ['Terminal', 'Detached']
 
         try:
             final_state = self._wait_run_in_final_state(run_url,
                                                         self.options.wait,
-                                                        final_states)
+                                                        self.options.final_states)
         except AbortException as ex:
             if self.options.nagios:
                 print('CRITICAL - %s. State: %s. Run: %s' % (
@@ -258,6 +269,10 @@ class MainProgram(CommandBase):
                 _sleep.ncycle += 1
             time.sleep(time_sleep)
         _sleep.ncycle = 1
+
+        if not self.options.nagios:
+            print('Waiting %s min for Run %s to reach %s' % \
+                  (waitmin, run_url, ','.join(final_states)))
 
         run_uuid = run_url.rsplit('/', 1)[-1]
         time_end = time.time() + waitmin * 60
