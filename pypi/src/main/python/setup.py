@@ -41,6 +41,8 @@ setup(
         'bin/ss-module-get',
         'bin/ss-module-put',
         'bin/ss-module-upload',
+        'bin/ss-node-add',
+        'bin/ss-node-remove',
         'bin/ss-run-get',
         'bin/ss-user-get',
         'bin/ss-user-put',

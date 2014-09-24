@@ -25,12 +25,6 @@ from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 
-default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                  'http://slipstream.sixsq.com')
-default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                os.path.join(util.TMPDIR, 'cookie'))
-
-
 class MainProgram(CommandBase):
     '''A command-line program to delete module definition(s).'''
 
@@ -53,24 +47,11 @@ class MainProgram(CommandBase):
                 be called repeatedly.'''
 
         self.parser.usage = usage
-
-        self.parser.add_option('-u', '--username', dest='username',
-                               help='SlipStream username', metavar='USERNAME',
-                               default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p', '--password', dest='password',
-                               help='SlipStream password', metavar='PASSWORD',
-                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
-
-        self.parser.add_option('--cookie', dest='cookieFilename',
-                               help='SlipStream cookie', metavar='FILE',
-                               default=default_cookie)
-
-        self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
-                               help='SlipStream server endpoint',
-                               default=default_endpoint)
+        self.add_authentication_options()
+        self.addEndpointOption()        
 
         self.options, self.args = self.parser.parse_args()
-
+        
         self._checkArgs()
 
     def _checkArgs(self):

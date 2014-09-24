@@ -70,7 +70,6 @@ except KeyboardInterrupt:
     print '\nExecution interrupted by the user... goodbye!'
     sys.exit(-1)
 
-
 class CommandBase(object):
 
 
@@ -100,6 +99,26 @@ class CommandBase(object):
                                action='count', default=self.verboseLevel)
         self.parse()
         self.verboseLevel = self.options.verboseLevel
+
+    def add_authentication_options(self):
+        default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
+                                os.path.join(util.TMPDIR, 'cookie'))
+        self.parser.add_option('-u', '--username', dest='username',
+                               help='SlipStream username', metavar='USERNAME',
+                               default=os.environ.get('SLIPSTREAM_USERNAME'))
+        self.parser.add_option('-p', '--password', dest='password',
+                               help='SlipStream password', metavar='PASSWORD',
+                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
+        self.parser.add_option('--cookie', dest='cookieFilename',
+                               help='SlipStream cookie', metavar='FILE',
+                               default=default_cookie)
+
+    def addEndpointOption(self):
+        default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
+                                  'https://slipstream.sixsq.com')
+        self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
+                               help='SlipStream server endpoint',
+                               default=default_endpoint)
 
     def parse(self):
         pass
