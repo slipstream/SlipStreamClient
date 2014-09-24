@@ -92,6 +92,8 @@ class Client(object):
     def _qualifyKey(self, key):
         """Qualify the key, if not already done, with the right nodename"""
 
+        node_level_properties = ['multiplicity', 'ids']
+
         _key = key
 
         # Is this a reserved or special nodename?
@@ -109,7 +111,7 @@ class Client(object):
             parts = nodenamePart.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
             nodename = parts[0]
             # multiplicity parameter should NOT be qualified make an exception
-            if len(parts) == 1 and propertyPart != 'multiplicity':
+            if len(parts) == 1 and propertyPart not in node_level_properties:
                 _key = nodename + \
                     NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
                     NodeDecorator.nodeMultiplicityStartIndex + \
@@ -117,7 +119,7 @@ class Client(object):
                     propertyPart
             return _key
 
-        if _key != 'multiplicity':
+        if _key not in node_level_properties:
             _key = self._getNodeName() + NodeDecorator.NODE_PROPERTY_SEPARATOR + _key
         else:
             parts = self._getNodeName().split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
