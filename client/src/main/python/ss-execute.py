@@ -42,7 +42,7 @@ class MainProgram(CommandBase):
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = 'Inactive'
-    FINAL_STATES = ['Terminal', 'Detached', 'Done']
+    FINAL_STATES = ['Done', ]
 
 
     def __init__(self, argv=None):
