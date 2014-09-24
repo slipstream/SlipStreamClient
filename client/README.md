@@ -29,7 +29,7 @@ function on_B() {
         # Do something here. Example:
         ss-get $INSTANCE_NAME ready
         host_name=$(ss-get $INSTANCE_NAME:hostname)
-        echo “New instance of $SLIPSTREAM_SCALING_NODE: $INSTANCE_NAME, $host_name"
+        echo "New instance of $SLIPSTREAM_SCALING_NODE: $INSTANCE_NAME, $host_name"
     done
 }
 
