@@ -26,10 +26,6 @@ from slipstream.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 
-default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                  'http://slipstream.sixsq.com')
-
-
 class MainProgram(CommandBase):
     '''Recursively download SlipStream modules as XML from server.'''
 
@@ -49,16 +45,8 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.parser.add_option('-u', '--username', dest='username',
-                               help='SlipStream username', metavar='USERNAME',
-                               default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p', '--password', dest='password',
-                               help='SlipStream password', metavar='PASSWORD',
-                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
-
-        self.parser.add_option('-e', '--endpoint', dest='endpoint', metavar='URL',
-                               help='SlipStream server endpoint',
-                               default=default_endpoint)
+        self.add_authentication_options()
+        self.addEndpointOption()        
 
         self.parser.add_option('--purge-image-ids', dest='purgImageIds',
                                help='Remove cloud image ids before saving',

@@ -29,10 +29,6 @@ import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 etree = util.importETree()
 
-default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                  'http://slipstream.sixsq.com')
-
-
 class MainProgram(CommandBase):
     '''Uploads a collection of modules (in XML format) to the server.'''
 
@@ -49,17 +45,8 @@ class MainProgram(CommandBase):
         usage = '''usage: %prog [options] <file> ...'''
 
         self.parser.usage = usage
-
-        self.parser.add_option('-u', '--username', dest='username',
-                               help='SlipStream username', metavar='USERNAME',
-                               default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p', '--password', dest='password',
-                               help='SlipStream password', metavar='PASSWORD',
-                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
-
-        self.parser.add_option('-e', '--endpoint', dest='endpoint',
-                               help='SlipStream server endpoint', metavar='URL',
-                               default=default_endpoint)
+        self.add_authentication_options()
+        self.addEndpointOption()        
 
         self.parser.add_option('-f', '--force', dest='force',
                                help='Force execution, ignoring errors',

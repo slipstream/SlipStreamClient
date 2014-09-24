@@ -29,11 +29,6 @@ from slipstream.Client import Client
 from slipstream.exceptions.Exceptions import AbortException, TimeoutException
 import slipstream.util as util
 
-default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                  'http://slipstream.sixsq.com')
-default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                os.path.join(util.TMPDIR, 'cookie'))
-
 RC_SUCCESS = 0
 RC_CRITICAL_DEFAULT = 1
 RC_CRITICAL_NAGIOS = 2
@@ -41,13 +36,11 @@ RC_CRITICAL_NAGIOS = 2
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
 
-    REF_QNAME = util.RUN_PARAM_REFQNAME
-    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE)
+    REF_QNAME = 'refqname'
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = 'Inactive'
-    FINAL_STATES = ['Terminal', 'Detached', 'Done']
 
     def __init__(self, argv=None):
         self.moduleUri = None
@@ -66,20 +59,8 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.parser.add_option('-u', '--username', dest='username',
-                               help='SlipStream username', metavar='USERNAME',
-                               default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p', '--password', dest='password',
-                               help='SlipStream password', metavar='PASSWORD',
-                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
-
-        self.parser.add_option('--cookie', dest='cookieFilename',
-                               help='SlipStream cookie', metavar='FILE',
-                               default=default_cookie)
-
-        self.parser.add_option('--endpoint', dest='endpoint',
-                               help='SlipStream server endpoint', metavar='URL',
-                               default=default_endpoint)
+        self.add_authentication_options()
+        self.addEndpointOption()
 
         self.parser.add_option('--parameters', dest='parameters',
                                help='Deployment or image parameters override. '
@@ -104,27 +85,11 @@ class MainProgram(CommandBase):
                                help='Kill VMs on any error.',
                                default=False, action='store_true')
 
-        self.parser.add_option('--mutable-run',
-                               dest='mutable_run',
-                               help='Launch a mutable run.',
-                               default=False, action='store_true')
-
-        self.parser.add_option('--final-states', dest='final_states',
-                               help='Comma separated list of final states. ' +
-                               'Default: %s' % ', '.join(self.FINAL_STATES),
-                               type='string', action="callback",
-                               callback=self._final_states_callback,
-                               metavar='FINAL_STATES', default=self.FINAL_STATES)
-
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
 
         self.resourceUrl = self.args[0]
-
-    @staticmethod
-    def _final_states_callback(option, opt, value, parser):
-        setattr(parser.values, option.dest, value.split(','))
 
     def _checkArgs(self):
         if len(self.args) < 1:
@@ -188,11 +153,12 @@ class MainProgram(CommandBase):
         Nagios check or not.
         '''
         rc = self._get_critical_rc()
+        final_states = ['Terminal', 'Detached']
 
         try:
             final_state = self._wait_run_in_final_state(run_url,
                                                         self.options.wait,
-                                                        self.options.final_states)
+                                                        final_states)
         except AbortException as ex:
             if self.options.nagios:
                 print('CRITICAL - %s. State: %s. Run: %s' % (
@@ -237,16 +203,11 @@ class MainProgram(CommandBase):
         return self.options.nagios and RC_CRITICAL_NAGIOS or RC_CRITICAL_DEFAULT
 
     def _assembleData(self):
-        self._add_not_node_params()
-        return [self._decorate_node_param_key(k) + '=' + v for k, v in self.parameters.items()]
-
-    def _add_not_node_params(self):
         self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
-        if self.options.mutable_run:
-            self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
+        return [self._decorateKey(k) + '=' + v for k, v in self.parameters.items()]
 
-    def _decorate_node_param_key(self, key):
-        if key in self.RUN_LAUNCH_NOT_NODE_PARAMS:
+    def _decorateKey(self, key):
+        if key == self.REF_QNAME:
             return key
         parts = key.split(':')
         if len(parts) != 2:
@@ -269,10 +230,6 @@ class MainProgram(CommandBase):
                 _sleep.ncycle += 1
             time.sleep(time_sleep)
         _sleep.ncycle = 1
-
-        if not self.options.nagios:
-            print('Waiting %s min for Run %s to reach %s' % \
-                  (waitmin, run_url, ','.join(final_states)))
 
         run_uuid = run_url.rsplit('/', 1)[-1]
         time_end = time.time() + waitmin * 60

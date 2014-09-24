@@ -70,11 +70,6 @@ except KeyboardInterrupt:
     print '\nExecution interrupted by the user... goodbye!'
     sys.exit(-1)
 
-default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                  'https://slipstream.sixsq.com')
-default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                os.path.join(util.TMPDIR, 'cookie'))
-
 class CommandBase(object):
     def __init__(self, dummy):
 
@@ -104,6 +99,8 @@ class CommandBase(object):
         self.verboseLevel = self.options.verboseLevel
 
     def add_authentication_options(self):
+        default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
+                                os.path.join(util.TMPDIR, 'cookie'))
         self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
@@ -115,6 +112,8 @@ class CommandBase(object):
                                default=default_cookie)
 
     def addEndpointOption(self):
+        default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
+                                  'https://slipstream.sixsq.com')
         self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
                                help='SlipStream server endpoint',
                                default=default_endpoint)

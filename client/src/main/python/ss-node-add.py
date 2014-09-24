@@ -53,8 +53,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()
-        
+        self.addEndpointOption()        
         self.parser.add_option('--runtime-parameter',
                                dest='runtimeParameters',
                                metavar='<parameter-name>:<value>[,<value>,...]',
