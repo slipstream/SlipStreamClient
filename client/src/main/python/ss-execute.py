@@ -36,11 +36,14 @@ RC_CRITICAL_NAGIOS = 2
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
 
-    REF_QNAME = 'refqname'
+    REF_QNAME = util.RUN_PARAM_REFQNAME
+    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE)
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = 'Inactive'
+    FINAL_STATES = ['Terminal', 'Detached', 'Done']
+
 
     def __init__(self, argv=None):
         self.moduleUri = None
@@ -85,11 +88,27 @@ class MainProgram(CommandBase):
                                help='Kill VMs on any error.',
                                default=False, action='store_true')
 
+        self.parser.add_option('--mutable-run',
+                               dest='mutable_run',
+                               help='Launch a mutable run.',
+                               default=False, action='store_true')
+
+        self.parser.add_option('--final-states', dest='final_states',
+                               help='Comma separated list of final states. ' +
+                               'Default: %s' % ', '.join(self.FINAL_STATES),
+                               type='string', action="callback",
+                               callback=self._final_states_callback,
+                               metavar='FINAL_STATES', default=self.FINAL_STATES)
+
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
 
         self.resourceUrl = self.args[0]
+
+    @staticmethod
+    def _final_states_callback(option, opt, value, parser):
+        setattr(parser.values, option.dest, value.split(','))
 
     def _checkArgs(self):
         if len(self.args) < 1:
@@ -153,12 +172,11 @@ class MainProgram(CommandBase):
         Nagios check or not.
         '''
         rc = self._get_critical_rc()
-        final_states = ['Terminal', 'Detached']
 
         try:
             final_state = self._wait_run_in_final_state(run_url,
                                                         self.options.wait,
-                                                        final_states)
+                                                        self.options.final_states)
         except AbortException as ex:
             if self.options.nagios:
                 print('CRITICAL - %s. State: %s. Run: %s' % (
@@ -203,17 +221,27 @@ class MainProgram(CommandBase):
         return self.options.nagios and RC_CRITICAL_NAGIOS or RC_CRITICAL_DEFAULT
 
     def _assembleData(self):
-        self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
-        return [self._decorateKey(k) + '=' + v for k, v in self.parameters.items()]
+        self._add_not_node_params()
+        return self._decorate_parameters(self.parameters,
+                                         filter_out=self.RUN_LAUNCH_NOT_NODE_PARAMS)
 
-    def _decorateKey(self, key):
-        if key == self.REF_QNAME:
+    def _add_not_node_params(self):
+        self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
+        if self.options.mutable_run:
+            self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
+
+    def _decorate_node_param_key(self, key, filter_out=[]):
+        if key in filter_out:
             return key
         parts = key.split(':')
         if len(parts) != 2:
             self.parser.error('Invalid key format: ' + key)
         nodename, key = parts
         return 'parameter--node--' + nodename + '--' + key
+
+    def _decorate_parameters(self, params, filter_out=[]):
+        return ['%s=%s' % (self._decorate_node_param_key(k, filter_out), v)
+                for k, v in params.items()]
 
     def _wait_run_in_final_state(self, run_url, waitmin, final_states):
         '''Return on reaching final state.
@@ -230,6 +258,10 @@ class MainProgram(CommandBase):
                 _sleep.ncycle += 1
             time.sleep(time_sleep)
         _sleep.ncycle = 1
+
+        if not self.options.nagios:
+            print('Waiting %s min for Run %s to reach %s' % \
+                  (waitmin, run_url, ','.join(final_states)))
 
         run_uuid = run_url.rsplit('/', 1)[-1]
         time_end = time.time() + waitmin * 60
