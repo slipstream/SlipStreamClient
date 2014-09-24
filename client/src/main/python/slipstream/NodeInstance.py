@@ -62,11 +62,21 @@ class NodeInstance(object):
         return self.__get('%s.%s' % (self.get_cloud(), parameter_name),
                           default_value)
 
+    def set_attributes(self, attributes):
+        """attributes: dict
+        """
+        for key, value in attributes.items():
+            self.__set(key, value)
+
     def set_image_attributes(self, image_attributes):
+        """image_attributes: dict
+        """
         for key, value in image_attributes.items():
             self.__set('%s.%s' % (self.IMAGE_ATTRIBUTE_PREFIX, key), value)
 
     def set_image_targets(self, image_targets):
+        """image_targets: dict
+        """
         for key, value in image_targets.items():
             self.__set('%s.%s' % (self.IMAGE_TARGETS_PREFIX, key), value)
 

@@ -101,16 +101,20 @@ class HttpClient(object):
                 raise Exceptions.NotYetSetException(_extractDetail(content))
             if resp.status == EXPECTATION_FAILED_ERROR:
                 raise Exceptions.TerminalStateException(_extractDetail(content))
+
             # FIXME: fix the server such that 406 is not returned when cookie expires
             if resp.status == 401 or resp.status == 406:
                 headers = self._createAuthenticationHeader()
 
-            msg = "Failed calling method %s on url %s, with reason: %d: %s" % (
-                method, url, resp.status, resp.reason)
             if resp.status == 404:
                 clientEx = Exceptions.NotFoundError(resp.reason)
             else:
+                detail = _extractDetail(content)
+                detail = detail and (" - " + detail) or ''
+                msg = "Failed calling method %s on url %s, with reason: %d: %s" % (
+                    method, url, resp.status, resp.reason)
                 clientEx = Exceptions.ClientError(msg)
+
             clientEx.code = resp.status
             raise clientEx
 

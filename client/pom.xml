@@ -9,7 +9,7 @@
   <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStreamClient</artifactId>
-    <version>2.3.1-SNAPSHOT</version>
+    <version>2.3.4-SNAPSHOT</version>
   </parent>
 
   <build>
@@ -132,7 +132,6 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
-        <version>1.1.1</version><!-- outputFile doesn't work in 1.2, needed for pylint below -->
         <executions>
           <execution>
             <id>unpack-stratuslab</id>

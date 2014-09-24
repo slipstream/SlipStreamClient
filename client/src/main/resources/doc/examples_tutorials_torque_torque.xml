@@ -1,6 +1,6 @@
 <deploymentModule category="Deployment" creation="2013-10-30 10:54:54.242 CET" deleted="false" description="Torque Batch Cluster" lastModified="2013-11-24 11:46:56.254 CET" parentUri="module/examples/tutorials/torque" shortName="torque" version="84">
    <parameters />
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="">

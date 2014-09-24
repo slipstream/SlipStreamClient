@@ -51,6 +51,9 @@ RUN_RESOURCE_PATH = '/run'
 MODULE_RESOURCE_PATH = '/module'
 USER_RESOURCE_PATH = '/user'
 
+RUN_PARAM_REFQNAME = 'refqname'
+RUN_PARAM_MUTABLE = 'mutable'
+
 CONFIGPARAM_CONNECTOR_MODULE_NAME = 'cloudconnector'
 
 SUPPORTED_PLATFORMS_BY_DISTRO = {'debian_based': ('ubuntu',),

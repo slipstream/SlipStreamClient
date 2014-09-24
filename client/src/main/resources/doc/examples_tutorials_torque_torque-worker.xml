@@ -5,57 +5,8 @@
          <parameter category="Cloud" description="Volatile extra disk in GB" isSet="false" mandatory="true" name="extra.disk.volatile" readonly="false" type="String" />
       </entry>
       <entry>
-         <string>stratuslab.disks.bus.type</string>
-         <parameter category="stratuslab" description="VM disks bus type" isSet="true" mandatory="true" name="stratuslab.disks.bus.type" readonly="false" type="Enum">
-            <enumValues length="2">
-               <string>virtio</string>
-               <string>scsi</string>
-            </enumValues>
-            <value>virtio</value>
-            <defaultValue>virtio</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>CC-IN2P3.instance.type</string>
-         <parameter category="CC-IN2P3" description="Instance type (flavor)" isSet="true" mandatory="true" name="CC-IN2P3.instance.type" readonly="false" type="String">
-            <value>m1.tiny</value>
-            <defaultValue>m1.tiny</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>stratuslab.instance.type</string>
-         <parameter category="stratuslab" description="Cloud instance type" isSet="true" mandatory="true" name="stratuslab.instance.type" readonly="false" type="Enum">
-            <enumValues length="7">
-               <string>m1.small</string>
-               <string>c1.medium</string>
-               <string>m1.large</string>
-               <string>m1.xlarge</string>
-               <string>c1.xlarge</string>
-               <string>t1.micro</string>
-               <string>standard.xsmall</string>
-            </enumValues>
-            <value>m1.large</value>
-            <defaultValue>m1.large</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>LLR.cpu</string>
-         <parameter category="LLR" description="Requested CPUs" isSet="false" mandatory="true" name="LLR.cpu" readonly="false" type="String" />
-      </entry>
-      <entry>
          <string>hostname</string>
          <parameter category="Output" description="hostname/ip of the image" isSet="false" mandatory="true" name="hostname" readonly="false" type="String" />
-      </entry>
-      <entry>
-         <string>LLR.ram</string>
-         <parameter category="LLR" description="Requested RAM (in GB)" isSet="false" mandatory="true" name="LLR.ram" readonly="false" type="String" />
-      </entry>
-      <entry>
-         <string>stratuslab.ram</string>
-         <parameter category="stratuslab" description="Requested RAM (in GB)" isSet="true" mandatory="true" name="stratuslab.ram" readonly="false" type="String">
-            <value>2</value>
-            <defaultValue>2</defaultValue>
-         </parameter>
       </entry>
       <entry>
          <string>network</string>
@@ -69,52 +20,11 @@
          </parameter>
       </entry>
       <entry>
-         <string>LLR.instance.type</string>
-         <parameter category="LLR" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
-            <enumValues length="7">
-               <string>m1.small</string>
-               <string>c1.medium</string>
-               <string>m1.large</string>
-               <string>m1.xlarge</string>
-               <string>c1.xlarge</string>
-               <string>t1.micro</string>
-               <string>standard.xsmall</string>
-            </enumValues>
-            <value>m1.small</value>
-            <defaultValue>m1.small</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>CC-IN2P3.security.groups</string>
-         <parameter category="CC-IN2P3" description="Security Groups (comma separated list)" isSet="true" mandatory="true" name="CC-IN2P3.security.groups" readonly="false" type="String">
-            <value>default</value>
-            <defaultValue>default</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>LLR.disks.bus.type</string>
-         <parameter category="LLR" description="VM disks bus type" isSet="true" mandatory="true" name="LLR.disks.bus.type" readonly="false" type="Enum">
-            <enumValues length="2">
-               <string>virtio</string>
-               <string>scsi</string>
-            </enumValues>
-            <value>virtio</value>
-            <defaultValue>virtio</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>stratuslab.cpu</string>
-         <parameter category="stratuslab" description="Requested CPUs" isSet="true" mandatory="true" name="stratuslab.cpu" readonly="false" type="String">
-            <value>2</value>
-            <defaultValue>2</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
          <string>instanceid</string>
          <parameter category="Output" description="Cloud instance id" isSet="false" mandatory="true" name="instanceid" readonly="false" type="String" />
       </entry>
    </parameters>
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">
@@ -152,32 +62,14 @@ apt-get -o DPkg::options::="--force-confdef" -o DPkg::options::="--force-confold
 #
 
 #
+# ensure torque isn't running
+#
+service torque-mom stop
+
+#
 # create normal user
 #
 adduser --quiet --disabled-password --gecos '' tuser
-
-#
-# import the munge key from the server and start daemon
-#
-export munge_key64=`ss-get --timeout 480 master.1:munge_key64`
-echo $munge_key64 | base64 -d &gt; /etc/munge/munge.key
-chown munge:munge /etc/munge/munge.key
-chmod 0400 /etc/munge/munge.key
-service munge start
-
-#
-# setup the worker daemon with master's hostname
-#
-master_ip=`ss-get master.1:hostname`
-cmd="import socket; print socket.getfqdn('$master_ip')"
-export master_hostname=`python -c "$cmd"`
-
-echo "\$pbsserver " $master_hostname &gt; /var/spool/torque/mom_priv/config
-
-#
-# start the worker daemon
-#
-service torque-mom restart
 
 #
 # setup SSH configuration
@@ -188,7 +80,51 @@ chown tuser:tuser /home/tuser/.ssh/id_rsa
 chmod 0400 /home/tuser/.ssh/id_rsa
 
 ssh-keyscan `ss-get master.1:hostname` &gt;&gt; /home/tuser/.ssh/known_hosts
-ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_hosts</target>
+ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_hosts
+
+#
+# setup the worker daemon with master's hostname
+#
+master_ip=`ss-get master.1:hostname`
+cmd="import socket; print socket.getfqdn('$master_ip')"
+export master_hostname=`python -c "$cmd"`
+
+touch /var/spool/torque/mom_priv/config
+echo "$master_ip $master_hostname torqueserver" &gt;&gt; /etc/hosts
+
+#
+# import the munge key from the server and start daemon
+#
+# publication of the munge key also signals that the torque
+# server has been completely configured and workers can
+# connect
+#
+export munge_key64=`ss-get --timeout 480 master.1:munge_key64`
+echo $munge_key64 | base64 -d &gt; /etc/munge/munge.key
+chown munge:munge /etc/munge/munge.key
+chmod 0400 /etc/munge/munge.key
+service munge start
+
+#
+# start the worker daemon; this tends to randomly fail
+# retry multiple times to start daemon
+#
+PIDFILE=/var/spool/torque/mom_priv/mom.lock
+NEXT_WAIT_TIME=0
+RC=1
+until [ $RC -eq 0 ] || [ $NEXT_WAIT_TIME -eq 9 ]; do
+  sleep $(( NEXT_WAIT_TIME++ ))
+  service torque-mom stop
+  if [ -f ${PIDFILE} ]; then
+    kill `cat ${PIDFILE}`
+    rm -f ${PIDFILE}
+  fi
+  service torque-mom start
+  sleep 10  # give daemon time to fail
+  ps `cat ${PIDFILE}`
+  RC=$?
+done
+</target>
    </targets>
    <packages />
    <prerecipe />

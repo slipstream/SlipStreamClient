@@ -12,54 +12,8 @@
          <parameter category="Cloud" description="Volatile extra disk in GB" isSet="false" mandatory="true" name="extra.disk.volatile" readonly="false" type="String" />
       </entry>
       <entry>
-         <string>stratuslab.disks.bus.type</string>
-         <parameter category="stratuslab" description="VM disks bus type" isSet="true" mandatory="true" name="stratuslab.disks.bus.type" readonly="false" type="Enum">
-            <enumValues length="2">
-               <string>virtio</string>
-               <string>scsi</string>
-            </enumValues>
-            <value>virtio</value>
-            <defaultValue>virtio</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>CC-IN2P3.instance.type</string>
-         <parameter category="CC-IN2P3" description="Instance type (flavor)" isSet="true" mandatory="true" name="CC-IN2P3.instance.type" readonly="false" type="String">
-            <value>m1.tiny</value>
-            <defaultValue>m1.tiny</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>stratuslab.instance.type</string>
-         <parameter category="stratuslab" description="Cloud instance type" isSet="true" mandatory="true" name="stratuslab.instance.type" readonly="false" type="Enum">
-            <enumValues length="7">
-               <string>m1.small</string>
-               <string>c1.medium</string>
-               <string>m1.large</string>
-               <string>m1.xlarge</string>
-               <string>c1.xlarge</string>
-               <string>t1.micro</string>
-               <string>standard.xsmall</string>
-            </enumValues>
-            <value>m1.small</value>
-            <defaultValue>m1.small</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>LLR.cpu</string>
-         <parameter category="LLR" description="Requested CPUs" isSet="false" mandatory="true" name="LLR.cpu" readonly="false" type="String" />
-      </entry>
-      <entry>
          <string>hostname</string>
          <parameter category="Output" description="hostname/ip of the image" isSet="false" mandatory="true" name="hostname" readonly="false" type="String" />
-      </entry>
-      <entry>
-         <string>LLR.ram</string>
-         <parameter category="LLR" description="Requested RAM (in GB)" isSet="false" mandatory="true" name="LLR.ram" readonly="false" type="String" />
-      </entry>
-      <entry>
-         <string>stratuslab.ram</string>
-         <parameter category="stratuslab" description="Requested RAM (in GB)" isSet="false" mandatory="true" name="stratuslab.ram" readonly="false" type="String" />
       </entry>
       <entry>
          <string>ready</string>
@@ -77,49 +31,11 @@
          </parameter>
       </entry>
       <entry>
-         <string>LLR.instance.type</string>
-         <parameter category="LLR" description="Cloud instance type" isSet="true" mandatory="true" name="LLR.instance.type" readonly="false" type="Enum">
-            <enumValues length="7">
-               <string>m1.small</string>
-               <string>c1.medium</string>
-               <string>m1.large</string>
-               <string>m1.xlarge</string>
-               <string>c1.xlarge</string>
-               <string>t1.micro</string>
-               <string>standard.xsmall</string>
-            </enumValues>
-            <value>m1.small</value>
-            <defaultValue>m1.small</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>CC-IN2P3.security.groups</string>
-         <parameter category="CC-IN2P3" description="Security Groups (comma separated list)" isSet="true" mandatory="true" name="CC-IN2P3.security.groups" readonly="false" type="String">
-            <value>default</value>
-            <defaultValue>default</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>LLR.disks.bus.type</string>
-         <parameter category="LLR" description="VM disks bus type" isSet="true" mandatory="true" name="LLR.disks.bus.type" readonly="false" type="Enum">
-            <enumValues length="2">
-               <string>virtio</string>
-               <string>scsi</string>
-            </enumValues>
-            <value>virtio</value>
-            <defaultValue>virtio</defaultValue>
-         </parameter>
-      </entry>
-      <entry>
-         <string>stratuslab.cpu</string>
-         <parameter category="stratuslab" description="Requested CPUs" isSet="false" mandatory="true" name="stratuslab.cpu" readonly="false" type="String" />
-      </entry>
-      <entry>
          <string>instanceid</string>
          <parameter category="Output" description="Cloud instance id" isSet="false" mandatory="true" name="instanceid" readonly="false" type="String" />
       </entry>
    </parameters>
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">

@@ -1,6 +1,6 @@
 <projectModule category="Project" creation="2013-10-30 10:54:53.776 CET" deleted="false" description="Demo of complete service testing using Apache as an example." lastModified="2013-11-24 11:46:53.994 CET" parentUri="module/examples/tutorials" shortName="service-testing" version="71">
    <parameters />
-   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers />
    </authz>
    <commit author="sixsq">

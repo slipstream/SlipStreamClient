@@ -99,14 +99,8 @@ class StratuslabClientCloud(BaseCloudConnector):
     @override
     def _build_image(self, user_info, node_instance):
 
-        # self.creator.create()
         self.creator.createStep2()
 
-        #
-        # if messaging is set to 'pdisk', then try polling for the new image
-        # identifier from the storage system; otherwise will just return empty
-        # string
-        #
         return self._poll_storage_for_new_image(self.slConfigHolder)
 
     def _poll_storage_for_new_image(self, slConfigHolder):
