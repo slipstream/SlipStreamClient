@@ -51,6 +51,7 @@ setup(
         'slipstream',
         'slipstream.contextualizers',
         'slipstream.contextualizers.dummy',
+        'slipstream.commands',
     ],
     package_dir={'slipstream': 'lib/slipstream'},
     py_modules=[
@@ -63,6 +64,7 @@ setup(
         'slipstream.HttpClient',
         'slipstream.SlipStreamHttpClient',
         'slipstream.util',
+        'slipstream.commands.NodeInstanceRuntimeParameter',
         'slipstream.__version__',
     ],
     requires=['httplib2'],
