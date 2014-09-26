@@ -25,11 +25,9 @@ import tempfile
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.MachineExecutor import MachineExecutor
 import slipstream.util as util
-from slipstream.exceptions.Exceptions import ExecutionException
+from slipstream.exceptions.Exceptions import ExecutionException, \
+    AbortException
 from slipstream.util import appendSshPubkeyToAuthorizedKeys, override
-
-TARGET_POLL_INTERVAL = 10  # Time to wait (in seconds) between to server call
-                           # while executing a target script.
 
 
 def getExecutor(wrapper, configHolder):
@@ -37,6 +35,11 @@ def getExecutor(wrapper, configHolder):
 
 
 class NodeDeploymentExecutor(MachineExecutor):
+
+    SCRIPT_EXIT_SUCCESS = 0
+
+    # Wait interval (seconds) between server calls when executing a target script.
+    TARGET_POLL_INTERVAL = 10
 
     def __init__(self, wrapper, configHolder=ConfigHolder()):
         self.verboseLevel = 0
@@ -113,14 +116,28 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target, exports={}):
+    def _execute_target(self, target, exports={}, abort_on_err=False):
         util.printStep("Executing target '%s'" % target)
         if target in self.targets:
-            self._run_target_script(self.targets[target][0], exports)
-            sys.stdout.flush()
-            sys.stderr.flush()
+            self._launch_target_script(target, exports, abort_on_err)
         else:
             util.printAndFlush('Nothing to do on target: %s\n' % target)
+
+    def _launch_target_script(self, target, exports, abort_on_err):
+        fail_msg = "Failed running %s target" % target
+        try:
+            rc = self._run_target_script(self.targets[target][0], exports)
+            sys.stdout.flush()
+            sys.stderr.flush()
+        except Exception as ex:
+            msg = '%s: %s' % (fail_msg, str(ex))
+            if abort_on_err:
+                self.wrapper.fail(msg)
+            raise
+        else:
+            if rc != self.SCRIPT_EXIT_SUCCESS and abort_on_err:
+                self.wrapper.fail(fail_msg)
+                raise AbortException(fail_msg)
 
     def _get_scaling_exports(self):
         node_name, node_instance_names = \
@@ -129,11 +146,9 @@ class NodeDeploymentExecutor(MachineExecutor):
                    'SLIPSTREAM_SCALING_VMS': ' '.join(node_instance_names)}
         return exports
 
-    def _run_target_script(self, target_script, exports={}):
-        if not target_script:
-            util.printAndFlush('Script is empty\n')
-            return
-
+    def _launch_process(self, target_script, exports):
+        '''Returns launched process as subprocess.Popen instance.
+        '''
         tmpfilesuffix = ''
         if util.is_windows():
             tmpfilesuffix = '.ps1'
@@ -152,6 +167,18 @@ class NodeDeploymentExecutor(MachineExecutor):
         finally:
             os.chdir(currentDir)
 
+        return process
+
+    def _run_target_script(self, target_script, exports={}):
+        '''Return exit code of the user script.  Output of the script goes
+        to stdout/err and will end up in the node executor's log file.
+        '''
+        if not target_script:
+            util.printAndFlush('Script is empty\n')
+            return 0
+
+        process = self._launch_process(target_script, exports)
+
         # The process is still working on the background.
         while process.poll() is None:
             # Ask server whether the abort flag is set. If so, kill the
@@ -169,8 +196,10 @@ class NodeDeploymentExecutor(MachineExecutor):
                 except OSError:
                     pass
                 break
-            time.sleep(TARGET_POLL_INTERVAL)
+            time.sleep(self.TARGET_POLL_INTERVAL)
         util.printDetail("End of the target script")
+
+        return process.returncode
 
     def _add_ssh_pubkey_if_needed(self):
         # if util.needToAddSshPubkey():
