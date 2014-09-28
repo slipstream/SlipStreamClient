@@ -72,7 +72,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printAction('Executing')
 
         if not self.wrapper.is_scale_state_operational():
-            self._execute_target('execute')
+            self._execute_target('execute', abort_on_err=True)
         else:
             self._execute_scale_action_target()
 
