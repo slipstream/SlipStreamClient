@@ -113,7 +113,7 @@ class MachineExecutor(object):
     def onSendingReports(self):
         util.printAction('Sending reports')
         reportFileName = '%s_report_%s.tgz' % (
-            self._nodename(), util.toTimeInIso8601NoColon(time.time()))
+            self._get_node_instance_name(), util.toTimeInIso8601NoColon(time.time()))
         reportFileName = os.path.join(tempfile.gettempdir(), reportFileName)
         try:
             archive = tarfile.open(reportFileName, 'w:gz')
@@ -149,8 +149,8 @@ class MachineExecutor(object):
         time.sleep(60)
         raise ExecutionException('The run is in a final state but the VM is still running !')
 
-    def _nodename(self):
-        return self.wrapper.nodename()
+    def _get_node_instance_name(self):
+        return self.wrapper.node_instance_name()
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)

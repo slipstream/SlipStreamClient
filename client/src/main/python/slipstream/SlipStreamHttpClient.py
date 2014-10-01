@@ -39,7 +39,7 @@ class SlipStreamHttpClient(object):
         self.ignoreAbort = False
         self.username = ''
         self.diid = ''
-        self.nodename = ''
+        self.node_instance_name = ''
         self.serviceurl = ''
         self.verboseLevel = None
         self.http_max_retries = 2
@@ -94,7 +94,7 @@ class SlipStreamHttpClient(object):
     def get_node_deployment_targets(self):
         self._retrieveAndSetRun()
         return DomExtractor.get_deployment_targets(self.run_dom,
-                                                 self._getGenericNodename())
+                                                   self._get_nodename())
 
     def _extractModuleResourceUri(self, run):
         rootElement = etree.fromstring(run)
@@ -126,9 +126,10 @@ class SlipStreamHttpClient(object):
 
         return nodes_instances
 
-    def _getGenericNodename(self):
-        'Nodename w/o multiplicity'
-        return self.nodename.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
+    def _get_nodename(self):
+        'Node name derived from the node instance name.'
+        return self.node_instance_name.split(
+            NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
 
     def get_run_category(self):
         self._retrieveAndSetRun()

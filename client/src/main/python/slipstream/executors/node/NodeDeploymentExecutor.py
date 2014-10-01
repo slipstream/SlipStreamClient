@@ -124,7 +124,8 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printAndFlush('Nothing to do on target: %s\n' % target)
 
     def _launch_target_script(self, target, exports, abort_on_err):
-        fail_msg = "Failed running %s target" % target
+        fail_msg = "Failed running '%s' target on '%s'" % (
+            target, self._get_node_instance_name())
         try:
             rc = self._run_target_script(self.targets[target][0], exports)
             sys.stdout.flush()
@@ -175,7 +176,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         '''
         if not target_script:
             util.printAndFlush('Script is empty\n')
-            return 0
+            return self.SCRIPT_EXIT_SUCCESS
 
         process = self._launch_process(target_script, exports)
 
@@ -211,3 +212,6 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _get_user_ssh_pubkey(self):
         return self.wrapper.get_user_ssh_pubkey()
+
+    def _get_node_instance_name(self):
+        return self.wrapper.node_instance_name()

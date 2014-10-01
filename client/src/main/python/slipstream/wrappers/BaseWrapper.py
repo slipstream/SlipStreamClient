@@ -149,9 +149,9 @@ class BaseWrapper(object):
         return _key
 
     def _get_node_instance_name(self):
-        return self.configHolder.nodename
+        return self.configHolder.node_instance_name
 
-    def nodename(self):
+    def node_instance_name(self):
         return self._get_node_instance_name()
 
     def getTargets(self):

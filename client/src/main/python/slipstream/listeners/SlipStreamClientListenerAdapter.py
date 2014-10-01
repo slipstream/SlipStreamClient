@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -23,14 +23,14 @@ from slipstream.NodeDecorator import NodeDecorator
 class SlipStreamClientListenerAdapter(SimplePrintListener):
     def __init__(self, slipStremClient):
         super(SlipStreamClientListenerAdapter, self).__init__()
-        self._client = slipStremClient
+        self._ss_client = slipStremClient
         self._parameter = NodeDecorator.NODE_PROPERTY_SEPARATOR + \
             NodeDecorator.STATECUSTOM_KEY
         self.write = self._write
 
     def _write(self, msg):
-        self.write_for(self._client.nodename, msg)
-        
+        self.write_for(self._ss_client.node_instance_name, msg)
+
     def write_for(self, nodename, msg):
         param = nodename + self._parameter
-        self._client.setRuntimeParameter(param, msg)
+        self._ss_client.setRuntimeParameter(param, msg)

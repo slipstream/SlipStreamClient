@@ -83,7 +83,7 @@ diid = %s
 username = %s
 cookie = %s
 serviceurl = %s
-nodename = %s
+node_instance_name = %s
 """ % (os.environ['SLIPSTREAM_DIID'],
        os.environ['SLIPSTREAM_USERNAME'],
        os.environ['SLIPSTREAM_COOKIE'].strip('"'),
