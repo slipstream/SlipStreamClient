@@ -27,7 +27,7 @@ class TerminateInstancesCommand(CloudClientCommand):
                                                               'http_max_retries': 0,
                                                               KEY_RUN_CATEGORY: ''},
                                                      context={'foo': 'bar'}))
-        cc._initialization(self.user_info)
+        cc._initialization(self.user_info, **self.get_initialization_extra_kwargs())
 
         if cc.has_capability(cc.CAPABILITY_VAPP):
             cc.stop_vapps_by_ids(ids)

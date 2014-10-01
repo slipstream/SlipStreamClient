@@ -31,7 +31,7 @@ class DescribeInstancesCommand(CloudClientCommand):
                                                               'http_max_retries': 0,
                                                               KEY_RUN_CATEGORY: ''},
                                                      context={'foo': 'bar'}))
-        cc._initialization(self.user_info)
+        cc._initialization(self.user_info, **self.get_initialization_extra_kwargs())
         vms = self._list_instances(cc)
         return cc, vms
 

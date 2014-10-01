@@ -55,6 +55,9 @@ class CloudClientCommand(object):
     def get_cloud_specific_mandatory_options(self):
         return []
 
+    def get_initialization_extra_kwargs(self):
+        return {}
+
     ''' ---------------------------------------- '''
 
     def do_work(self):

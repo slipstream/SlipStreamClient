@@ -206,9 +206,9 @@ class BaseCloudConnector(object):
     def stop_vapps_by_ids(self, ids):
         self._stop_vapps_by_ids(ids)
 
-    def start_nodes_and_clients(self, user_info, nodes_instances):
+    def start_nodes_and_clients(self, user_info, nodes_instances, init_extra_kwargs={}):
 
-        self._initialization(user_info)
+        self._initialization(user_info, **init_extra_kwargs)
         try:
             self.__start_nodes_instantiation_tasks_wait_finished(user_info,
                                                                  nodes_instances)

@@ -73,7 +73,7 @@ class RunInstancesCommand(CloudClientCommand):
                                                          KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                                                 context={'foo': 'bar'}))
 
-        cc.start_nodes_and_clients(self.user_info, {nodename: node_instance})
+        cc.start_nodes_and_clients(self.user_info, {nodename: node_instance}, self.get_initialization_extra_kwargs())
 
 
 
