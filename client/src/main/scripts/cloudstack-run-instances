@@ -5,123 +5,57 @@ import sys
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-from slipstream.util import nostdouterr
-from slipstream.ConfigHolder import ConfigHolder
-from slipstream.NodeInstance import NodeInstance
-from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.command.CloudClientCommand import main
+from slipstream.command.RunInstancesCommand import RunInstancesCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackCommand import CloudStackCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 from slipstream.cloudconnectors.cloudstack.CloudStackAdvancedZoneClientCloud import CloudStackAdvancedZoneClientCloud
 
 
-saved_stdout = sys.stdout
+class CloudStackRunInstances(RunInstancesCommand, CloudStackCommand):
 
-def get_bootstrap_script(self, nodename, preExport=None, preBootstrap=None, postBootstrap=None, username=None):
-    return os.environ['context_script']
+    NETWORKS_KEY = 'networks'
+    ZONE_TYPE_KEY = 'zone-type'
+    INSTANCE_TYPE_KEY = 'instance-type'
+    SECURITY_GROUPS_KEY = 'security-groups'
 
-def publish_vm_info(self, vm, node_instance):
-    print >> saved_stdout, '%s,%s' % (self._vm_get_id(vm), self._vm_get_ip(vm))
-
-
-class MainProgram(CloudStackCommand):
+    def get_connector_class(self):
+        if self.get_option(self.ZONE_TYPE_KEY).lower() == 'advanced':
+            return CloudStackAdvancedZoneClientCloud
+        else:
+            return CloudStackClientCloud
 
     def __init__(self):
-        super(MainProgram, self).__init__()
+        super(CloudStackRunInstances, self).__init__()
 
-    def setProgramOptions(self):
-        self.parser.add_option('--image-id', dest='imageId',
-                               help='Image ID. Mandatory.',
-                               default='', metavar='ID')
+    def set_cloud_specific_options(self, parser):
+        CloudStackCommand.set_cloud_specific_options(self, parser)
 
-        self.parser.add_option('--instance-name', dest='instance_name',
-                               help='Name of the instance',
-                               default='', metavar='NAME')
-
-        self.parser.add_option('--instance-type', dest='instance_type',
-                               help='Instance Type',
-                               default=None, metavar='TYPE')
-
-        self.parser.add_option('--network-type', dest='network_type',
-                               help='Network type (public or private)',
-                               default='public', metavar='NETWORK-TYPE')
-
-        self.parser.add_option('--networks', dest='networks',
-                               help='Networks (comma separated)',
-                               default='', metavar='NETWORKS')
-
-        self.parser.add_option('--public-key', dest='public_key',
-                               help='Public key in the OpenSSH format',
-                               default='', metavar='PUBKEY')
-
-        self.parser.add_option('--security-groups', dest='security_groups',
-                               help='Comma separated security groups',
-                               default='', metavar='SECGROUP')
-
-        self.parser.add_option('--context-script', dest='context_script',
-                               help='Context script',
-                               default='', metavar='SCRIPT')
-
-        self.parser.add_option('--zone-type', dest='zone_type',
+        self.parser.add_option('--' + self.ZONE_TYPE_KEY, dest=self.ZONE_TYPE_KEY,
                                help='Type of the zone (Basic [default], Advanced)',
                                default='Basic', metavar='ZONE-TYPE')
 
-    def checkOptions(self):
-        if not all((self.options.imageId, self.options.instance_name,
-                    self.options.instance_type, self.options.public_key)):
-            self.parser.error("Some mandatory options were not given values.")
+        self.parser.add_option('--' + self.INSTANCE_TYPE_KEY, dest=self.INSTANCE_TYPE_KEY,
+                               help='Instance Type (Flavor)',
+                               default=None, metavar='TYPE')
 
-    def _setUserInfo(self):
-        super(MainProgram, self)._setUserInfo()
-        self.userInfo['General.ssh.public.key'] = self.options.public_key
+        self.parser.add_option('--' + self.SECURITY_GROUPS_KEY, dest=self.SECURITY_GROUPS_KEY,
+                               help='Comma separated list of security groups',
+                               default='', metavar='SECGROUPS')
 
-    def doWork(self):
-        os.environ['context_script'] = self.options.context_script
+        self.parser.add_option('--'+self.NETWORKS_KEY, dest=self.NETWORKS_KEY,
+                               help='Networks (comma separated)',
+                               default='', metavar='NETWORKS')
 
-        node_instance = NodeInstance({
-            'name': self.options.instance_name,
-            'image.platform': 'linux',
-            'cloudservice': 'cloudstack',
-            'image.imageId': self.options.imageId,
-            'image.id': self.options.imageId,
-            'cloudstack.instance.type': self.options.instance_type,
-            'cloudstack.security.groups': self.options.security_groups,
-            'cloudstack.networks': self.options.networks,
-            'network': self.options.network_type
-        })
+    def get_cloud_specific_node_inst_cloud_params(self):
+        return {'security.groups': self.get_option(self.SECURITY_GROUPS_KEY),
+                'instance.type': self.get_option(self.INSTANCE_TYPE_KEY)}
 
-        with nostdouterr():
-            vm = self._start_image(node_instance)
-        #print '%s,%s' % (vm['id'], vm['ip'])
-
-    def _start_image(self, node_instance):
-        nodename = node_instance.get_name()
-
-        if self.options.zone_type.lower() == 'advanced':
-            cc = CloudStackAdvancedZoneClientCloud(ConfigHolder(options={'verboseLevel': 0,
-                                                                         'http_max_retries': 0,
-                                                                         KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                                                         context={'foo': 'bar'}))
-        else:
-            cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0,
-                                                             'http_max_retries': 0,
-                                                             KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                                             context={'foo': 'bar'}))
-
-        CloudStackClientCloud._get_bootstrap_script = get_bootstrap_script
-        CloudStackClientCloud._publish_vm_info = publish_vm_info
-
-        vms = cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
-        vm = vms[0].itervalues().next()
-
-        return {'id': cc._vm_get_id(vm), 'ip': cc._vm_get_ip(vm)}
+    def get_cloud_specific_mandatory_options(self):
+        return CloudStackCommand.get_cloud_specific_mandatory_options(self) + \
+               [self.INSTANCE_TYPE_KEY]
 
 
 if __name__ == "__main__":
-    try:
-        MainProgram()
-    except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
-    except Exception as e:
-        print >> sys.stderr, e
-        exit(1)
+    main(CloudStackRunInstances)
 

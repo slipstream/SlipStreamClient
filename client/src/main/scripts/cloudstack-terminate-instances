@@ -1,40 +1,17 @@
 #!/usr/bin/env python
 
-from slipstream.util import nostdouterr
-from slipstream.ConfigHolder import ConfigHolder
+from slipstream.command.CloudClientCommand import main
+from slipstream.command.TerminateInstancesCommand import TerminateInstancesCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackCommand import CloudStackCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 
 
-class MainProgram(CloudStackCommand):
+class CloudStackTerminateInstances(TerminateInstancesCommand, CloudStackCommand):
+
     def __init__(self):
-        super(MainProgram, self).__init__()
+        super(CloudStackTerminateInstances, self).__init__()
 
-    def setProgramOptions(self):
-        self.parser.add_option('--instance-id', dest='instances_ids',
-                help='Instance ID (can be used multiple times)', action='append',
-                default=[], metavar='ID')
-
-    def checkOptions(self):
-        if not self.options.instances_ids:
-            self.parser.error("Some options were not given values. "
-                              "All options are mandatory.")
-
-    def doWork(self):
-        with nostdouterr():
-            self._stop_instances(self.options.instances_ids)
-
-    def _stop_instances(self, ids):
-        cc = CloudStackClientCloud(ConfigHolder(options={'verboseLevel': 0},
-                                                context={'foo': 'bar'}))
-        cc._initialization(self.userInfo)
-        cc.stop_vms_by_ids(ids)
 
 if __name__ == "__main__":
-    try:
-        MainProgram()
-    except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
-    except Exception as e:
-        print e
-        exit(1)
+    main(CloudStackTerminateInstances)
+
