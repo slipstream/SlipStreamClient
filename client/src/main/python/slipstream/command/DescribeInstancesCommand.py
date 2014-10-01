@@ -22,7 +22,7 @@ class DescribeInstancesCommand(CloudClientCommand):
         super(DescribeInstancesCommand, self).__init__(timeout)
 
     def do_work(self):
-        with nostdouterr():
+        with nostdouterr(self.get_option('verbose')):
             cc, vms = self.describe_instances()
         self._print_results(cc, vms)
 

@@ -27,6 +27,16 @@ from slipstream.util import VERBOSE_LEVEL_QUIET, VERBOSE_LEVEL_DETAILED, ENV_SLI
 from slipstream.exceptions.Exceptions import ExecutionException
 
 
+class VerboseException(Exception):
+
+    def __init__(self, cause):
+        self.cause = cause
+        self.traceback = sys.exc_info()
+
+    def __str__(self):
+        return str(self.cause)
+
+
 def main(command):
     try:
         command().execute()
@@ -34,6 +44,9 @@ def main(command):
     except KeyboardInterrupt:
         print '\n\nExecution interrupted by the user... goodbye!'
         exit(1)
+    except VerboseException as e:
+        exc_info = e.traceback
+        raise exc_info[0], exc_info[1], exc_info[2]
     except Exception as e:
         print >> sys.stderr, e
         exit(2)
@@ -84,18 +97,23 @@ class CloudClientCommand(object):
         self.verbose_level = VERBOSE_LEVEL_QUIET
         self.mandatory_options = []
         self.timeout = timeout
-
         self._init_args_parser()
         self._init_cloud_instance_name()
 
     def execute(self):
         self._parse_args()
-        self._init_user_info()
+        try:
+            self._init_user_info()
 
-        if self.timeout:
-            signal.signal(signal.SIGALRM, self.alarm_handler)
-            signal.alarm(self.timeout)
-        self.do_work()
+            if self.timeout:
+                signal.signal(signal.SIGALRM, self.alarm_handler)
+                signal.alarm(self.timeout)
+            self.do_work()
+        except Exception as e:
+            if self.get_option('verbose'):
+                raise VerboseException(e)
+            else:
+                raise
 
     def _init_user_info(self):
         self.user_info = UserInfo(self._cloud_instance_name)

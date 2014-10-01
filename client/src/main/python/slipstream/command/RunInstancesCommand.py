@@ -25,8 +25,13 @@ class RunInstancesCommand(CloudClientCommand):
     def get_cloud_specific_node_inst_cloud_params(self):
         return {}
 
+    def get_cloud_specific_node_inst_image_attributes(self):
+        return {}
+
+    def get_cloud_specific_node_inst_attributes(self):
+        return {}
+
     def __init__(self, timeout=600):
-        print __name__
         super(RunInstancesCommand, self).__init__(timeout)
 
     def _set_command_specific_options(self, parser):
@@ -58,8 +63,10 @@ class RunInstancesCommand(CloudClientCommand):
     def do_work(self):
         node_instance = self.get_node_instance()
         node_instance.set_cloud_parameters(self.get_cloud_specific_node_inst_cloud_params())
+        node_instance.set_image_attributes(self.get_cloud_specific_node_inst_image_attributes())
+        node_instance.set_attributes(self.get_cloud_specific_node_inst_attributes())
 
-        with nostdouterr():
+        with nostdouterr(self.get_option('verbose')):
             self._run_instance(node_instance)
 
     def _run_instance(self, node_instance):
@@ -71,7 +78,8 @@ class RunInstancesCommand(CloudClientCommand):
         cc = cloud_connector_class(ConfigHolder(options={'verboseLevel': 0,
                                                          'http_max_retries': 0,
                                                          KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                                context={'foo': 'bar'}))
+                                                context={'foo': 'bar'},
+                                                config={'foo': 'bar'}))
 
         cc.start_nodes_and_clients(self.user_info, {nodename: node_instance}, self.get_initialization_extra_kwargs())
 
