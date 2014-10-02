@@ -13,6 +13,7 @@ from slipstream.util import nostdout
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeDecorator import NodeDecorator
 from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
 
@@ -79,9 +80,9 @@ class MainProgram(OpenStackCommand):
     def doWork(self):
 
         node_instance = NodeInstance({
-            'name': self.options.instance_name,
+            NodeDecorator.NODE_INSTANCE_NAME_KEY: self.options.instance_name,
+            NodeDecorator.CLOUDSERVICE_KEY: 'openstack',
             # 'image.platform': 'Ubuntu',
-            'cloudservice': 'openstack',
             'image.imageId': self.options.imageId,
             'image.id': self.options.imageId,
             'openstack.instance.type': self.options.instance_type,
