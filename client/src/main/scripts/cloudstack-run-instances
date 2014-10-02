@@ -9,6 +9,7 @@ from slipstream.util import nostdouterr
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeDecorator import NodeDecorator
 from slipstream.cloudconnectors.cloudstack.CloudStackCommand import CloudStackCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 from slipstream.cloudconnectors.cloudstack.CloudStackAdvancedZoneClientCloud import CloudStackAdvancedZoneClientCloud
@@ -78,9 +79,9 @@ class MainProgram(CloudStackCommand):
         os.environ['context_script'] = self.options.context_script
 
         node_instance = NodeInstance({
-            'name': self.options.instance_name,
+            NodeDecorator.NODE_INSTANCE_NAME_KEY: self.options.instance_name,
+            NodeDecorator.CLOUDSERVICE_KEY: 'cloudstack',
             'image.platform': 'linux',
-            'cloudservice': 'cloudstack',
             'image.imageId': self.options.imageId,
             'image.id': self.options.imageId,
             'cloudstack.instance.type': self.options.instance_type,
@@ -91,7 +92,7 @@ class MainProgram(CloudStackCommand):
 
         with nostdouterr():
             vm = self._start_image(node_instance)
-        #print '%s,%s' % (vm['id'], vm['ip'])
+        # print '%s,%s' % (vm['id'], vm['ip'])
 
     def _start_image(self, node_instance):
         nodename = node_instance.get_name()
