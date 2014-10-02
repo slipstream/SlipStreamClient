@@ -40,7 +40,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.parser.add_option('--cancel', dest='ignoreAbort',
+        self.parser.add_option('--cancel', dest='cancel',
                                help='cancel the abort status',
                                default=False, action='store_true')
 
@@ -57,7 +57,11 @@ class MainProgram(CommandBase):
     def doWork(self):
         configHolder = ConfigHolder(self.options)
         client = Client(configHolder)
-        client.setRuntimeParameter(NodeDecorator.ABORT_KEY, self.reason)
+
+        if self.options.cancel:
+            client.cancel_abort()
+        else:
+            client.setRuntimeParameter(NodeDecorator.ABORT_KEY, self.reason)
 
 if __name__ == "__main__":
     try:

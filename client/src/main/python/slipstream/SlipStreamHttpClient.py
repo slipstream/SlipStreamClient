@@ -155,6 +155,7 @@ class SlipStreamHttpClient(object):
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')
 
+    # TODO: LS: Can we remove this method ?
     def reset(self):
         url = self.run_url
         self._httpPost(url, 'reset', 'text/plain')
@@ -223,6 +224,14 @@ class SlipStreamHttpClient(object):
                                    accept='text/plain')
 
         return content.strip().strip('"').strip("'")
+
+    def unset_runtime_parameter(self, key, ignore_abort=False):
+        url = '%s/%s' % (self.run_url, key)
+
+        if (self.ignoreAbort or ignore_abort):
+            url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
+
+        self._httpDelete(url)
 
     def _httpGet(self, url, accept='application/xml'):
         return self.httpClient.get(url, accept, retry_number=self.http_max_retries)

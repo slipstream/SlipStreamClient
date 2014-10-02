@@ -150,6 +150,15 @@ class Client(object):
             raise ClientError("value exceeds maximum length of %d characters" % self.VALUE_LENGTH_LIMIT)
         self.httpClient.setRuntimeParameter(_key, stripped_value)
 
+    def cancel_abort(self):
+        # Global abort
+        self.httpClient.unset_runtime_parameter(NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY,
+                                                ignore_abort=True)
+
+        _key = self._qualifyKey(NodeDecorator.ABORT_KEY)
+        self.httpClient.unset_runtime_parameter(_key, ignore_abort=True)
+
+    # TODO: LS: Can we remove this method ?
     def reset(self):
         self.httpClient.reset()
 
