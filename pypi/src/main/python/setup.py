@@ -43,6 +43,7 @@ setup(
         'bin/ss-module-upload',
         'bin/ss-node-add',
         'bin/ss-node-remove',
+        'bin/ss-random',
         'bin/ss-run-get',
         'bin/ss-user-get',
         'bin/ss-user-put',
