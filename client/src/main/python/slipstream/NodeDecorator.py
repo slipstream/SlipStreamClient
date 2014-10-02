@@ -52,7 +52,7 @@ class NodeDecorator(object):
     reservedNodeNames = [globalNamespaceName, orchestratorName, MACHINE_NAME]
 
     NODE_NAME_KEY = 'nodename'
-    NODE_INSTANCE_NAME_KEY = 'name'
+    NODE_INSTANCE_NAME_KEY = 'node_instance_name'
 
     IS_ORCHESTRATOR_KEY = 'is.orchestrator'
 

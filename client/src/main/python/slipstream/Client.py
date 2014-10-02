@@ -129,13 +129,13 @@ class Client(object):
         return _key
 
     def setNodeName(self, value):
-        self.context['nodename'] = value
+        self.context[NodeDecorator.NODE_INSTANCE_NAME_KEY] = value
 
     def _getNodeName(self):
-        return self.context['nodename']
+        return self.context[NodeDecorator.NODE_INSTANCE_NAME_KEY]
 
     def _getRuntimeParameter(self, key, ignoreAbort=False):
-        specialKeys = ['nodename']
+        specialKeys = [NodeDecorator.NODE_INSTANCE_NAME_KEY]
         if key in specialKeys:
             return self.context['key']
 

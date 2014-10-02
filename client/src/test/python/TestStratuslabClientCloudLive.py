@@ -36,7 +36,7 @@ CONFIG_FILE = os.path.join(os.path.dirname(__file__),
 stratuslab.username = konstan@sixsq.com
 stratuslab.password = xxx
 stratuslab.imageid =  HZTKYZgX7XzSokCHMB60lS0wsiv
-""" # pylint: disable=pointless-string-statement
+"""  # pylint: disable=pointless-string-statement
 
 
 class TestStratusLabClientCloud(unittest.TestCase):
@@ -80,11 +80,11 @@ class TestStratusLabClientCloud(unittest.TestCase):
 
         self.node_name = 'test_node'
         self.node_instances = {}
-        for i in range(1, self.multiplicity+1):
+        for i in range(1, self.multiplicity + 1):
             node_instance_name = self.node_name + '.' + str(i)
             self.node_instances[node_instance_name] = NodeInstance({
-                'nodename': self.node_name,
-                'name': node_instance_name,
+                NodeDecorator.NODE_NAME_KEY: self.node_name,
+                NodeDecorator.NODE_INSTANCE_NAME_KEY: node_instance_name,
                 'cloudservice': 'stratuslab',
                 'extra.disk.volatile': extra_disk_volatile,
                 'image.resourceUri': '',
@@ -119,7 +119,7 @@ set -x
 ls -l /tmp
 dpkg -l | egrep "nano|lvm" || true
 """,
-            'image.packages' : ['lvm2','nano'],
+            'image.packages' : ['lvm2', 'nano'],
             'image.recipe':
 """#!/bin/sh
 set -e
