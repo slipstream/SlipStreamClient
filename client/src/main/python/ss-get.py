@@ -26,7 +26,7 @@ from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(CommandBase):
-    '''A command-line program to get key/value pairs from info sys restlet.'''
+    '''A command-line program to get a runtime parameter value from a run, blocking (by default) if not set.'''
 
     def __init__(self, argv=None):
         super(MainProgram, self).__init__(argv)
@@ -35,7 +35,7 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] <key>
 
-<key>    Key from which to retrieve the value'''
+<key>    Key (i.e. runtime parameter) from which to retrieve the value'''
 
         self.parser.usage = usage
 

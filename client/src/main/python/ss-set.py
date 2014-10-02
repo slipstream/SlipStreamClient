@@ -24,7 +24,7 @@ from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(CommandBase):
-    '''A command-line program to set key/value pairs to info sys restlet.'''
+    '''A command-line program to set a value for an existing runtime parameter.'''
 
     def __init__(self, argv=None):
         self.key = None
@@ -34,10 +34,11 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''%prog [options] <key> [<value>]
 
-<key>            Key from which to retrieve the value
+<key>            Key from which to set the value. Note that if the parameter
+                 does not exist, the run will abort.
 <value>          Value to be set.  This parameter is mandatory, unless the
                  --decrement option is uses, in which case this parameter is
-                 ignores'''
+                 ignored'''
 
         self.parser.usage = usage
 
