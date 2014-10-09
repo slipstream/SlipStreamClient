@@ -116,7 +116,13 @@ class NodeInstance(object):
         return self.__get('network', default_value)
 
     def get_networks(self):
-        return self.get_cloud_parameter('networks', '').split(',')
+        '''Return list of user provided network names, or an empty list instead.
+        '''
+        networks = self.get_cloud_parameter('networks', '')
+        if networks:
+            return [n.strip() for n in networks.split(',')]
+        else:
+            return []
 
     def get_platform(self):
         return self.__get(NodeDecorator.IMAGE_PLATFORM_KEY, 'linux')
