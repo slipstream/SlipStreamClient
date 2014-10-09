@@ -42,6 +42,8 @@ class NodeInstance(object):
         return parameter
 
     def __set(self, parameter_name, value):
+        if isinstance(value, basestring):
+            value = value.strip()
         self.__parameters[parameter_name] = value
 
     def get_image_attribute(self, attribute_name, default_value=None):
