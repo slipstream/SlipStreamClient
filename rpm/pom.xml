@@ -257,6 +257,7 @@
             <!-- fixing a bug in client -->
             <script>
 /bin/touch /usr/bin/slipstream.client.conf
+/bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf
             </script>
           </postinstallScriptlet>
 
