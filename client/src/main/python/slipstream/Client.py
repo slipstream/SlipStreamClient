@@ -96,18 +96,26 @@ class Client(object):
 
         _key = key
 
-        # Is this a reserved or special nodename?
-        for reserved in NodeDecorator.reservedNodeNames:
-            if _key.startswith(reserved + NodeDecorator.NODE_PROPERTY_SEPARATOR):
-                return _key
-
         # Is the key namespaced (i.e. contains node/key separator: ':')?
         if NodeDecorator.NODE_PROPERTY_SEPARATOR in _key:
-            # Is the nodename in the form: <nodename>.<index>?  If not, make it so
-            # such that <nodename>:<property> -> <nodename>.1:<property
+
+            # Is this a reserved or special nodename?
+            for reserved in NodeDecorator.reservedNodeNames:
+                if _key.startswith(reserved + NodeDecorator.NODE_PROPERTY_SEPARATOR):
+                    return _key
+
+            # Get node (instance) name and the key parts.
             parts = _key.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)
             nodenamePart = parts[0]
             propertyPart = parts[1]  # safe since we've done the test in the if above
+
+            # Is this an orchestrator?  We don't qualify orchestrator
+            # parameter names.
+            if NodeDecorator.is_orchestrator_name(nodenamePart):
+                return _key
+
+            # Is the nodename in the form: <nodename>.<index>?  If not, make it so
+            # such that <nodename>:<property> -> <nodename>.1:<property
             parts = nodenamePart.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
             nodename = parts[0]
             # multiplicity parameter should NOT be qualified make an exception
