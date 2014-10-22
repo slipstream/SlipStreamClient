@@ -211,6 +211,16 @@ class BaseCloudConnector(object):
     def stop_vapps_by_ids(self, ids):
         self._stop_vapps_by_ids(ids)
 
+    def stop_node_instances(self, node_instances):
+        ids = []
+
+        for node_instance in node_instances:
+            ids.append(node_instance.get_instance_id())
+            self.__del_vm(node_instance.get_name())
+
+        if len(ids) > 0:
+            self.stop_vms_by_ids(ids)
+
     def start_nodes_and_clients(self, user_info, nodes_instances):
 
         self._initialization(user_info)
@@ -219,8 +229,6 @@ class BaseCloudConnector(object):
                                                                  nodes_instances)
         finally:
             self._finalization(user_info)
-
-        return self.get_vms_details()
 
     def __start_nodes_instantiation_tasks_wait_finished(self, user_info,
                                                         nodes_instances):
@@ -266,10 +274,22 @@ class BaseCloudConnector(object):
                 self.__launch_windows_bootstrap_script(node_instance,
                                                        self._vm_get_ip(vm))
 
+    def get_vms(self):
+        return self.__vms
+
+    def _get_vm(self, name):
+        try:
+            return self.__vms[name]
+        except KeyError:
+            raise Exceptions.NotFoundError("VM '%s' not found." % name)
+
     def __add_vm(self, vm, node_instance):
         name = node_instance.get_name()
         self.__vms[name] = vm
         self._publish_vm_info(vm, node_instance)
+
+    def __del_vm(self, name):
+        del self.__vms[name]
 
     def _publish_vm_info(self, vm, node_instance):
         instance_name = node_instance.get_name()
@@ -300,15 +320,6 @@ class BaseCloudConnector(object):
         # Needed for thread safety
         NodeInfoPublisher(self.configHolder).publish_url_ssh(instance_name,
                                                              vm_ip, ssh_username)
-
-    def get_vms(self):
-        return self.__vms
-
-    def _get_vm(self, name):
-        try:
-            return self.__vms[name]
-        except KeyError:
-            raise Exceptions.NotFoundError("VM '%s' not found." % name)
 
     def _set_temp_private_key_and_public_key(self, privateKeyFileName, publicKey):
         self.tempPrivateKeyFileName = privateKeyFileName
@@ -702,9 +713,3 @@ class BaseCloudConnector(object):
     def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)
 
-    def get_vms_details(self):
-        vms_details = []
-        for name, vm in self.get_vms().items():
-            vms_details.append({name: {'id': self._vm_get_id(vm),
-                                       'ip': self._vm_get_ip(vm)}})
-        return vms_details

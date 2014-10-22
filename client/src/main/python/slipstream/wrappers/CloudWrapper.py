@@ -65,12 +65,8 @@ class CloudWrapper(BaseWrapper):
             self.SCALE_STATE_REMOVING, self._get_cloud_service_name())
 
     def stop_node_instances(self):
-        ids = []
         node_instances_to_stop = self._get_node_instances_to_stop()
-        for node_instance in node_instances_to_stop.values():
-            ids.append(node_instance.get_instance_id())
-        if len(ids) > 0:
-            self._cloud_client.stop_vms_by_ids(ids)
+        self._cloud_client.stop_node_instances(node_instances_to_stop.values())
 
         instance_names_removed = node_instances_to_stop.keys()
         self.set_scale_state_on_node_instances(instance_names_removed,
