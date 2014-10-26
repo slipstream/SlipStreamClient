@@ -48,7 +48,7 @@ class MainProgram(CommandBase):
         try:
             return environ['SLIPSTREAM_CLOUD']
         except KeyError:
-            print 'Missing environment variable SLIPSTREAM_CLOUD.'
+            print 'ERROR: Missing environment variable SLIPSTREAM_CLOUD.'
             sys.exit(-1)
 
 if __name__ == '__main__':
