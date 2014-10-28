@@ -42,7 +42,7 @@ class NodeDecorator(object):
 
     # Orchestrator name
     orchestratorName = 'orchestrator'
-    ORCHESTRATOR_NODENAME_RE = re.compile('orchestrator(-\w[-\w]*)?$')
+    ORCHESTRATOR_NODENAME_RE = re.compile('^' + orchestratorName + '(-\w[-\w]*)?$')
 
     # Name given to the machine being built for node state
     MACHINE_NAME = 'machine'
@@ -52,7 +52,7 @@ class NodeDecorator(object):
     reservedNodeNames = [globalNamespaceName, orchestratorName, MACHINE_NAME]
 
     NODE_NAME_KEY = 'nodename'
-    NODE_INSTANCE_NAME_KEY = 'name'
+    NODE_INSTANCE_NAME_KEY = 'node_instance_name'
 
     IS_ORCHESTRATOR_KEY = 'is.orchestrator'
 

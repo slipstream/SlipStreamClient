@@ -99,6 +99,7 @@ class BaseWrapper(object):
             node_instance_name = self.get_my_node_instance_name()
         self._ss_client.complete_state(node_instance_name)
 
+    # TODO: LS: Can we remove this method ?
     def reset(self):
         self._ss_client.reset()
 

@@ -93,7 +93,8 @@ class SlipStreamHttpClient(object):
 
     def get_node_deployment_targets(self):
         self._retrieveAndSetRun()
-        return DomExtractor.get_deployment_targets(self.run_dom, self.get_my_node_name())
+        return DomExtractor.get_deployment_targets(self.run_dom,
+                                                   self._get_nodename())
 
     def _extractModuleResourceUri(self, run):
         rootElement = etree.fromstring(run)
@@ -125,6 +126,11 @@ class SlipStreamHttpClient(object):
 
         return nodes_instances
 
+    def _get_nodename(self):
+        'Node name derived from the node instance name.'
+        return self.node_instance_name.split(
+            NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
+
     def get_run_category(self):
         self._retrieveAndSetRun()
         return DomExtractor.extractCategoryFromRun(self.run_dom)
@@ -149,6 +155,7 @@ class SlipStreamHttpClient(object):
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')
 
+    # TODO: LS: Can we remove this method ?
     def reset(self):
         url = self.run_url
         self._httpPost(url, 'reset', 'text/plain')
@@ -217,6 +224,14 @@ class SlipStreamHttpClient(object):
                                    accept='text/plain')
 
         return content.strip().strip('"').strip("'")
+
+    def unset_runtime_parameter(self, key, ignore_abort=False):
+        url = '%s/%s' % (self.run_url, key)
+
+        if (self.ignoreAbort or ignore_abort):
+            url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
+
+        self._httpDelete(url)
 
     def _httpGet(self, url, accept='application/xml'):
         return self.httpClient.get(url, accept, retry_number=self.http_max_retries)

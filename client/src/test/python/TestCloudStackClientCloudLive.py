@@ -27,7 +27,7 @@ from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudSta
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.SlipStreamHttpClient import UserInfo
 from slipstream.NodeInstance import NodeInstance
-from slipstream.NodeDecorator import RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY
+from slipstream.NodeDecorator import RUN_CATEGORY_DEPLOYMENT, KEY_RUN_CATEGORY, NodeDecorator
 from slipstream import util
 
 CONFIG_FILE = os.path.join(os.path.dirname(__file__),
@@ -92,8 +92,8 @@ class TestCloudStackClientCloud(unittest.TestCase):
         for i in range(1, self.multiplicity + 1):
             node_instance_name = self.node_name + '.' + str(i)
             self.node_instances[node_instance_name] = NodeInstance({
-                'nodename': self.node_name,
-                'name': node_instance_name,
+                NodeDecorator.NODE_NAME_KEY: self.node_name,
+                NodeDecorator.NODE_INSTANCE_NAME_KEY: node_instance_name,
                 'cloudservice': self.connector_instance_name,
                 # 'index': i,s
                 'image.platform': 'linux',

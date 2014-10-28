@@ -90,8 +90,8 @@ class TestOpenStackClientCloud(unittest.TestCase):
         for i in range(1, self.multiplicity + 1):
             node_instance_name = node_name + '.' + str(i)
             self.node_instances[node_instance_name] = NodeInstance({
-                'nodename': node_name,
-                'name': node_instance_name,
+                NodeDecorator.NODE_NAME_KEY: node_name,
+                NodeDecorator.NODE_INSTANCE_NAME_KEY: node_instance_name,
                 'cloudservice': self.connector_instance_name,
                 # 'index': i,
                 'image.platform': 'Ubuntu',

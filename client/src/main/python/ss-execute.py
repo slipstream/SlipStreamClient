@@ -36,8 +36,10 @@ RC_CRITICAL_NAGIOS = 2
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
 
+    RUN_TYPE = 'type'
     REF_QNAME = util.RUN_PARAM_REFQNAME
-    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE)
+    IMAGE_CLOUD_SERVICE = 'parameter--cloudservice'
+    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE, RUN_TYPE, IMAGE_CLOUD_SERVICE)
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
@@ -91,6 +93,11 @@ class MainProgram(CommandBase):
         self.parser.add_option('--mutable-run',
                                dest='mutable_run',
                                help='Launch a mutable run.',
+                               default=False, action='store_true')
+
+        self.parser.add_option('--build-image',
+                               dest='build_image',
+                               help='Build the image instead of running it',
                                default=False, action='store_true')
 
         self.parser.add_option('--final-states', dest='final_states',
@@ -227,6 +234,10 @@ class MainProgram(CommandBase):
 
     def _add_not_node_params(self):
         self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
+
+        if self.options.build_image:
+            self.parameters[self.RUN_TYPE] = 'Machine'
+
         if self.options.mutable_run:
             self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
 

@@ -40,9 +40,16 @@ class MainProgram(CommandBase):
 
     def doWork(self):
         configHolder = ConfigHolder(self.options)
-        configHolder.set('cloud', environ['SLIPSTREAM_CLOUD'])
+        configHolder.set('cloud', self._get_cloud())
         orchestrator = Orchestrator(configHolder)
         orchestrator.execute()
+
+    def _get_cloud(self):
+        try:
+            return environ['SLIPSTREAM_CLOUD']
+        except KeyError:
+            print 'ERROR: Missing environment variable SLIPSTREAM_CLOUD.'
+            sys.exit(-1)
 
 if __name__ == '__main__':
     try:

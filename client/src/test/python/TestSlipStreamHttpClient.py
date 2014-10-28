@@ -57,6 +57,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         self.context['serviceurl'] = 'endpoint'
         self.context['username'] = 'username'
         self.context['password'] = 'password'
+        self.context[NodeDecorator.NODE_INSTANCE_NAME_KEY] = 'apache'
 
     def tearDown(self):
         pass
@@ -87,7 +88,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         self.assertEquals(NODE_INSTANCES_NUM, len(nodes))
         assert False == any(map(NodeDecorator.is_orchestrator_name, nodes.keys()))
         for node_instance_name, node_instance in nodes.iteritems():
-            assert node_instance_name == node_instance['name']
+            assert node_instance_name == node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY]
             assert isinstance(node_instance, dict)
             self.assertEquals('myCloud', node_instance['cloudservice'])
             self.assertEquals('false', node_instance['is.orchestrator'])
@@ -153,7 +154,8 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         nodes_instances = client.get_nodes_instances()
         assert len(nodes_instances) == NODE_INSTANCES_NUM
 
-        node_keys = ['cloudservice', 'nodename', 'name', 'id']
+        node_keys = ['cloudservice', NodeDecorator.NODE_NAME_KEY,
+                     NodeDecorator.NODE_INSTANCE_NAME_KEY, 'id']
         for nodes_instance in nodes_instances:
             for key in node_keys:
                 if nodes_instances[nodes_instance].is_orchestrator() == 'false':

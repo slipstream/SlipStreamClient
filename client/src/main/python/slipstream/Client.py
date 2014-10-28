@@ -96,18 +96,26 @@ class Client(object):
 
         _key = key
 
-        # Is this a reserved or special nodename?
-        for reserved in NodeDecorator.reservedNodeNames:
-            if _key.startswith(reserved + NodeDecorator.NODE_PROPERTY_SEPARATOR):
-                return _key
-
         # Is the key namespaced (i.e. contains node/key separator: ':')?
         if NodeDecorator.NODE_PROPERTY_SEPARATOR in _key:
-            # Is the nodename in the form: <nodename>.<index>?  If not, make it so
-            # such that <nodename>:<property> -> <nodename>.1:<property
+
+            # Is this a reserved or special nodename?
+            for reserved in NodeDecorator.reservedNodeNames:
+                if _key.startswith(reserved + NodeDecorator.NODE_PROPERTY_SEPARATOR):
+                    return _key
+
+            # Get node (instance) name and the key parts.
             parts = _key.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)
             nodenamePart = parts[0]
             propertyPart = parts[1]  # safe since we've done the test in the if above
+
+            # Is this an orchestrator?  We don't qualify orchestrator
+            # parameter names.
+            if NodeDecorator.is_orchestrator_name(nodenamePart):
+                return _key
+
+            # Is the nodename in the form: <nodename>.<index>?  If not, make it so
+            # such that <nodename>:<property> -> <nodename>.1:<property
             parts = nodenamePart.split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
             nodename = parts[0]
             # multiplicity parameter should NOT be qualified make an exception
@@ -128,11 +136,20 @@ class Client(object):
 
         return _key
 
+    def setNodeName(self, value):
+        self.context[NodeDecorator.NODE_INSTANCE_NAME_KEY] = value
+
     def _getNodeName(self):
-        return self.context['node_instance_name']
+        return self.context[NodeDecorator.NODE_INSTANCE_NAME_KEY]
 
     def _getRuntimeParameter(self, key, ignoreAbort=False):
-        return self.httpClient.getRuntimeParameter(key)
+        specialKeys = [NodeDecorator.NODE_INSTANCE_NAME_KEY]
+        if key in specialKeys:
+            return self.context['key']
+
+        content = self.httpClient.getRuntimeParameter(key)
+
+        return content
 
     def setRuntimeParameter(self, key, value):
         _key = self._qualifyKey(key)
@@ -141,6 +158,15 @@ class Client(object):
             raise ClientError("value exceeds maximum length of %d characters" % self.VALUE_LENGTH_LIMIT)
         self.httpClient.setRuntimeParameter(_key, stripped_value)
 
+    def cancel_abort(self):
+        # Global abort
+        self.httpClient.unset_runtime_parameter(NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY,
+                                                ignore_abort=True)
+
+        _key = self._qualifyKey(NodeDecorator.ABORT_KEY)
+        self.httpClient.unset_runtime_parameter(_key, ignore_abort=True)
+
+    # TODO: LS: Can we remove this method ?
     def reset(self):
         self.httpClient.reset()
 
