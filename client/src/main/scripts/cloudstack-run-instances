@@ -111,7 +111,8 @@ class MainProgram(CloudStackCommand):
         CloudStackClientCloud._get_bootstrap_script = get_bootstrap_script
         CloudStackClientCloud._publish_vm_info = publish_vm_info
 
-        vms = cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
+        cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
+        vms = cc.get_vms_details()
         vm = vms[0].itervalues().next()
 
         return {'id': cc._vm_get_id(vm), 'ip': cc._vm_get_ip(vm)}

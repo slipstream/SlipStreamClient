@@ -110,7 +110,8 @@ class MainProgram(OpenStackCommand):
                                                         KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                                                context={'foo': 'bar'}))
 
-        vms = cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
+        cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
+        vms = cc.get_vms_details()
         vm = vms[0].itervalues().next()
 
         return {'id': cc._vm_get_id(vm), 'ip': cc._vm_get_ip(vm)}

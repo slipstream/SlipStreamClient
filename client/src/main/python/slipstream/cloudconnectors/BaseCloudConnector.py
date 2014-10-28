@@ -713,3 +713,10 @@ class BaseCloudConnector(object):
     def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)
 
+    def get_vms_details(self):
+        vms_details = []
+        for name, vm in self.get_vms().items():
+            vms_details.append({name: {'id': self._vm_get_id(vm),
+                                       'ip': self._vm_get_ip(vm)}})
+        return vms_details
+
