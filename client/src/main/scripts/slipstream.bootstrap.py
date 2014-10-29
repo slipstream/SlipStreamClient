@@ -50,18 +50,13 @@ class HTTPSConnection(httplib.HTTPSConnection):
             self.sock = sock
             self._tunnel()
         try:
-            # using SSLv23
+            # using TLSv1
+            self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
+                                        ssl_version=ssl.PROTOCOL_TLSv1)
+        except ssl.SSLError:
+            # switching to SSLv23
             self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
                                         ssl_version=ssl.PROTOCOL_SSLv23)
-        except ssl.SSLError:
-            try:
-                # switching to SSLv3
-                self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                            ssl_version=ssl.PROTOCOL_SSLv3)
-            except ssl.SSLError:
-                # switching to TLSv1
-                self.sock = ssl.wrap_socket(sock, self.key_file, self.cert_file,
-                                            ssl_version=ssl.PROTOCOL_TLSv1)
 
 
 class HTTPSHandler(urllib2.HTTPSHandler):
