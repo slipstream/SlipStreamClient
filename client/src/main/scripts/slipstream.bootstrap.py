@@ -41,7 +41,7 @@ class HTTPSConnection(httplib.HTTPSConnection):
     def connect(self):
         """Connect to a host on a given (SSL) port.
 
-        Switching SSL protocol from SSLv23 to SSLv3 and TLSv1 as last resort
+        Switching SSL protocol from TLSv1 to SSLv23 as last resort
         when a violation of protocol occurred.
         See: http://bugs.python.org/issue11220
         """
