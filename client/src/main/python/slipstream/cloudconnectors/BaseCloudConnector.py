@@ -674,7 +674,7 @@ class BaseCloudConnector(object):
         if self.isStartOrchestrator():
             targetScript = 'slipstream-orchestrator'
 
-        command = 'mkdir -p %(reports)s; wget --no-check-certificate --secure-protocol=SSLv3 -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+        command = 'mkdir -p %(reports)s; wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
         return command % {
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
@@ -712,4 +712,11 @@ class BaseCloudConnector(object):
 
     def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)
+
+    def get_vms_details(self):
+        vms_details = []
+        for name, vm in self.get_vms().items():
+            vms_details.append({name: {'id': self._vm_get_id(vm),
+                                       'ip': self._vm_get_ip(vm)}})
+        return vms_details
 

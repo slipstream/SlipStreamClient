@@ -155,8 +155,8 @@ lvs
         self.client.run_category = RUN_CATEGORY_IMAGE
         self.client._prepare_machine_for_build_image = Mock()
 
-        instances_details = self.client.start_nodes_and_clients(self.user_info,
-                                                                {NodeDecorator.MACHINE_NAME: self.node_instance})
+        self.client.start_nodes_and_clients(self.user_info, {NodeDecorator.MACHINE_NAME: self.node_instance})
+        instances_details = self.client.get_vms_details()
 
         assert instances_details
         assert instances_details[0][NodeDecorator.MACHINE_NAME]
