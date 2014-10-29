@@ -117,7 +117,6 @@ class BaseCloudConnector(object):
     CAPABILITY_WINDOWS_CONTEXTUALIZATION = 'windowsContextualization'
     CAPABILITY_GENERATE_PASSWORD = 'generatePassword'
     CAPABILITY_DIRECT_IP_ASSIGNMENT = 'directIpAssignment'
-    CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE = 'needToAddSshPublicKeyOnNode'
     CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP = 'orchestratorCanKillItselfOrItsVapp'
 
     def __init__(self, configHolder):
@@ -138,7 +137,7 @@ class BaseCloudConnector(object):
 
         self.__vms = {}
 
-        self.__cloud = os.environ['SLIPSTREAM_CONNECTOR_INSTANCE']
+        self.__cloud = os.environ[util.ENV_CONNECTOR_INSTANCE]
 
         self.__init_threading_related()
 
@@ -158,7 +157,6 @@ class BaseCloudConnector(object):
                           windows_contextualization=False,
                           generate_password=False,
                           direct_ip_assignment=False,
-                          need_to_add_ssh_public_key_on_node=False,
                           orchestrator_can_kill_itself_or_its_vapp=False):
         if vapp:
             self.__capabilities.append(self.CAPABILITY_VAPP)
@@ -172,9 +170,6 @@ class BaseCloudConnector(object):
             self.__capabilities.append(self.CAPABILITY_GENERATE_PASSWORD)
         if direct_ip_assignment:
             self.__capabilities.append(self.CAPABILITY_DIRECT_IP_ASSIGNMENT)
-        if need_to_add_ssh_public_key_on_node:
-            self.__capabilities.append(
-                self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE)
         if orchestrator_can_kill_itself_or_its_vapp:
             self.__capabilities.append(
                 self.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
@@ -221,9 +216,8 @@ class BaseCloudConnector(object):
         if len(ids) > 0:
             self.stop_vms_by_ids(ids)
 
-    def start_nodes_and_clients(self, user_info, nodes_instances):
-
-        self._initialization(user_info)
+    def start_nodes_and_clients(self, user_info, nodes_instances, init_extra_kwargs={}):
+        self._initialization(user_info, **init_extra_kwargs)
         try:
             self.__start_nodes_instantiation_tasks_wait_finished(user_info,
                                                                  nodes_instances)
@@ -429,7 +423,7 @@ class BaseCloudConnector(object):
 
     @staticmethod
     def isStartOrchestrator():
-        return os.environ.get('CLI_ORCHESTRATOR', 'False') == 'True'
+        return os.environ.get('IS_ORCHESTRATOR', 'False') == 'True'
 
     def __secure_ssh_access_and_run_bootstrap_script(self, user_info, node_instance, ip):
         username, password = self.__get_vm_username_password(node_instance)
@@ -581,11 +575,16 @@ class BaseCloudConnector(object):
             addEnvironmentVariableCommand = 'export'
             script += '#!/bin/sh -ex\n'
 
+        regex = 'SLIPSTREAM_'
+        if self.isStartOrchestrator():
+            regex += '|CLOUDCONNECTOR_'
+        env_matcher = re.compile(regex)
+
         if pre_export:
             script += '%s\n' % pre_export
 
         for var, val in os.environ.items():
-            if var.startswith('SLIPSTREAM_') and var != 'SLIPSTREAM_NODENAME':
+            if env_matcher.match(var) and var != util.ENV_NODE_INSTANCE_NAME:
                 if var == 'SLIPSTREAM_REPORT_DIR' and node_instance.is_windows():
                     val = Client.WINDOWS_REPORTSDIR
                 if re.search(' ', val):
@@ -593,12 +592,9 @@ class BaseCloudConnector(object):
                 script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var,
                                           val)
 
-        script += '%s SLIPSTREAM_NODENAME=%s\n' % (addEnvironmentVariableCommand,
-                                                   node_instance_name)
-
         script += '%s %s=%s\n' % (addEnvironmentVariableCommand,
-                                  util.ENV_NEED_TO_ADD_SSHPUBKEY,
-                                  self.has_capability(self.CAPABILITY_NEED_TO_ADD_SHH_PUBLIC_KEY_ON_NODE))
+                                  util.ENV_NODE_INSTANCE_NAME,
+                                  node_instance_name)
 
         if pre_bootstrap:
             script += '%s\n' % pre_bootstrap

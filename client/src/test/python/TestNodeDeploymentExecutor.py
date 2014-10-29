@@ -23,6 +23,7 @@ from slipstream.ConfigHolder import ConfigHolder
 ContextualizerFactory.getContextAsDict = Mock(return_value={'foo':'bar'})
 ConfigHolder._getConfigFromFileAsDict = Mock(return_value={'foo':'bar'})
 
+from slipstream.NodeInstance import NodeInstance
 from slipstream.executors.node.NodeDeploymentExecutor import NodeDeploymentExecutor
 from slipstream.exceptions.Exceptions import AbortException
 from TestCloudConnectorsBase import TestCloudConnectorsBase
@@ -42,7 +43,8 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         wrapper.isAbort = Mock(return_value=False)
         nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
         target = 'foo'
-        nde.targets[target] = ('oops', False)
+        nde.node_instance = NodeInstance()
+        nde.node_instance.set_image_targets({target: 'oops'})
         self.assertRaises(OSError, nde._launch_target_script,
                           *(target, {}, True))
         assert 1 == nde.wrapper.fail.call_count
@@ -54,7 +56,8 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
         nde.TARGET_POLL_INTERVAL = 1
         target = 'foo'
-        nde.targets[target] = ('#!/bin/bash \n/command/not/found\n', False)
+        nde.node_instance = NodeInstance()
+        nde.node_instance.set_image_targets({target: '#!/bin/bash \n/command/not/found\n'})
         self.assertRaises(AbortException, nde._launch_target_script,
                           *(target, {}, True))
         assert 1 == nde.wrapper.fail.call_count

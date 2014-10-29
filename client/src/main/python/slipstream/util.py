@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import getpass
 import urllib2
 import uuid as uuidModule
 import warnings
@@ -59,7 +60,9 @@ SUPPORTED_PLATFORMS_BY_DISTRO = {'debian_based': ('ubuntu',),
                                  'redhat_based': ('fedora', 'redhat', 'centos')}
 SUPPORTED_PLATFORMS = [y for x in SUPPORTED_PLATFORMS_BY_DISTRO.values() for y in x]
 
-ENV_NEED_TO_ADD_SSHPUBKEY = 'SLIPSTREAM_NEED_TO_ADD_SSHPUBKEY'
+ENV_SLIPSTREAM_SSH_PUB_KEY = '__SLIPSTREAM_SSH_PUB_KEY'
+ENV_CONNECTOR_INSTANCE = 'SLIPSTREAM_CONNECTOR_INSTANCE'
+ENV_NODE_INSTANCE_NAME = 'SLIPSTREAM_NODE_INSTANCE_NAME'
 
 
 def get_cloudconnector_modulenames(base_package='slipstream.cloudconnectors'):
@@ -84,11 +87,6 @@ def get_cloudconnector_modulename_by_cloudname(cloudname):
             return module_name
     raise Exceptions.NotFoundError(
         "Failed to find cloud connector module for cloud %s." % cloudname)
-
-
-def needToAddSshPubkey():
-    return (os.environ.get(ENV_NEED_TO_ADD_SSHPUBKEY, '').lower() == 'true') \
-        and not is_windows()
 
 
 def configureLogger():
@@ -563,17 +561,25 @@ def getPackagesInstallCommand(platform, packages):
     return cmd
 
 
-def appendSshPubkeyToAuthorizedKeys(pubkey):
-    dot_ssh_path = os.path.expanduser('~') + '/.ssh'
+def append_ssh_pubkey_to_authorized_keys(pubkey, user=''):
+    if is_windows():
+        return
+
+    if not user:
+        user = getpass.getuser()
+
+    dot_ssh_path = os.path.expanduser('~' + user) + '/.ssh'
     try:
         os.mkdir(dot_ssh_path)
     except:
         pass
-    fileAppendContent(dot_ssh_path + '/authorized_keys',
-                      '\n' + pubkey)
-    execute('restorecon -R %s || true' % dot_ssh_path, noWait=True, shell=True, withStderr=True,
-            withOutput=True)
 
+    fileAppendContent(dot_ssh_path + '/authorized_keys', '\n' + pubkey)
+
+    execute('chown -R %(user)s:$(id -g %(user)s) %(ssh_path)s' % {'user': user, 'ssh_path': dot_ssh_path},
+            noWait=True, shell=True, withStderr=True, withOutput=True)
+
+    execute('restorecon -R %s || true;' % dot_ssh_path, noWait=True, shell=True, withStderr=True, withOutput=True)
 
 
 class NullFile(object):

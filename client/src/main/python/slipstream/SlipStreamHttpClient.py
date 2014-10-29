@@ -441,10 +441,5 @@ class DomExtractor(object):
         '''
         targets = {}
         for targetNode in image_dom.findall('targets/target'):
-            runInBackgroundStr = targetNode.get('runInBackground')
-            runInBackground = False
-            if runInBackgroundStr:
-                if runInBackgroundStr.lower() == 'true':
-                    runInBackground = True
-            targets[targetNode.get('name')] = (targetNode.text, runInBackground)
+            targets[targetNode.get('name')] = targetNode.text
         return targets

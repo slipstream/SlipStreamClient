@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -40,7 +40,10 @@ class MachineExecutor(object):
         self.reportFilesAndDirsList = [self.ssLogDir]
 
     def execute(self):
-        self._execute()
+        try:
+            self._execute()
+        except Exception as ex:
+            self._fail_global(ex)
 
     def _execute(self, state=None):
         state = (state and state) or self.wrapper.getState()
@@ -60,13 +63,17 @@ class MachineExecutor(object):
             traceback.print_exc()
             self._fail(ex)
 
-        self.wrapper.complete_state()
+        if self._need_to_complete(state):
+            self.wrapper.complete_state()
         state = self._waitForNextState(state)
         self._execute(state)
 
     def _fail(self, exception):
-        self.wrapper.fail("Exception %s with detail %s" % (exception.__class__,
+        self.wrapper.fail("Exception %s with detail: %s" % (exception.__class__,
                                                            str(exception)))
+    def _fail_global(self, exception):
+        self.wrapper.fail_global("Exception %s with detail: %s" % (exception.__class__,
+                                                                  str(exception)))
 
     def _waitForNextState(self, state):
         timeSleep = 5
@@ -92,6 +99,9 @@ class MachineExecutor(object):
 
     def _is_mutable(self):
         return self.wrapper.is_mutable()
+
+    def _need_to_complete(self, state):
+        return state not in ['Finalizing', 'Done', 'Cancelled', 'Aborted']
 
     def onInitializing(self):
         pass
@@ -150,7 +160,7 @@ class MachineExecutor(object):
         raise ExecutionException('The run is in a final state but the VM is still running !')
 
     def _get_node_instance_name(self):
-        return self.wrapper.node_instance_name()
+        return self.wrapper.get_my_node_instance_name()
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)

@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -203,10 +203,10 @@ class StratuslabClientCloud(BaseCloudConnector):
         configHolder.readonlyDiskId = node_instance.get_cloud_parameter('extra_disk_readonly', '')
 
     def _set_extra_context_data_on_config_holder(self, configHolder, node_instance):
-        nodename = node_instance.get_name()
+        node_instance_name = node_instance.get_name()
         configHolder.extraContextData = '#'.join(
             ['%s=%s' % (k, v) for (k, v) in os.environ.items() if k.startswith('SLIPSTREAM_')])
-        configHolder.extraContextData += '#SLIPSTREAM_NODENAME=%s' % nodename
+        configHolder.extraContextData += '#%s=%s' % (util.ENV_NODE_INSTANCE_NAME, node_instance_name)
         configHolder.extraContextData += '#SCRIPT_EXEC=%s' % self._build_slipstream_bootstrap_command(node_instance)
 
     def _set_vm_name_on_config_holder(self, configHolder, vm_name):

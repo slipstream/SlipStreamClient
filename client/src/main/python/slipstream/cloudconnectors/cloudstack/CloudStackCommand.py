@@ -16,42 +16,33 @@
  limitations under the License.
 """
 
-from slipstream.cloudconnectors.CloudClientCommand import CloudClientCommand
+from slipstream.command.CloudClientCommand import CloudClientCommand
 from slipstream.cloudconnectors.cloudstack.CloudStackClientCloud import CloudStackClientCloud
 
 
 class CloudStackCommand(CloudClientCommand):
 
-    def __init__(self):
-        self.PROVIDER_NAME = CloudStackClientCloud.cloudName
-        super(CloudStackCommand, self).__init__()
+    ENDPOINT_KEY = 'endpoint'
+    ZONE_KEY = 'zone'
 
-    def _setCommonOptions(self):
-        self.parser.add_option('--key', dest='key',
-                               help='Key',
-                               default='', metavar='KEY')
+    def __init__(self, timeout=None):
+        super(CloudStackCommand, self).__init__(timeout)
 
-        self.parser.add_option('--secret', dest='secret',
-                               help='Secret',
-                               default='', metavar='SECRET')
+    def get_connector_class(self):
+        return CloudStackClientCloud
 
-        self.parser.add_option('--endpoint', dest='endpoint',
-                               help='Endpoint',
-                               default='', metavar='ENDPOINT')
+    def set_cloud_specific_options(self, parser):
+        self.parser.add_option('--'+self.ENDPOINT_KEY, dest=self.ENDPOINT_KEY,
+                               help='Endpoint', default='', metavar='ENDPOINT')
 
-        self.parser.add_option('--zone', dest='zone',
-                               help='Zone',
-                               default='', metavar='ZONE')
+        self.parser.add_option('--'+self.ZONE_KEY, dest=self.ZONE_KEY, 
+                               help='Zone', default='', metavar='ZONE')
 
-    def _checkOptions(self):
-        if not all((self.options.key, self.options.secret,
-                    self.options.endpoint, self.options.zone)):
-            self.parser.error('Some options were not given values. '
-                              'All options are mandatory.')
-        self.checkOptions()
+    def get_cloud_specific_user_cloud_params(self):
+        return {self.ENDPOINT_KEY: self.get_option(self.ENDPOINT_KEY),
+                self.ZONE_KEY: self.get_option(self.ZONE_KEY)}
 
-    def _setUserInfo(self):
-        self.userInfo[self.PROVIDER_NAME + '.username'] = self.options.key
-        self.userInfo[self.PROVIDER_NAME + '.password'] = self.options.secret
-        self.userInfo[self.PROVIDER_NAME + '.endpoint'] = self.options.endpoint
-        self.userInfo[self.PROVIDER_NAME + '.zone'] = self.options.zone
+    def get_cloud_specific_mandatory_options(self):
+        return [self.ZONE_KEY,
+                self.ENDPOINT_KEY]
+

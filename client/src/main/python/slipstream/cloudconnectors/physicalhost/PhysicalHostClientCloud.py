@@ -20,7 +20,7 @@ import os
 
 import slipstream.util as util
 
-from slipstream.util import override
+from slipstream.util import override, ENV_NODE_INSTANCE_NAME
 from slipstream.NodeInstance import NodeInstance
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
 from slipstream.exceptions.Exceptions import ExecutionException
@@ -118,7 +118,7 @@ class PhysicalHostClientCloud(BaseCloudConnector):
         for (k, v) in os.environ.items():
             if k.startswith('SLIPSTREAM_') or k.startswith('PHYSICALHOST_'):
                 userData += 'export ' + k + '="' + v + '"' + "; "
-        userData += 'export SLIPSTREAM_NODENAME="' + node_instance_name + '"' + "; "
+        userData += 'export ' + ENV_NODE_INSTANCE_NAME + '="' + node_instance_name + '"' + "; "
         userData += self._build_slipstream_bootstrap_command(node_instance_name)
         userData += "'\\'') > /dev/null 2>&1 &' | at now"
         return userData

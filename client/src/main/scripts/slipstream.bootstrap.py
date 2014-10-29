@@ -94,14 +94,14 @@ node_instance_name = %s
        os.environ['SLIPSTREAM_USERNAME'],
        os.environ['SLIPSTREAM_COOKIE'].strip('"'),
        os.environ['SLIPSTREAM_SERVICEURL'],
-       os.environ['SLIPSTREAM_NODENAME'])
+       os.environ['SLIPSTREAM_NODE_INSTANCE_NAME'])
     file(contextFile, 'w').write(slipstreamContext)
 
 
 def _persistSlipStreamConfig(cloud, orchestration):
     cloudConnector = os.environ.get('CLOUDCONNECTOR_PYTHON_MODULENAME', '')
     # cloud connector module name is only required for orchestration
-    if not cloudConnector and orchestration:
+    if orchestration and not cloudConnector:
         raise RuntimeError("Failed to find connector module name for cloud: %s" % cloud)
 
     clientConfig = """[System]

@@ -27,7 +27,7 @@ from mock import Mock
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.wrappers.CloudWrapper import CloudWrapper
-from slipstream.util import CONFIGPARAM_CONNECTOR_MODULE_NAME
+from slipstream.util import CONFIGPARAM_CONNECTOR_MODULE_NAME, ENV_CONNECTOR_INSTANCE
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.NodeInstance import NodeInstance
 
@@ -43,17 +43,18 @@ class TestCloudWrapper(TestCloudConnectorsBase):
                 'username': base64.b64encode('user'),
                 'password': base64.b64encode('pass'),
                 'cookie_filename': 'cookies',
-                'serviceurl': self.serviceurl
+                'serviceurl': self.serviceurl,
+                'node_instance_name': 'instance-name'
             },
             context={'foo': 'bar'},
             config={'foo': 'bar'})
 
-        os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'] = 'Test'
+        os.environ[ENV_CONNECTOR_INSTANCE] = 'Test'
 
         BaseWrapper.is_mutable = Mock(return_value=False)
 
     def tearDown(self):
-        os.environ.pop('SLIPSTREAM_CONNECTOR_INSTANCE')
+        os.environ.pop(ENV_CONNECTOR_INSTANCE)
         self.configHolder = None
         shutil.rmtree('%s/.cache/' % os.getcwd(), ignore_errors=True)
 

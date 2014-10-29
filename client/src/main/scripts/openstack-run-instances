@@ -1,128 +1,59 @@
 #!/usr/bin/env python
+"""
+ SlipStream Client
+ =====
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
+ =====
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
 
-import os
-import re
-import time
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+"""
+
 import warnings
-import traceback
 warnings.filterwarnings("ignore", category=DeprecationWarning)
-import sys
 
-from slipstream.util import nostdouterr
-from slipstream.util import nostdout
-from slipstream.ConfigHolder import ConfigHolder
-from slipstream.NodeInstance import NodeInstance
-from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
-from slipstream.NodeDecorator import NodeDecorator
+from slipstream.command.CloudClientCommand import main
+from slipstream.command.RunInstancesCommand import RunInstancesCommand
 from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand
 from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
 
 
-def publish_vm_info(self, vm, node_instance):
-    try:
-        self._orig_publish_vm_info(vm, node_instance)
-    except Exception as e:
-        pass
-        # print >> sys.stderr, e
-        # print >> sys.stderr, traceback.format_exc()
+class OpenStackRunInstances(RunInstancesCommand, OpenStackCommand):
 
-def get_bootstrap_script(self, node_instance):
-    return os.environ['context_script']
+    INSTANCE_TYPE_KEY = 'instance-type'
+    SECURITY_GROUPS_KEY = 'security-groups'
 
-
-class MainProgram(OpenStackCommand):
     def __init__(self):
-        super(MainProgram, self).__init__()
+        super(OpenStackRunInstances, self).__init__()
 
-    def setProgramOptions(self):
-        self.parser.add_option('--image-id', dest='imageId',
-                               help='Image ID. Mandatory.',
-                               default='', metavar='ID')
+    def set_cloud_specific_options(self, parser):
+        OpenStackCommand.set_cloud_specific_options(self, parser)
 
-        self.parser.add_option('--instance-name', dest='instance_name',
-                               help='Name of the instance',
-                               default='', metavar='NAME')
-
-        self.parser.add_option('--instance-type', dest='instance_type',
+        self.parser.add_option('--' + self.INSTANCE_TYPE_KEY, dest=self.INSTANCE_TYPE_KEY,
                                help='Instance Type (Flavor)',
                                default=None, metavar='TYPE')
 
-        self.parser.add_option('--network-type', dest='network_type',
-                               help='Network type (public or private)',
-                               default='', metavar='NETWORK-TYPE')
-
-        self.parser.add_option('--public-key', dest='public_key',
-                               help='Public key in the OpenSSH format',
-                               default='', metavar='PUBKEY')
-
-        self.parser.add_option('--security-groups', dest='security_groups',
+        self.parser.add_option('--' + self.SECURITY_GROUPS_KEY, dest=self.SECURITY_GROUPS_KEY,
                                help='Comma separated list of security groups',
                                default='', metavar='SECGROUPS')
 
-        self.parser.add_option('--context-script', dest='context_script',
-                               help='Context script',
-                               default='', metavar='SCRIPT')
+    def get_cloud_specific_node_inst_cloud_params(self):
+        return {'security.groups': self.get_option(self.SECURITY_GROUPS_KEY),
+                'instance.type': self.get_option(self.INSTANCE_TYPE_KEY)}
 
-        self.parser.add_option('--slipstream-endpoint', dest='slipstream_endpoint',
-                               help='SlipStream endpoint',
-                               default='http://localhost:8182', metavar='URL')
-
-    def checkOptions(self):
-        if not all((self.options.imageId, self.options.instance_type, self.options.region,
-                    self.options.instance_name)):
-            self.parser.error('Some mandatory options were not given values.')
-
-    def _setUserInfo(self):
-        super(MainProgram, self)._setUserInfo()
-
-        self.userInfo['General.ssh.public.key'] = self.options.public_key
-
-    def doWork(self):
-
-        node_instance = NodeInstance({
-            NodeDecorator.NODE_INSTANCE_NAME_KEY: self.options.instance_name,
-            NodeDecorator.CLOUDSERVICE_KEY: 'openstack',
-            # 'image.platform': 'Ubuntu',
-            'image.imageId': self.options.imageId,
-            'image.id': self.options.imageId,
-            'openstack.instance.type': self.options.instance_type,
-            'openstack.security.groups': self.options.security_groups,
-            'network': self.options.network_type,
-        })
-
-        with nostdouterr():
-            vm = self._startImage(node_instance)
-
-        print '%s, %s' % (vm['id'], vm['ip'])
-
-    def _startImage(self, node_instance):
-        nodename = node_instance.get_name()
-
-        OpenStackClientCloud._orig_publish_vm_info = OpenStackClientCloud._publish_vm_info
-        OpenStackClientCloud._publish_vm_info = publish_vm_info
-        OpenStackClientCloud._get_bootstrap_script = get_bootstrap_script
-        os.environ['context_script'] = self.options.context_script or ''
-
-        cc = OpenStackClientCloud(ConfigHolder(options={
-                                                        'verboseLevel': 0,
-                                                        'http_max_retries': 0,
-                                                        'serviceurl': self.options.slipstream_endpoint,
-                                                        KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
-                                               context={'foo': 'bar'}))
-
-        cc.start_nodes_and_clients(self.userInfo, {nodename: node_instance})
-        vms = cc.get_vms_details()
-        vm = vms[0].itervalues().next()
-
-        return {'id': cc._vm_get_id(vm), 'ip': cc._vm_get_ip(vm)}
+    def get_cloud_specific_mandatory_options(self):
+        return OpenStackCommand.get_cloud_specific_mandatory_options(self) + \
+               [self.INSTANCE_TYPE_KEY,
+                self.SECURITY_GROUPS_KEY]
 
 
 if __name__ == "__main__":
-    try:
-        MainProgram()
-    except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
-    except Exception as e:
-        print >> sys.stderr, e
-        print >> sys.stderr, traceback.format_exc()
-        exit(1)
+    main(OpenStackRunInstances)
