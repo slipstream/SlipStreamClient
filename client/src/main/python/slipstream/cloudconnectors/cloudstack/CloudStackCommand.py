@@ -35,7 +35,8 @@ class CloudStackCommand(CloudClientCommand):
         self.parser.add_option('--'+self.ENDPOINT_KEY, dest=self.ENDPOINT_KEY,
                                help='Endpoint', default='', metavar='ENDPOINT')
 
-        self.parser.add_option('--'+self.ZONE_KEY, dest=self.ZONE_KEY, help='Zone', default='', metavar='ZONE')
+        self.parser.add_option('--'+self.ZONE_KEY, dest=self.ZONE_KEY, 
+                               help='Zone', default='', metavar='ZONE')
 
     def get_cloud_specific_user_cloud_params(self):
         return {self.ENDPOINT_KEY: self.get_option(self.ENDPOINT_KEY),

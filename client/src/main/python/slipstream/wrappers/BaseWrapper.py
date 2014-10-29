@@ -312,8 +312,6 @@ class BaseWrapper(object):
 
     def get_my_node_instance(self):
         node_name = self.get_my_node_instance_name()
-        util.printAndFlush('My node name: %s' % node_name)
-        util.printAndFlush('Nodes instances: %s' % self._get_nodes_instances())
         return self._get_nodes_instances().get(node_name)
 
     def discard_run_locally(self):

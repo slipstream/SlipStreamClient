@@ -1,7 +1,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -70,8 +70,8 @@ except KeyboardInterrupt:
     print '\nExecution interrupted by the user... goodbye!'
     sys.exit(-1)
 
-class CommandBase(object):
 
+class CommandBase(object):
 
     def __init__(self, dummy):
 
@@ -102,7 +102,7 @@ class CommandBase(object):
 
     def add_authentication_options(self):
         default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                os.path.join(util.TMPDIR, 'cookie'))
+                                        os.path.join(util.TMPDIR, 'cookie'))
         self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username', metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
@@ -115,7 +115,7 @@ class CommandBase(object):
 
     def addEndpointOption(self):
         default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                  'https://slipstream.sixsq.com')
+                                          'https://slipstream.sixsq.com')
         self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
                                help='SlipStream server endpoint',
                                default=default_endpoint)
@@ -181,7 +181,7 @@ class CommandBase(object):
         if len(bits) != 2:
             self.usageExit("Error: properties must be expressed as: <name>=<value>, got '%s'" % value)
 
-        #Type convertions
+        # Type convertions
         if bits[1].lower() == 'true':
             bits[1] = True
         elif bits[1].lower() == 'false':
@@ -252,4 +252,3 @@ class CommandBase(object):
         if not os.path.isfile(ifile):
             self.usageExit("Input is not a file: " + ifile)
         return open(ifile).read()
-

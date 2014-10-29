@@ -85,7 +85,6 @@ class CloudClientCommand(object):
     def _get_command_mandatory_options(self):
         return []
 
-
     def alarm_handler(self, signum, frame):
         raise RuntimeError('The command has timed out.')
 
@@ -194,9 +193,3 @@ class CloudClientCommand(object):
 
     def get_node_instance_name(self):
         return os.environ.get(util.ENV_NODE_INSTANCE_NAME)
-
-
-
-
-
-

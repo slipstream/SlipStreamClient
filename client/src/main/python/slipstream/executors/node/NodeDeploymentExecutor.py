@@ -44,7 +44,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         self.verboseLevel = 0
         super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
 
-        self.retreive_my_node_instance()
+        self.node_instance = self._retreive_my_node_instance()
 
         self.SCALE_ACTION_TO_TARGET = \
             {self.wrapper.SCALE_ACTION_CREATION: 'onvmadd',
@@ -86,10 +86,11 @@ class NodeDeploymentExecutor(MachineExecutor):
         super(NodeDeploymentExecutor, self).onReady()
         self.wrapper.set_scale_state_operational()
 
-    def retreive_my_node_instance(self):
-        self.node_instance = self.wrapper.get_my_node_instance()
-        if self.node_instance is None:
+    def _retreive_my_node_instance(self):
+        node_instance = self.wrapper.get_my_node_instance()
+        if node_instance is None:
             raise ExecutionException("Couldn't get the node instance for the current VM.")
+        return node_instance
 
     def _get_target_on_scale_action(self, action):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
@@ -198,10 +199,6 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printDetail("End of the target script")
 
         return process.returncode
-
-    def _add_ssh_pubkey_if_needed(self):
-        # if util.needToAddSshPubkey():
-        self._add_ssh_pubkey()
 
     def _add_ssh_pubkey(self, login_user):
         util.printStep('Adding the public keys')
