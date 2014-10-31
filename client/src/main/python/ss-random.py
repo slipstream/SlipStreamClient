@@ -18,9 +18,9 @@
 """
 from __future__ import print_function
 
-import os
 import sys
-import binascii
+import random
+import string
 
 from slipstream.CommandBase import CommandBase
 from slipstream.Client import Client
@@ -63,12 +63,14 @@ class MainProgram(CommandBase):
             self.key = self.args[0]
         try:
             self.size = int(self.options.size)
+            if self.size < 1:
+                self.usageExit('Size value must be a positive integer')
         except ValueError:
-            self.usageExit("Invalid size value, must be an integer")
+            self.usageExit("Invalid size value, must be a positive integer")
 
     def doWork(self):
         
-        rvalue = binascii.b2a_hex(os.urandom(self.size))
+        rvalue = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(self.size)])
 
         if self.key is not None:
             configHolder = ConfigHolder(self.options)
