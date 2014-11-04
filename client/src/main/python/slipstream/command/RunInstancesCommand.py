@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 
 from slipstream.command.CloudClientCommand import CloudClientCommand
-from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.NodeInstance import NodeInstance
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.util import nostdouterr
@@ -52,11 +52,11 @@ class RunInstancesCommand(CloudClientCommand):
         super(RunInstancesCommand, self).__init__(timeout)
 
     def _set_command_specific_options(self, parser):
-        parser.add_option('--' + self.IMAGE_ID_KEY, dest=self.IMAGE_ID_KEY, 
+        parser.add_option('--' + self.IMAGE_ID_KEY, dest=self.IMAGE_ID_KEY,
                           help='Image ID', default='', metavar='IMAGEID')
 
         parser.add_option('--' + self.PLATFORM_KEY, dest=self.PLATFORM_KEY,
-                          help='Platform (eg: Ubuntu, CentOS, Windows, ...)', 
+                          help='Platform (eg: Ubuntu, CentOS, Windows, ...)',
                           default='linux', metavar='PLATFORM')
 
         parser.add_option('--' + self.NETWORK_TYPE, dest=self.NETWORK_TYPE,
@@ -70,7 +70,7 @@ class RunInstancesCommand(CloudClientCommand):
 
     def _get_node_instance(self):
         return NodeInstance({
-            'name': self.get_node_instance_name(),
+            NodeDecorator.NODE_INSTANCE_NAME_KEY: self.get_node_instance_name(),
             'cloudservice': self._cloud_instance_name,
             'image.platform': self.get_option(self.PLATFORM_KEY),
             'image.imageId': self.get_option(self.IMAGE_ID_KEY),
@@ -98,7 +98,7 @@ class RunInstancesCommand(CloudClientCommand):
                                     KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                           context={'foo': 'bar'},
                           config={'foo': 'bar'})
-        
+
         cc = cloud_connector_class(ch)
-        cc.start_nodes_and_clients(self.user_info, {nodename: node_instance}, 
+        cc.start_nodes_and_clients(self.user_info, {nodename: node_instance},
                                    self.get_initialization_extra_kwargs())
