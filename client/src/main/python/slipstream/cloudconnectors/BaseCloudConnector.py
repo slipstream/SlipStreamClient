@@ -422,7 +422,7 @@ class BaseCloudConnector(object):
         return vm_name
 
     @staticmethod
-    def isStartOrchestrator():
+    def is_start_orchestrator():
         return os.environ.get('IS_ORCHESTRATOR', 'False') == 'True'
 
     def __secure_ssh_access_and_run_bootstrap_script(self, user_info, node_instance, ip):
@@ -576,7 +576,7 @@ class BaseCloudConnector(object):
             script += '#!/bin/sh -ex\n'
 
         regex = 'SLIPSTREAM_'
-        if self.isStartOrchestrator():
+        if self.is_start_orchestrator():
             regex += '|CLOUDCONNECTOR_'
         env_matcher = re.compile(regex)
 
@@ -623,7 +623,7 @@ class BaseCloudConnector(object):
         reportdir = Client.WINDOWS_REPORTSDIR
 
         targetScript = ''
-        if self.isStartOrchestrator():
+        if self.is_start_orchestrator():
             targetScript = 'slipstream-orchestrator'
 
         command = 'mkdir %(reports)s\n'
@@ -667,7 +667,7 @@ class BaseCloudConnector(object):
         reportdir = Client.REPORTSDIR
 
         targetScript = ''
-        if self.isStartOrchestrator():
+        if self.is_start_orchestrator():
             targetScript = 'slipstream-orchestrator'
 
         command = 'mkdir -p %(reports)s; wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
