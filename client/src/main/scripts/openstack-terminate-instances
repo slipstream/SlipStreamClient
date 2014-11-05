@@ -20,7 +20,6 @@
 from slipstream.command.CloudClientCommand import main
 from slipstream.command.TerminateInstancesCommand import TerminateInstancesCommand
 from slipstream.cloudconnectors.openstack.OpenStackCommand import OpenStackCommand
-from slipstream.cloudconnectors.openstack.OpenStackClientCloud import OpenStackClientCloud
 
 
 class OpenStackTerminateInstances(TerminateInstancesCommand, OpenStackCommand):
