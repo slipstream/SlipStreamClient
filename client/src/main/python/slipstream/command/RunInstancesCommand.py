@@ -21,7 +21,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 import sys
 
 from slipstream.command.CloudClientCommand import CloudClientCommand
-from slipstream.NodeDecorator import KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
+from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.NodeInstance import NodeInstance
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.util import nostdouterr
@@ -71,7 +71,7 @@ class RunInstancesCommand(CloudClientCommand):
 
     def _get_node_instance(self):
         return NodeInstance({
-            'name': self.get_node_instance_name(),
+            NodeDecorator.NODE_INSTANCE_NAME_KEY: self.get_node_instance_name(),
             'cloudservice': self._cloud_instance_name,
             'image.platform': self.get_option(self.PLATFORM_KEY),
             'image.imageId': self.get_option(self.IMAGE_ID_KEY),
