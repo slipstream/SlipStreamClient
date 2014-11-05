@@ -97,10 +97,10 @@ class CloudClientCommand(object):
         self.mandatory_options = []
         self.timeout = timeout
         self._init_args_parser()
-        self._init_cloud_instance_name()
 
     def execute(self):
         self._parse_args()
+        self._init_cloud_instance_name()
         try:
             self._init_user_info()
 
@@ -168,9 +168,12 @@ class CloudClientCommand(object):
             self.verbose_level = VERBOSE_LEVEL_DETAILED
 
     def _check_options(self):
-        errors = ', '.join([name for name in self.mandatory_options if not getattr(self.options, name, None)])
-        if errors:
-            self.parser.error('The following options are mandatory but no values was given: %s' % errors)
+        missing_list = [name for name in self.mandatory_options
+                        if not getattr(self.options, name, None)]
+        if missing_list:
+            missing_options = ', '.join(map(lambda x: '--' + x, missing_list))
+            self.parser.error('The following mandatory options were not provided: %s' %
+                              missing_options)
 
     def _get_common_user_cloud_params(self):
         return {
@@ -188,7 +191,7 @@ class CloudClientCommand(object):
         try:
             self._cloud_instance_name = os.environ[util.ENV_CONNECTOR_INSTANCE]
         except KeyError:
-            raise ExecutionException('Environment variable %s is required.' %
+            raise ExecutionException('ERROR: Environment variable %s is required.' %
                                      util.ENV_CONNECTOR_INSTANCE)
 
     def get_node_instance_name(self):
