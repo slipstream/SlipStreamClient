@@ -59,7 +59,7 @@
    </cloudNames>
    <runs />
    <targets >
-      <target name="execute" runInBackground="false">#!/bin/sh
+      <target name="execute">#!/bin/sh
 
 set -e
 

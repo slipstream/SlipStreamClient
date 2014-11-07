@@ -184,7 +184,7 @@
                   <comment />
                </commit>
                <targets >
-                  <target name="execute" runInBackground="false">#!/bin/sh -xe
+                  <target name="execute">#!/bin/sh -xe
 # Wait for the metadata to be resolved
 web_server_ip=$(ss-get --timeout 360 webserver.hostname)
 web_server_port=$(ss-get --timeout 360 webserver.port)
@@ -195,7 +195,7 @@ ENDPOINT=http://${web_server_ip}:${web_server_port}/data.txt
 wget -t 2 -O /tmp/data.txt ${ENDPOINT}
 [ "$?" = "0" ] &amp; ss-set statecustom "OK: $(cat /tmp/data.txt)" || ss-abort "Could not get the test file: ${ENDPOINT}"
 </target>
-                  <target name="report" runInBackground="false">#!/bin/sh -x
+                  <target name="report">#!/bin/sh -x
 cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
                </targets>
                <packages />
@@ -339,7 +339,7 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
                   <comment />
                </commit>
                <targets >
-                  <target name="execute" runInBackground="false">#!/bin/sh -xe
+                  <target name="execute">#!/bin/sh -xe
 apt-get update -y
 apt-get install -y apache2
 
@@ -352,7 +352,7 @@ sed -i -e 's/^NameVirtualHost.*$/NameVirtualHost *:'$port'/' /etc/apache2/ports.
 sed -i -e 's/^&lt;VirtualHost.*$/&lt;VirtualHost *:'$port'&gt;/' /etc/apache2/sites-available/default
 service apache2 start
 ss-set ready true</target>
-                  <target name="report" runInBackground="false">#!/bin/sh -x
+                  <target name="report">#!/bin/sh -x
 cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
 cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR</target>
                </targets>
