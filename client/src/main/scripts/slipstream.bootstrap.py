@@ -154,12 +154,31 @@ def _downloadAndExtractTarball(tarbalUrl, targetDir):
     print 'Expanding tarball:', localTarBall
     tarfile.open(localTarBall, 'r:gz').extractall(targetDir)
 
-
+def _setup_manual_env():
+    print "Creating local environment variable script for manual troubleshooting"
+    dot_slipstream = '.slipstream'
+    slipstream_setenv = 'slipstream.setenv'
+    try:
+        home = os.path.expanduser("~")
+        os.makedirs(os.path.join(home, dot_slipstream))
+    except OSError:
+        pass
+    setenv_file_source = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin', slipstream_setenv)
+    setenv_file_destination = os.path.join(home, dot_slipstream)
+    setenv_file_destination_in_tmp = os.path.join(os.sep, 'tmp', slipstream_setenv)
+    try:
+        shutil.copyfile(setenv_file_source, setenv_file_destination)
+    except IOError, ex:
+        pass
+    try:
+        shutil.copyfile(setenv_file_source, setenv_file_destination_in_tmp)
+    except IOError, ex:
+        pass
+    
 def _deployRemoteTarball(url, extract_to, name):
     print 'Retrieving %s library from %s' % (name, url)
     _downloadAndExtractTarball(url, extract_to)
     __pythonpathPrepend(extract_to)
-
 
 def _setInstallCommandAndDistro():
     global INSTALL_CMD, DISTRO
@@ -322,6 +341,7 @@ def getAndSetupSlipStream(cloud, orchestration):
 
     print 'Retrieving the latest version of the SlipStream from:', slipstreamTarballUrl
     _downloadAndExtractTarball(slipstreamTarballUrl, SLIPSTREAM_CLIENT_HOME)
+    _setup_manual_env()
     _setPythonpathSlipStream()
     _setPathSlipStream()
     _buildContextAndConfigSlipStream(cloud, orchestration)
