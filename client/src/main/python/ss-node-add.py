@@ -21,7 +21,7 @@ from __future__ import print_function
 import os
 import sys
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
