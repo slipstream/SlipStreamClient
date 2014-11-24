@@ -221,6 +221,9 @@ class StratuslabClientCloud(BaseCloudConnector):
                 runner = self._do_run_instance(image_id, configHolder)
             except socket.error, ex:
                 if attempt >= max_attempts:
+                    # TODO: Need to print full stacktrace of the actual exception.
+                    #       Otherwise, it's not possible to troubleshoot the issue.
+                    #       Connection issues can come from multiple layers.
                     raise Exceptions.ExecutionException(
                         "Failed to launch instance after %i attempts: %s" %
                         (attempt, str(ex)))
