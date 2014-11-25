@@ -24,6 +24,7 @@ import random
 import string
 
 from threading import local
+from threading import Lock
 
 import slipstream.exceptions.Exceptions as Exceptions
 
@@ -39,6 +40,7 @@ from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
 from winrm.winrm_service import WinRMWebService
 from winrm.exceptions import WinRMTransportError
 
+lock = Lock()
 
 class BaseCloudConnector(object):
 
@@ -279,7 +281,8 @@ class BaseCloudConnector(object):
 
     def __add_vm(self, vm, node_instance):
         name = node_instance.get_name()
-        self.__vms[name] = vm
+        with lock:
+            self.__vms[name] = vm
         self._publish_vm_info(vm, node_instance)
 
     def __del_vm(self, name):
