@@ -286,7 +286,10 @@ class BaseCloudConnector(object):
         self._publish_vm_info(vm, node_instance)
 
     def __del_vm(self, name):
-        del self.__vms[name]
+        try:
+            del self.__vms[name]
+        except KeyError:
+            util.printDetail("Failed locally removing VM '%s'. Not found." % name)
 
     def _publish_vm_info(self, vm, node_instance):
         instance_name = node_instance.get_name()
