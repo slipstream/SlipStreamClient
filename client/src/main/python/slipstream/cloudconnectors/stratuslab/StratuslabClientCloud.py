@@ -22,6 +22,7 @@ import os
 import socket
 import sys
 import time
+import logging
 
 from stratuslab.ConfigHolder import ConfigHolder as StratuslabConfigHolder
 from stratuslab.marketplace.ManifestDownloader import ManifestDownloader
@@ -30,6 +31,8 @@ from stratuslab.Creator import CreatorBaseListener
 from stratuslab.vm_manager.Runner import Runner
 from stratuslab.volume_manager.volume_manager_factory import VolumeManagerFactory
 from stratuslab.Exceptions import OneException
+from stratuslab.api import LogUtil
+LogUtil.get_console_logger()
 
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
@@ -65,6 +68,10 @@ class StratuslabClientCloud(BaseCloudConnector):
         self._set_capabilities(contextualization=True,
                                direct_ip_assignment=True,
                                orchestrator_can_kill_itself_or_its_vapp=True)
+
+        if self.verboseLevel > 2:
+            LogUtil.set_logger_level(level=logging.DEBUG)
+
         patch_stratuslab()
 
     def _start_image_for_build(self, user_info, node_instance):

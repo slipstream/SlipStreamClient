@@ -2,7 +2,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2013 SixSq Sarl (sixsq.com)
+ Copyright (C) 2014 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -39,9 +39,7 @@ stratuslab.imageid =  HZTKYZgX7XzSokCHMB60lS0wsiv
 """  # pylint: disable=pointless-string-statement
 
 
-class TestStratusLabClientCloud(unittest.TestCase):
-
-    # pylint: disable=protected-access
+class TestStratusLabLiveBase(unittest.TestCase):
 
     def setUp(self):
 
@@ -53,11 +51,9 @@ class TestStratusLabClientCloud(unittest.TestCase):
             raise Exception('Configuration file %s not found.' % CONFIG_FILE)
 
         self.ch = ConfigHolder(configFile=CONFIG_FILE, context={'foo': 'bar'})
-        self.ch.set('verboseLevel', self.ch.config['General.verbosity'])
+        self.ch.set('verboseLevel', int(self.ch.config['General.verbosity']))
 
-        os.environ['SLIPSTREAM_MESSAGING_ENDPOINT'] = self.ch.config['SLIPSTREAM_MESSAGING_ENDPOINT']
-        os.environ['SLIPSTREAM_MESSAGING_TYPE'] = self.ch.config['SLIPSTREAM_MESSAGING_TYPE']
-        os.environ['SLIPSTREAM_MESSAGING_QUEUE'] = self.ch.config['SLIPSTREAM_MESSAGING_QUEUE']
+        os.environ['SLIPSTREAM_PDISK_ENDPOINT'] = self.ch.config['SLIPSTREAM_PDISK_ENDPOINT']
 
         self.client = StratuslabClientCloud(self.ch)
         self.client._publish_vm_info = Mock()
@@ -136,7 +132,10 @@ lvs
         self.client = None
         self.ch = None
 
-    def xtest_1_startStopImages(self):
+
+class TestStratusLabClientCloudLive(TestStratusLabLiveBase):
+
+    def xtest_1_start_stop_images(self):
 
         self.client._get_max_workers = Mock(return_value=self.max_iaas_workers)
 
@@ -148,14 +147,15 @@ lvs
             vms = self.client.get_vms()
             assert len(vms) == int(self.multiplicity)
         finally:
-            self.client._stop_deployment()
+            self.client.stop_deployment()
 
-    def xtest_2_buildImage(self):
+    def xtest_2_build_image(self):
 
         self.client.run_category = RUN_CATEGORY_IMAGE
         self.client._prepare_machine_for_build_image = Mock()
 
-        self.client.start_nodes_and_clients(self.user_info, {NodeDecorator.MACHINE_NAME: self.node_instance})
+        self.client.start_nodes_and_clients(
+            self.user_info, {NodeDecorator.MACHINE_NAME: self.node_instance})
         instances_details = self.client.get_vms_details()
 
         assert instances_details
