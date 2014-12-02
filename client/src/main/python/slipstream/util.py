@@ -574,7 +574,9 @@ def append_ssh_pubkey_to_authorized_keys(pubkey, user=''):
     except:
         pass
 
-    fileAppendContent(dot_ssh_path + '/authorized_keys', '\n' + pubkey)
+    file_content = '\n# Keys added by SlipStream\n%s\n# End of keys added by SlipStream\n' % pubkey
+
+    fileAppendContent(dot_ssh_path + '/authorized_keys', file_content)
 
     execute('chown -R %(user)s:$(id -g %(user)s) %(ssh_path)s' % {'user': user, 'ssh_path': dot_ssh_path},
             noWait=True, shell=True, withStderr=True, withOutput=True)
