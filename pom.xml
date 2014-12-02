@@ -49,8 +49,9 @@
   </build>
 
   <scm>
-     <connection>scm:git:ssh://git@github.com/slipstream/SlipStreamClient.git</connection>
-     <developerConnection>scm:git:ssh://git@github.com/slipstream/SlipStreamClient.git</developerConnection>
+     <connection>${scm.read}/SlipStreamClient.git</connection>
+     <developerConnection>${scm.write}/SlipStreamClient.git</developerConnection>
+     <url>${scm.public}/SlipStreamClient</url>
     <tag>HEAD</tag>
   </scm>
 
