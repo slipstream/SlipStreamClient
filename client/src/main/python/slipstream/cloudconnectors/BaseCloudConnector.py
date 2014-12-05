@@ -676,7 +676,11 @@ class BaseCloudConnector(object):
         if self.is_start_orchestrator():
             targetScript = 'slipstream-orchestrator'
 
-        command = 'mkdir -p %(reports)s; wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+        command = 'mkdir -p %(reports)s; '
+        command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 '
+        command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1) '
+        #command += '&& export LIBCLOUD_DEBUG=/dev/stderr '
+        command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
         return command % {
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
