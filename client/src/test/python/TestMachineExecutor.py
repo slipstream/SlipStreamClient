@@ -47,6 +47,7 @@ class LocalCacheTestCase(unittest.TestCase):
 
         # Simulate timeout.
         me.timeout = 0
+        wrapper.is_mutable = Mock(return_value=False)
         self.assertRaises(TimeoutException, me._wait_for_next_state,
                           ('NotReadyState',))
 

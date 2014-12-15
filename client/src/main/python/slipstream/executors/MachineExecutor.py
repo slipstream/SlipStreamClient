@@ -109,8 +109,11 @@ class MachineExecutor(object):
                 return new_state
             self._sleep(self._get_sleep_time(state))
         else:
-            raise TimeoutException('Timeout reached waiting for next state, '
-                                   'current state: %s' % state)
+            msg = 'Timeout reached waiting for next state, current state: %s' % state
+            if self._is_mutable():
+                self._fail(TimeoutException(msg))
+            else:
+                raise TimeoutException(msg)
 
     def _in_ready_and_no_need_to_stop_images(self, state):
         return state == 'Ready' and not self.wrapper.need_to_stop_images()
