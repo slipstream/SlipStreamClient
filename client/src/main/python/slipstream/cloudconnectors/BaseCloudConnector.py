@@ -22,6 +22,7 @@ import time
 import tempfile
 import random
 import string
+import sys
 
 from threading import local
 from threading import Lock
@@ -195,8 +196,8 @@ class BaseCloudConnector(object):
             ss.ignoreAbort = True
             return ss.getRuntimeParameter('max.iaas.workers')
         except Exception as ex:  # pylint: disable=broad-except
-            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex),
-                             verboseThreshold=0)
+            util.printDetail('Failed to get max.iaas.workers: %s %s' %
+                             (ex.__class__, str(ex)), verboseThreshold=0)
             return None
 
     def stop_deployment(self):
@@ -669,7 +670,7 @@ class BaseCloudConnector(object):
         }
 
     def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
-        bootstrap = os.path.join(tempfile.gettempdir(), 'slipstream.bootstrap')
+        bootstrap = os.path.join(self.__get_tmp_dir_for_linux(), 'slipstream.bootstrap')
         reportdir = Client.REPORTSDIR
 
         targetScript = ''
@@ -679,8 +680,9 @@ class BaseCloudConnector(object):
         command = 'mkdir -p %(reports)s; '
         command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1) '
-        #command += '&& export LIBCLOUD_DEBUG=/dev/stderr '
+        # command += '&& export LIBCLOUD_DEBUG=/dev/stderr '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+
         return command % {
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
@@ -688,6 +690,13 @@ class BaseCloudConnector(object):
             'nodename': instance_name,
             'targetScript': targetScript
         }
+
+    @staticmethod
+    def __get_tmp_dir_for_linux():
+        if sys.platform.startswith('linux'):
+            return tempfile.gettempdir()
+        else:
+            return '/tmp'
 
     def _wait_can_connect_with_ssh_or_abort(self, host, username='', password='', sshKey=None):
         self._print_detail('Check if we can connect to %s' % host)
