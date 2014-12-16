@@ -105,26 +105,6 @@
               </artifactItems>
             </configuration>
           </execution>
-
-          <execution>
-            <id>get-stratuslab</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>copy</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>eu.stratuslab.client</groupId>
-                  <artifactId>stratuslab-cli-user-pkg</artifactId>
-                  <version>${stratuslab.version.zip}</version>
-                  <type>tar.gz</type>
-                </artifactItem>
-              </artifactItems>
-              <stripVersion>true</stripVersion>
-            </configuration>
-          </execution>
         </executions>
 
       </plugin>
@@ -133,25 +113,6 @@
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>exec-maven-plugin</artifactId>
         <executions>
-          <execution>
-            <id>unpack-stratuslab</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <configuration>
-              <workingDirectory>${project.build.directory}/dependencies</workingDirectory>
-              <executable>tar</executable>
-              <arguments>
-                <argument>--strip-components</argument>
-                <argument>3</argument>
-                <argument>-zxvf</argument>
-                <argument>stratuslab-cli-user-pkg.tar.gz</argument>
-                <argument>lib/stratuslab/python/stratuslab</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
           <execution>
             <id>unittests</id>
             <goals>
