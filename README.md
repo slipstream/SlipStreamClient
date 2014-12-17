@@ -14,3 +14,13 @@ Install
 To install the client:
 
 ```pip install slipstream-client```
+
+On the VMs
+-----
+
+To setup the client environment on a VM deployed by SlipStream, run the
+following:
+
+```source /opt/slipstream/client/sbin/slipstream.setenv```
+
+Note: yes a simpler way is on its way!
