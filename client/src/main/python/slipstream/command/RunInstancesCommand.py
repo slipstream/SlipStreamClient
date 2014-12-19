@@ -94,7 +94,8 @@ class RunInstancesCommand(CloudClientCommand):
         cloud_connector_class = self.get_connector_class()
         cloud_connector_class._publish_vm_info = publish_vm_info
 
-        ch = ConfigHolder(options={'verboseLevel': 0,
+        verbose_level = self.get_option('verbose') and 3 or 0
+        ch = ConfigHolder(options={'verboseLevel': verbose_level,
                                    'http_max_retries': 0,
                                     KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                           context={'foo': 'bar'},

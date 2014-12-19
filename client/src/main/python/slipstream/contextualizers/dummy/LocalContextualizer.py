@@ -34,7 +34,7 @@ class LocalContextualizer(object):
     [contextualization]
     nodename=<node-name>
     diid=<run-id>
-    serviceurl=http://slipstream.stratuslab.eu
+    serviceurl=https://slipstream.sixsq.com
     username=<username>
     password=<password>
     """

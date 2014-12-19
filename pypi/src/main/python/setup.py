@@ -59,7 +59,7 @@ setup(
     py_modules=[
         'slipstream.ConfigHolder',
         'slipstream.contextualizers.ContextualizerFactory',
-        'slipstream.CommandBase',
+        'slipstream.command.CommandBase',
         'slipstream.Client',
         'slipstream.exceptions.Exceptions',
         'slipstream.NodeDecorator',

@@ -21,7 +21,7 @@ from __future__ import print_function
 import os
 import sys
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
@@ -33,7 +33,7 @@ class MainProgram(CommandBase):
         self.runId = None
         self.nodeName = None
         self.instancesToRemove = []
-        
+
         self.username = None
         self.password = None
         self.cookie = None
@@ -46,13 +46,13 @@ class MainProgram(CommandBase):
 <run>        Run id of the mutable deployment from which to remove instance(s).
 
 <node-name>  Node name to remove instances from.
-                
+
 <ids>        Ids of the node instances to to remove from a mutable deployment run.'''
 
         self.parser.usage = usage
         self.add_authentication_options()
         self.addEndpointOption()
-        
+
         self.options, self.args = self.parser.parse_args()
         self._check_args()
 
@@ -67,10 +67,10 @@ class MainProgram(CommandBase):
             self.instancesToRemove = map(int, instancesToRemove)
         except ValueError:
             self.usageExit("Invalid ids, they must be integers")
-             
+
 
     def doWork(self):
-        
+
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
@@ -79,10 +79,10 @@ class MainProgram(CommandBase):
 
         instances = str(self.instancesToRemove)[1:-1]
         self.log("Removing node instances: %s..." % instances)
-        
+
         print(instances)
         client.delete(url, "ids=" + instances)
-        
+
 
 if __name__ == "__main__":
     try:

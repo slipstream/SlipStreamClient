@@ -22,7 +22,7 @@ import sys
 import random
 import string
 
-from slipstream.CommandBase import CommandBase
+from slipstream.command.CommandBase import CommandBase
 from slipstream.Client import Client
 import slipstream.util as util
 import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
@@ -51,9 +51,9 @@ class MainProgram(CommandBase):
                                metavar='NUMBER',
                                help='Number of characters for the random string (default: 12)',
                                default=12)
-        
+
         self.options, self.args = self.parser.parse_args()
-        
+
         self._check_args()
 
     def _check_args(self):
@@ -69,14 +69,14 @@ class MainProgram(CommandBase):
             self.usageExit("Invalid size value, must be a positive integer")
 
     def doWork(self):
-        
+
         rvalue = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(self.size)])
 
         if self.key is not None:
             configHolder = ConfigHolder(self.options)
             client = Client(configHolder)
             client.setRuntimeParameter(self.key, rvalue)
-        
+
         print(rvalue)
 
 if __name__ == "__main__":

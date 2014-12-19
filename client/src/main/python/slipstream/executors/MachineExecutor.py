@@ -30,6 +30,10 @@ from slipstream.Client import Client
 
 
 class MachineExecutor(object):
+
+    WAIT_NEXT_STATE_SHORT = 15
+    WAIT_NEXT_STATE_LONG = 60
+
     def __init__(self, wrapper, configHolder=ConfigHolder()):
         self.wrapper = wrapper
         self.timeout = 30 * 60  # 30 minutes
@@ -63,39 +67,68 @@ class MachineExecutor(object):
             traceback.print_exc()
             self._fail(ex)
 
+        self._complete_state(state)
+        new_state = self._wait_for_next_state(state)
+
+        self._execute(new_state)
+
+    def _complete_state(self, state):
         if self._need_to_complete(state):
             self.wrapper.complete_state()
-        state = self._waitForNextState(state)
-        self._execute(state)
 
     def _fail(self, exception):
         self.wrapper.fail("Exception %s with detail: %s" % (exception.__class__,
-                                                           str(exception)))
+                                                            str(exception)))
+
     def _fail_global(self, exception):
         self.wrapper.fail_global("Exception %s with detail: %s" % (exception.__class__,
-                                                                  str(exception)))
+                                                                   str(exception)))
 
-    def _waitForNextState(self, state):
-        timeSleep = 5
-        timeMax = time.time() + float(self.timeout)
-        util.printDetail('Waiting for next state transition, currently in %s' %
-                         state, self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
-        while time.time() <= timeMax or self._is_timeout_not_needed(state):
-            newState = self.wrapper.getState()
-            if state != newState:
-                return newState
-            else:
-                if self._is_timeout_not_needed(state) and not self._is_mutable():
-                    time.sleep(timeSleep * 12)
-                else:
-                    time.sleep(timeSleep)
+    def _wait_for_next_state(self, state):
+        """Returns the next state after waiting (polling is used) for the state
+        transition from the server.
+        """
+
+        # Conditionally treat Ready state.
+        if self._in_ready_and_mutable_run(state) or \
+            self._in_ready_and_no_need_to_stop_images(state):
+            util.printDetail('Waiting for the next state transition, currently in %s' %
+                state, self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
+            while True:
+                new_state = self.wrapper.getState()
+                if state != new_state:
+                    return new_state
+                self._sleep(self.WAIT_NEXT_STATE_SHORT)
+
+        wait_time_max = time.time() + float(self.timeout)
+        util.printDetail('Waiting %s sec. for the next state transition, currently in %s' %
+             (self.timeout, state), self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
+        while time.time() <= wait_time_max:
+            new_state = self.wrapper.getState()
+            if state != new_state:
+                return new_state
+            self._sleep(self._get_sleep_time(state))
         else:
-            raise TimeoutException('Timeout reached waiting for next state, '
-                                   'current state: %s' % state)
+            msg = 'Timeout reached waiting for next state, current state: %s' % state
+            if self._is_mutable():
+                self._fail(TimeoutException(msg))
+            else:
+                raise TimeoutException(msg)
 
-    def _is_timeout_not_needed(self, state):
-        return state == 'Ready' and \
-            (not self.wrapper.need_to_stop_images() or self._is_mutable())
+    def _in_ready_and_no_need_to_stop_images(self, state):
+        return state == 'Ready' and not self.wrapper.need_to_stop_images()
+
+    def _in_ready_and_mutable_run(self, state):
+        return state == 'Ready' and self._is_mutable()
+
+    @staticmethod
+    def _sleep(seconds):
+        time.sleep(seconds)
+
+    def _get_sleep_time(self, state):
+        if not self._is_mutable() and self._in_ready_and_no_need_to_stop_images(state):
+            return self.WAIT_NEXT_STATE_LONG
+        return self.WAIT_NEXT_STATE_SHORT
 
     def _is_mutable(self):
         return self.wrapper.is_mutable()
@@ -164,4 +197,3 @@ class MachineExecutor(object):
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
-

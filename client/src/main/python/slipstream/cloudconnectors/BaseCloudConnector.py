@@ -22,8 +22,10 @@ import time
 import tempfile
 import random
 import string
+import sys
 
 from threading import local
+from threading import Lock
 
 import slipstream.exceptions.Exceptions as Exceptions
 
@@ -39,6 +41,7 @@ from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
 from winrm.winrm_service import WinRMWebService
 from winrm.exceptions import WinRMTransportError
 
+lock = Lock()
 
 class BaseCloudConnector(object):
 
@@ -193,8 +196,8 @@ class BaseCloudConnector(object):
             ss.ignoreAbort = True
             return ss.getRuntimeParameter('max.iaas.workers')
         except Exception as ex:  # pylint: disable=broad-except
-            util.printDetail('Failed to get max.iaas.workers: %s' % str(ex),
-                             verboseThreshold=0)
+            util.printDetail('Failed to get max.iaas.workers: %s %s' %
+                             (ex.__class__, str(ex)), verboseThreshold=0)
             return None
 
     def stop_deployment(self):
@@ -279,11 +282,15 @@ class BaseCloudConnector(object):
 
     def __add_vm(self, vm, node_instance):
         name = node_instance.get_name()
-        self.__vms[name] = vm
+        with lock:
+            self.__vms[name] = vm
         self._publish_vm_info(vm, node_instance)
 
     def __del_vm(self, name):
-        del self.__vms[name]
+        try:
+            del self.__vms[name]
+        except KeyError:
+            util.printDetail("Failed locally removing VM '%s'. Not found." % name)
 
     def _publish_vm_info(self, vm, node_instance):
         instance_name = node_instance.get_name()
@@ -663,14 +670,19 @@ class BaseCloudConnector(object):
         }
 
     def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
-        bootstrap = os.path.join(tempfile.gettempdir(), 'slipstream.bootstrap')
+        bootstrap = os.path.join(self.__get_tmp_dir_for_linux(), 'slipstream.bootstrap')
         reportdir = Client.REPORTSDIR
 
         targetScript = ''
         if self.is_start_orchestrator():
             targetScript = 'slipstream-orchestrator'
 
-        command = 'mkdir -p %(reports)s; wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 && chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+        command = 'mkdir -p %(reports)s; '
+        command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 '
+        command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1) '
+        # command += '&& export LIBCLOUD_DEBUG=/dev/stderr '
+        command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+
         return command % {
             'bootstrap': bootstrap,
             'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
@@ -678,6 +690,13 @@ class BaseCloudConnector(object):
             'nodename': instance_name,
             'targetScript': targetScript
         }
+
+    @staticmethod
+    def __get_tmp_dir_for_linux():
+        if sys.platform.startswith('linux'):
+            return tempfile.gettempdir()
+        else:
+            return '/tmp'
 
     def _wait_can_connect_with_ssh_or_abort(self, host, username='', password='', sshKey=None):
         self._print_detail('Check if we can connect to %s' % host)
