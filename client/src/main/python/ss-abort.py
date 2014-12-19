@@ -25,8 +25,7 @@ from slipstream.NodeDecorator import NodeDecorator
 
 
 class MainProgram(CommandBase):
-    '''A command-line program to set the abort key/value pair in the info sys
-    restlet.'''
+    '''A command-line program to set the abort state for a run.'''
 
     def __init__(self, argv=None):
         self.reason = None
