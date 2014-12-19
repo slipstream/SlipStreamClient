@@ -32,6 +32,7 @@ setup(
     url='http://sixsq.com',
     scripts=[
         'bin/ss-abort',
+        'bin/ss-cancel-abort',
         'bin/ss-display',
         'bin/ss-execute',
         'bin/ss-get',
