@@ -33,7 +33,7 @@ class TerminateInstancesCommand(CloudClientCommand):
 
     def _set_command_specific_options(self, parser):
         parser.add_option('--' + self.INSTANCE_IDS_KEY, dest=self.INSTANCE_IDS_KEY,
-                          help='Instance ID (can be used multiple times)', 
+                          help='Instance ID (can be used multiple times)',
                           action='append', default=[], metavar='ID')
 
     def _get_command_mandatory_options(self):
@@ -41,7 +41,7 @@ class TerminateInstancesCommand(CloudClientCommand):
 
     def do_work(self):
         ids = self.get_option(self.INSTANCE_IDS_KEY)
-        ch = ConfigHolder(options={'verboseLevel': 0,
+        ch = ConfigHolder(options={'verboseLevel': self.options.verbose and 3 or 0,
                                    'http_max_retries': 0,
                                    KEY_RUN_CATEGORY: ''},
                           context={'foo': 'bar'})
