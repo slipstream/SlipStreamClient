@@ -199,7 +199,7 @@ class OpenStackClientCloud(BaseCloudConnector):
 
     @override
     def _wait_and_get_instance_ip_address(self, vm):
-        timeWait = 120
+        timeWait = 300
         timeStop = time.time() + timeWait
 
         while time.time() < timeStop:
@@ -229,7 +229,7 @@ class OpenStackClientCloud(BaseCloudConnector):
             'Timed out while waiting for IPs to be assigned to instances: %s' % vmId)
 
     def _wait_instance_in_running_state(self, instanceId):
-        timeWait = 120
+        timeWait = 300
         timeStop = time.time() + timeWait
 
         state = ''
