@@ -39,6 +39,7 @@ class RunInstancesCommand(CloudClientCommand):
     IMAGE_ID_KEY = 'image-id'
     PLATFORM_KEY = 'platform'
     NETWORK_TYPE = 'network-type'
+    EXTRA_DISK_VOLATILE = 'extra-disk-volatile'
 
     def get_cloud_specific_node_inst_cloud_params(self):
         return {}
@@ -64,20 +65,28 @@ class RunInstancesCommand(CloudClientCommand):
                           help='Network type (public or private)',
                           default='Public', metavar='NETWORK-TYPE')
 
+        parser.add_option('--' + self.EXTRA_DISK_VOLATILE, dest=self.EXTRA_DISK_VOLATILE,
+                          help='Size of the volatile extra disk (in GB)',
+                          default='', metavar='EXTRA-DISK-VOLATILE')
+
     def _get_command_mandatory_options(self):
         return [self.IMAGE_ID_KEY,
                 self.PLATFORM_KEY,
                 self.NETWORK_TYPE]
 
     def _get_node_instance(self):
-        return NodeInstance({
+        runtime_parameteres = {
             NodeDecorator.NODE_INSTANCE_NAME_KEY: self.get_node_instance_name(),
             'cloudservice': self._cloud_instance_name,
             'image.platform': self.get_option(self.PLATFORM_KEY),
             'image.imageId': self.get_option(self.IMAGE_ID_KEY),
             'image.id': self.get_option(self.IMAGE_ID_KEY),
             'network': self.get_option(self.NETWORK_TYPE)
-        })
+        }
+        if self.get_option(self.EXTRA_DISK_VOLATILE):
+            runtime_parameteres.update({'extra.disk.volatile':
+                                        self.get_option(self.EXTRA_DISK_VOLATILE)})
+        return NodeInstance(runtime_parameteres)
 
     def do_work(self):
         node_instance = self._get_node_instance()
