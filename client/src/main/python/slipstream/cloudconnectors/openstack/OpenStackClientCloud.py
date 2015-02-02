@@ -63,6 +63,7 @@ class OpenStackClientCloud(BaseCloudConnector):
 
         self.flavors = []
         self.images = []
+        self.networks = []
         self.securit_groups = []
 
     @override
@@ -71,6 +72,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         self._thread_local.driver = self._get_driver(user_info)
         self.flavors = self._thread_local.driver.list_sizes()
         self.images = self._thread_local.driver.list_images()
+        self.networks = self._thread_local.driver.ex_list_networks()
         self.securit_groups = self._thread_local.driver.ex_list_security_groups()
 
         if self.is_deployment():
@@ -140,12 +142,32 @@ class OpenStackClientCloud(BaseCloudConnector):
         if image == None:
             raise Exceptions.ParameterNotFoundException("Couldn't find the specified image: %s" % image_id)
 
-        instance = self._thread_local.driver.create_node(name=vm_name,
-                                                         size=flavor,
-                                                         image=image,
-                                                         ex_keyname=keypair,
-                                                         ex_userdata=contextualizationScript,
-                                                         ex_security_groups=securityGroups)
+        # extract mappings for Public and Private networks from the connector instance
+        network = None
+        network_type = node_instance.get_network_type()
+        if network_type == 'Public':
+            network_name = node_instance.get_public_network_name()
+            network = searchInObjectList(self.networks, 'name', network_name)
+        else if network_type == 'Private':
+            network_name = node_instance.get_private_network_name()
+            network = searchInObjectList(self.networks, 'name', network_name)
+
+        # create the instance without or with an explicit network 
+        if network is None:
+            instance = self._thread_local.driver.create_node(name=vm_name,
+                                                             size=flavor,
+                                                             image=image,
+                                                             ex_keyname=keypair,
+                                                             ex_userdata=contextualizationScript,
+                                                             ex_security_groups=securityGroups)
+        else 
+            instance = self._thread_local.driver.create_node(name=vm_name,
+                                                             size=flavor,
+                                                             image=image,
+                                                             networks=[network],
+                                                             ex_keyname=keypair,
+                                                             ex_userdata=contextualizationScript,
+                                                             ex_security_groups=securityGroups)
 
         vm = dict(networkType=node_instance.get_network_type(),
                   instance=instance,
