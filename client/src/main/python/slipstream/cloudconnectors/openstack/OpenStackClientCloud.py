@@ -148,7 +148,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         if network_type == 'Public':
             network_name = node_instance.get_public_network_name()
             network = searchInObjectList(self.networks, 'name', network_name)
-        else if network_type == 'Private':
+        elif network_type == 'Private':
             network_name = node_instance.get_private_network_name()
             network = searchInObjectList(self.networks, 'name', network_name)
 
@@ -160,7 +160,7 @@ class OpenStackClientCloud(BaseCloudConnector):
                                                              ex_keyname=keypair,
                                                              ex_userdata=contextualizationScript,
                                                              ex_security_groups=securityGroups)
-        else 
+        else:
             instance = self._thread_local.driver.create_node(name=vm_name,
                                                              size=flavor,
                                                              image=image,
