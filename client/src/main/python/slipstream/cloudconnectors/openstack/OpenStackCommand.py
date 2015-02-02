@@ -27,6 +27,8 @@ class OpenStackCommand(CloudClientCommand):
     ENDPOINT_KEY = 'endpoint'
     SERVICE_TYPE_KEY = 'service-type'
     SERVICE_NAME_KEY = 'service-name'
+    NETWORK_PUBLIC_KEY = 'network-public'
+    NETWORK_PRIVATE_KEY = 'network-private'
 
     def __init__(self, timeout=None):
         super(OpenStackCommand, self).__init__(timeout)
@@ -52,16 +54,28 @@ class OpenStackCommand(CloudClientCommand):
                           help='Name of the service which provides the instances functionality (default: nova)',
                           default='nova', metavar='NAME')
 
+        parser.add_option('--' + self.NETWORK_PUBLIC_KEY, dest=self.NETWORK_PUBLIC_KEY,
+                          help='Mapping for Public network (default: "")',
+                          default='', metavar='NAME')
+
+        parser.add_option('--' + self.NETWORK_PRIVATE_KEY, dest=self.NETWORK_PRIVATE_KEY,
+                          help='Mapping for Private network (default: "")',
+                          default='', metavar='NAME')
+
     def get_cloud_specific_user_cloud_params(self):
         return {'tenant.name': self.get_option(self.PROJECT_KEY),
                 'service.region': self.get_option(self.REGION_KEY),
                 self.ENDPOINT_KEY: self.get_option(self.ENDPOINT_KEY),
                 'service.type': self.get_option(self.SERVICE_TYPE_KEY),
-                'service.name': self.get_option(self.SERVICE_NAME_KEY)}
+                'service.name': self.get_option(self.SERVICE_NAME_KEY),
+                'network.public': self.get_option(self.NETWORK_PUBLIC_KEY),
+                'network.private': self.get_option(self.NETWORK_PRIVATE_KEY)}
 
     def get_cloud_specific_mandatory_options(self):
         return [self.REGION_KEY,
                 self.PROJECT_KEY,
                 self.ENDPOINT_KEY,
                 self.SERVICE_TYPE_KEY,
-                self.SERVICE_NAME_KEY]
+                self.SERVICE_NAME_KEY,
+                self.NETWORK_PUBLIC_KEY,
+                self.NETWORK_PRIVATE_KEY]
