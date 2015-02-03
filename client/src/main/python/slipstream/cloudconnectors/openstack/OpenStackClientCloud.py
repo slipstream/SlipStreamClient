@@ -152,22 +152,17 @@ class OpenStackClientCloud(BaseCloudConnector):
             network_name = node_instance.get_private_network_name()
             network = searchInObjectList(self.networks, 'name', network_name)
 
-        # create the instance without or with an explicit network 
-        if network is None:
-            instance = self._thread_local.driver.create_node(name=vm_name,
-                                                             size=flavor,
-                                                             image=image,
-                                                             ex_keyname=keypair,
-                                                             ex_userdata=contextualizationScript,
-                                                             ex_security_groups=securityGroups)
-        else:
-            instance = self._thread_local.driver.create_node(name=vm_name,
-                                                             size=flavor,
-                                                             image=image,
-                                                             networks=[network],
-                                                             ex_keyname=keypair,
-                                                             ex_userdata=contextualizationScript,
-                                                             ex_security_groups=securityGroups)
+        kwargs = {"name": vm_name,
+                  "size": flavor,
+                  "image": image,
+                  "ex_keyname": keypair,
+                  "ex_userdata": contextualizationScript,
+                  "ex_security_groups": securityGroups}
+
+        if network is not None:
+            kwargs["networks"] = [network]
+
+        instance = self._thread_local.driver.create_node(**kwargs)
 
         vm = dict(networkType=node_instance.get_network_type(),
                   instance=instance,

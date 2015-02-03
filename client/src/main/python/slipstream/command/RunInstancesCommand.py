@@ -75,7 +75,7 @@ class RunInstancesCommand(CloudClientCommand):
                 self.NETWORK_TYPE]
 
     def _get_node_instance(self):
-        runtime_parameteres = {
+        runtime_parameters = {
             NodeDecorator.NODE_INSTANCE_NAME_KEY: self.get_node_instance_name(),
             'cloudservice': self._cloud_instance_name,
             'image.platform': self.get_option(self.PLATFORM_KEY),
@@ -84,9 +84,9 @@ class RunInstancesCommand(CloudClientCommand):
             'network': self.get_option(self.NETWORK_TYPE)
         }
         if self.get_option(self.EXTRA_DISK_VOLATILE):
-            runtime_parameteres.update({'extra.disk.volatile':
+            runtime_parameters.update({'extra.disk.volatile':
                                         self.get_option(self.EXTRA_DISK_VOLATILE)})
-        return NodeInstance(runtime_parameteres)
+        return NodeInstance(runtime_parameters)
 
     def do_work(self):
         node_instance = self._get_node_instance()

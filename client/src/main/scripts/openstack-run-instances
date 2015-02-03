@@ -30,6 +30,8 @@ class OpenStackRunInstances(RunInstancesCommand, OpenStackCommand):
 
     INSTANCE_TYPE_KEY = 'instance-type'
     SECURITY_GROUPS_KEY = 'security-groups'
+    NETWORK_PUBLIC_KEY = 'network-public'
+    NETWORK_PRIVATE_KEY = 'network-private'
 
     def __init__(self):
         super(OpenStackRunInstances, self).__init__()
@@ -45,14 +47,27 @@ class OpenStackRunInstances(RunInstancesCommand, OpenStackCommand):
                                help='Comma separated list of security groups',
                                default='', metavar='SECGROUPS')
 
+        self.parser.add_option('--' + self.NETWORK_PUBLIC_KEY, dest=self.NETWORK_PUBLIC_KEY,
+                          help='Mapping for Public network (default: "")',
+                          default='', metavar='NAME')
+
+        self.parser.add_option('--' + self.NETWORK_PRIVATE_KEY, dest=self.NETWORK_PRIVATE_KEY,
+                          help='Mapping for Private network (default: "")',
+                          default='', metavar='NAME')
+
+
     def get_cloud_specific_node_inst_cloud_params(self):
         return {'security.groups': self.get_option(self.SECURITY_GROUPS_KEY),
-                'instance.type': self.get_option(self.INSTANCE_TYPE_KEY)}
+                'instance.type': self.get_option(self.INSTANCE_TYPE_KEY),
+                'network.public': self.get_option(self.NETWORK_PUBLIC_KEY),
+                'network.private': self.get_option(self.NETWORK_PRIVATE_KEY)}
 
     def get_cloud_specific_mandatory_options(self):
         return OpenStackCommand.get_cloud_specific_mandatory_options(self) + \
                [self.INSTANCE_TYPE_KEY,
-                self.SECURITY_GROUPS_KEY]
+                self.SECURITY_GROUPS_KEY,
+                self.NETWORK_PUBLIC_KEY,
+                self.NETWORK_PRIVATE_KEY]
 
 
 if __name__ == "__main__":
