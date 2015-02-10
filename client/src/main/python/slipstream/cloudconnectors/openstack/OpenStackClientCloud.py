@@ -146,10 +146,10 @@ class OpenStackClientCloud(BaseCloudConnector):
         network = None
         network_type = node_instance.get_network_type()
         if network_type == 'Public':
-            network_name = node_instance.get_public_network_name()
+            network_name = user_info.get_public_network_name()
             network = searchInObjectList(self.networks, 'name', network_name)
         elif network_type == 'Private':
-            network_name = node_instance.get_private_network_name()
+            network_name = user_info.get_private_network_name()
             network = searchInObjectList(self.networks, 'name', network_name)
 
         kwargs = {"name": vm_name,

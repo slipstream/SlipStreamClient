@@ -135,12 +135,6 @@ class NodeInstance(object):
         else:
             return []
 
-    def get_public_network_name(self):
-        return self.get_cloud_parameter('network.public', '').strip()
-
-    def get_private_network_name(self):
-        return self.get_cloud_parameter('network.private', '').strip()
-
     def get_platform(self):
         return self.__get(NodeDecorator.IMAGE_PLATFORM_KEY, 'linux')
 

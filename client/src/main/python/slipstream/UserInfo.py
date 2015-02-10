@@ -30,14 +30,14 @@ class UserInfo(dict):
         self.general = 'General' + self.SEPARATOR
         self.qualifires = (self.cloud, self.user, self.general)
 
-    def get_cloud(self, key):
-        return self.__getitem__(self.cloud + key)
+    def get_cloud(self, key, default_value=None):
+        return self.get(self.cloud + key, default_value)
 
-    def get_general(self, key):
-        return self.__getitem__(self.general + key)
+    def get_general(self, key, default_value=None):
+        return self.get(self.general + key, default_value)
 
-    def get_user(self, key):
-        return self.__getitem__(self.user + key)
+    def get_user(self, key, default_value=None):
+        return self.get(self.user + key, default_value)
 
     def __setitem__(self, key, val):
         if not key.startswith(self.qualifires):
@@ -71,6 +71,12 @@ class UserInfo(dict):
 
     def get_keypair_name(self):
         return self.get_cloud('keypair.name')
+
+    def get_public_network_name(self):
+        return self.get_cloud('network.public', '').strip()
+
+    def get_private_network_name(self):
+        return self.get_cloud('network.private', '').strip()
 
     def set_private_key(self, private_key):
         self[self.cloud + 'private.key'] = private_key
