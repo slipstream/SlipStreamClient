@@ -45,12 +45,6 @@ class LocalCacheTestCase(unittest.TestCase):
         wrapper = Mock(spec=CloudWrapper)
         me = MachineExecutor(wrapper, Mock())
 
-        # Simulate timeout.
-        me.timeout = 0
-        wrapper.is_mutable = Mock(return_value=False)
-        self.assertRaises(TimeoutException, me._wait_for_next_state,
-                          ('NotReadyState',))
-
         # Enter the waiting loop just because we are in the Ready state and
         # the run is mutable.  Then exit from the waiting loop immediately with
         # 'NextState' as the next one.
