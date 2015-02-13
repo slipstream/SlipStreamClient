@@ -66,6 +66,7 @@ class NodeDecorator(object):
     INSTANCEID_KEY = 'instanceid'
     CLOUDSERVICE_KEY = 'cloudservice'
     SECURITY_GROUPS_KEY = 'security.groups'
+    MAX_PROVISIONING_FAILURES_KEY = 'max-provisioning-failures'
 
     urlIgnoreAbortAttributeFragment = '?ignoreabort=true'
 

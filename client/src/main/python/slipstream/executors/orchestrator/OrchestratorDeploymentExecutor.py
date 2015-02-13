@@ -43,9 +43,23 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
             util.printError('Error starting instances with error: %s' % ex)
             raise
 
+        self._complete_state_for_failed_node_instances()
+
+    @override
+    def onExecuting(self):
+        super(OrchestratorDeploymentExecutor, self).onExecuting()
+        self._complete_state_for_failed_node_instances()
+
+    @override
+    def onSendingReports(self):
+        super(OrchestratorDeploymentExecutor, self).onSendingReports()
+        self._complete_state_for_failed_node_instances()
+
     @override
     def onReady(self):
         super(OrchestratorDeploymentExecutor, self).onReady()
+
+        self._complete_state_for_failed_node_instances()
 
         self.wrapper.set_removed_instances_as_gone()
 
@@ -68,3 +82,6 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         self.wrapper.complete_state()
 
         self._killItself()
+
+    def _complete_state_for_failed_node_instances(self):
+        self.wrapper.complete_state_for_failed_node_instances()
