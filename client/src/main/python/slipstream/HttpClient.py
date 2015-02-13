@@ -95,12 +95,15 @@ class HttpClient(object):
             CONFLICT_ERROR = 409
             PRECONDITION_FAILED_ERROR = 412
             EXPECTATION_FAILED_ERROR = 417
+            TOO_MANY_REQUESTS_ERROR = 429
             if resp.status == CONFLICT_ERROR:
                 raise Exceptions.AbortException(_extractDetail(content))
             if resp.status == PRECONDITION_FAILED_ERROR:
                 raise Exceptions.NotYetSetException(_extractDetail(content))
             if resp.status == EXPECTATION_FAILED_ERROR:
                 raise Exceptions.TerminalStateException(_extractDetail(content))
+            if resp.status == TOO_MANY_REQUESTS_ERROR:
+                raise Exceptions.ServerError("Too Many Requests. Retry later.")
 
             # FIXME: fix the server such that 406 is not returned when cookie expires
             if resp.status == 401 or resp.status == 406:
