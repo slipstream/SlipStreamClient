@@ -116,8 +116,7 @@ class CloudWrapper(BaseWrapper):
                 instances_failed_iaas = self._get_failed_instances_on_iaas(node_instances)
                 if instances_failed_iaas:
                     instance_names = self._get_node_instance_names_from_nodes_dict(instances_failed_iaas)
-                    self._log('Failed instances: %s' % instance_names)
-                    self._log_and_set_statecustom('Checking for VMs failed on IaaS level.')
+                    self._log_and_set_statecustom('Failed on IaaS: %s' % instance_names)
                     self._check_too_many_failures(allowed_failed_vms_per_node,
                                                   instances_failed_iaas, 'IaaS')
             i += 1
