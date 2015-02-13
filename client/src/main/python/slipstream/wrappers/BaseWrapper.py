@@ -297,6 +297,10 @@ class BaseWrapper(object):
     def send_report(self, filename):
         self._ss_client.sendReport(filename)
 
+    def set_statecustom(self, msg):
+        key = self._qualifyKey(NodeDecorator.STATECUSTOM_KEY)
+        self._ss_client.setRuntimeParameter(key, msg)
+
     #
     # Local cache of NodesInstances, Run, Run Parameters and User.
     #
@@ -332,6 +336,12 @@ class BaseWrapper(object):
         if self._run_parameters is None:
             self._run_parameters = self._ss_client.get_run_parameters()
         return self._run_parameters
+
+    def clean_local_cache(self):
+        self.discard_run_locally()
+        self.discard_user_info_locally()
+        self.discard_nodes_info_locally()
+        self.discard_run_parameters_locally()
 
     #
     # Helpers

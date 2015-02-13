@@ -43,6 +43,7 @@ from winrm.exceptions import WinRMTransportError
 
 lock = Lock()
 
+
 class BaseCloudConnector(object):
 
 #   ----- METHODS THAT CAN/SHOULD BE IMPLEMENTED IN CONNECTORS -----
@@ -96,10 +97,20 @@ class BaseCloudConnector(object):
         Returns: one IP - Public or Private."""
         raise NotImplementedError()
 
+    def _vm_get_state(self, vm_instance):
+        """Retrieve VM state from the vm_instance object returned by _start_image().
+        Returns: VM cloud state."""
+        return ""
+
     def _vm_get_password(self, vm_instance):
         """Retrieve the password of the VM from the vm_instance object returned by _start_image().
         Returns: the password needed to connect to the VM"""
         pass
+
+    def _get_vm_failed_states(self):
+        """Override the method or provide cloud specific list of VM_FAILED_STATES.
+        """
+        return self.VM_FAILED_STATES
 
 #   ----------------------------------------------------------------
 
@@ -121,6 +132,8 @@ class BaseCloudConnector(object):
     CAPABILITY_GENERATE_PASSWORD = 'generatePassword'
     CAPABILITY_DIRECT_IP_ASSIGNMENT = 'directIpAssignment'
     CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP = 'orchestratorCanKillItselfOrItsVapp'
+
+    VM_FAILED_STATES = ['failed', 'error']
 
     def __init__(self, configHolder):
         """Constructor.
@@ -735,3 +748,8 @@ class BaseCloudConnector(object):
                                        'ip': self._vm_get_ip(vm)}})
         return vms_details
 
+    def _has_vm_failed(self, vm_instance):
+        """Check if VM failed on the cloud level. vm_instance as returned by _start_image().
+        Returns: True or False."""
+        vm_state = self._vm_get_state(vm_instance).lower()
+        return vm_state in [fstate.lower() for fstate in self._get_vm_failed_states()]

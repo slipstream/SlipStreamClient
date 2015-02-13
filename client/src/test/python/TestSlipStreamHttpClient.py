@@ -45,6 +45,7 @@ RUN_ETREE = etree.fromstring(RUN_XML)
 with open(os.path.join(_get_resources_path(), 'user.xml')) as fd:
     USER_XML = fd.read()
 
+NODES_NUM = 2
 NODE_INSTANCES_NUM = 2
 CLOUD_NAME = 'myCloud'
 
@@ -92,6 +93,10 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
             assert isinstance(node_instance, dict)
             self.assertEquals('myCloud', node_instance['cloudservice'])
             self.assertEquals('false', node_instance['is.orchestrator'])
+
+    def test_extract_nodes_runtime_parameters(self):
+        nodes = DomExtractor.extract_nodes_runtime_parameters(RUN_ETREE)
+        self.assertEquals(NODES_NUM, len(nodes))
 
     def test_get_build_targets_from_image_module(self):
         package1 = 'vim-enhanced'
@@ -185,6 +190,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
         assert 'on' == userInfo.get_general('On Error Run Forever')
         assert '3' == userInfo.get_general('Verbosity Level')
+
 
 if __name__ == '__main__':
     unittest.main()

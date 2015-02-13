@@ -51,6 +51,8 @@ class NodeDeploymentExecutor(MachineExecutor):
              self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove',
              self.wrapper.SCALE_ACTION_DISK_RESIZE: 'ondiskresize'}
 
+        self._send_reports = False
+
     @override
     def onProvisioning(self):
         super(NodeDeploymentExecutor, self).onProvisioning()
@@ -64,13 +66,25 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printAction('Executing')
 
         if not self.wrapper.is_scale_state_operational():
-            self._execute_target('execute', abort_on_err=True)
+            self._execute_execute_target()
         else:
             self._execute_scale_action_target()
+
+    def _execute_execute_target(self):
+        self._execute_target('execute', abort_on_err=True)
+        self._set_need_to_send_reports()
 
     @override
     def onSendingReports(self):
         util.printAction('Sending report')
+        if self._need_to_send_reports():
+            self._execute_report_target_and_send_reports()
+            self._unset_need_to_send_reports()
+        else:
+            util.printDetail('INFO: Conditionally skipped sending reports.',
+                             verboseThreshold=0)
+
+    def _execute_report_target_and_send_reports(self):
         try:
             self._execute_target('report')
         except ExecutionException as ex:
@@ -103,6 +117,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             if target:
                 exports = self._get_scaling_exports()
                 self._execute_target(target, exports)
+                self._set_need_to_send_reports()
             else:
                 util.printDetail("Deployment is scaling. No target to "
                                  "execute on action %s" % scale_action)
@@ -206,3 +221,12 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _get_user_ssh_pubkey(self):
         return self.wrapper.get_user_ssh_pubkey()
+
+    def _set_need_to_send_reports(self):
+        self._send_reports = True
+
+    def _unset_need_to_send_reports(self):
+        self._send_reports = False
+
+    def _need_to_send_reports(self):
+        return self._send_reports or not self.wrapper.is_scale_state_operational()

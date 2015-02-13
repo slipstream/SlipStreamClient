@@ -101,7 +101,7 @@ class SlipStreamHttpClient(object):
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
     def get_nodes_instances(self, cloud_service_name=None):
-        '''Return dict {<nodename>: NodeInstance, }
+        '''Return dict {<node_instance_name>: NodeInstance, }
         '''
         nodes_instances = {}
 
@@ -109,11 +109,15 @@ class SlipStreamHttpClient(object):
         nodes_instances_runtime_parameters = \
             DomExtractor.extract_nodes_instances_runtime_parameters(
                 self.run_dom, cloud_service_name)
+        nodes_runtime_parameters = DomExtractor.extract_nodes_runtime_parameters(self.run_dom)
 
         for node_instance_name, node_instance_runtime_parameters in nodes_instances_runtime_parameters.items():
 
             node_instance = NodeInstance(node_instance_runtime_parameters)
             node_name = node_instance.get_node_name()
+
+            node_instance.set_parameter(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY,
+                nodes_runtime_parameters[node_name].get(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY, '0'))
 
             image_attributes = DomExtractor.extract_node_image_attributes(self.run_dom, node_name)
             node_instance.set_image_attributes(image_attributes)
@@ -164,8 +168,8 @@ class SlipStreamHttpClient(object):
         url = self.runEndpoint
         return self._httpPost(url, resourceUri, 'text/plain')
 
-    def complete_state(self, nodeName):
-        url = '%s/%s:%s' % (self.run_url, nodeName,
+    def complete_state(self, node_instance_name):
+        url = '%s/%s:%s' % (self.run_url, node_instance_name,
                             NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
@@ -242,8 +246,8 @@ class SlipStreamHttpClient(object):
     def _httpPost(self, url, body=None, contentType='application/xml'):
         return self.httpClient.post(url, body, contentType, retry_number=self.http_max_retries)
 
-    def _httpDelete(self, url):
-        return self.httpClient.delete(url, retry_number=self.http_max_retries)
+    def _httpDelete(self, url, body=None):
+        return self.httpClient.delete(url, body=body, retry_number=self.http_max_retries)
 
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)
@@ -266,6 +270,15 @@ class SlipStreamHttpClient(object):
         self.run_url = self.runEndpoint + '/' + (uuid or self.diid)
         return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
 
+    def remove_instances_from_run(self, node_name, ids, detele_ids_only=True):
+        """ids : []
+        """
+        url = '%s/%s' % (self.run_url, node_name)
+        body = "ids=%s" % ','.join(map(str, ids))
+        if detele_ids_only:
+            body = body + '&delete-ids-only=true'
+        self._httpDelete(url, body=body)
+
 
 class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
@@ -276,7 +289,7 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
-        '''Return dict {<nodename>: {<runtimeparamname>: <value>, }, }
+        '''Return dict {<node_instance_name>: {<runtimeparamname>: <value>, }, }
         '''
         nodes_instances = {}
         for node_instance_name in run_dom.attrib['nodeNames'].split(','):
@@ -303,6 +316,47 @@ class DomExtractor(object):
                     del nodes_instances[node_instance_name]
 
         return nodes_instances
+
+    @staticmethod
+    def extract_nodes_runtime_parameters(run_dom):
+        '''Return dict {<node_name>: {<runtimeparamname>: <value>, }, }
+        '''
+        nodes = {}
+        node_names = DomExtractor._get_node_names(run_dom)
+
+        for node_name in node_names:
+
+            if NodeDecorator.is_orchestrator_name(node_name):
+                continue
+
+            node = {}
+            node[NodeDecorator.NODE_NAME_KEY] = node_name
+
+            # Unfortunately, this doesn't work on Python 2.6.6
+            # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
+            query = "runtimeParameters/entry/runtimeParameter"
+            for rtp in run_dom.findall(query):
+                if rtp.get('group') == node_name:
+                    key = DomExtractor._get_key_from_runtimeparameter(rtp)
+                    node[key] = rtp.text
+            nodes[node_name] = node
+
+        return nodes
+
+    @staticmethod
+    def _get_node_names(run_dom):
+        """Return list of node names in the run.
+        """
+        node_names = []
+        for group in run_dom.attrib['groups'].split(','):
+            node_name = ""
+            try:
+                node_name = group.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)[1]
+            except IndexError:
+                pass
+            else:
+                node_names.append(node_name.strip())
+        return node_names
 
     @staticmethod
     def _get_key_from_runtimeparameter(rtp):

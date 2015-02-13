@@ -145,10 +145,7 @@ class MachineExecutor(object):
         self._clean_local_cache()
 
     def _clean_local_cache(self):
-        self.wrapper.discard_run_locally()
-        self.wrapper.discard_user_info_locally()
-        self.wrapper.discard_nodes_info_locally()
-        self.wrapper.discard_run_parameters_locally()
+        self.wrapper.clean_local_cache()
 
     def onExecuting(self):
         util.printAction('Executing')

@@ -86,6 +86,9 @@ class NodeInstance(object):
         for key, value in cloud_parameters.items():
             self.__set('%s.%s' % (self.get_cloud(), key), value)
 
+    def set_parameter(self, name, value):
+        self.__set(name, value)
+
     def is_orchestrator(self):
         return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY,
                                         'False'))
@@ -98,6 +101,9 @@ class NodeInstance(object):
 
     def get_image_id(self):
         return self.get_image_attribute('id')
+
+    def get_id(self):
+        return self.__get('id')
 
     def get_image_resource_uri(self):
         return self.get_image_attribute('resourceUri')
@@ -172,3 +178,7 @@ class NodeInstance(object):
 
     def get_smp(self):
         return self.get_cloud_parameter('smp')
+
+    def get_max_provisioning_failures(self):
+        return self.__get(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY)
+

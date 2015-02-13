@@ -658,3 +658,9 @@ def override(func):
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
 
+
+def flatten_list_of_lists(list_of_lists):
+    list_out = []
+    for inner_list in list_of_lists:
+        list_out.extend(inner_list)
+    return list_out
