@@ -19,6 +19,8 @@
 
 import httplib2
 import unittest
+import tempfile
+import shutil
 
 from mock import Mock
 
@@ -55,18 +57,29 @@ class HttpClientTestCase(unittest.TestCase):
 
     def testGetSetsCookie(self):
 
-        httpRequestMock = Mock(return_value=(httplib2.Response({'set-cookie': 'acookie'}), ''))
+        # Use an alternate temporary directory to avoid conflicts in file
+        # permissions on /tmp/slipstream/cookie if different users run the
+        # tests on the same machine.
+        temp_dir = tempfile.mkdtemp()
+        try:
+            tempfile.tempdir = temp_dir
 
-        httpObjectMock = Mock()
-        httpObjectMock.request = httpRequestMock
+            httpRequestMock = Mock(return_value=(httplib2.Response({'set-cookie': 'acookie'}), ''))
 
-        mock = Mock(return_value=httpObjectMock)
-        HttpClient._getHttpObject = mock
+            httpObjectMock = Mock()
+            httpObjectMock.request = httpRequestMock
 
-        client = HttpClient('username', 'password')
-        client.get('http://localhost:9999/url')
+            mock = Mock(return_value=httpObjectMock)
+            HttpClient._getHttpObject = mock
 
-        self.assertEqual('acookie', client.cookie)
+            client = HttpClient('username', 'password')
+            client.get('http://localhost:9999/url')
+
+            self.assertEqual('acookie', client.cookie)
+
+        finally:
+            tempfile.tempdir = None
+            shutil.rmtree(temp_dir)
 
     def testGetWithCookie(self):
 
