@@ -88,31 +88,14 @@ class MachineExecutor(object):
         """Returns the next state after waiting (polling is used) for the state
         transition from the server.
         """
-
-        # Conditionally treat Ready state.
-        if self._in_ready_and_mutable_run(state) or self._in_ready_and_no_need_to_stop_images(state):
-            util.printDetail('Waiting for the next state transition, currently in %s' % state,
-                             self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
-            while True:
-                new_state = self.wrapper.getState()
-                if state != new_state:
-                    return new_state
-                self._sleep(self.WAIT_NEXT_STATE_SHORT)
-
-        wait_time_max = time.time() + float(self.timeout)
-        util.printDetail('Waiting %s sec. for the next state transition, currently in %s' % (self.timeout, state),
+        util.printDetail('Waiting for the next state transition, currently in %s' % state,
                          self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
-        while time.time() <= wait_time_max:
+
+        while True:
             new_state = self.wrapper.getState()
             if state != new_state:
                 return new_state
             self._sleep(self._get_sleep_time(state))
-        else:
-            msg = 'Timeout reached waiting for next state, current state: %s' % state
-            if self._is_mutable():
-                self._fail(TimeoutException(msg))
-            else:
-                raise TimeoutException(msg)
 
     def _in_ready_and_no_need_to_stop_images(self, state):
         return state == 'Ready' and not self.wrapper.need_to_stop_images()
