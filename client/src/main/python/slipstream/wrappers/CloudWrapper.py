@@ -27,7 +27,8 @@ from slipstream.exceptions.Exceptions import ExecutionException
 
 class CloudWrapper(BaseWrapper):
 
-    WAIT_INSTANCES_PROVISIONED_MIN = 15
+    WAIT_INSTANCES_PROVISIONED_MIN = 30
+    WAIT_TIME_PERCENTAGE = .8
 
     def __init__(self, configHolder):
         super(CloudWrapper, self).__init__(configHolder)
@@ -62,9 +63,13 @@ class CloudWrapper(BaseWrapper):
         nodes_instances = self._get_node_instances_to_start()
         self._cloud_client.start_nodes_and_clients(user_info, nodes_instances)
 
-        self._check_provisioning(nodes_instances.values())
+        user_timeout_min = int(user_info.get_general('Timeout', self.WAIT_INSTANCES_PROVISIONED_MIN))
+        # Wait less than defined by user.
+        timeout_min = int(user_timeout_min * self.WAIT_TIME_PERCENTAGE)
 
-    def _check_provisioning(self, node_instances):
+        self._check_provisioning(nodes_instances.values(), timeout_min)
+
+    def _check_provisioning(self, node_instances, timeout_min):
         """
         node_instances list [NodeInstance, ]
         """
@@ -72,7 +77,7 @@ class CloudWrapper(BaseWrapper):
 
         if self._need_to_wait_instances_provisioned(allowed_failed_vms_per_node):
             all_provisioned = self._sleep_while_instances_provisioned(
-                self.WAIT_INSTANCES_PROVISIONED_MIN, node_instances, allowed_failed_vms_per_node)
+                timeout_min, node_instances, allowed_failed_vms_per_node)
             if not all_provisioned and not self.isAbort():
                 self._check_instances_provisioned(node_instances, allowed_failed_vms_per_node)
             else:
