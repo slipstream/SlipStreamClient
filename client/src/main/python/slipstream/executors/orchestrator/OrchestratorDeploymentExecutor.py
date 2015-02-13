@@ -47,10 +47,12 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
     @override
     def onExecuting(self):
+        super(OrchestratorDeploymentExecutor, self).onExecuting()
         self._complete_state_for_failed_node_instances()
 
     @override
     def onSendingReports(self):
+        super(OrchestratorDeploymentExecutor, self).onSendingReports()
         self._complete_state_for_failed_node_instances()
 
     @override
