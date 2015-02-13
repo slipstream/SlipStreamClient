@@ -52,23 +52,24 @@ class TasksRunner(object):
             self.workers.append(thr)
             thr.start()
 
-    def wait_tasks_processed(self):
+    def wait_tasks_processed(self, ignore_exception=False):
         while not self._tasks_finished():
-            self._process_exc_queue()
-        self._process_exc_queue()
+            self._process_exc_queue(ignore_exception)
+        self._process_exc_queue(ignore_exception)
 
     def _tasks_finished(self):
         return all(map(lambda w: not w.is_alive(), self.workers))
 
-    def _process_exc_queue(self):
+    def _process_exc_queue(self, ignore_exception):
         try:
             exc_info = self.exc_queue.get(block=True,
                                           timeout=QUEUE_GET_TIMEOUT)
         except Queue.Empty:
             pass
         else:
-            self._stop_all_workers()
-            raise exc_info[0], exc_info[1], exc_info[2]
+            if not ignore_exception:
+                self._stop_all_workers()
+                raise exc_info[0], exc_info[1], exc_info[2]
 
     def _stop_all_workers(self):
         for t in self.workers:

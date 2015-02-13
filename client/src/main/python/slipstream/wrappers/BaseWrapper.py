@@ -120,6 +120,10 @@ class BaseWrapper(object):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
         return self._get_runtime_parameter(key)
 
+    def get_recovery_mode(self):
+        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.RECOVERY_MODE_KEY
+        return util.str2bool(self._get_runtime_parameter(key))
+
     def isAbort(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
         try:

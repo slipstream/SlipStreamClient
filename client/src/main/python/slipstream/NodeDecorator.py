@@ -61,6 +61,8 @@ class NodeDecorator(object):
     COMPLETE_KEY = 'complete'
     STATECUSTOM_KEY = 'statecustom'
 
+    RECOVERY_MODE_KEY = 'recovery.mode'
+
     IMAGE_PLATFORM_KEY = 'image.platform'
     SCALE_STATE_KEY = 'scale.state'
     INSTANCEID_KEY = 'instanceid'

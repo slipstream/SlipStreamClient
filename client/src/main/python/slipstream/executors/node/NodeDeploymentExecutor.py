@@ -46,6 +46,8 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         self.node_instance = self._retreive_my_node_instance()
 
+        self.recovery_mode = False
+
         self.SCALE_ACTION_TO_TARGET = \
             {self.wrapper.SCALE_ACTION_CREATION: 'onvmadd',
              self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove',
@@ -65,6 +67,13 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onExecuting(self):
         util.printAction('Executing')
 
+        self._get_recovery_mode()
+        if self._is_recovery_mode():
+            util.printDetail("Recovery mode enabled, recipes will not be executed.",
+                             verboseLevel=self.verboseLevel,
+                             verboseThreshold=util.VERBOSE_LEVEL_NORMAL)
+            return
+
         if not self.wrapper.is_scale_state_operational():
             self._execute_execute_target()
         else:
@@ -77,6 +86,7 @@ class NodeDeploymentExecutor(MachineExecutor):
     @override
     def onSendingReports(self):
         util.printAction('Sending report')
+
         if self._need_to_send_reports():
             self._execute_report_target_and_send_reports()
             self._unset_need_to_send_reports()
@@ -99,6 +109,12 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onReady(self):
         super(NodeDeploymentExecutor, self).onReady()
         self.wrapper.set_scale_state_operational()
+
+    def _get_recovery_mode(self):
+        self.recovery_mode = self.wrapper.get_recovery_mode()
+
+    def _is_recovery_mode(self):
+        return self.recovery_mode == True
 
     def _retreive_my_node_instance(self):
         node_instance = self.wrapper.get_my_node_instance()
