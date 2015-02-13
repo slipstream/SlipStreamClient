@@ -51,8 +51,8 @@
          </parameter>
       </entry>
       <entry>
-         <string><![CDATA[General.timeout]]></string>
-         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.timeout" description="Minutes - When this timeout is reached, the execution is forcefully terminated." category="General" mandatory="true" type="String" readonly="false">
+         <string><![CDATA[General.Timeout]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.Timeout" description="Minutes - When this timeout is reached, the execution is forcefully terminated." category="General" mandatory="true" type="String" readonly="false">
             <value><![CDATA[30]]></value>
          </parameter>
       </entry>

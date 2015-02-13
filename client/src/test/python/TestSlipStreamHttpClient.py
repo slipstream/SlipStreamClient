@@ -175,6 +175,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert 'Test' == userInfo.get_user('firstName')
         assert 'User' == userInfo.get_user('lastName')
         assert 'test@sixsq.com' == userInfo.get_user('email')
+        assert '30' == userInfo.get_general('Timeout')
 
     def test_getUserInfo(self):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
