@@ -116,8 +116,11 @@ class SlipStreamHttpClient(object):
             node_instance = NodeInstance(node_instance_runtime_parameters)
             node_name = node_instance.get_node_name()
 
-            node_instance.set_parameter(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY,
-                nodes_runtime_parameters[node_name].get(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY, '0'))
+            if nodes_runtime_parameters:
+                node_runtime_parameters = nodes_runtime_parameters.get(node_name, {})
+                if node_runtime_parameters:
+                    node_instance.set_parameter(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY,
+                        node_runtime_parameters.get(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY, '0'))
 
             image_attributes = DomExtractor.extract_node_image_attributes(self.run_dom, node_name)
             node_instance.set_image_attributes(image_attributes)
