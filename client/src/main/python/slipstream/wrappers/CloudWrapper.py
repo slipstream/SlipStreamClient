@@ -61,7 +61,9 @@ class CloudWrapper(BaseWrapper):
     def start_node_instances(self):
         user_info = self._get_user_info(self._get_cloud_service_name())
         nodes_instances = self._get_node_instances_to_start()
+        self._log_and_set_statecustom('Requesting provisioning of node instances [%s].' % util.toTimeInIso8601(time.time()))
         self._cloud_client.start_nodes_and_clients(user_info, nodes_instances)
+        self._log_and_set_statecustom('Requested provisioning of node instances [%s].' % util.toTimeInIso8601(time.time()))
 
         user_timeout_min = int(user_info.get_general('Timeout', self.WAIT_INSTANCES_PROVISIONED_MIN))
         # Wait less than defined by user.
@@ -78,7 +80,9 @@ class CloudWrapper(BaseWrapper):
         if self._need_to_wait_instances_provisioned(allowed_failed_vms_per_node):
             all_provisioned = self._sleep_while_instances_provisioned(
                 timeout_min, node_instances, allowed_failed_vms_per_node)
-            if not all_provisioned and not self.isAbort():
+            if self.isAbort():
+                return
+            if not all_provisioned:
                 self._check_instances_provisioned(node_instances, allowed_failed_vms_per_node)
             else:
                 self._log_and_set_statecustom('All instances were provisioned. Moving on.')
@@ -106,31 +110,44 @@ class CloudWrapper(BaseWrapper):
         all_provisioned = False
         time_wait_max = time.time() + sleep_time * 60
         i = 1
+        n_to_provision = len(node_instances)
+        n_failed_on_iaas = 0
+        n_failed_on_iaas_timestamp = 'not checked'
         while time.time() < time_wait_max:
             time.sleep(30)
             if self.isAbort():
                 self._log_and_set_statecustom('Abort flag detected. Stop waiting for '
                                               'instances to be provisioned.')
                 break
-            if self._all_provisioned(node_instances):
+            n_creating = self._get_in_creating_number()
+            n_creating_timestamp = util.toTimeInIso8601(time.time())
+            if n_creating == 0:
                 all_provisioned = True
                 self._log_and_set_statecustom('All instances provisioned. Exiting waiting loop.')
                 break
             if i % 4 == 0:
-                self._log_and_set_statecustom('Checking for VMs failed on IaaS level.')
                 instances_failed_iaas = self._get_failed_instances_on_iaas(node_instances)
+                n_failed_on_iaas_timestamp = util.toTimeInIso8601(time.time())
                 if instances_failed_iaas:
                     instance_names = self._get_node_instance_names_from_nodes_dict(instances_failed_iaas)
-                    self._log_and_set_statecustom('Failed on IaaS: %s' % instance_names)
+                    self._log_and_set_statecustom('Failed on IaaS: %s.' % instance_names)
                     self._check_too_many_failures(allowed_failed_vms_per_node,
                                                   instances_failed_iaas, 'IaaS')
+                    n_failed_on_iaas = len(util.flatten_list_of_lists(instances_failed_iaas.values()))
+                    if n_failed_on_iaas == n_creating:
+                        break
             i += 1
 
+            timeout_after = '%dh%02dm%02ds' % util.seconds_to_hms(time_wait_max - time.time())
+            self._log_and_set_statecustom('Stats: to provision %s, in "creating" %s [%s], failed on IaaS %s [%s], timeout after %s.' %
+                                          (n_to_provision, n_creating, n_creating_timestamp, n_failed_on_iaas,
+                                           n_failed_on_iaas_timestamp, timeout_after))
         return all_provisioned
 
-    def _all_provisioned(self, node_instances):
+    def _get_in_creating_number(self):
         self.clean_local_cache()
-        return (len(self._get_creating_node_instances()) == 0) and True or False
+        creating_per_node = self._get_creating_node_instances()
+        return len(util.flatten_list_of_lists(creating_per_node.values()))
 
     def _check_too_many_failures(self, allowed_failed_vms_per_node, instances_failed, context):
         """
@@ -174,7 +191,7 @@ class CloudWrapper(BaseWrapper):
 
         self.clean_local_cache()
 
-        # Register instances to for forceful state completion.
+        # Register instances for forceful state completion.
         self._instance_names_force_to_compete_states = instance_names_to_remove
 
     def _get_allowed_provisioning_failures_per_node(self, node_instances):
@@ -353,7 +370,7 @@ class CloudWrapper(BaseWrapper):
         """'ids_per_node' dict : {'node_name': [id,], }
         """
         for node_name, ids in ids_per_node.iteritems():
-            self._log_and_set_statecustom('Requesting to remove instance ids: (%s, %s)' % (node_name, ids))
+            self._log_and_set_statecustom('Requesting to remove instance ids: (%s, %s)' % (node_name, sorted(map(int, ids))))
             self._ss_client.remove_instances_from_run(node_name, ids, detele_ids_only=True)
 
     def _get_node_instance_names_from_nodes_dict(self, nodes_dict):

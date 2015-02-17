@@ -664,3 +664,9 @@ def flatten_list_of_lists(list_of_lists):
     for inner_list in list_of_lists:
         list_out.extend(inner_list)
     return list_out
+
+
+def seconds_to_hms(seconds):
+    m, s = divmod(seconds, 60)
+    h, m = divmod(m, 60)
+    return h, m, s
