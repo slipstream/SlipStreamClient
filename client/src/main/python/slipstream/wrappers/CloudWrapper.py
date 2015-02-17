@@ -69,6 +69,8 @@ class CloudWrapper(BaseWrapper):
         # Wait less than defined by user.
         timeout_min = int(user_timeout_min * self.WAIT_TIME_PERCENTAGE)
 
+        self.clean_local_cache()
+        nodes_instances = self._get_nodes_instances(self._get_cloud_service_name())
         self._check_provisioning(nodes_instances.values(), timeout_min)
 
     def _check_provisioning(self, node_instances, timeout_min):
@@ -129,8 +131,6 @@ class CloudWrapper(BaseWrapper):
                 instances_failed_iaas = self._get_failed_instances_on_iaas(node_instances)
                 n_failed_on_iaas_timestamp = util.toTimeInIso8601(time.time())
                 if instances_failed_iaas:
-                    instance_names = self._get_node_instance_names_from_nodes_dict(instances_failed_iaas)
-                    self._log_and_set_statecustom('Failed on IaaS: %s.' % instance_names)
                     self._check_too_many_failures(allowed_failed_vms_per_node,
                                                   instances_failed_iaas, 'IaaS')
                     n_failed_on_iaas = len(util.flatten_list_of_lists(instances_failed_iaas.values()))
