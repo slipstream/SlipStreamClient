@@ -135,6 +135,8 @@ class CloudWrapper(BaseWrapper):
                                                   instances_failed_iaas, 'IaaS')
                     n_failed_on_iaas = len(util.flatten_list_of_lists(instances_failed_iaas.values()))
                     if n_failed_on_iaas == n_creating:
+                        self._log('Number of failed on IaaS (%s) == in "creating" (%s).  Existing waiting loop.' %
+                                  (n_failed_on_iaas, n_creating))
                         break
             i += 1
 
