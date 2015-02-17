@@ -662,7 +662,8 @@ def str2bool(v):
 def flatten_list_of_lists(list_of_lists):
     list_out = []
     for inner_list in list_of_lists:
-        list_out.extend(inner_list)
+        if inner_list is not None:
+            list_out.extend(inner_list)
     return list_out
 
 
