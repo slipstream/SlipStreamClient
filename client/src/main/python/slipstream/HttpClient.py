@@ -39,7 +39,7 @@ class HttpClient(object):
         self.username = username
         self.password = password
         self.verboseLevel = util.VERBOSE_LEVEL_NORMAL
-        self.cookieFilename = os.path.join(util.TMPDIR, 'cookie')
+        self.cookieFilename = os.path.join(os.path.expanduser('~'), '.slipstream-cookie')
         self.disableSslCertificateValidation = True
 
         if configHolder:
