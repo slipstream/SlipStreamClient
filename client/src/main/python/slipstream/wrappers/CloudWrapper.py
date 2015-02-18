@@ -372,7 +372,8 @@ class CloudWrapper(BaseWrapper):
         """'ids_per_node' dict : {'node_name': [id,], }
         """
         for node_name, ids in ids_per_node.iteritems():
-            self._log_and_set_statecustom('Requesting to remove instance ids: (%s, %s)' % (node_name, sorted(map(int, ids))))
+            self._log_and_set_statecustom('Requesting to terminate and remove instances: (%s: %s)' %
+                                          (node_name, sorted(map(int, ids))))
             self._ss_client.remove_instances_from_run(node_name, ids, detele_ids_only=True)
 
     def _get_node_instance_names_from_nodes_dict(self, nodes_dict):
