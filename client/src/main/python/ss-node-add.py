@@ -25,6 +25,7 @@ from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
+from slipstream.NodeDecorator import NodeDecorator
 
 class MainProgram(CommandBase):
     '''A command-line program to add node instance(s) to a mutable deployment.'''
@@ -33,8 +34,9 @@ class MainProgram(CommandBase):
         self.runId = None
         self.nodeName = None
         self.numberToAdd = 1
+        self.numberToTolerate = 0
         self.runtimeParameters = []
-        
+
         self.username = None
         self.password = None
         self.cookie = None
@@ -45,15 +47,18 @@ class MainProgram(CommandBase):
         usage = '''usage: %prog [options] <run> <node-name> [<number>]
 
 <run>        Run id of the mutable deployment to which to add instance(s).
-                
+
 <node-name>  Node name to add instances to.
 
 <number>     Number of node instances to add to the mutable deployment run.
-             By default, add one.'''
+             By default, add one.
+
+<number-tolerate>   Max number of failed instances to tolerate.
+             By default, 0. The value should be less than <number>.'''
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()        
+        self.addEndpointOption()
         self.parser.add_option('--runtime-parameter',
                                dest='runtimeParameters',
                                metavar='<parameter-name>:<value>[,<value>,...]',
@@ -62,17 +67,22 @@ class MainProgram(CommandBase):
                                     'runtime parameter.',
                                action='append',
                                default=[])
-        
+
         self.options, self.args = self.parser.parse_args()
         self._check_args()
 
     def _check_args(self):
         if len(self.args) < 2:
             self.usageExitTooFewArguments()
-        if len(self.args) > 3:
+        if len(self.args) > 4:
             self.usageExitTooManyArguments()
-        if len(self.args) == 3:
-            self.numberToAdd = self.args[2]            
+        if len(self.args) >= 3:
+            self.numberToAdd = int(self.args[2])
+        if len(self.args) == 4:
+            self.numberToTolerate = int(self.args[3])
+            if self.numberToTolerate >= self.numberToAdd:
+                self.usageExit("Number of failed instances to tolerate should be less than "
+                               "the number of instances to add.")
         self.runId = self.args[0]
         self.nodeName = self.args[1]
 
@@ -81,7 +91,7 @@ class MainProgram(CommandBase):
             NodeInstanceRuntimeParameter.validate(rp)
 
     def doWork(self):
-        
+
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
@@ -96,14 +106,21 @@ class MainProgram(CommandBase):
 
         url = self.options.endpoint + baseUri + '/'
 
+        if self.numberToTolerate > 0:
+            self.log("Setting max-provisioning-failures to %s on node %s..." %
+                     (self.numberToTolerate, self.nodeName))
+            runtime_param = self.nodeName + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+                            NodeDecorator.MAX_PROVISIONING_FAILURES_KEY
+            client.put(url + runtime_param, str(self.numberToTolerate))
+
         if self.runtimeParameters:
             for rp in self.runtimeParameters:
-                name,values = NodeInstanceRuntimeParameter.parse_option_value(rp)
+                name, values = NodeInstanceRuntimeParameter.parse_option_value(rp)
                 mapped = NodeInstanceRuntimeParameter.generate_mapping_index_name_value(self.nodeName, name, values, addedIds)
                 for k in mapped:
                     print(k, mapped[k])
                     client.put(url + k, mapped[k])
-        
+
 
 if __name__ == "__main__":
     try:
