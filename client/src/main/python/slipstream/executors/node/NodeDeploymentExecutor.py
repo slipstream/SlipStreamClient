@@ -70,8 +70,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         self._get_recovery_mode()
         if self._is_recovery_mode():
             util.printDetail("Recovery mode enabled, recipes will not be executed.",
-                             verboseLevel=self.verboseLevel,
-                             verboseThreshold=util.VERBOSE_LEVEL_NORMAL)
+                             verboseThreshold=util.VERBOSE_LEVEL_QUIET)
             return
 
         if not self.wrapper.is_scale_state_operational():
@@ -92,7 +91,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             self._unset_need_to_send_reports()
         else:
             util.printDetail('INFO: Conditionally skipped sending reports.',
-                             verboseThreshold=0)
+                             verboseThreshold=util.VERBOSE_LEVEL_QUIET)
 
     def _execute_report_target_and_send_reports(self):
         try:
