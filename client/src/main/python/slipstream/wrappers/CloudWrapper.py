@@ -59,21 +59,37 @@ class CloudWrapper(BaseWrapper):
         self._update_slipstream_image(node_instance, new_id)
 
     def start_node_instances(self):
-        user_info = self._get_user_info(self._get_cloud_service_name())
+        cloud_service_name = self._get_cloud_service_name()
+        user_info = self._get_user_info(cloud_service_name)
         nodes_instances = self._get_node_instances_to_start()
-        self._log_and_set_statecustom('Requesting provisioning of node instances [%s].' % util.toTimeInIso8601(time.time()))
-        self._cloud_client.start_nodes_and_clients(user_info, nodes_instances)
-        self._log_and_set_statecustom('Requested provisioning of node instances [%s].' % util.toTimeInIso8601(time.time()))
 
+        provisioning_stop_time = self._get_provisioning_timeout_time(user_info)
+
+        self._start_nodes_and_clients(user_info, nodes_instances)
+
+        self.clean_local_cache()
+        nodes_instances = self._get_nodes_instances(cloud_service_name)
+        self._check_provisioning(nodes_instances.values(), provisioning_stop_time)
+
+    def _start_nodes_and_clients(self, user_info, nodes_instances):
+        time_start_iaas_provision = time.time()
+        self._log_and_set_statecustom('Requesting provisioning of node instances [%s].' %
+                                      util.toTimeInIso8601(time_start_iaas_provision))
+        self._cloud_client.start_nodes_and_clients(user_info, nodes_instances)
+        self._log_and_set_statecustom('Provisioning of node instances requested [%s]. Time took to provision %s.' %
+                                      (util.toTimeInIso8601(time.time()),
+                                       util.seconds_to_hms_str(time.time() - time_start_iaas_provision)))
+
+    def _get_provisioning_timeout_time(self, user_info):
+        """Return wall-clock time until which the provisioning is allowed to take place.
+        80% of the user's General.Timeout value is used.
+        """
         user_timeout_min = int(user_info.get_general('Timeout', self.WAIT_INSTANCES_PROVISIONED_MIN))
         # Wait less than defined by user.
         timeout_min = int(user_timeout_min * self.WAIT_TIME_PERCENTAGE)
+        return time.time() + timeout_min * 60
 
-        self.clean_local_cache()
-        nodes_instances = self._get_nodes_instances(self._get_cloud_service_name())
-        self._check_provisioning(nodes_instances.values(), timeout_min)
-
-    def _check_provisioning(self, node_instances, timeout_min):
+    def _check_provisioning(self, node_instances, provisioning_stop_time):
         """
         node_instances list [NodeInstance, ]
         """
@@ -81,7 +97,7 @@ class CloudWrapper(BaseWrapper):
 
         if self._need_to_wait_instances_provisioned(allowed_failed_vms_per_node):
             all_provisioned = self._sleep_while_instances_provisioned(
-                timeout_min, node_instances, allowed_failed_vms_per_node)
+                provisioning_stop_time, node_instances, allowed_failed_vms_per_node)
             if self.isAbort():
                 return
             if not all_provisioned:
@@ -95,9 +111,9 @@ class CloudWrapper(BaseWrapper):
         """
         return max(allowed_failed_vms_per_node.values()) > 0
 
-    def _sleep_while_instances_provisioned(self, sleep_time, node_instances, allowed_failed_vms_per_node):
+    def _sleep_while_instances_provisioned(self, provisioning_stop_time, node_instances, allowed_failed_vms_per_node):
         """
-        sleep_time in min.
+        provisioning_stop_time (wall-clock time until the monitoring loop should run) : int
         node_instances list [NodeInstance, ]
         allowed_failed_vms_per_node dict : {'node_name': integer, }
 
@@ -105,17 +121,16 @@ class CloudWrapper(BaseWrapper):
         False otherwise.
 
         """
-        self._log('Waiting for %s min for %s instances to be provisioned.' %
-                  (sleep_time, len(node_instances)))
+        self._log('Waiting until %s for %s instances to be provisioned.' %
+                  (util.toTimeInIso8601(provisioning_stop_time), len(node_instances)))
         self._log('Allowed number of failed instances per node: %s' %
                   allowed_failed_vms_per_node)
         all_provisioned = False
-        time_wait_max = time.time() + sleep_time * 60
         i = 1
         n_to_provision = len(node_instances)
         n_failed_on_iaas = 0
         n_failed_on_iaas_timestamp = 'not checked'
-        while time.time() < time_wait_max:
+        while time.time() < provisioning_stop_time:
             time.sleep(30)
             if self.isAbort():
                 self._log_and_set_statecustom('Abort flag detected. Stop waiting for '
@@ -140,7 +155,7 @@ class CloudWrapper(BaseWrapper):
                         break
             i += 1
 
-            timeout_after = '%dh%02dm%02ds' % util.seconds_to_hms(time_wait_max - time.time())
+            timeout_after = util.seconds_to_hms_str(provisioning_stop_time - time.time())
             self._log_and_set_statecustom('Stats: to provision %s, in "creating" %s [%s], failed on IaaS %s [%s], timeout after %s.' %
                                           (n_to_provision, n_creating, n_creating_timestamp, n_failed_on_iaas,
                                            n_failed_on_iaas_timestamp, timeout_after))

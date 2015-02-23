@@ -671,3 +671,7 @@ def seconds_to_hms(seconds):
     m, s = divmod(seconds, 60)
     h, m = divmod(m, 60)
     return h, m, s
+
+
+def seconds_to_hms_str(seconds):
+    return '%dh%02dm%02ds' % seconds_to_hms(seconds)
