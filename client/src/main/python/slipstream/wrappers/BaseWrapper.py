@@ -265,6 +265,19 @@ class BaseWrapper(object):
         state = self._get_global_scale_state()
         return self._state_to_action(state)
 
+    def get_scale_action(self):
+        state = self.get_scale_state()
+        return self._state_to_action(state)
+
+    def check_scale_state_consistency(self):
+        states_node_instances = self._get_effective_scale_states()
+        states_node_instances.pop(self.SCALE_STATE_REMOVED, None)
+
+        if len(states_node_instances) > 1:
+            msg = "Inconsistent scaling situation. Single scaling action allowed," \
+                  " found: %s" % states_node_instances
+            raise Exceptions.ExecutionException(msg)
+
     def get_scaling_node_and_instance_names(self):
         '''Return name of the node and the corresponding instances that are
         currently being scaled.
