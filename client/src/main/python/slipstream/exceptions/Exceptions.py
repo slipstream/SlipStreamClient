@@ -40,6 +40,9 @@ class NetworkError(ServerError):
 class SecurityError(ServerError):
     pass
 
+class TooManyRequestsError(ServerError):
+    pass
+
 
 class ClientError(Exception):
     def __init__(self, arg, code=None):

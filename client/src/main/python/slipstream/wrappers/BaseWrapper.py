@@ -27,6 +27,7 @@ from slipstream.exceptions import Exceptions
 class NodeInfoPublisher(SlipStreamHttpClient):
     def __init__(self, configHolder):
         super(NodeInfoPublisher, self).__init__(configHolder)
+        self.set_http_max_retries(-5)
 
     def publish(self, nodename, vm_id, vm_ip):
         self.publish_instanceid(nodename, vm_id)

@@ -20,11 +20,10 @@ import os
 import time
 import base64
 import httplib
-
 import httplib2
-
 import socket
 
+from threading import Lock
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
 
@@ -41,6 +40,9 @@ class HttpClient(object):
         self.verboseLevel = util.VERBOSE_LEVEL_NORMAL
         self.cookieFilename = os.path.join(os.path.expanduser('~'), '.slipstream-cookie')
         self.disableSslCertificateValidation = True
+
+        self.lock = Lock()
+        self.too_many_requests_count = 0
 
         if configHolder:
             configHolder.assign(self)
@@ -103,7 +105,7 @@ class HttpClient(object):
             if resp.status == EXPECTATION_FAILED_ERROR:
                 raise Exceptions.TerminalStateException(_extractDetail(content))
             if resp.status == TOO_MANY_REQUESTS_ERROR:
-                raise Exceptions.ServerError("Too Many Requests. Retry later.")
+                raise Exceptions.TooManyRequestsError("Too Many Requests. Retry later.")
 
             # FIXME: fix the server such that 406 is not returned when cookie expires
             if resp.status == 401 or resp.status == 406:
@@ -194,7 +196,17 @@ class HttpClient(object):
             try:
                 resp, content = _request(_buildHeaders())
                 resp, content = _handleResponse(resp, content)
+                with self.lock:
+                    if self.too_many_requests_count > 0:
+                        self.too_many_requests_count -= 1
                 return resp, content
+            except Exceptions.TooManyRequestsError:
+                sleep = min(abs(float(self.too_many_requests_count) / 10.0 * 290 + 10), 300)
+                with self.lock:
+                    self.too_many_requests_count += 1
+                util.printDetail('Too Many Requests error. Retrying in %s seconds.' % sleep)
+                time.sleep(sleep)
+                util.printDetail('Retrying...')
             except (httplib.HTTPException, httplib2.HttpLib2Error, socket.error,
                     Exceptions.NetworkError, Exceptions.ServerError) as ex:
                 if retry_number == 0 or max_retry == 0:
@@ -209,7 +221,7 @@ class HttpClient(object):
                     sleep = min((abs(max_retry) - float(sleep)) / (abs(max_retry)-1) * 80 + 10, 90)
 
                     retry_number = retry_number - 1
-                    util.printDetail('HTTP call error: %s \n%s of %s attempts remaining. \nRetrying in %s seconds' % (ex, retry_number, max_retry, sleep))
+                    util.printDetail('HTTP call error: %s \n%s of %s attempts remaining. \nRetrying in %s seconds.' % (ex, retry_number, max_retry, sleep))
                     time.sleep(sleep)
                     util.printDetail('Retrying...')
 
