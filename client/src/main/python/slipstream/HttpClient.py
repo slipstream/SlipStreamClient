@@ -200,13 +200,16 @@ class HttpClient(object):
                     if self.too_many_requests_count > 0:
                         self.too_many_requests_count -= 1
                 return resp, content
+
             except Exceptions.TooManyRequestsError:
                 sleep = min(abs(float(self.too_many_requests_count) / 10.0 * 290 + 10), 300)
                 with self.lock:
-                    self.too_many_requests_count += 1
+                    if self.too_many_requests_count < 11:
+                        self.too_many_requests_count += 1
                 util.printDetail('Too Many Requests error. Retrying in %s seconds.' % sleep)
                 time.sleep(sleep)
                 util.printDetail('Retrying...')
+
             except (httplib.HTTPException, httplib2.HttpLib2Error, socket.error,
                     Exceptions.NetworkError, Exceptions.ServerError) as ex:
                 if retry_number == 0 or max_retry == 0:
