@@ -49,6 +49,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def onExecuting(self):
         super(OrchestratorDeploymentExecutor, self).onExecuting()
         self._complete_state_for_failed_node_instances()
+        self.wrapper.check_scale_state_consistency()
 
     @override
     def onSendingReports(self):

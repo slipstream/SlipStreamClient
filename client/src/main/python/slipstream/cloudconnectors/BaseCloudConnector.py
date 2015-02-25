@@ -309,8 +309,10 @@ class BaseCloudConnector(object):
         instance_name = node_instance.get_name()
         vm_id = self._vm_get_id(vm)
         vm_ip = self._vm_get_ip(vm)
-        self._publish_vm_id(instance_name, vm_id)
-        self._publish_vm_ip(instance_name, vm_ip)
+        if vm_id:
+            self._publish_vm_id(instance_name, vm_id)
+        if vm_ip:
+            self._publish_vm_ip(instance_name, vm_ip)
         if node_instance and vm_ip:
             self.__publish_url_ssh(vm, node_instance)
 
