@@ -27,6 +27,8 @@ from slipstream.util import nostdouterr
 
 class DescribeInstancesCommand(CloudClientCommand):
 
+    DEFAULT_TIMEOUT = 30
+
     def _vm_get_state(self, cc, vm):
         raise NotImplementedError()
 
@@ -36,8 +38,11 @@ class DescribeInstancesCommand(CloudClientCommand):
     def _list_instances(self, cc):
         return cc.list_instances()
 
-    def __init__(self, timeout=30):
-        super(DescribeInstancesCommand, self).__init__(timeout)
+    def __init__(self):
+        super(DescribeInstancesCommand, self).__init__()
+
+    def _get_default_timeout(self):
+        return self.DEFAULT_TIMEOUT
 
     def do_work(self):
         with nostdouterr(self.get_option('verbose')):

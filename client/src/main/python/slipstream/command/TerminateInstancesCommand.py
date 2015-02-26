@@ -27,9 +27,10 @@ from slipstream.ConfigHolder import ConfigHolder
 class TerminateInstancesCommand(CloudClientCommand):
 
     INSTANCE_IDS_KEY = 'instance-ids'
+    DEFAULT_TIMEOUT = 600
 
-    def __init__(self, timeout=600):
-        super(TerminateInstancesCommand, self).__init__(timeout)
+    def __init__(self):
+        super(TerminateInstancesCommand, self).__init__()
 
     def _set_command_specific_options(self, parser):
         parser.add_option('--' + self.INSTANCE_IDS_KEY, dest=self.INSTANCE_IDS_KEY,
@@ -38,6 +39,9 @@ class TerminateInstancesCommand(CloudClientCommand):
 
     def _get_command_mandatory_options(self):
         return [self.INSTANCE_IDS_KEY]
+
+    def _get_default_timeout(self):
+        return self.DEFAULT_TIMEOUT
 
     def do_work(self):
         ids = self.get_option(self.INSTANCE_IDS_KEY)

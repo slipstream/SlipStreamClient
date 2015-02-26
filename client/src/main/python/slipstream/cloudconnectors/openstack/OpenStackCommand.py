@@ -28,8 +28,8 @@ class OpenStackCommand(CloudClientCommand):
     SERVICE_TYPE_KEY = 'service-type'
     SERVICE_NAME_KEY = 'service-name'
 
-    def __init__(self, timeout=None):
-        super(OpenStackCommand, self).__init__(timeout)
+    def __init__(self):
+        super(OpenStackCommand, self).__init__()
 
     def get_connector_class(self):
         return OpenStackClientCloud
