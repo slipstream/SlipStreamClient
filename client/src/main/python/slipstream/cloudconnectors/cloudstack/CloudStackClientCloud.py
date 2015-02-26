@@ -147,25 +147,14 @@ class CloudStackClientCloud(BaseCloudConnector):
         max_workers = self._get_max_workers(self.configHolder)
         tasksRunnner = TasksRunner(self.__stop_instance,
                                    max_workers=max_workers,
-                                   verbose=4)#self.verboseLevel)
+                                   verbose=self.verboseLevel)
         for instance in instances:
             tasksRunnner.put_task(instance)
-        print 'RUN'
+
         tasksRunnner.run_tasks()
         tasksRunnner.wait_tasks_processed()
 
     def __stop_instance(self, instance):
-        import sys
-        from random import random
-        if random > 0.5:
-            print 'EXCEPTION'
-            sys.stdout.flush()
-            raise Exception('AHHHHH !!!')
-        else:
-            time.sleep(5)
-            print 'OK'
-            sys.stdout.flush()
-        return
         driver = self._get_driver(self.user_info)
         driver.destroy_node(instance)
 
