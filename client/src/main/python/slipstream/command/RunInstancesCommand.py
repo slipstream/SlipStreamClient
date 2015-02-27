@@ -40,6 +40,7 @@ class RunInstancesCommand(CloudClientCommand):
     PLATFORM_KEY = 'platform'
     NETWORK_TYPE = 'network-type'
     EXTRA_DISK_VOLATILE = 'extra-disk-volatile'
+    DEFAULT_TIMEOUT = 600
 
     def get_cloud_specific_node_inst_cloud_params(self):
         return {}
@@ -50,8 +51,8 @@ class RunInstancesCommand(CloudClientCommand):
     def get_cloud_specific_node_inst_attributes(self):
         return {}
 
-    def __init__(self, timeout=600):
-        super(RunInstancesCommand, self).__init__(timeout)
+    def __init__(self):
+        super(RunInstancesCommand, self).__init__()
 
     def _set_command_specific_options(self, parser):
         parser.add_option('--' + self.IMAGE_ID_KEY, dest=self.IMAGE_ID_KEY,
@@ -73,6 +74,9 @@ class RunInstancesCommand(CloudClientCommand):
         return [self.IMAGE_ID_KEY,
                 self.PLATFORM_KEY,
                 self.NETWORK_TYPE]
+
+    def _get_default_timeout(self):
+        return self.DEFAULT_TIMEOUT
 
     def _get_node_instance(self):
         runtime_parameters = {

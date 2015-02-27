@@ -76,6 +76,9 @@ class CloudClientCommand(object):
     def do_work(self):
         raise NotImplementedError()
 
+    def _get_default_timeout(self):
+        raise NotImplementedError()
+
     def _set_command_specific_options(self, parser):
         pass
 
@@ -88,14 +91,14 @@ class CloudClientCommand(object):
     def alarm_handler(self, signum, frame):
         raise RuntimeError('The command has timed out.')
 
-    def __init__(self, timeout=None):
+    def __init__(self):
         self.parser = None
         self.options = None
         self.args = None
         self.user_info = None
         self.verbose_level = VERBOSE_LEVEL_QUIET
         self.mandatory_options = []
-        self.timeout = timeout
+        self.timeout = None
         self._init_args_parser()
 
     def execute(self):
@@ -150,6 +153,8 @@ class CloudClientCommand(object):
 
     def _set_default_options(self):
         self.parser.add_option('-v', dest='verbose', help='Be verbose.', default=False, action='store_true')
+        self.parser.add_option('-t', dest='timeout', help='Timeout (in seconds). Default: %s' %
+                               self._get_default_timeout(), default=self._get_default_timeout(), type='int')
 
     def _set_common_options(self, parser):
         parser.add_option('--' + UserInfo.CLOUD_USERNAME_KEY, dest=UserInfo.CLOUD_USERNAME_KEY,
@@ -167,6 +172,8 @@ class CloudClientCommand(object):
         if self.options.verbose:
             self.verbose_level = VERBOSE_LEVEL_DETAILED
 
+        self.timeout = self.options.timeout
+
     def _check_options(self):
         missing_list = [name for name in self.mandatory_options
                         if not getattr(self.options, name, None)]
@@ -174,6 +181,8 @@ class CloudClientCommand(object):
             missing_options = ', '.join(map(lambda x: '--' + x, missing_list))
             self.parser.error('The following mandatory options were not provided: %s' %
                               missing_options)
+
+        self._check_default_options()
 
     def _get_common_user_cloud_params(self):
         return {

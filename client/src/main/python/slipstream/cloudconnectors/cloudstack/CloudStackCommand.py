@@ -25,17 +25,17 @@ class CloudStackCommand(CloudClientCommand):
     ENDPOINT_KEY = 'endpoint'
     ZONE_KEY = 'zone'
 
-    def __init__(self, timeout=None):
-        super(CloudStackCommand, self).__init__(timeout)
+    def __init__(self):
+        super(CloudStackCommand, self).__init__()
 
     def get_connector_class(self):
         return CloudStackClientCloud
 
     def set_cloud_specific_options(self, parser):
-        self.parser.add_option('--'+self.ENDPOINT_KEY, dest=self.ENDPOINT_KEY,
+        self.parser.add_option('--' + self.ENDPOINT_KEY, dest=self.ENDPOINT_KEY,
                                help='Endpoint', default='', metavar='ENDPOINT')
 
-        self.parser.add_option('--'+self.ZONE_KEY, dest=self.ZONE_KEY, 
+        self.parser.add_option('--' + self.ZONE_KEY, dest=self.ZONE_KEY,
                                help='Zone', default='', metavar='ZONE')
 
     def get_cloud_specific_user_cloud_params(self):
@@ -45,4 +45,3 @@ class CloudStackCommand(CloudClientCommand):
     def get_cloud_specific_mandatory_options(self):
         return [self.ZONE_KEY,
                 self.ENDPOINT_KEY]
-
