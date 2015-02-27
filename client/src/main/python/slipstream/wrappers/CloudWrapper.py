@@ -59,9 +59,14 @@ class CloudWrapper(BaseWrapper):
         self._update_slipstream_image(node_instance, new_id)
 
     def start_node_instances(self):
+        nodes_instances = self._get_node_instances_to_start()
+        if not nodes_instances:
+            self._log_and_set_statecustom('No node instances to start [%s].' %
+                                          util.toTimeInIso8601(time.time()))
+            return
+
         cloud_service_name = self._get_cloud_service_name()
         user_info = self._get_user_info(cloud_service_name)
-        nodes_instances = self._get_node_instances_to_start()
 
         provisioning_stop_time = self._get_provisioning_timeout_time(user_info)
 
