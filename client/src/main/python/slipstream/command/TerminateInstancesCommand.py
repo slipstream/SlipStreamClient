@@ -27,7 +27,7 @@ from slipstream.ConfigHolder import ConfigHolder
 class TerminateInstancesCommand(CloudClientCommand):
 
     INSTANCE_IDS_KEY = 'instance-ids'
-    DEFAULT_TIMEOUT = 600
+    DEFAULT_TIMEOUT = 900
 
     def __init__(self):
         super(TerminateInstancesCommand, self).__init__()
