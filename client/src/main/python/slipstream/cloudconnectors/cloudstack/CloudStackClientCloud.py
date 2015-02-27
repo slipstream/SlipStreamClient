@@ -225,7 +225,7 @@ class CloudStackClientCloud(BaseCloudConnector):
     def _delete_keypair(self, kp_name):
         kp = KeyPair(name=kp_name, public_key=None, fingerprint=None,
                      driver=self._thread_local.driver)
-        return self._thread_local.driver.delete_keypair(kp)
+        return self._thread_local.driver.delete_key_pair(kp)
 
     def format_instance_name(self, name):
         name = self.remove_bad_char_in_instance_name(name)
