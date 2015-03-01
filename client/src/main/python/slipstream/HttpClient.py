@@ -23,7 +23,9 @@ import httplib
 import httplib2
 import socket
 
+from random import random
 from threading import Lock
+
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
 
@@ -203,6 +205,7 @@ class HttpClient(object):
 
             except Exceptions.TooManyRequestsError:
                 sleep = min(abs(float(self.too_many_requests_count) / 10.0 * 290 + 10), 300)
+                sleep += (random() * sleep * 0.2) - (sleep * 0.1)
                 with self.lock:
                     if self.too_many_requests_count < 11:
                         self.too_many_requests_count += 1
