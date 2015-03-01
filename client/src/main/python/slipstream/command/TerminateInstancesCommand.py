@@ -27,6 +27,7 @@ from slipstream.ConfigHolder import ConfigHolder
 class TerminateInstancesCommand(CloudClientCommand):
 
     INSTANCE_IDS_KEY = 'instance-ids'
+    INSTANCES_IDS_FILE_KEY = 'instance-ids-file'
     DEFAULT_TIMEOUT = 900
 
     def __init__(self):
@@ -36,9 +37,9 @@ class TerminateInstancesCommand(CloudClientCommand):
         parser.add_option('--' + self.INSTANCE_IDS_KEY, dest=self.INSTANCE_IDS_KEY,
                           help='Instance ID (can be used multiple times)',
                           action='append', default=[], metavar='ID')
-
-    def _get_command_mandatory_options(self):
-        return [self.INSTANCE_IDS_KEY]
+        parser.add_option('--' + self.INSTANCES_IDS_FILE_KEY, dest=self.INSTANCES_IDS_FILE_KEY,
+                          help='File containing a list of instance ids (one per line)',
+                          default=None, metavar='FILE')
 
     def _get_default_timeout(self):
         return self.DEFAULT_TIMEOUT
@@ -51,6 +52,11 @@ class TerminateInstancesCommand(CloudClientCommand):
                           context={'foo': 'bar'})
         cc = self.get_connector_class()(ch)
         cc._initialization(self.user_info, **self.get_initialization_extra_kwargs())
+
+        fname = self.get_option(self.INSTANCES_IDS_FILE_KEY)
+        if fname:
+            with open(fname) as f:
+                ids += f.readlines()
 
         if cc.has_capability(cc.CAPABILITY_VAPP):
             cc.stop_vapps_by_ids(ids)
