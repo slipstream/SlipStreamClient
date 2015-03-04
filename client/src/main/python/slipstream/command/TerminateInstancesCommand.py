@@ -56,7 +56,7 @@ class TerminateInstancesCommand(CloudClientCommand):
         fname = self.get_option(self.INSTANCES_IDS_FILE_KEY)
         if fname:
             with open(fname) as f:
-                ids += f.readlines()
+                ids += f.read().splitlines()
 
         if cc.has_capability(cc.CAPABILITY_VAPP):
             cc.stop_vapps_by_ids(ids)
