@@ -77,6 +77,10 @@ class NodeDecorator(object):
     IMAGE = RUN_CATEGORY_IMAGE
     DEPLOYMENT = RUN_CATEGORY_DEPLOYMENT
 
+    RUN_TYPE_ORCHESTRATION = 'Orchestration'
+    RUN_TYPE_MACHINE = 'Machine'
+    RUN_TYPE_RUN = 'Run'
+
     MODULE_RESOURCE_URI = 'moduleResourceUri'
 
     @staticmethod
