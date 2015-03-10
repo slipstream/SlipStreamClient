@@ -24,6 +24,7 @@ from slipstream.NodeDecorator import KEY_RUN_CATEGORY
 from slipstream.ConfigHolder import ConfigHolder
 
 
+# pylint: disable=abstract-method
 class TerminateInstancesCommand(CloudClientCommand):
 
     INSTANCE_IDS_KEY = 'instance-ids'
@@ -51,12 +52,14 @@ class TerminateInstancesCommand(CloudClientCommand):
                                    KEY_RUN_CATEGORY: ''},
                           context={'foo': 'bar'})
         cc = self.get_connector_class()(ch)
+
+        # pylint: disable=protected-access
         cc._initialization(self.user_info, **self.get_initialization_extra_kwargs())
 
         fname = self.get_option(self.INSTANCES_IDS_FILE_KEY)
         if fname:
             with open(fname) as f:
-                ids += f.readlines()
+                ids += f.read().splitlines()
 
         if cc.has_capability(cc.CAPABILITY_VAPP):
             cc.stop_vapps_by_ids(ids)

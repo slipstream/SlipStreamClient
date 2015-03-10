@@ -397,15 +397,16 @@ class DomExtractor(object):
         targets = {}
         image_dom = DomExtractor.extract_node_image(run_dom, node_name)
 
-        category = DomExtractor.get_module_category(run_dom)
-        if category == NodeDecorator.IMAGE:
+        run_type = DomExtractor.extractTypeFromRun(run_dom)
+        if run_type == NodeDecorator.RUN_TYPE_MACHINE:
             targets = DomExtractor.get_build_targets(image_dom)
-        elif category == NodeDecorator.DEPLOYMENT:
+        elif run_type == NodeDecorator.RUN_TYPE_ORCHESTRATION or run_type == NodeDecorator.RUN_TYPE_RUN:
             targets = DomExtractor.get_deployment_targets_from_image(image_dom)
         else:
-            raise Exceptions.ClientError("Unknown category: '%s'. Possible values: %s" %
-                                         (category, [NodeDecorator.IMAGE, NodeDecorator.DEPLOYMENT]))
-
+            raise Exceptions.ClientError("Unknown run type: '%s'. Possible values: %s" %
+                                         (run_type, [NodeDecorator.RUN_TYPE_MACHINE,
+                                                     NodeDecorator.RUN_TYPE_ORCHESTRATION,
+                                                     NodeDecorator.RUN_TYPE_RUN]))
         return targets
 
     @staticmethod
@@ -482,9 +483,9 @@ class DomExtractor(object):
     def get_deployment_targets(run_dom, nodename):
         '''Return deployment targets from the image of the node 'nodename'.
         '''
-        module = run_dom.find('module')
 
-        if module.get('category') == 'Image':
+        if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
+            module = run_dom.find('module')
             return DomExtractor.get_deployment_targets_from_image(module)
         else:
             for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
