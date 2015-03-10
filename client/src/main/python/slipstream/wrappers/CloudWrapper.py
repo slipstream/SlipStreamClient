@@ -126,13 +126,13 @@ class CloudWrapper(BaseWrapper):
         False otherwise.
 
         """
+        n_to_provision = len(node_instances)
         self._log('Waiting until %s for %s instances to be provisioned.' %
-                  (util.toTimeInIso8601(provisioning_stop_time), len(node_instances)))
+                  (util.toTimeInIso8601(provisioning_stop_time), n_to_provision))
         self._log('Allowed number of failed instances per node: %s' %
                   allowed_failed_vms_per_node)
         all_provisioned = False
         i = 1
-        n_to_provision = len(node_instances)
         n_failed_on_iaas = 0
         n_failed_on_iaas_timestamp = 'not checked'
         while time.time() < provisioning_stop_time:
@@ -270,6 +270,14 @@ class CloudWrapper(BaseWrapper):
 
     def stop_node_instances(self):
         node_instances_to_stop = self._get_node_instances_to_stop()
+        if not node_instances_to_stop:
+            self._log_and_set_statecustom('No node instances to stop [%s].' %
+                                          util.toTimeInIso8601(time.time()))
+            return
+        instance_names = ','.join(
+            self._get_node_instance_names_from_nodeinstances_dict(node_instances_to_stop))
+        self._log_and_set_statecustom('Node instances to stop: %s [%s].' %
+                                      (instance_names, util.toTimeInIso8601(time.time())))
         self._cloud_client.stop_node_instances(node_instances_to_stop.values())
 
         instance_names_removed = node_instances_to_stop.keys()
@@ -402,6 +410,12 @@ class CloudWrapper(BaseWrapper):
         """
         node_instances = util.flatten_list_of_lists(nodes_dict.values())
         return [x.get_name() for x in node_instances]
+
+    def _get_node_instance_names_from_nodeinstances_dict(self, nodeinstances_dict):
+        """Return list of the instance names [str, ].
+        'nodeinstances_dict' dict : {<node_instance_name>: NodeInstance, }
+        """
+        return [x.get_name() for x in nodeinstances_dict.values()]
 
     def _log_and_set_statecustom(self, msg):
         self._log(msg)

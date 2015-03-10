@@ -303,6 +303,9 @@ class BaseWrapper(object):
         return self.STATE_TO_ACTION.get(state, None)
 
     def get_node_instances_in_scale_state(self, scale_state, cloud_service_name=None):
+        '''Return dict {<node_instance_name>: NodeInstance, } with the node instances
+        in the scale_state.
+        '''
         instances = {}
 
         nodes_instances = self._get_nodes_instances(cloud_service_name)
@@ -326,7 +329,7 @@ class BaseWrapper(object):
         self._nodes_instances = {}
 
     def _get_nodes_instances(self, cloud_service_name=None):
-        '''Return dict {<node-name>: {<runtime-param-name>: <value>, }, }
+        '''Return dict {<node_instance_name>: NodeInstance, }
         '''
         if not self._nodes_instances:
             self._nodes_instances = self._ss_client.get_nodes_instances(cloud_service_name)
