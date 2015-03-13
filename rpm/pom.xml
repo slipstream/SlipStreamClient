@@ -110,6 +110,11 @@
 					<description>
 						SlipStream Client API and CLI.
 					</description>
+
+					<obsoletes>
+                                          <obsolete>slipstream-client</obsolete>
+                                        </obsoletes>
+
 					<requires>
 						<require>python &gt;= 2.6</require>
 						<require>python-httplib2</require>
