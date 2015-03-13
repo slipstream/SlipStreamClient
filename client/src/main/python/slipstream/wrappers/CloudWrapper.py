@@ -30,6 +30,18 @@ class CloudWrapper(BaseWrapper):
     WAIT_INSTANCES_PROVISIONED_MIN = 30
     WAIT_TIME_PERCENTAGE = .8
 
+    KEEP_RUNNING_NEVER = 'never'
+    KEEP_RUNNING_ALWAYS = 'always'
+    KEEP_RUNNING_ON_ERROR = 'on-error'
+    KEEP_RUNNING_ON_SUCCESS = 'on-success'
+
+    KEEP_RUNNING_DEFAULT = KEEP_RUNNING_ON_SUCCESS
+
+    KEEP_RUNNING_VALUES = [KEEP_RUNNING_NEVER,
+                           KEEP_RUNNING_ALWAYS,
+                           KEEP_RUNNING_ON_ERROR,
+                           KEEP_RUNNING_ON_SUCCESS]
+
     def __init__(self, configHolder):
         super(CloudWrapper, self).__init__(configHolder)
 
@@ -348,17 +360,26 @@ class CloudWrapper(BaseWrapper):
         return self._cloud_client.has_capability(
             self._cloud_client.CAPABILITY_ORCHESTRATOR_CAN_KILL_ITSELF_OR_ITS_VAPP)
 
+    def _check_keep_running(self, keep_running):
+        return keep_running in self.KEEP_RUNNING_VALUES
+
     def need_to_stop_images(self, ignore_on_success_run_forever=False):
         runParameters = self._get_run_parameters()
 
-        onErrorRunForever = runParameters.get('General.On Error Run Forever', 'false')
-        onSuccessRunForever = runParameters.get('General.On Success Run Forever', 'false')
+        keep_running = runParameters.get('General.keep-running')
+
+        if not self._check_keep_running(keep_running):
+            message ='Wrong value for "keep-running" (%s). Should be one of the following: %s. Using the default value (%s).'\
+                    % (keep_running, self.KEEP_RUNNING_VALUES, self.KEEP_RUNNING_DEFAULT)
+            util.printError(message)
+            self.fail(message)
+            keep_running = self.KEEP_RUNNING_DEFAULT
 
         stop = True
         if self.isAbort():
-            if onErrorRunForever == 'true':
+            if keep_running in [self.KEEP_RUNNING_ALWAYS, self.KEEP_RUNNING_ON_ERROR]:
                 stop = False
-        elif onSuccessRunForever == 'true' and not ignore_on_success_run_forever:
+        elif keep_running in [self.KEEP_RUNNING_ALWAYS, self.KEEP_RUNNING_ON_SUCCESS] and not ignore_on_success_run_forever:
             stop = False
 
         return stop
