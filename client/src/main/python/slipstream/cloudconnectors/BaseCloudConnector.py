@@ -705,7 +705,7 @@ class BaseCloudConnector(object):
 
         return command % {
             'bootstrap': bootstrap,
-            'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
+            'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
             'reports': reportdir,
             'nodename': instance_name,
             'targetScript': targetScript

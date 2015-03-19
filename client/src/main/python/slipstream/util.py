@@ -675,3 +675,10 @@ def seconds_to_hms(seconds):
 
 def seconds_to_hms_str(seconds):
     return '%dh%02dm%02ds' % seconds_to_hms(seconds)
+
+
+def get_required_envvar(env_name):
+    try:
+        return os.environ[env_name]
+    except KeyError:
+        raise Exception('ERROR: Environment variable %s is required.' % env_name)

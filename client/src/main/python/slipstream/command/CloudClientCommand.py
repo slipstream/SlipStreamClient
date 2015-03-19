@@ -197,11 +197,7 @@ class CloudClientCommand(object):
         self.user_info.set_cloud_params(params)
 
     def _init_cloud_instance_name(self):
-        try:
-            self._cloud_instance_name = os.environ[util.ENV_CONNECTOR_INSTANCE]
-        except KeyError:
-            raise ExecutionException('ERROR: Environment variable %s is required.' %
-                                     util.ENV_CONNECTOR_INSTANCE)
+        self._cloud_instance_name = util.get_required_envvar(util.ENV_CONNECTOR_INSTANCE)
 
     def get_node_instance_name(self):
-        return os.environ.get(util.ENV_NODE_INSTANCE_NAME)
+        return util.get_required_envvar(util.ENV_NODE_INSTANCE_NAME)
