@@ -87,6 +87,11 @@ class BaseCloudConnector(object):
         """This method is used to destroy a full vApp if the capability 'vapp' is set."""
         pass
 
+    def list_instances(self):
+        """Returns list of VMs consumable by the connector's _vm_get_id(vm) and _vm_get_ip(vm).
+        """
+        raise NotImplementedError()
+
     def _vm_get_id(self, vm_instance):
         """Retrieve the VM ID from the vm_instance object returned by _start_image().
         Returns: cloud ID of the instance."""
