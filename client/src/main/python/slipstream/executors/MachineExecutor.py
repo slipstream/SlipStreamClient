@@ -124,7 +124,11 @@ class MachineExecutor(object):
     def onProvisioning(self):
         util.printAction('Provisioning')
 
+        self._clean_user_info_cache()
         self._clean_local_cache()
+
+    def _clean_user_info_cache(self):
+        self.wrapper.discard_user_info_locally()
 
     def _clean_local_cache(self):
         self.wrapper.clean_local_cache()
