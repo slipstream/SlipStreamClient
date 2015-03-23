@@ -65,6 +65,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         self.images = []
         self.networks = []
         self.securit_groups = []
+        self.tempPrivateKey = None
 
     @override
     def _initialization(self, user_info):
@@ -96,6 +97,8 @@ class OpenStackClientCloud(BaseCloudConnector):
         self._thread_local.driver = self._get_driver(user_info)
         listener = self._get_listener()
 
+        if not user_info.get_private_key() and self.tempPrivateKey:
+            user_info.set_private_key(self.tempPrivateKey)
         machine_name = node_instance.get_name()
 
         vm = self._get_vm(machine_name)
@@ -288,6 +291,7 @@ class OpenStackClientCloud(BaseCloudConnector):
         kp = self._thread_local.driver.ex_create_keypair(kp_name)
         user_info.set_private_key(kp.private_key)
         user_info.set_keypair_name(kp.name)
+        self.tempPrivateKey = kp.private_key
         return kp.name
 
     def _delete_keypair(self, kp_name):
