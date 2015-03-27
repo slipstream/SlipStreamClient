@@ -693,10 +693,6 @@ class BaseCloudConnector(object):
         bootstrap = os.path.join(self.__get_tmp_dir_for_linux(), 'slipstream.bootstrap')
         reportdir = Client.REPORTSDIR
 
-        targetScript = ''
-        if self.is_start_orchestrator():
-            targetScript = 'slipstream-orchestrator'
-
         command = 'mkdir -p %(reports)s; '
         command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1) '
@@ -708,7 +704,7 @@ class BaseCloudConnector(object):
             'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
             'reports': reportdir,
             'nodename': instance_name,
-            'targetScript': targetScript
+            'targetScript': self._get_machine_target_script_name()
         }
 
     @staticmethod
@@ -717,6 +713,12 @@ class BaseCloudConnector(object):
             return tempfile.gettempdir()
         else:
             return '/tmp'
+
+    def _get_machine_target_script_name(self):
+        if self.is_start_orchestrator():
+            return 'slipstream-orchestrator'
+        else:
+            return ''
 
     def _wait_can_connect_with_ssh_or_abort(self, host, username='', password='', sshKey=None):
         self._print_detail('Check if we can connect to %s' % host)
