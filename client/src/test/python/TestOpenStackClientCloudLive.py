@@ -104,6 +104,7 @@ class TestOpenStackClientCloud(unittest.TestCase):
 
         self.node_instance = NodeInstance({
             'name': NodeDecorator.MACHINE_NAME,
+            NodeDecorator.NODE_INSTANCE_NAME_KEY: NodeDecorator.MACHINE_NAME,
             'cloudservice': self.connector_instance_name,
             'image.platform': 'Ubuntu',
             'image.imageId': image_id,
