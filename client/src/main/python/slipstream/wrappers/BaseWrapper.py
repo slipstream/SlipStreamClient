@@ -360,7 +360,6 @@ class BaseWrapper(object):
 
     def clean_local_cache(self):
         self.discard_run_locally()
-        self.discard_user_info_locally()
         self.discard_nodes_info_locally()
         self.discard_run_parameters_locally()
 
