@@ -170,9 +170,6 @@ class BaseWrapper(object):
 
         return _key
 
-    def getTargets(self):
-        return self._ss_client.get_node_deployment_targets()
-
     def get_cloud_instance_id(self):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
         return self._get_runtime_parameter(key)
@@ -191,6 +188,10 @@ class BaseWrapper(object):
     def is_mutable(self):
         mutable = self._ss_client.get_run_mutable()
         return util.str2bool(mutable)
+
+    def set_state_custom(self, message):
+        key = self._qualifyKey(NodeDecorator.STATECUSTOM_KEY)
+        self._ss_client.setRuntimeParameter(key, message)
 
     def set_scale_state_on_node_instances(self, instance_names, scale_state):
         for instance_name in instance_names:
@@ -354,6 +355,15 @@ class BaseWrapper(object):
         if self._run_parameters is None:
             self._run_parameters = self._ss_client.get_run_parameters()
         return self._run_parameters
+
+    def has_to_execute_build_recipes(self):
+        run_parameters = self._get_run_parameters()
+
+        key = self.get_my_node_instance_name().rsplit(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR, 1)[0] \
+              + NodeDecorator.NODE_PROPERTY_SEPARATOR \
+              + NodeDecorator.RUN_BUILD_RECIPES_KEY
+
+        return util.str2bool(run_parameters.get(key))
 
     def clean_local_cache(self):
         self.discard_run_locally()

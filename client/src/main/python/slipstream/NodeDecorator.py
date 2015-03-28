@@ -54,6 +54,10 @@ class NodeDecorator(object):
     NODE_NAME_KEY = 'nodename'
     NODE_INSTANCE_NAME_KEY = 'node_instance_name'
 
+    NODE_PRERECIPE = 'prerecipe'
+    NODE_RECIPE = 'recipe'
+    NODE_PACKAGES = 'packages'
+
     IS_ORCHESTRATOR_KEY = 'is.orchestrator'
 
     # State names
@@ -63,6 +67,7 @@ class NodeDecorator(object):
 
     RECOVERY_MODE_KEY = 'recovery.mode'
 
+    RUN_BUILD_RECIPES_KEY = 'run-build-recipes'
     IMAGE_PLATFORM_KEY = 'image.platform'
     SCALE_STATE_KEY = 'scale.state'
     INSTANCEID_KEY = 'instanceid'

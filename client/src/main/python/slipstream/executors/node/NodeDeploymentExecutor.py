@@ -27,6 +27,7 @@ from slipstream.executors.MachineExecutor import MachineExecutor
 import slipstream.util as util
 from slipstream.exceptions.Exceptions import ExecutionException, AbortException
 from slipstream.util import append_ssh_pubkey_to_authorized_keys, override
+from slipstream.NodeDecorator import NodeDecorator
 
 
 def getExecutor(wrapper, configHolder):
@@ -74,9 +75,28 @@ class NodeDeploymentExecutor(MachineExecutor):
             return
 
         if not self.wrapper.is_scale_state_operational():
+            if self.wrapper.has_to_execute_build_recipes():
+                self._execute_build_recipes()
             self._execute_execute_target()
         else:
             self._execute_scale_action_target()
+
+    def _execute_build_recipes(self):
+        util.printDetail('Executing build recipes')
+
+        self._execute_target(NodeDecorator.NODE_PRERECIPE, abort_on_err=True)
+
+        packages = self.node_instance.get_packages()
+        if packages:
+            message = 'Installing packages: %s' % ', '.join(packages)
+            util.printStep(message)
+            self.wrapper.set_state_custom(message)
+            cmd = util.get_packages_install_command(self.node_instance.get_platform(), packages)
+            self._run_target_script('#!/bin/sh -xe\n%s' % cmd)
+        else:
+            util.printStep('No packages to install')
+
+        self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
 
     def _execute_execute_target(self):
         self._execute_target('execute', abort_on_err=True)
@@ -95,7 +115,7 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _execute_report_target_and_send_reports(self):
         try:
-            self._execute_target('report')
+            self._execute_target('report', ssdisplay=False)
         except ExecutionException as ex:
             util.printDetail("Failed executing 'report' with: \n%s" % str(ex),
                              verboseLevel=self.verboseLevel,
@@ -140,8 +160,11 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target_name, exports={}, abort_on_err=False):
-        util.printStep("Executing target '%s'" % target_name)
+    def _execute_target(self, target_name, exports={}, abort_on_err=False, ssdisplay=True):
+        message = "Executing target '%s'" % target_name
+        util.printStep(message)
+        if ssdisplay:
+            self.wrapper.set_state_custom(message)
 
         target_script = self.node_instance.get_image_target(target_name)
         if target_script:

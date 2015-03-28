@@ -75,11 +75,10 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         self.assertEquals(1, client._httpGet.call_count)
 
     def test_get_deployment_targets(self):
-        targets = DomExtractor.get_deployment_targets(RUN_ETREE, 'apache')
-        self.assertEquals(
-            True, targets['execute'].startswith('#!/bin/sh -xe\napt-get update -y\n'))
+        targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'apache')
+        self.assertEquals(True, targets['execute'].startswith('#!/bin/sh -xe\napt-get update -y\n'))
 
-        targets = DomExtractor.get_deployment_targets(RUN_ETREE, 'testclient')
+        targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'testclient')
         self.assertEquals(targets['execute'].startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
                           True)
 
