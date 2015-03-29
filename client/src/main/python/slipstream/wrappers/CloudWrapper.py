@@ -85,8 +85,19 @@ class CloudWrapper(BaseWrapper):
         self._start_nodes_and_clients(user_info, nodes_instances)
 
         self.clean_local_cache()
-        nodes_instances = self._get_nodes_instances(cloud_service_name)
-        self._check_provisioning(nodes_instances.values(), provisioning_stop_time)
+        nodes_instances_list = self._get_node_instances_to_follow(nodes_instances.keys())
+        self._check_provisioning(nodes_instances_list, provisioning_stop_time)
+
+    def _get_node_instances_to_follow(self, ni_names_starting):
+        """
+        ni_names_to_be_started : list of node instance names [string, ]
+        """
+        all_node_instances = self._get_nodes_instances(self._get_cloud_service_name())
+        instances = []
+        for name, instance in all_node_instances.iteritems():
+            if name in ni_names_starting:
+                instances.append(instance)
+        return instances
 
     def _start_nodes_and_clients(self, user_info, nodes_instances):
         time_start_iaas_provision = time.time()
@@ -377,7 +388,7 @@ class CloudWrapper(BaseWrapper):
         keep_running = runParameters.get('General.keep-running')
 
         if not self._check_keep_running(keep_running):
-            message ='Wrong value for "keep-running" (%s). Should be one of the following: %s. Using the default value (%s).'\
+            message = 'Wrong value for "keep-running" (%s). Should be one of the following: %s. Using the default value (%s).'\
                     % (keep_running, self.KEEP_RUNNING_VALUES, self.KEEP_RUNNING_DEFAULT)
             util.printError(message)
             self.fail(message)
@@ -432,7 +443,8 @@ class CloudWrapper(BaseWrapper):
         node_instances = util.flatten_list_of_lists(nodes_dict.values())
         return [x.get_name() for x in node_instances]
 
-    def _get_node_instance_names_from_nodeinstances_dict(self, nodeinstances_dict):
+    @staticmethod
+    def _get_node_instance_names_from_nodeinstances_dict(nodeinstances_dict):
         """Return list of the instance names [str, ].
         'nodeinstances_dict' dict : {<node_instance_name>: NodeInstance, }
         """
