@@ -119,7 +119,7 @@ class MachineExecutor(object):
         return state not in ['Finalizing', 'Done', 'Cancelled', 'Aborted']
 
     def onInitializing(self):
-        pass
+        util.printAction('Initializing')
 
     def onProvisioning(self):
         util.printAction('Provisioning')
