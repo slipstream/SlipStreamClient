@@ -12,6 +12,77 @@
     <version>2.6-SNAPSHOT</version>
   </parent>
 
+  <profiles>
+    <profile>
+      <id>unit-testing</id>
+      <activation>
+        <property>
+          <name>!skipTests</name>
+        </property>
+      </activation>
+
+      <build>
+        <plugins> 
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>unittests</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>test</phase>
+                <configuration>
+                  <executable>nosetests</executable>
+                  <environmentVariables>
+                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./target/dependencies</PYTHONPATH>
+                  </environmentVariables>
+                  <arguments>
+                    <argument>-v</argument>
+                    <argument>--where=target/test/python</argument>
+                    <argument>--ignore-files=.*Live.py</argument>
+                    <argument>--with-xunit</argument>
+                    <argument>--xunit-file=${project.build.directory}/nosetests.xml</argument>
+                    <argument>--with-coverage</argument>
+                    <argument>--cover-xml</argument>
+                    <argument>--cover-xml-file=${project.build.directory}/coverage.xml</argument>
+                    <argument>--cover-package=slipstream</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              
+              <execution>
+                <id>pylint</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>test</phase>
+                <configuration>
+                  <workingDirectory>${project.build.directory}/main/python</workingDirectory>
+                  <outputFile>${project.build.directory}/pylint.out</outputFile>
+                  <successCodes>
+                    <successCode>0</successCode>
+                    <successCode>31</successCode>
+                  </successCodes>
+                  <executable>pylint</executable>
+                  <arguments>
+                    <argument>-f</argument>
+                    <argument>parseable</argument>
+                    <argument>--rcfile</argument>
+                    <argument>${basedir}/pylint.config</argument>
+                    <argument>slipstream</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+              
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+
   <build>
     <plugins>
 
@@ -107,62 +178,6 @@
           </execution>
         </executions>
 
-      </plugin>
-
-      <plugin>
-        <groupId>org.codehaus.mojo</groupId>
-        <artifactId>exec-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>unittests</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>test</phase>
-            <configuration>
-              <executable>nosetests</executable>
-              <environmentVariables>
-                <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./target/dependencies</PYTHONPATH>
-              </environmentVariables>
-              <arguments>
-                <argument>-v</argument>
-                <argument>--where=target/test/python</argument>
-                <argument>--ignore-files=.*Live.py</argument>
-                <argument>--with-xunit</argument>
-                <argument>--xunit-file=${project.build.directory}/nosetests.xml</argument>
-                <argument>--with-coverage</argument>
-                <argument>--cover-xml</argument>
-                <argument>--cover-xml-file=${project.build.directory}/coverage.xml</argument>
-                <argument>--cover-package=slipstream</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
-          <execution>
-            <id>pylint</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>test</phase>
-            <configuration>
-              <workingDirectory>${project.build.directory}/main/python</workingDirectory>
-              <outputFile>${project.build.directory}/pylint.out</outputFile>
-              <successCodes>
-                <successCode>0</successCode>
-                <successCode>31</successCode>
-              </successCodes>
-              <executable>pylint</executable>
-              <arguments>
-                <argument>-f</argument>
-                <argument>parseable</argument>
-                <argument>--rcfile</argument>
-                <argument>${basedir}/pylint.config</argument>
-                <argument>slipstream</argument>
-              </arguments>
-            </configuration>
-          </execution>
-
-        </executions>
       </plugin>
 
     </plugins>
