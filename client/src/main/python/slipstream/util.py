@@ -548,6 +548,14 @@ def _getSecureHostPortFromUrl(endpoint):
 
 
 def get_packages_install_command(platform, packages):
+    """Return platform dependent command to install the requested packages.
+    :param platform: name of the platfrom
+    :type platform: str or unicode
+    :param packages: list of packages to install
+    :type packages: list
+    :returns: platform dependent command to install the requested packages
+    :rtype: str
+    """
     if platform.lower() not in SUPPORTED_PLATFORMS:
         raise ValueError("Unsupported platform '%s' while installing packages. "
                          "Supported: %s" % (platform,
