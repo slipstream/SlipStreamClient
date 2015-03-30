@@ -90,7 +90,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         if packages:
             message = 'Installing packages: %s' % ', '.join(packages)
             util.printStep(message)
-            self.wrapper.set_state_custom(message)
+            self.wrapper.set_statecustom(message)
             cmd = util.get_packages_install_command(self.node_instance.get_platform(), packages)
             self._run_target_script('#!/bin/sh -xe\n%s' % cmd)
         else:
@@ -164,7 +164,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         message = "Executing target '%s'" % target_name
         util.printStep(message)
         if ssdisplay:
-            self.wrapper.set_state_custom(message)
+            self.wrapper.set_statecustom(message)
 
         target_script = self.node_instance.get_image_target(target_name)
         if target_script:

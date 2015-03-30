@@ -189,10 +189,6 @@ class BaseWrapper(object):
         mutable = self._ss_client.get_run_mutable()
         return util.str2bool(mutable)
 
-    def set_state_custom(self, message):
-        key = self._qualifyKey(NodeDecorator.STATECUSTOM_KEY)
-        self._ss_client.setRuntimeParameter(key, message)
-
     def set_scale_state_on_node_instances(self, instance_names, scale_state):
         for instance_name in instance_names:
             key = instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + NodeDecorator.SCALE_STATE_KEY
@@ -316,9 +312,9 @@ class BaseWrapper(object):
     def send_report(self, filename):
         self._ss_client.sendReport(filename)
 
-    def set_statecustom(self, msg):
+    def set_statecustom(self, message):
         key = self._qualifyKey(NodeDecorator.STATECUSTOM_KEY)
-        self._ss_client.setRuntimeParameter(key, msg)
+        self._ss_client.setRuntimeParameter(key, message)
 
     #
     # Local cache of NodesInstances, Run, Run Parameters and User.

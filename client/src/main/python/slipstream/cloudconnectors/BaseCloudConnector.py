@@ -377,29 +377,18 @@ class BaseCloudConnector(object):
                                                password=password,
                                                sshKey=ssh_private_key_file)
 
-            listener = self._get_listener()
-
             if prerecipe:
-                message = 'Running Pre-recipe'
-                util.printStep(message)
-                listener.write_for(machine_name, message)
-
+                self._print_step('Running Pre-recipe', machine_name)
                 remoteRunScript(username, host, prerecipe, sshKey=ssh_private_key_file, password=password)
 
             if packages:
-                message = 'Installing Packages'
-                util.printStep(message)
-                listener.write_for(machine_name, message)
-
+                self._print_step('Installing Packages', machine_name)
                 platform = node_instance.get_platform()
                 remoteRunCommand(command=util.get_packages_install_command(platform, packages),
                                  host=host, user=username, sshKey=ssh_private_key_file, password=password)
 
             if recipe:
-                message = 'Running Recipe'
-                util.printStep(message)
-                listener.write_for(machine_name, message)
-
+                self._print_step('Running Recipe', machine_name)
                 remoteRunScript(username, host, recipe, sshKey=ssh_private_key_file, password=password)
 
             if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
@@ -751,6 +740,11 @@ class BaseCloudConnector(object):
 
     def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)
+
+    def _print_step(self, message, write_for=None):
+        util.printStep(message)
+        if write_for:
+            self._get_listener().write_for(write_for, message)
 
     def get_vms_details(self):
         vms_details = []
