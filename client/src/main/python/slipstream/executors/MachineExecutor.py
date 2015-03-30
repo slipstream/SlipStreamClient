@@ -23,8 +23,8 @@ import tarfile
 import tempfile
 
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.exceptions.Exceptions import TimeoutException, \
-    AbortException, TerminalStateException, ExecutionException
+from slipstream.exceptions.Exceptions import AbortException, \
+    TerminalStateException, ExecutionException
 from slipstream import util
 from slipstream.Client import Client
 
@@ -49,8 +49,14 @@ class MachineExecutor(object):
         except Exception as ex:
             self._fail_global(ex)
 
-    def _execute(self, state=None):
-        state = (state and state) or self.wrapper.getState()
+    def _execute(self):
+        state = self.wrapper.getState()
+        while True:
+            self._execute_state(state)
+            self._complete_state(state)
+            state = self._wait_for_next_state(state)
+
+    def _execute_state(self, state):
         if not state:
             raise ExecutionException('Machine executor: No state to execute '
                                      'specified.')
@@ -66,11 +72,6 @@ class MachineExecutor(object):
             util.printError('Error executing node, with detail: %s' % ex)
             traceback.print_exc()
             self._fail(ex)
-
-        self._complete_state(state)
-        new_state = self._wait_for_next_state(state)
-
-        self._execute(new_state)
 
     def _complete_state(self, state):
         if self._need_to_complete(state):
