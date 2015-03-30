@@ -170,9 +170,6 @@ class BaseWrapper(object):
 
         return _key
 
-    def getTargets(self):
-        return self._ss_client.get_node_deployment_targets()
-
     def get_cloud_instance_id(self):
         key = self._qualifyKey(NodeDecorator.INSTANCEID_KEY)
         return self._get_runtime_parameter(key)
@@ -318,9 +315,9 @@ class BaseWrapper(object):
     def send_report(self, filename):
         self._ss_client.sendReport(filename)
 
-    def set_statecustom(self, msg):
+    def set_statecustom(self, message):
         key = self._qualifyKey(NodeDecorator.STATECUSTOM_KEY)
-        self._ss_client.setRuntimeParameter(key, msg)
+        self._ss_client.setRuntimeParameter(key, message)
 
     #
     # Local cache of NodesInstances, Run, Run Parameters and User.
@@ -357,6 +354,15 @@ class BaseWrapper(object):
         if self._run_parameters is None:
             self._run_parameters = self._ss_client.get_run_parameters()
         return self._run_parameters
+
+    def has_to_execute_build_recipes(self):
+        run_parameters = self._get_run_parameters()
+
+        key = self.get_my_node_instance_name().rsplit(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR, 1)[0] \
+              + NodeDecorator.NODE_PROPERTY_SEPARATOR \
+              + NodeDecorator.RUN_BUILD_RECIPES_KEY
+
+        return util.str2bool(run_parameters.get(key))
 
     def clean_local_cache(self):
         self.discard_run_locally()

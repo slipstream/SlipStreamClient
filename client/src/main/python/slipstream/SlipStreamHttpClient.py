@@ -91,11 +91,6 @@ class SlipStreamHttpClient(object):
         _, content = self._httpGet(url, 'application/xml')
         return content
 
-    def get_node_deployment_targets(self):
-        self._retrieveAndSetRun()
-        return DomExtractor.get_deployment_targets(self.run_dom,
-                                                   self._get_nodename())
-
     def _extractModuleResourceUri(self, run):
         rootElement = etree.fromstring(run)
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
@@ -397,16 +392,9 @@ class DomExtractor(object):
         targets = {}
         image_dom = DomExtractor.extract_node_image(run_dom, node_name)
 
-        run_type = DomExtractor.extractTypeFromRun(run_dom)
-        if run_type == NodeDecorator.RUN_TYPE_MACHINE:
-            targets = DomExtractor.get_build_targets(image_dom)
-        elif run_type == NodeDecorator.RUN_TYPE_ORCHESTRATION or run_type == NodeDecorator.RUN_TYPE_RUN:
-            targets = DomExtractor.get_deployment_targets_from_image(image_dom)
-        else:
-            raise Exceptions.ClientError("Unknown run type: '%s'. Possible values: %s" %
-                                         (run_type, [NodeDecorator.RUN_TYPE_MACHINE,
-                                                     NodeDecorator.RUN_TYPE_ORCHESTRATION,
-                                                     NodeDecorator.RUN_TYPE_RUN]))
+        targets.update(DomExtractor.get_build_targets(image_dom))
+        targets.update(DomExtractor.get_deployment_targets_from_image(image_dom))
+
         return targets
 
     @staticmethod
@@ -443,15 +431,15 @@ class DomExtractor(object):
     def get_build_targets(run_dom):
         targets = {}
 
-        for target in ['prerecipe', 'recipe']:
+        for target in [NodeDecorator.NODE_PRERECIPE, NodeDecorator.NODE_RECIPE]:
             targets[target] = DomExtractor.get_element_value_from_element_tree(run_dom, target)
 
-        targets['packages'] = []
+        targets[NodeDecorator.NODE_PACKAGES] = []
         packages = run_dom.findall('packages/package')
         for package in packages:
             name = package.get('name')
             if name:
-                targets['packages'].append(name)
+                targets[NodeDecorator.NODE_PACKAGES].append(name)
 
         return targets
 
@@ -478,20 +466,6 @@ class DomExtractor(object):
             value = node.find('value')
             parameters[node.get('name')] = value.text if value is not None else None
         return parameters
-
-    @staticmethod
-    def get_deployment_targets(run_dom, nodename):
-        '''Return deployment targets from the image of the node 'nodename'.
-        '''
-
-        if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
-            module = run_dom.find('module')
-            return DomExtractor.get_deployment_targets_from_image(module)
-        else:
-            for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
-                if node.get('name') == nodename:
-                    return DomExtractor.get_deployment_targets_from_image(node.find('image'))
-        return {}
 
     @staticmethod
     def get_deployment_targets_from_image(image_dom):

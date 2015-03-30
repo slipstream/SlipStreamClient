@@ -547,17 +547,25 @@ def _getSecureHostPortFromUrl(endpoint):
     return secure, host, port
 
 
-def getPackagesInstallCommand(platform, packages):
+def get_packages_install_command(platform, packages):
+    """Return platform dependent command to install the requested packages.
+    :param platform: name of the platfrom
+    :type platform: str or unicode
+    :param packages: list of packages to install
+    :type packages: list
+    :returns: platform dependent command to install the requested packages
+    :rtype: str
+    """
     if platform.lower() not in SUPPORTED_PLATFORMS:
         raise ValueError("Unsupported platform '%s' while installing packages. "
                          "Supported: %s" % (platform,
                                             ', '.join(SUPPORTED_PLATFORMS)))
 
     if platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['debian_based']:
-        cmd = 'apt-get -y install'
+        cmd = 'export DEBIAN_FRONTEND=noninteractive && apt-get -y update && apt-get -y install'
     elif platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['redhat_based']:
         cmd = 'yum -y install'
-    cmd += ' ' + packages
+    cmd += ' ' + ' '.join(packages).strip()
     return cmd
 
 
@@ -656,7 +664,7 @@ def override(func):
 
 
 def str2bool(v):
-    return v.lower() in ("yes", "true", "t", "1")
+    return v is not None and v.lower() in ("yes", "true", "t", "1")
 
 
 def flatten_list_of_lists(list_of_lists):

@@ -148,13 +148,13 @@ class NodeInstance(object):
         return self.__parameters.get(NodeDecorator.SCALE_STATE_KEY)
 
     def get_prerecipe(self):
-        return self.get_image_target('prerecipe')
+        return self.get_image_target(NodeDecorator.NODE_PRERECIPE)
 
     def get_recipe(self):
-        return self.get_image_target('recipe')
+        return self.get_image_target(NodeDecorator.NODE_RECIPE)
 
     def get_packages(self):
-        return self.get_image_target('packages', [])
+        return self.get_image_target(NodeDecorator.NODE_PACKAGES, [])
 
     def get_username(self, default_value=None):
         return self.get_image_attribute('loginUser', default_value)

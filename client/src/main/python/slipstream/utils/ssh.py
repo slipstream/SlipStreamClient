@@ -31,8 +31,7 @@ from paramiko import SSHClient
 from paramiko.ssh_exception import AuthenticationException
 from Crypto.PublicKey import RSA
 
-from slipstream.util import execute, _printDetail, \
-    SUPPORTED_PLATFORMS_BY_DISTRO, getPackagesInstallCommand
+from slipstream.util import execute, _printDetail
 from slipstream.exceptions import Exceptions
 from slipstream.utils.pyCryptoPatch import pyCryptoPatch
 import scpclient
@@ -389,40 +388,21 @@ def remoteRunScript(user, host, script, sshKey=None, password='', nohup=False):
         except:
             pass
 
-    nohup_cmd = (nohup is True) and 'at now -f' or ''
-    sudo = (user != 'root') and 'sudo' or ''
-    dstCommand = ('%s %s %s' % (sudo, nohup_cmd, dstScriptFile)).strip()
-    rc, stderr = sshCmdWithStderr(dstCommand, host, sshKey=sshKey,
-                                  user=user, password=password)
-    if rc != 0:
-        raise Exceptions.ExecutionException("An error occurred while "
-                                            "executing user script: %s." % stderr)
-    return rc, stderr
+    return remoteRunCommand(user, host, dstScriptFile, sshKey, password, nohup)
 
 
 def remoteRunScriptNohup(user, host, script, sshKey=None, password=''):
-    return remoteRunScript(user, host, script, sshKey=sshKey,
-                           password=password, nohup=True)
+    return remoteRunScript(user, host, script, sshKey=sshKey, password=password, nohup=True)
 
+def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False):
+    nohup_cmd = (nohup is True) and 'at now -f' or ''
+    sudo = (user != 'root') and 'sudo' or ''
 
-def remoteInstallPackages(user, host, packages, platform, sshKey=None,
-                          password=''):
-    "platform - OS distribution as defined in util.SUPPORTED_PLATFORMS."
-    sudo = (user != 'root') and 'sudo ' or ''
+    cmd = ('%s %s %s' % (sudo, nohup_cmd, command)).strip()
 
-    # On freshly installed Ubuntu update is required first.
-    if platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['debian_based']:
-        rc, stderr = sshCmdWithStderr('%sapt-get update' % sudo,
-                                      host, user=user,
-                                      sshKey=sshKey, password=password)
-        if rc != 0:
-            raise Exceptions.ExecutionException("An error occurred while updating "
-                                                "system packages: %s." % stderr)
-
-    cmd = '%s%s' % (sudo,
-                    getPackagesInstallCommand(platform, packages))
-    rc, stderr = sshCmdWithStderr(cmd, host, user=user,
-                                  sshKey=sshKey, password=password)
+    rc, stderr = sshCmdWithStderr(cmd, host, user=user, sshKey=sshKey, password=password)
     if rc != 0:
-        raise Exceptions.ExecutionException("An error occurred while installing "
-                                            "user packages: %s." % stderr)
+        raise Exceptions.ExecutionException("An error occurred while executing the command: %s\n%s." % (command,stderr))
+
+    return rc, stderr
+

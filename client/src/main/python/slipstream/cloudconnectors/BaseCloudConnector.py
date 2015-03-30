@@ -35,7 +35,7 @@ from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
 from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
 from slipstream.utils.ssh import remoteRunScriptNohup, waitUntilSshCanConnectOrTimeout, remoteRunScript, \
-                                 remoteInstallPackages, generate_keypair
+                                 generate_keypair, remoteRunCommand
 from slipstream.utils.tasksrunner import TasksRunner
 from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
 from winrm.winrm_service import WinRMWebService
@@ -368,7 +368,7 @@ class BaseCloudConnector(object):
     def _build_image_increment(self, user_info, node_instance, host):
         prerecipe = node_instance.get_prerecipe()
         recipe = node_instance.get_recipe()
-        packages = ' '.join(node_instance.get_packages()).strip()
+        packages = node_instance.get_packages()
         try:
             machine_name = node_instance.get_name()
 
@@ -383,19 +383,17 @@ class BaseCloudConnector(object):
                                                sshKey=ssh_private_key_file)
 
             if prerecipe:
-                util.printStep('Running Pre-recipe')
-                self.__listener.write_for(machine_name, 'Running Pre-recipe')
+                self._print_step('Running Pre-recipe', machine_name)
                 remoteRunScript(username, host, prerecipe, sshKey=ssh_private_key_file, password=password)
+
             if packages:
-                util.printStep('Installing Packages')
-                self.__listener.write_for(machine_name, 'Installing Packages')
-                remoteInstallPackages(username, host, packages,
-                                      node_instance.get_platform(),
-                                      sshKey=ssh_private_key_file,
-                                      password=password)
+                self._print_step('Installing Packages', machine_name)
+                platform = node_instance.get_platform()
+                remoteRunCommand(command=util.get_packages_install_command(platform, packages),
+                                 host=host, user=username, sshKey=ssh_private_key_file, password=password)
+
             if recipe:
-                util.printStep('Running Recipe')
-                self.__listener.write_for(machine_name, 'Running Recipe')
+                self._print_step('Running Recipe', machine_name)
                 remoteRunScript(username, host, recipe, sshKey=ssh_private_key_file, password=password)
 
             if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
@@ -749,6 +747,11 @@ class BaseCloudConnector(object):
 
     def _print_detail(self, message):
         util.printDetail(message, self.verboseLevel)
+
+    def _print_step(self, message, write_for=None):
+        util.printStep(message)
+        if write_for:
+            self._get_listener().write_for(write_for, message)
 
     def get_vms_details(self):
         vms_details = []
