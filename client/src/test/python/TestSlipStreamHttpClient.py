@@ -114,18 +114,18 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 </imageModule>
 """ % {'package1': package1,
        'package2': package2,
-       'prerecipe': prerecipe,
-       'recipe': recipe}
+       NodeDecorator.NODE_PRERECIPE: prerecipe,
+       NodeDecorator.NODE_RECIPE: recipe}
 
         dom = etree.fromstring(image_module_xml)
         targets = DomExtractor.get_build_targets(dom)
 
         failMsg = "Failure getting '%s' build target."
-        assert targets['prerecipe'] == prerecipe, failMsg % 'prerecipe'
-        assert targets['recipe'] == recipe, failMsg % 'recipe'
-        assert isinstance(targets['packages'], list), failMsg % 'packages'
-        assert package1 in targets['packages'], failMsg % 'packages'
-        assert package2 in targets['packages'], failMsg % 'packages'
+        assert targets[NodeDecorator.NODE_PRERECIPE] == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
+        assert targets[NodeDecorator.NODE_RECIPE] == recipe, failMsg % NodeDecorator.NODE_RECIPE
+        assert isinstance(targets[NodeDecorator.NODE_PACKAGES], list), failMsg % NodeDecorator.NODE_PACKAGES
+        assert package1 in targets[NodeDecorator.NODE_PACKAGES], failMsg % NodeDecorator.NODE_PACKAGES
+        assert package2 in targets[NodeDecorator.NODE_PACKAGES], failMsg % NodeDecorator.NODE_PACKAGES
 
     def test_get_extra_disks(self):
         nodes = RUN_ETREE.findall(DomExtractor.PATH_TO_NODE_ON_RUN)

@@ -431,15 +431,15 @@ class DomExtractor(object):
     def get_build_targets(run_dom):
         targets = {}
 
-        for target in ['prerecipe', 'recipe']:
+        for target in [NodeDecorator.NODE_PRERECIPE, NodeDecorator.NODE_RECIPE]:
             targets[target] = DomExtractor.get_element_value_from_element_tree(run_dom, target)
 
-        targets['packages'] = []
+        targets[NodeDecorator.NODE_PACKAGES] = []
         packages = run_dom.findall('packages/package')
         for package in packages:
             name = package.get('name')
             if name:
-                targets['packages'].append(name)
+                targets[NodeDecorator.NODE_PACKAGES].append(name)
 
         return targets
 
