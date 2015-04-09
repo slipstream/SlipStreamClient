@@ -281,13 +281,12 @@ class BaseCloudConnector(object):
             vm = self._wait_and_get_instance_ip_address(vm)
             self.__add_vm(vm, node_instance)
 
-        if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION) and not self.is_build_image():
-            if not node_instance.is_windows():
-                self.__secure_ssh_access_and_run_bootstrap_script(
-                    user_info, node_instance, self._vm_get_ip(vm))
-            else:
-                self.__launch_windows_bootstrap_script(node_instance,
-                                                       self._vm_get_ip(vm))
+        if not self.is_build_image():
+            if not node_instance.is_windows() and not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
+                self.__secure_ssh_access_and_run_bootstrap_script(user_info, node_instance, self._vm_get_ip(vm))
+
+            elif node_instance.is_windows() and not self.has_capability(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION):
+                self.__launch_windows_bootstrap_script(node_instance, self._vm_get_ip(vm))
 
     def get_vms(self):
         return self.__vms
@@ -496,6 +495,9 @@ class BaseCloudConnector(object):
 
     def __launch_windows_bootstrap_script(self, node_instance, ip):
         username, password = self.__get_vm_username_password(node_instance)
+        if not username:
+            username = 'administrator'
+
         script = self._get_bootstrap_script(node_instance, username=username)
         winrm = self._getWinrm(ip, username, password)
         self._waitCanConnectWithWinrmOrAbort(winrm)
