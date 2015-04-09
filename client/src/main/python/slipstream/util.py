@@ -116,26 +116,24 @@ def execute(commandAndArgsList, **kwargs):
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
 
+    if not isinstance(commandAndArgsList, list):
+        commandAndArgsList = [commandAndArgsList]
+
     if is_windows():
         commandAndArgsList.insert(0, '-File')
         commandAndArgsList.insert(0, 'Bypass')
         commandAndArgsList.insert(0, '-ExecutionPolicy')
         commandAndArgsList.insert(0, 'powershell')
 
-    if isinstance(commandAndArgsList, list):
-        _cmd = ' '.join(commandAndArgsList)
-    else:
-        _cmd = commandAndArgsList
+    printDetail('Calling: %s' % ' '.join(commandAndArgsList), kwargs)
 
-    printDetail('Calling: %s' % _cmd, kwargs)
-
-    if isinstance(commandAndArgsList, list) and kwargs.get('shell', False):
+    if kwargs.get('shell', False):
         commandAndArgsList = ' '.join(commandAndArgsList)
 
     extra_env = kwargs.pop('extra_env', {})
     if extra_env:
-        kwargs['env'] = dict(chain(os.environ.copy().iteritems(),
-                                   extra_env.iteritems()))
+        kwargs['env'] = dict(chain(os.environ.copy().iteritems(), extra_env.iteritems()))
+
     process = subprocess.Popen(commandAndArgsList, **kwargs)
 
     if not wait:
