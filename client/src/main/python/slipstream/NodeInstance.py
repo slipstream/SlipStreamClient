@@ -142,7 +142,7 @@ class NodeInstance(object):
             return []
 
     def get_platform(self):
-        return self.__get(NodeDecorator.IMAGE_PLATFORM_KEY, 'linux')
+        return self.get_image_attribute(NodeDecorator.PLATFORM_KEY, 'linux')
 
     def get_scale_state(self):
         return self.__parameters.get(NodeDecorator.SCALE_STATE_KEY)

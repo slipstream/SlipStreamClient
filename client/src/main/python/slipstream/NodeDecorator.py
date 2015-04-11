@@ -68,7 +68,7 @@ class NodeDecorator(object):
     RECOVERY_MODE_KEY = 'recovery.mode'
 
     RUN_BUILD_RECIPES_KEY = 'run-build-recipes'
-    IMAGE_PLATFORM_KEY = 'image.platform'
+    PLATFORM_KEY = 'platform'
     SCALE_STATE_KEY = 'scale.state'
     INSTANCEID_KEY = 'instanceid'
     CLOUDSERVICE_KEY = 'cloudservice'
