@@ -38,6 +38,7 @@ class RunInstancesCommand(CloudClientCommand):
 
     IMAGE_ID_KEY = 'image-id'
     PLATFORM_KEY = 'platform'
+    LOGIN_USER_KEY = 'login-username'
     NETWORK_TYPE = 'network-type'
     EXTRA_DISK_VOLATILE = 'extra-disk-volatile'
     DEFAULT_TIMEOUT = 600
@@ -70,6 +71,10 @@ class RunInstancesCommand(CloudClientCommand):
                           help='Size of the volatile extra disk (in GB)',
                           default='', metavar='EXTRA-DISK-VOLATILE')
 
+        parser.add_option('--' + self.LOGIN_USER_KEY, dest=self.LOGIN_USER_KEY,
+                          help='Username of the user to use to contextualize the instance',
+                          default='', metavar='USER')
+
     def _get_command_mandatory_options(self):
         return [self.IMAGE_ID_KEY,
                 self.PLATFORM_KEY,
@@ -87,9 +92,15 @@ class RunInstancesCommand(CloudClientCommand):
             'image.id': self.get_option(self.IMAGE_ID_KEY),
             'network': self.get_option(self.NETWORK_TYPE)
         }
+
         if self.get_option(self.EXTRA_DISK_VOLATILE):
             runtime_parameters.update({'extra.disk.volatile':
                                         self.get_option(self.EXTRA_DISK_VOLATILE)})
+
+        if self.get_option(self.LOGIN_USER_KEY):
+            runtime_parameters.update({NodeInstance.IMAGE_ATTRIBUTE_PREFIX + '.' + NodeDecorator.LOGIN_USER_KEY:
+                                       self.get_option(self.LOGIN_USER_KEY)})
+
         return NodeInstance(runtime_parameters)
 
     def do_work(self):
