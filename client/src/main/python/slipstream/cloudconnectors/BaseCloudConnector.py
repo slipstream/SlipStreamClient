@@ -421,8 +421,8 @@ class BaseCloudConnector(object):
         os.chmod(ssh_private_key_file, 0400)
         return ssh_private_key_file
 
-    def __get_vm_username_password(self, node_instance):
-        user = node_instance.get_username('root')
+    def __get_vm_username_password(self, node_instance, default_user='root'):
+        user = node_instance.get_username(default_user)
         password = self.__get_vm_password(node_instance)
         return user, password
 
@@ -494,9 +494,7 @@ class BaseCloudConnector(object):
                                                                       output))
 
     def __launch_windows_bootstrap_script(self, node_instance, ip):
-        username, password = self.__get_vm_username_password(node_instance)
-        if not username:
-            username = 'administrator'
+        username, password = self.__get_vm_username_password(node_instance, 'administrator')
 
         script = self._get_bootstrap_script(node_instance, username=username)
         winrm = self._getWinrm(ip, username, password)

@@ -157,7 +157,7 @@ class NodeInstance(object):
         return self.get_image_target(NodeDecorator.NODE_PACKAGES, [])
 
     def get_username(self, default_value=None):
-        return self.get_image_attribute('loginUser', default_value)
+        return self.get_image_attribute(NodeDecorator.LOGIN_USER_KEY, default_value)
 
     def get_password(self):
         return self.get_cloud_parameter('login.password')
