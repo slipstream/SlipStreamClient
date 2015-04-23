@@ -14,7 +14,7 @@
    <nodes >
       <entry>
          <string>testclient</string>
-         <node cloudService="default" creation="2013-11-16 08:15:35.934 CET" deleted="false" imageUri="module/examples/tutorials/service-testing/client" multiplicity="1" name="testclient" network="Public">
+         <node cloudService="default" creation="2013-11-16 08:15:35.934 CET" deleted="false" imageUri="module/examples/tutorials/service-testing/client" maxProvisioningFailures="0" multiplicity="1" name="testclient" network="Public">
             <parameters >
                <entry>
                   <string>webserver.port</string>
@@ -208,7 +208,7 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
       </entry>
       <entry>
          <string>apache</string>
-         <node cloudService="default" creation="2013-11-16 08:15:35.934 CET" deleted="false" imageUri="module/examples/tutorials/service-testing/apache" multiplicity="1" name="apache" network="Public">
+         <node cloudService="default" creation="2013-11-16 08:15:35.934 CET" deleted="false" imageUri="module/examples/tutorials/service-testing/apache" maxProvisioningFailures="0" multiplicity="1" name="apache" network="Public">
             <parameters />
             <parameterMappings />
             <image category="Image" creation="2013-11-16 08:43:51.658 CET" deleted="false" description="Apache web server appliance with custom landing page." isBase="false" lastModified="2013-11-24 11:46:54.916 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/service-testing/apache" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="77">

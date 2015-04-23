@@ -14,7 +14,7 @@
    <nodes >
       <entry>
          <string>worker</string>
-         <node cloudService="default" creation="2013-10-30 10:54:54.242 CET" deleted="false" imageUri="module/examples/tutorials/torque/torque-worker" multiplicity="2" name="worker" network="Public">
+         <node cloudService="default" creation="2013-10-30 10:54:54.242 CET" deleted="false" imageUri="module/examples/tutorials/torque/torque-worker" maxProvisioningFailures="0" multiplicity="2" name="worker" network="Public">
             <parameters />
             <parameterMappings />
             <image category="Image" creation="2013-11-16 09:03:03.212 CET" deleted="false" description="worker node for torque cluster" isBase="false" lastModified="2013-11-24 11:46:55.456 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/torque/torque-worker" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-worker" version="80">
@@ -213,7 +213,7 @@ ssh-keyscan `ss-get master.1:master_hostname` &gt;&gt; /home/tuser/.ssh/known_ho
       </entry>
       <entry>
          <string>master</string>
-         <node cloudService="default" creation="2013-10-30 10:54:54.242 CET" deleted="false" imageUri="module/examples/tutorials/torque/torque-master" multiplicity="1" name="master" network="Public">
+         <node cloudService="default" creation="2013-10-30 10:54:54.242 CET" deleted="false" imageUri="module/examples/tutorials/torque/torque-master" maxProvisioningFailures="0" multiplicity="1" name="master" network="Public">
             <parameters />
             <parameterMappings />
             <image category="Image" creation="2013-11-16 11:03:32.474 CET" deleted="false" description="master node for torque cluster" isBase="false" lastModified="2013-11-24 11:46:55.238 CET" loginUser="root" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/torque/torque-master" parentUri="module/examples/tutorials/torque" platform="ubuntu" shortName="torque-master" version="79">

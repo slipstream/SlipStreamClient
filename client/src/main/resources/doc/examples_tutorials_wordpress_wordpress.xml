@@ -14,7 +14,7 @@
    <nodes >
       <entry>
          <string>wp</string>
-         <node cloudService="stratuslab" creation="2013-11-15 13:47:49.339 CET" deleted="false" imageUri="module/examples/tutorials/wordpress/wordpress-appliance" multiplicity="1" name="wp" network="Public">
+         <node cloudService="stratuslab" creation="2013-11-15 13:47:49.339 CET" deleted="false" imageUri="module/examples/tutorials/wordpress/wordpress-appliance" maxProvisioningFailures="0" multiplicity="1" name="wp" network="Public">
             <parameters >
                <entry>
                   <string>mysql_password</string>
