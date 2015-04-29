@@ -100,6 +100,7 @@ class HttpClient(object):
             PRECONDITION_FAILED_ERROR = 412
             EXPECTATION_FAILED_ERROR = 417
             TOO_MANY_REQUESTS_ERROR = 429
+
             if resp.status == CONFLICT_ERROR:
                 raise Exceptions.AbortException(_extractDetail(content))
             if resp.status == PRECONDITION_FAILED_ERROR:
@@ -107,7 +108,7 @@ class HttpClient(object):
             if resp.status == EXPECTATION_FAILED_ERROR:
                 raise Exceptions.TerminalStateException(_extractDetail(content))
             if resp.status == TOO_MANY_REQUESTS_ERROR:
-                raise Exceptions.TooManyRequestsError("Too Many Requests. Retry later.")
+                raise Exceptions.TooManyRequestsError("Too Many Requests")
 
             # FIXME: fix the server such that 406 is not returned when cookie expires
             if resp.status == 401 or resp.status == 406:
@@ -126,9 +127,13 @@ class HttpClient(object):
             raise clientEx
 
         def _handle5xx(resp):
-            raise Exceptions.ServerError(
-                "Failed calling method %s on url %s, with reason: %d: %s" % (
-                    method, url, resp.status, resp.reason))
+            SERVICE_UNAVAILABLE_ERROR = 503
+
+            if resp.status == SERVICE_UNAVAILABLE_ERROR:
+                raise Exceptions.ServiceUnavailableError("SlipStream is in maintenance.")
+            else:
+                raise Exceptions.ServerError("Failed calling method %s on url %s, with reason: %d: %s"
+                                             % (method, url, resp.status, resp.reason))
 
         def _extractDetail(xmlContent):
             if xmlContent == '':
@@ -203,13 +208,13 @@ class HttpClient(object):
                         self.too_many_requests_count -= 1
                 return resp, content
 
-            except Exceptions.TooManyRequestsError:
+            except (Exceptions.TooManyRequestsError, Exceptions.ServiceUnavailableError) as ex:
                 sleep = min(abs(float(self.too_many_requests_count) / 10.0 * 290 + 10), 300)
                 sleep += (random() * sleep * 0.2) - (sleep * 0.1)
                 with self.lock:
                     if self.too_many_requests_count < 11:
                         self.too_many_requests_count += 1
-                util.printDetail('Too Many Requests error. Retrying in %s seconds.' % sleep)
+                util.printDetail('Error: %s. Retrying in %s seconds.' % (ex, sleep))
                 time.sleep(sleep)
                 util.printDetail('Retrying...')
 

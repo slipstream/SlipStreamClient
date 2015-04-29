@@ -40,7 +40,12 @@ class NetworkError(ServerError):
 class SecurityError(ServerError):
     pass
 
+
 class TooManyRequestsError(ServerError):
+    pass
+
+
+class ServiceUnavailableError(ServerError):
     pass
 
 
