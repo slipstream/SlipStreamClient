@@ -3,6 +3,7 @@ target
 *.pyc
 *.pyo
 *.log
+*.iml
 .idea/
 .coverage
 .cache/
