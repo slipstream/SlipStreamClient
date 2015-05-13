@@ -102,7 +102,7 @@ class ThreadWrapper(Thread):
         super(ThreadWrapper, self).__init__(group=group, target=target,
                                             name=name, args=args,
                                             kwargs=kwargs, verbose=verbose)
-        self.setDaemon(daemonic)
+        self.daemon = daemonic
         if exc_queue and not hasattr(exc_queue, 'put'):
             raise TypeError('exc_queue object must support queue interface put()')
         self.exc_queue = exc_queue
