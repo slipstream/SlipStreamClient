@@ -28,12 +28,14 @@ QUEUE_GET_TIMEOUT = 3
 
 class TasksRunner(object):
 
-    def __init__(self, task_executor=None, max_workers=None, verbose=None):
+    def __init__(self, task_executor=None, max_workers=None, verbose=None,
+                 daemonic_workers=True):
         self._executor = task_executor
         self._max_workers = (max_workers == None) and DEFAULT_WORKERS_NUMBER \
             or int(max_workers)
         self._verbose = verbose
         self.workers = []
+        self.daemonic_workers = daemonic_workers
         self.tasks_queue = Queue.Queue()
         # Queue with exceptions from threads.
         self.exc_queue = Queue.Queue()
@@ -47,8 +49,7 @@ class TasksRunner(object):
         for _ in range(nworkers):
             worker = Worker(self._executor, self.tasks_queue)
             thr = ThreadWrapper(target=worker.work, exc_queue=self.exc_queue,
-                                verbose=self._verbose)
-            # thr.daemon = True
+                                verbose=self._verbose, daemonic=self.daemonic_workers)
             self.workers.append(thr)
             thr.start()
 
@@ -94,12 +95,14 @@ class Worker(object):
 
 class ThreadWrapper(Thread):
     def __init__(self, group=None, target=None, name=None,
-                 args=(), kwargs=None, verbose=None, exc_queue=None):
+                 args=(), kwargs=None, verbose=None, exc_queue=None,
+                 daemonic=True):
         if verbose != None and int(verbose) >= 3:
             verbose = True
         super(ThreadWrapper, self).__init__(group=group, target=target,
                                             name=name, args=args,
                                             kwargs=kwargs, verbose=verbose)
+        self.setDaemon(daemonic)
         if exc_queue and not hasattr(exc_queue, 'put'):
             raise TypeError('exc_queue object must support queue interface put()')
         self.exc_queue = exc_queue
