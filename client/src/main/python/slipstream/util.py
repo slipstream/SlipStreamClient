@@ -28,6 +28,7 @@ import getpass
 import urllib2
 import uuid as uuidModule
 import warnings
+import pwd
 from itertools import chain
 from ConfigParser import SafeConfigParser
 
@@ -574,6 +575,9 @@ def append_ssh_pubkey_to_authorized_keys(pubkey, user=''):
     if not user:
         user = getpass.getuser()
 
+    if not user_exists(user):
+        raise Exceptions.ExecutionException('User %s not found.' % user)
+
     dot_ssh_path = os.path.expanduser('~' + user) + '/.ssh'
     try:
         os.mkdir(dot_ssh_path)
@@ -688,3 +692,13 @@ def get_required_envvar(env_name):
         return os.environ[env_name]
     except KeyError:
         raise Exception('ERROR: Environment variable %s is required.' % env_name)
+
+
+def user_exists(user):
+    try:
+        pwd.getpwnam(user)
+    except KeyError:
+        return False
+    else:
+        return True
+
