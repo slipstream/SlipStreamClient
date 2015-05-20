@@ -136,20 +136,22 @@ class BaseCloudConnector(object):
         :type node_instance: <NodeInstance>
         """
 
-        raise NotImplementedError()
+        # Example code
 
         # Cloud VM id.
-        vm_id = node_instance.get_instance_id()
+        #vm_id = node_instance.get_instance_id()
 
         # RAM in GB.
-        ram = node_instance.get_ram()
+        #ram = node_instance.get_ram()
         # Number of CPUs.
-        cpu = node_instance.get_cpu()
+        #cpu = node_instance.get_cpu()
 
         # In case cloud uses T-short sizes.
-        instance_type = node_instance.get_instance_type()
+        #instance_type = node_instance.get_instance_type()
 
         # IaaS calls go here.
+
+        raise NotImplementedError()
 
     def attach_disk(node_instance):
         """Attach extra disk to the VM.
@@ -159,19 +161,21 @@ class BaseCloudConnector(object):
         :rtype: string
         """
 
-        raise NotImplementedError()
+        # Example code
 
-        device_name = ''
+        #device_name = ''
 
         # Cloud VM id.
-        vm_id = node_instance.get_instance_id()
+        #vm_id = node_instance.get_instance_id()
 
         # Size of the disk to attach (in GB).
-        disk_size_GB = node_instance.get_cloud_parameter('disk.attach.size')
+        #disk_size_GB = node_instance.get_cloud_parameter('disk.attach.size')
 
         # IaaS calls go here.
 
-        return device_name
+        #return device_name
+
+        raise NotImplementedError()
 
     def detach_disk(node_instance):
         """Detach disk from the VM.
@@ -179,15 +183,17 @@ class BaseCloudConnector(object):
         :type node_instance: <NodeInstance>
         """
 
-        raise NotImplementedError()
+        # Example code
 
         # Cloud VM id.
-        vm_id = node_instance.get_instance_id()
+        #vm_id = node_instance.get_instance_id()
 
         # Name of the block device to detach (/dev/XYZ).
-        device = node_instance.get_cloud_parameter('disk.detach.device')
+        #device = node_instance.get_cloud_parameter('disk.detach.device')
 
         # IaaS calls go here.
+
+        raise NotImplementedError()
 
 #   ----------------------------------------------------------------
 
