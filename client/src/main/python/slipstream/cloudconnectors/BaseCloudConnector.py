@@ -117,6 +117,84 @@ class BaseCloudConnector(object):
         """
         return self.VM_FAILED_STATES
 
+
+    """IaaS actions for VM vertical scalability.
+
+    If the VM needs to be restarted, the implementation should
+    * wait until VM enters Running state, and
+    * assert that the action was correctly fulfilled by IaaS.
+    If the action on the VM can be applied w/o restart, the implementation should
+    * wait until action is applied by IaaS, and
+    * assert that the action was correctly fulfilled by IaaS.
+    Raise `slipstream.exceptions.Exceptions.ExecutionException`
+    on any handled error.
+    """
+
+    def resize(node_instance):
+        """
+        :param node_instance: node instance object
+        :type node_instance: <NodeInstance>
+        """
+
+        # Example code
+
+        # Cloud VM id.
+        #vm_id = node_instance.get_instance_id()
+
+        # RAM in GB.
+        #ram = node_instance.get_ram()
+        # Number of CPUs.
+        #cpu = node_instance.get_cpu()
+
+        # In case cloud uses T-short sizes.
+        #instance_type = node_instance.get_instance_type()
+
+        # IaaS calls go here.
+
+        raise NotImplementedError()
+
+    def attach_disk(node_instance):
+        """Attach extra disk to the VM.
+        :param node_instance: node instance object
+        :type node_instance: <NodeInstance>
+        :return: name of the device that was attached
+        :rtype: string
+        """
+
+        # Example code
+
+        #device_name = ''
+
+        # Cloud VM id.
+        #vm_id = node_instance.get_instance_id()
+
+        # Size of the disk to attach (in GB).
+        #disk_size_GB = node_instance.get_cloud_parameter('disk.attach.size')
+
+        # IaaS calls go here.
+
+        #return device_name
+
+        raise NotImplementedError()
+
+    def detach_disk(node_instance):
+        """Detach disk from the VM.
+        :param node_instance: node instance object
+        :type node_instance: <NodeInstance>
+        """
+
+        # Example code
+
+        # Cloud VM id.
+        #vm_id = node_instance.get_instance_id()
+
+        # Name of the block device to detach (/dev/XYZ).
+        #device = node_instance.get_cloud_parameter('disk.detach.device')
+
+        # IaaS calls go here.
+
+        raise NotImplementedError()
+
 #   ----------------------------------------------------------------
 
     TIMEOUT_CONNECT = 10 * 60
