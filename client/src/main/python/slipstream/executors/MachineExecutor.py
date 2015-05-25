@@ -62,6 +62,11 @@ class MachineExecutor(object):
                                      'specified.')
         try:
             getattr(self, 'on' + state)()
+        except AttributeError as ex:
+            msg = "Machine executor does not implement '%s' state." % state
+            util.printError('Error executing node, with detail: %s (%s)' % (msg, ex))
+            traceback.print_exc()
+            self._fail_str(msg)
         except AbortException as ex:
             util.printError('Abort flag raised: %s' % ex)
         except TerminalStateException:
@@ -77,13 +82,22 @@ class MachineExecutor(object):
         if self._need_to_complete(state):
             self.wrapper.complete_state()
 
+    @staticmethod
+    def _failure_msg_from_exception(exception):
+        """
+        :param exception: exception class
+        :return: string
+        """
+        return "Exception %s with detail: %s" % (exception.__class__, str(exception))
+
     def _fail(self, exception):
-        self.wrapper.fail("Exception %s with detail: %s" % (exception.__class__,
-                                                            str(exception)))
+        self.wrapper.fail(self._failure_msg_from_exception(exception))
 
     def _fail_global(self, exception):
-        self.wrapper.fail_global("Exception %s with detail: %s" % (exception.__class__,
-                                                                   str(exception)))
+        self.wrapper.fail_global(self._failure_msg_from_exception(exception))
+
+    def _fail_str(self, msg):
+        self.wrapper.fail(msg)
 
     def _wait_for_next_state(self, state):
         """Returns the next state after waiting (polling is used) for the state
