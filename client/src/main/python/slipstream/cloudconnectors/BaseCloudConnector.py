@@ -130,7 +130,7 @@ class BaseCloudConnector(object):
     on any handled error.
     """
 
-    def resize(node_instance):
+    def resize(self, node_instance):
         """
         :param node_instance: node instance object
         :type node_instance: <NodeInstance>
@@ -153,7 +153,7 @@ class BaseCloudConnector(object):
 
         raise NotImplementedError()
 
-    def attach_disk(node_instance):
+    def attach_disk(self, node_instance):
         """Attach extra disk to the VM.
         :param node_instance: node instance object
         :type node_instance: <NodeInstance>
@@ -177,7 +177,7 @@ class BaseCloudConnector(object):
 
         raise NotImplementedError()
 
-    def detach_disk(node_instance):
+    def detach_disk(self, node_instance):
         """Detach disk from the VM.
         :param node_instance: node instance object
         :type node_instance: <NodeInstance>
