@@ -24,26 +24,25 @@ from slipstream import util
 
 
 class OrchestratorDeploymentExecutor(MachineExecutor):
-    def __init__(self, wrapper, configHolder=ConfigHolder()):
+    def __init__(self, wrapper, config_holder=ConfigHolder()):
         super(OrchestratorDeploymentExecutor, self).__init__(wrapper,
-                                                             configHolder)
+                                                             config_holder)
 
     @override
     def onProvisioning(self):
         super(OrchestratorDeploymentExecutor, self).onProvisioning()
 
-        try:
-            util.printStep('Starting instances')
-            self.wrapper.start_node_instances()
-            util.printStep('Removing instances')
-            self.wrapper.stop_node_instances()
-        except Exceptions.AbortException:
+        if self._is_vertical_scaling():
             pass
-        except Exception as ex:
-            util.printError('Error starting instances with error: %s' % ex)
-            raise
+        else:
+            self._start_instances()
+            self._stop_instances()
 
         self._complete_state_for_failed_node_instances()
+
+    def _is_vertical_scaling(self):
+        # check scale.state is "vertical scaling" i.e. one of <resizing|disk_attaching|disk_detaching>
+        return False
 
     @override
     def onExecuting(self):
@@ -71,18 +70,34 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def onFinalizing(self):
         super(OrchestratorDeploymentExecutor, self).onFinalizing()
 
-        util.printStep('Stopping instances')
-        try:
-            self.wrapper.stopNodes()
-        except Exceptions.AbortException:
-            pass
-        except Exception as ex:
-            util.printError('Error stopping instances: %s' % ex)
-            raise
+        self._run_instances_action(self.wrapper.stopNodes, 'stopping')
 
         self.wrapper.complete_state()
 
         self._killItself()
+
+    def _start_instances(self):
+        self._run_instances_action(self.wrapper.start_node_instances, 'starting')
+
+    def _stop_instances(self):
+        self._run_instances_action(self.wrapper.stop_node_instances, 'stopping')
+
+    @staticmethod
+    def _run_instances_action(action, action_name):
+        """
+        :param action: action to run
+        :type action: callable
+        :param action_name: name of the action
+        :type: string
+        """
+        util.printStep('%s instances' % action_name.capitalize())
+        try:
+            action()
+        except Exceptions.AbortException:
+            pass
+        except Exception as ex:
+            util.printError('Error %s instances: %s' % (action_name, ex))
+            raise
 
     def _complete_state_for_failed_node_instances(self):
         self.wrapper.complete_state_for_failed_node_instances()
