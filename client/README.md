@@ -58,8 +58,8 @@ esac
 
 If required, the scripts should be defined in the image module's `Pre-Scale` and/or `Post-Scale` 
 targets and are intended to be used before and/or after the scaling up/down actions.  The scripts
-are only executed on the VMs that are subject to the current scaling action.  Below is the 
-example script for `Bash`.
+are only executed on the VMs that are subject to the current scaling action.  Below are the 
+example scripts for `Bash`.
 
 `Pre-Scale` script.  Note that it can be used on VM remove horizontal scalability action.
 
