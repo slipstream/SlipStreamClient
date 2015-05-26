@@ -34,12 +34,18 @@ class MachineExecutor(object):
     WAIT_NEXT_STATE_SHORT = 15
     WAIT_NEXT_STATE_LONG = 60
 
-    def __init__(self, wrapper, configHolder=ConfigHolder()):
+    def __init__(self, wrapper, config_holder=ConfigHolder()):
+        """
+        :param wrapper: SlipStream client and cloud client wrapper
+        :type wrapper: slipstream.wrappers.CloudWrapper
+        :param config_holder: configuration holder
+        :type config_holder: slipstream.ConfigHolder
+        """
         self.wrapper = wrapper
         self.timeout = 55 * 60  # 50 minutes
         self.ssLogDir = Client.REPORTSDIR
         self.verboseLevel = 0
-        configHolder.assign(self)
+        config_holder.assign(self)
 
         self.reportFilesAndDirsList = [self.ssLogDir]
 
