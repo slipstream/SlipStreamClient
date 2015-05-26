@@ -101,11 +101,11 @@ function after_disk_detach() { echo "After disk detach"; }
 
 case $SLIPSTREAM_SCALING_ACTION in
   vm_resize)
-      before_vm_resize ;;
+      after_vm_resize ;;
   disk_attach)
-      before_disk_attach ;;
+      after_disk_attach ;;
   disk_detach)
-      before_disk_detach ;;
+      after_disk_detach ;;
 esac
 ```
 
