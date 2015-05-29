@@ -25,8 +25,8 @@ from slipstream.exceptions import Exceptions
 
 
 class NodeInfoPublisher(SlipStreamHttpClient):
-    def __init__(self, configHolder):
-        super(NodeInfoPublisher, self).__init__(configHolder)
+    def __init__(self, config_holder):
+        super(NodeInfoPublisher, self).__init__(config_holder)
         self.set_http_max_retries(-5)
 
     def publish(self, nodename, vm_id, vm_ip):
@@ -34,16 +34,16 @@ class NodeInfoPublisher(SlipStreamHttpClient):
         self.publish_hostname(nodename, vm_ip)
 
     def publish_instanceid(self, nodename, vm_id):
-        self._setRuntimeParameter(nodename, 'instanceid', vm_id)
+        self._set_runtime_parameter(nodename, 'instanceid', vm_id)
 
     def publish_hostname(self, nodename, vm_ip):
-        self._setRuntimeParameter(nodename, 'hostname', vm_ip)
+        self._set_runtime_parameter(nodename, 'hostname', vm_ip)
 
     def publish_url_ssh(self, nodename, vm_ip, username):
         url = 'ssh://%s@%s' % (username.strip(), vm_ip.strip())
-        self._setRuntimeParameter(nodename, 'url.ssh', url)
+        self._set_runtime_parameter(nodename, 'url.ssh', url)
 
-    def _setRuntimeParameter(self, nodename, key, value):
+    def _set_runtime_parameter(self, nodename, key, value):
         parameter = nodename + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
         self.setRuntimeParameter(parameter, value, ignoreAbort=True)
 
