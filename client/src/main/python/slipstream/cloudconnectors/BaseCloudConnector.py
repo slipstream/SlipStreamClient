@@ -279,6 +279,23 @@ class BaseCloudConnector(object):
     def has_capability(self, capability):
         return capability in self.__capabilities
 
+    def __set_contextualization_capabilities(self, user_info):
+        native_contextualization = user_info.get_cloud(NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY, None)
+        if native_contextualization:
+            try:
+                self.__capabilities.remove(self.CAPABILITY_CONTEXTUALIZATION)
+                self.__capabilities.remove(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+            except ValueError:
+                pass
+
+            if native_contextualization == 'always':
+                self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
+                self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+            elif native_contextualization == 'linux only':
+                self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
+            elif native_contextualization == 'windows only':
+                self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+
     def is_build_image(self):
         return self.run_category == NodeDecorator.IMAGE
 
@@ -317,6 +334,7 @@ class BaseCloudConnector(object):
 
     def start_nodes_and_clients(self, user_info, nodes_instances, init_extra_kwargs={}):
         self._initialization(user_info, **init_extra_kwargs)
+        self.__set_contextualization_capabilities(user_info)
         try:
             self.__start_nodes_instantiation_tasks_wait_finished(user_info,
                                                                  nodes_instances)
@@ -734,7 +752,7 @@ class BaseCloudConnector(object):
 
         command = 'mkdir %(reports)s\n'
         command += 'If Not Exist "C:\\Python27\\python.exe" ( '
-        command += '  powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'http://www.python.org/ftp/python/2.7.4/python-2.7.4.msi\', $env:temp+\'\\python.msi\')"\n'
+        command += '  powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'https://www.python.org/ftp/python/2.7.10/python-2.7.10.amd64.msi\', $env:temp+\'\\python.msi\')"\n'
         command += '  start /wait msiexec /i %%TMP%%\\python.msi /qn /quiet /norestart /log log.txt TARGETDIR=C:\\Python27\\ ALLUSERS=1 '
         command += ')\n'
         command += 'setx path "%%path%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin" /M\n'

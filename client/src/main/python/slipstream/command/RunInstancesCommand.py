@@ -75,10 +75,21 @@ class RunInstancesCommand(CloudClientCommand):
                           help='Username of the user to use to contextualize the instance',
                           default='', metavar='USER')
 
+        parser.add_option('--' + NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY, dest=NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY,
+                          help='When SlipStream should use the native Cloud contextualization mechanisme (instead of SSH/WinRM)\nPossible values: never|always|linux only|windows only',
+                          default='', metavar='NATIV_CONTEXTUALIZATION')
+
     def _get_command_mandatory_options(self):
         return [self.IMAGE_ID_KEY,
                 self.PLATFORM_KEY,
                 self.NETWORK_TYPE]
+
+    def _get_command_specific_user_cloud_params(self):
+        native_contextualization = self.get_option(NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY)
+        if native_contextualization:
+            return {NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY: native_contextualization}
+        else:
+            return {}
 
     def _get_default_timeout(self):
         return self.DEFAULT_TIMEOUT
