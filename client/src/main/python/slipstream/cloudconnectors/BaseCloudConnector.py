@@ -291,9 +291,9 @@ class BaseCloudConnector(object):
             if native_contextualization == 'always':
                 self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
                 self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
-            elif native_contextualization == 'linux only':
+            elif native_contextualization == 'linux-only':
                 self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
-            elif native_contextualization == 'windows only':
+            elif native_contextualization == 'windows-only':
                 self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
 
     def is_build_image(self):
