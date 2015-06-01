@@ -79,6 +79,7 @@ class NodeDecorator(object):
     CLOUDSERVICE_KEY = 'cloudservice'
     SECURITY_GROUPS_KEY = 'security.groups'
     MAX_PROVISIONING_FAILURES_KEY = 'max-provisioning-failures'
+    NATIVE_CONTEXTUALIZATION_KEY = 'native-contextualization'
 
     urlIgnoreAbortAttributeFragment = '?ignoreabort=true'
 

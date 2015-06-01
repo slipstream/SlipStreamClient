@@ -279,6 +279,23 @@ class BaseCloudConnector(object):
     def has_capability(self, capability):
         return capability in self.__capabilities
 
+    def __set_contextualization_capabilities(self, user_info):
+        native_contextualization = user_info.get_cloud(NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY, None)
+        if native_contextualization:
+            try:
+                self.__capabilities.remove(self.CAPABILITY_CONTEXTUALIZATION)
+                self.__capabilities.remove(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+            except ValueError:
+                pass
+
+            if native_contextualization == 'always':
+                self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
+                self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+            elif native_contextualization == 'linux-only':
+                self.__capabilities.append(self.CAPABILITY_CONTEXTUALIZATION)
+            elif native_contextualization == 'windows-only':
+                self.__capabilities.append(self.CAPABILITY_WINDOWS_CONTEXTUALIZATION)
+
     def is_build_image(self):
         return self.run_category == NodeDecorator.IMAGE
 
@@ -317,6 +334,7 @@ class BaseCloudConnector(object):
 
     def start_nodes_and_clients(self, user_info, nodes_instances, init_extra_kwargs={}):
         self._initialization(user_info, **init_extra_kwargs)
+        self.__set_contextualization_capabilities(user_info)
         try:
             self.__start_nodes_instantiation_tasks_wait_finished(user_info,
                                                                  nodes_instances)
@@ -594,7 +612,7 @@ class BaseCloudConnector(object):
         shellId = winrm.open_shell()
         commands = ''
         for command in script.splitlines():
-            if command:
+            if command and not command.startswith('rem '):
                 commands += command + '& '
         commands += 'echo "Bootstrap Finished"'
         stdout, stderr, returnCode = self._runCommandWithWinrm(winrm, commands,
@@ -631,17 +649,19 @@ class BaseCloudConnector(object):
         util.printAndFlush('\nwinrm.run_command\n')
         commandId = winrm.run_command(_shellId, command, [])
         stdout, stderr, returnCode = ('N/A', 'N/A', 0)
-        util.printAndFlush('\nwinrm.get_command_output\n')
+
         if not runAndContinue:
+            util.printAndFlush('\nwinrm.get_command_output\n')
             try:
                 stdout, stderr, returnCode = winrm.get_command_output(_shellId, commandId)
             except Exception as e:  # pylint: disable=broad-except
                 print 'WINRM Exception: %s' % str(e)
-        util.printAndFlush('\nwinrm.cleanup_command\n')
-        if not runAndContinue:
+
+            util.printAndFlush('\nwinrm.cleanup_command\n')
             winrm.cleanup_command(_shellId, commandId)
             if not shellId:
                 winrm.close_shell(_shellId)
+
         return stdout, stderr, returnCode
 
     def __get_obfuscation_script(self, orchestrator_public_key, username, user_info=None):
@@ -674,6 +694,7 @@ class BaseCloudConnector(object):
 
         if node_instance.is_windows():
             addEnvironmentVariableCommand = 'set'
+            script += 'rem cmd\n'
         else:
             addEnvironmentVariableCommand = 'export'
             script += '#!/bin/sh -ex\n'
@@ -730,17 +751,19 @@ class BaseCloudConnector(object):
             targetScript = 'slipstream-orchestrator'
 
         command = 'mkdir %(reports)s\n'
-        command += 'powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'http://www.python.org/ftp/python/2.7.4/python-2.7.4.msi\', $env:temp+\'\\python.msi\')"\n'
-        command += 'start /wait msiexec /i %%TMP%%\\python.msi /qn /quiet /norestart /log log.txt TARGETDIR=C:\\Python27\\ ALLUSERS=1\n'
-        command += 'setx path "%%path%%;C:\\Python27" /M\n'
+        command += 'If Not Exist "C:\\Python27\\python.exe" ( '
+        command += '  powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'https://www.python.org/ftp/python/2.7.10/python-2.7.10.amd64.msi\', $env:temp+\'\\python.msi\')"\n'
+        command += '  start /wait msiexec /i %%TMP%%\\python.msi /qn /quiet /norestart /log log.txt TARGETDIR=C:\\Python27\\ ALLUSERS=1 '
+        command += ')\n'
+        command += 'setx path "%%path%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin" /M\n'
+        command += 'setx PYTHONPATH "%%PYTHONPATH%%;C:\\opt\\slipstream\\client\\lib" /M\n'
         command += 'powershell -Command "[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}; $wc = New-Object System.Net.WebClient; $wc.Headers.Add(\'User-Agent\',\'PowerShell\'); $wc.DownloadFile(\'%(bootstrapUrl)s\', $env:temp+\'\\%(bootstrap)s\')" > %(reports)s\\%(nodename)s.slipstream.log 2>&1\n'
-        command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin\n'
+        command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
 
         password = ''
         if not self.has_capability(self.CAPABILITY_GENERATE_PASSWORD):
-            password = ''.join(random.choice(string.ascii_letters + string.digits)
-                               for _ in range(10))
+            password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
             command += 'set pass=%(password)s\n'
             command += 'net user %(username)s %%pass%%\n'
             command += 'ss-get nodename > tmp.txt\n'

@@ -29,6 +29,7 @@ import subprocess
 import tempfile
 import commands
 import traceback
+import getpass
 
 SLIPSTREAM_CLIENT_HOME = os.path.join(os.sep, 'opt', 'slipstream', 'client')
 
@@ -180,6 +181,19 @@ def _deployRemoteTarball(url, extract_to, name):
     _downloadAndExtractTarball(url, extract_to)
     __pythonpathPrepend(extract_to)
 
+def _is_root_or_administrator():
+    user = getpass.getuser()
+    if user == None:
+        return False
+    else:
+        user = user.lower()
+    return user == 'root' or user == 'administrator'
+
+def _add_sudo_if_needed(cmd):
+    if not _is_root_or_administrator():
+        cmd.insert(0, 'sudo')
+    return cmd
+
 def _setInstallCommandAndDistro():
     global INSTALL_CMD, DISTRO
 
@@ -192,7 +206,7 @@ def _setInstallCommandAndDistro():
             else:
                 # TODO: on Ubuntu 10.04 there is no subprocess.check_output()!!!
                 install_cmd = commands.getoutput('which %s' % pkgmngr)
-                INSTALL_CMD = ['sudo', install_cmd, '-y', 'install']
+                INSTALL_CMD = _add_sudo_if_needed([install_cmd, '-y', 'install'])
                 DISTRO = (pkgmngr == 'apt-get') and 'ubuntu' or 'redhat'
                 if DISTRO == 'ubuntu':
                     subprocess.check_call([install_cmd, '-y', 'update'],
@@ -202,22 +216,21 @@ def _setInstallCommandAndDistro():
 
 
 def _installPip():
-    global PIP_INSTALLED
+    global PIP_INSTALLED, INSTALL_CMD
     if not PIP_INSTALLED:
         _setInstallCommandAndDistro()
         subprocess.check_call(INSTALL_CMD + ['python-setuptools'], stdout=subprocess.PIPE)
-        subprocess.check_call(['sudo', 'easy_install', 'pip'], stdout=subprocess.PIPE)
+        subprocess.check_call(_add_sudo_if_needed(['easy_install', 'pip']), stdout=subprocess.PIPE)
         PIP_INSTALLED = True
 
-
 def _installPycryptoDependencies():
-    deps = ['gcc', (DISTRO == 'ubuntu') and 'python-dev' or 'python-devel']
+    deps = ['gcc', (DISTRO == 'ubuntu') and 'python-dev' or 'python-devel', (DISTRO == 'ubuntu') and 'libgmp3-dev' or 'gmp-devel']
     subprocess.check_call(INSTALL_CMD + deps, stdout=subprocess.PIPE)
 
 
 def _pipInstall(package):
     _installPip()
-    subprocess.check_call(['sudo', 'pip', 'install', '-I', package],
+    subprocess.check_call(_add_sudo_if_needed(['pip', 'install', '-I', package]),
                           stdout=subprocess.PIPE)
 
 
@@ -256,7 +269,7 @@ def _installScpclient():
 
 def _paramikoSetup():
     try:
-        import Crypto
+        from Crypto import Random
     except ImportError:
         _installPycryptoParamikoScpclient()
         import Crypto  # noqa

@@ -272,8 +272,9 @@ class NodeDeploymentExecutor(MachineExecutor):
         return process.returncode
 
     def _add_ssh_pubkey(self, login_user):
-        util.printStep('Adding the public keys')
-        append_ssh_pubkey_to_authorized_keys(self._get_user_ssh_pubkey(), login_user)
+        if not util.is_windows():
+            util.printStep('Adding the public keys')
+            append_ssh_pubkey_to_authorized_keys(self._get_user_ssh_pubkey(), login_user)
 
     def _get_user_ssh_pubkey(self):
         return self.wrapper.get_user_ssh_pubkey()

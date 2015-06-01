@@ -28,7 +28,10 @@ import getpass
 import urllib2
 import uuid as uuidModule
 import warnings
-import pwd
+
+if sys.platform != 'win32':
+    import pwd
+
 from itertools import chain
 from ConfigParser import SafeConfigParser
 
