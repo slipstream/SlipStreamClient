@@ -41,7 +41,7 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         wrapper = Mock()
         wrapper.fail = Mock()
         wrapper.isAbort = Mock(return_value=False)
-        nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
+        nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
         target = 'foo'
         nde.node_instance = NodeInstance()
         nde.node_instance.set_image_targets({target: 'oops'})
@@ -53,7 +53,7 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         wrapper = Mock()
         wrapper.fail = Mock()
         wrapper.isAbort = Mock(return_value=False)
-        nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
+        nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
         nde.TARGET_POLL_INTERVAL = 1
         target = 'foo'
         nde.node_instance = NodeInstance()

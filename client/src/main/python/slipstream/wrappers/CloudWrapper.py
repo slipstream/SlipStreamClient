@@ -77,16 +77,13 @@ class CloudWrapper(BaseWrapper):
                                           util.toTimeInIso8601(time.time()))
             return
 
-        cloud_service_name = self._get_cloud_service_name()
-        user_info = self._get_user_info(cloud_service_name)
-
-        provisioning_stop_time = self._get_provisioning_timeout_time(user_info)
-
-        self._start_nodes_and_clients(user_info, nodes_instances)
+        self._start_nodes_and_clients(
+            self._get_user_info(self._get_cloud_service_name()), nodes_instances)
 
         self.clean_local_cache()
+
         nodes_instances_list = self._get_node_instances_to_follow(nodes_instances.keys())
-        self._check_provisioning(nodes_instances_list, provisioning_stop_time)
+        self._check_provisioning(nodes_instances_list, self._get_provisioning_timeout_time())
 
     def _get_node_instances_to_follow(self, ni_names_starting):
         """
@@ -108,14 +105,22 @@ class CloudWrapper(BaseWrapper):
                                       (util.toTimeInIso8601(time.time()),
                                        util.seconds_to_hms_str(time.time() - time_start_iaas_provision)))
 
-    def _get_provisioning_timeout_time(self, user_info):
+    def _get_provisioning_timeout_time(self):
         """Return wall-clock time until which the provisioning is allowed to take place.
         80% of the user's General.Timeout value is used.
         """
-        user_timeout_min = int(user_info.get_general('Timeout', self.WAIT_INSTANCES_PROVISIONED_MIN))
+        user_timeout_min = self._get_user_timeout()
         # Wait less than defined by user.
         timeout_min = int(user_timeout_min * self.WAIT_TIME_PERCENTAGE)
         return time.time() + timeout_min * 60
+
+    def _get_user_timeout(self):
+        """
+        :return: timeout in minutes
+        :rtype: int
+        """
+        user_info = self._get_user_info(self._get_cloud_service_name())
+        return int(user_info.get_general('Timeout', self.WAIT_INSTANCES_PROVISIONED_MIN))
 
     def _check_provisioning(self, node_instances, provisioning_stop_time):
         """
@@ -292,6 +297,9 @@ class CloudWrapper(BaseWrapper):
             self.SCALE_STATE_REMOVING, self._get_cloud_service_name())
 
     def stop_node_instances(self):
+        """
+        TODO: wait pre.scale.done == True if it's not FT case. (How to discover FT context?)
+        """
         node_instances_to_stop = self._get_node_instances_to_stop()
         if not node_instances_to_stop:
             self._log_and_set_statecustom('No node instances to stop [%s].' %
@@ -301,6 +309,7 @@ class CloudWrapper(BaseWrapper):
             self._get_node_instance_names_from_nodeinstances_dict(node_instances_to_stop))
         self._log_and_set_statecustom('Node instances to stop: %s [%s].' %
                                       (instance_names, util.toTimeInIso8601(time.time())))
+        # TODO: wait pre.scale.done == True if it's not FT case. (How to discover FT context?)
         self._cloud_client.stop_node_instances(node_instances_to_stop.values())
 
         instance_names_removed = node_instances_to_stop.keys()
@@ -457,5 +466,77 @@ class CloudWrapper(BaseWrapper):
         except Exception as ex:
             self._log('Failed to set statecustom with: %s' % str(ex))
 
-    def _log(self, msg):
+    @staticmethod
+    def _log(msg):
         util.printDetail(msg, verboseThreshold=0)
+
+    #
+    # Vertical Scaling
+    #
+    def vertically_scale_instances(self):
+
+        scale_state = self._get_global_scale_state()
+        if scale_state not in self.SCALE_STATES_VERTICAL_SCALABILITY:
+            raise ExecutionException('Wrong scale state \'%s\' for vertical scalability (expected one of: %s)' %
+                                     (scale_state, self.SCALE_STATES_VERTICAL_SCALABILITY))
+        node_instances = self.get_node_instances_in_scale_state(
+            scale_state, self._get_cloud_service_name()).values()
+
+        # wait pre.scale.done == True on all instances that are being scaled.
+        self._wait_pre_scale_done(node_instances)
+
+        # Request IaaS scaling action on each VMs being scaled and
+        # set 'scale.iaas.done' to 'true' on each node instance when done.
+        self._request_iaas_scaling_action(node_instances, scale_state)
+
+        self._wait_scale_state(self.SCALE_STATES_START_STOP_MAP[scale_state], node_instances)
+
+    def _request_iaas_scaling_action(self, node_instances, scale_state):
+        """
+        :param node_instances:  list of node instances
+        :type node_instances: list [NodeInstance, ]
+        :param scale_state: scale state the instances are in
+        :type scale_state: str
+        """
+        if scale_state == self.SCALE_STATE_RESIZING:
+            self._cloud_client.resize(
+                node_instances, done_reporter=self.set_scale_iaas_done)
+        elif scale_state == self.SCALE_STATE_DISK_ATTACHING:
+            self._cloud_client.attach_disk(
+                node_instances, done_reporter=self.set_scale_iaas_done)
+        elif scale_state == self.SCALE_STATE_DISK_DETACHING:
+            self._cloud_client.detach_disk(
+                node_instances, done_reporter=self.set_scale_iaas_done)
+
+    def _wait_pre_scale_done(self, node_instances):
+        """Blocking wait (with timeout) until RTP pre.scale.done is set on the requested node instances.
+        :param node_instances: list of NodeInstance object to wait the RTP is set on
+        :type node_instances: list [NodeInstance, ]
+        :raises: TimeoutException
+        """
+        timeout_at = self._get_provisioning_timeout_time()
+        self._log('Waiting for node instances to finish pre-scaling before %s' %
+                  util.toTimeInIso8601(timeout_at))
+
+        self._wait_rtp_equals(node_instances, NodeDecorator.PRE_SCALE_DONE_SUCCESS,
+                              self.get_pre_scale_done, timeout_at)
+
+        self._log('All node instances finished pre-scaling.')
+
+    def _wait_scale_state(self, state, node_instances):
+        """Blocking wait (with timeout) until the state is set on the requested node instances.
+        :param state: state to wait for
+        :type state: string
+        :param node_instances: list of NodeInstance object to wait the state on
+        :type node_instances: list [NodeInstance, ]
+        :raises: TimeoutException
+        """
+        timeout_at = self._get_provisioning_timeout_time()
+        self._log("Waiting for node instances to set '%s' to '%s' before %s" %
+                  (NodeDecorator.SCALE_STATE_KEY, state, util.toTimeInIso8601(timeout_at)))
+
+        self._wait_rtp_equals(node_instances, state, self._get_effective_scale_state,
+                              timeout_at)
+
+        self._log("All node instances set '%s' to '%s'." % (NodeDecorator.SCALE_STATE_KEY, state))
+

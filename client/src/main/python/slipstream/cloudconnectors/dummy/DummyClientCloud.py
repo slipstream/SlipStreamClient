@@ -17,6 +17,7 @@
 """
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
+import sys
 
 
 def getConnector(configHolder):
@@ -30,8 +31,8 @@ def getConnectorClass():
 class DummyClientCloud(BaseCloudConnector):
     cloudName = 'local'
 
-    def __init__(self, configHolder):
-        super(DummyClientCloud, self).__init__(configHolder)
+    def __init__(self, config_holder):
+        super(DummyClientCloud, self).__init__(config_holder)
 
     def _build_image(self, user_info, node_instance):
         print 'Building image. Dummy implementation.'
@@ -46,6 +47,18 @@ class DummyClientCloud(BaseCloudConnector):
     def _stop_vms_by_ids(self, ids):
         print 'Stopping VM(s). Dummy implementation.'
         print 'VM id(s):', ids
+
+    def _resize(self, node_instance):
+        print 'Resizing VM. Dummy implementation.'
+        print 'Node Instance:', node_instance
+
+    def _attach_disk(self, node_instance):
+        print 'Attaching disk to VM. Dummy implementation.'
+        print 'Node Instance:', node_instance
+
+    def _detach_disk(self, node_instance):
+        print 'Detaching disk from VM. Dummy implementation.'
+        print 'Node Instance:', node_instance
 
     def getInstanceInfos(self):
         return {'node1.1:instanceid': 'id1', 'node1.1:hostname': 'ip1',

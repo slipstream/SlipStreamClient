@@ -204,3 +204,6 @@ class MachineExecutor(object):
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
+
+    def _is_vertical_scaling(self):
+        return self.wrapper.is_vertical_scaling()

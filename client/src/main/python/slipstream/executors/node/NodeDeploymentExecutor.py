@@ -41,9 +41,9 @@ class NodeDeploymentExecutor(MachineExecutor):
     # Wait interval (seconds) between server calls when executing a target script.
     TARGET_POLL_INTERVAL = 10
 
-    def __init__(self, wrapper, configHolder=ConfigHolder()):
+    def __init__(self, wrapper, config_holder=ConfigHolder()):
         self.verboseLevel = 0
-        super(NodeDeploymentExecutor, self).__init__(wrapper, configHolder)
+        super(NodeDeploymentExecutor, self).__init__(wrapper, config_holder)
 
         self.node_instance = self._retreive_my_node_instance()
 
@@ -51,8 +51,7 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         self.SCALE_ACTION_TO_TARGET = \
             {self.wrapper.SCALE_ACTION_CREATION: 'onvmadd',
-             self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove',
-             self.wrapper.SCALE_ACTION_DISK_RESIZE: 'ondiskresize'}
+             self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove'}
 
         self._send_reports = False
 
@@ -63,6 +62,15 @@ class NodeDeploymentExecutor(MachineExecutor):
         if self.wrapper.is_scale_state_creating():
             self._add_ssh_pubkey(self.node_instance.get_username())
             self.wrapper.set_scale_state_created()
+        elif self._is_vertical_scaling():
+            if not self._is_pre_scale_done():
+                self._execute_pre_scale_action_target()
+                self.wrapper.set_pre_scale_done()
+
+            # Orchestrator applies IaaS action on the node instance.
+
+            self.wrapper.wait_scale_iaas_done()
+            self._execute_post_scale_action_target()
 
     @override
     def onExecuting(self):
@@ -144,10 +152,19 @@ class NodeDeploymentExecutor(MachineExecutor):
     def _get_target_on_scale_action(self, action):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
 
+    def _execute_pre_scale_action_target(self):
+        exports = self._get_scaling_exports()
+        self._execute_target('prescale', exports)
+        self._set_need_to_send_reports()
+
+    def _execute_post_scale_action_target(self):
+        exports = self._get_scaling_exports()
+        self._execute_target('postscale', exports)
+        self._set_need_to_send_reports()
+
     def _execute_scale_action_target(self):
-        scale_action = self.wrapper.get_scale_action()
+        scale_action = self._get_scale_action()
         if scale_action:
-            # TODO: Add local scale actions (ondiskresize, etc)
             target = self._get_target_on_scale_action(scale_action)
             if target:
                 exports = self._get_scaling_exports()
@@ -192,7 +209,8 @@ class NodeDeploymentExecutor(MachineExecutor):
         node_name, node_instance_names = \
             self.wrapper.get_scaling_node_and_instance_names()
         exports = {'SLIPSTREAM_SCALING_NODE': node_name,
-                   'SLIPSTREAM_SCALING_VMS': ' '.join(node_instance_names)}
+                   'SLIPSTREAM_SCALING_VMS': ' '.join(node_instance_names),
+                   'SLIPSTREAM_SCALING_ACTION': self._get_scale_action()}
         return exports
 
     def _launch_process(self, target_script, exports):
@@ -268,3 +286,10 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _need_to_send_reports(self):
         return self._send_reports or not self.wrapper.is_scale_state_operational()
+
+    def _get_scale_action(self):
+        return self.wrapper.get_scale_action()
+
+    def _is_pre_scale_done(self):
+        return self.wrapper.is_pre_scale_done()
+

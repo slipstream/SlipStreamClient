@@ -32,17 +32,18 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def onProvisioning(self):
         super(OrchestratorDeploymentExecutor, self).onProvisioning()
 
+        # TODO: check provisioning for consistency. Remove the checks from scaling methods.
+
         if self._is_vertical_scaling():
-            pass
+            self._vertically_scale_instances()
         else:
             self._start_instances()
             self._stop_instances()
 
         self._complete_state_for_failed_node_instances()
 
-    def _is_vertical_scaling(self):
-        # check scale.state is "vertical scaling" i.e. one of <resizing|disk_attaching|disk_detaching>
-        return False
+    def _vertically_scale_instances(self):
+        self.wrapper.vertically_scale_instances()
 
     @override
     def onExecuting(self):
