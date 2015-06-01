@@ -77,7 +77,7 @@ class RunInstancesCommand(CloudClientCommand):
 
         parser.add_option('--' + NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY, dest=NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY,
                           help='When SlipStream should use the native Cloud contextualization mechanisme (instead of SSH/WinRM)\nPossible values: never|always|linux only|windows only',
-                          default='', metavar='NATIV_CONTEXTUALIZATION')
+                          default='', metavar='NATIVE_CONTEXTUALIZATION')
 
     def _get_command_mandatory_options(self):
         return [self.IMAGE_ID_KEY,
