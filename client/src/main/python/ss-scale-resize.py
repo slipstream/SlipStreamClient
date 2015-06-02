@@ -39,7 +39,7 @@ class MainProgram(CommandBase):
         self.run_url = None
         self.run_dom = None
         self.node_name = None
-        self.instances_to_resize = []
+        self.instances_to_scale = []
         self.rtp_scale_values = {}
 
         self.options = None
@@ -83,7 +83,7 @@ class MainProgram(CommandBase):
         self._validate_and_set_scale_options()
 
         try:
-            self.instances_to_resize = map(int, self.args[2:])
+            self.instances_to_scale = map(int, self.args[2:])
         except ValueError:
             self.usageExit("Invalid ids, they must be integers")
 
@@ -117,12 +117,12 @@ class MainProgram(CommandBase):
         self._set_run_to_provisioning(client)
 
     def _set_new_size(self, client):
-        self.log("Requesting to resize node instances: %s" % self.instances_to_resize)
+        self.log("Requesting to resize node instances: %s" % self.instances_to_scale)
 
         cloudservice_name = self._get_cloudservice_name()
 
         node_url = self.run_url + "/" + self.node_name
-        for _id in self.instances_to_resize:
+        for _id in self.instances_to_scale:
             url = node_url + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
                 str(_id) + NodeDecorator.NODE_PROPERTY_SEPARATOR + cloudservice_name + '.'
             for scale_key, value in self.rtp_scale_values.items():
@@ -135,7 +135,7 @@ class MainProgram(CommandBase):
 
     def _set_scale_state(self, client, state):
         node_url = self.run_url + "/" + self.node_name
-        for _id in self.instances_to_resize:
+        for _id in self.instances_to_scale:
             url = node_url + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
                 str(_id) + NodeDecorator.NODE_PROPERTY_SEPARATOR + 'scale.state'
             client.put(url, state)
