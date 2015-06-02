@@ -45,7 +45,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         self.verboseLevel = 0
         super(NodeDeploymentExecutor, self).__init__(wrapper, config_holder)
 
-        self.node_instance = self._retreive_my_node_instance()
+        self.node_instance = self._retrieve_my_node_instance()
 
         self.recovery_mode = False
 
@@ -54,6 +54,7 @@ class NodeDeploymentExecutor(MachineExecutor):
              self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove'}
 
         self._send_reports = False
+        self._skip_execute_due_to_vertical_scaling = False
 
     @override
     def onProvisioning(self):
@@ -70,7 +71,10 @@ class NodeDeploymentExecutor(MachineExecutor):
             # Orchestrator applies IaaS action on the node instance.
 
             self.wrapper.wait_scale_iaas_done()
+            self.wrapper.unset_pre_scale_done()
             self._execute_post_scale_action_target()
+            self.wrapper.set_scale_action_done()
+            self._skip_execute_due_to_vertical_scaling = True
 
     @override
     def onExecuting(self):
@@ -80,6 +84,12 @@ class NodeDeploymentExecutor(MachineExecutor):
         if self._is_recovery_mode():
             util.printDetail("Recovery mode enabled, recipes will not be executed.",
                              verboseThreshold=util.VERBOSE_LEVEL_QUIET)
+            return
+
+        if self._skip_execute_due_to_vertical_scaling:
+            util.printDetail("Vertical scaling: skipping execution of execute targets.",
+                             verboseThreshold=util.VERBOSE_LEVEL_QUIET)
+            self._skip_execute_due_to_vertical_scaling = False
             return
 
         if not self.wrapper.is_scale_state_operational():
@@ -143,7 +153,7 @@ class NodeDeploymentExecutor(MachineExecutor):
     def _is_recovery_mode(self):
         return self.recovery_mode == True
 
-    def _retreive_my_node_instance(self):
+    def _retrieve_my_node_instance(self):
         node_instance = self.wrapper.get_my_node_instance()
         if node_instance is None:
             raise ExecutionException("Couldn't get the node instance for the current VM.")
