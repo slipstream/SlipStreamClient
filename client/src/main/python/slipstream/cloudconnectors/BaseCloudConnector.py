@@ -169,7 +169,7 @@ class BaseCloudConnector(object):
         #vm_id = node_instance.get_instance_id()
 
         # Size of the disk to attach (in GB).
-        #disk_size_GB = node_instance.get_cloud_parameter('disk.attach.size')
+        #disk_size_GB = node_instance.get_disk_attach_size()
 
         # IaaS calls go here.
 
@@ -189,7 +189,7 @@ class BaseCloudConnector(object):
         #vm_id = node_instance.get_instance_id()
 
         # Name of the block device to detach (/dev/XYZ).
-        #device = node_instance.get_cloud_parameter('disk.detach.device')
+        #device = node_instance.get_disk_detach_device()
 
         # IaaS calls go here.
 

@@ -182,3 +182,9 @@ class NodeInstance(object):
     def get_max_provisioning_failures(self):
         return self.__get(NodeDecorator.MAX_PROVISIONING_FAILURES_KEY)
 
+    def get_disk_attach_size(self):
+        return self.__get(NodeDecorator.SCALE_DISK_ATTACH_SIZE)
+
+    def get_disk_detach_device(self):
+        return self.__get(NodeDecorator.SCALE_DISK_DETACH_DEVICE)
+
