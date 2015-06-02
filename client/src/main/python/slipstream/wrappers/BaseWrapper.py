@@ -25,7 +25,7 @@ from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 from slipstream.NodeDecorator import NodeDecorator
 from slipstream.exceptions import Exceptions
 from slipstream.NodeInstance import NodeInstance
-from slipstream.exceptions.Exceptions import TimeoutException
+from slipstream.exceptions.Exceptions import TimeoutException, ExecutionException
 
 
 class InconsistentScaleStateError(Exceptions.ExecutionException):
@@ -425,7 +425,42 @@ class BaseWrapper(object):
         key = self._qualifyKey(NodeDecorator.PRE_SCALE_DONE)
         self._ss_client.setRuntimeParameter(key, NodeDecorator.PRE_SCALE_DONE_SUCCESS)
 
+    def unset_pre_scale_done(self):
+        """To be called by NodeDeploymentExecutor.  Not thread-safe.
+        """
+        key = self._qualifyKey(NodeDecorator.PRE_SCALE_DONE)
+        self._ss_client.setRuntimeParameter(key, 'false')
+
+    def set_scale_action_done(self):
+        """To be called by NodeDeploymentExecutor. Sets an end of the scaling action.
+        Not thread-safe.
+        """
+        scale_state_start = self.get_scale_state()
+        key = self._qualifyKey(NodeDecorator.SCALE_STATE_KEY)
+        try:
+            scale_done = self.SCALE_STATES_START_STOP_MAP[scale_state_start]
+        except KeyError:
+            raise ExecutionException(
+                "Unable to set the end of scale action on %s. Don't know start->done mapping for %s." %
+                (key, scale_state_start))
+        else:
+            self._ss_client.setRuntimeParameter(key, scale_done)
+
     def set_scale_iaas_done(self, node_instance_or_name):
+        """To be called on Orchestrator.  Thread-safe implementation.
+        :param node_instance_or_name: node instance object or node instance name
+        :type node_instance_or_name: NodeInstance or str
+        """
+        self._set_scale_iaas_done_rtp(node_instance_or_name, NodeDecorator.SCALE_IAAS_DONE_SUCCESS)
+
+    def unset_scale_iaas_done(self, node_instance_or_name):
+        """To be called on Orchestrator.  Thread-safe implementation.
+        :param node_instance_or_name: node instance object or node instance name
+        :type node_instance_or_name: NodeInstance or str
+        """
+        self._set_scale_iaas_done_rtp(node_instance_or_name, 'false')
+
+    def _set_scale_iaas_done_rtp(self, node_instance_or_name, value):
         """To be called on Orchestrator.  Thread-safe implementation.
         :param node_instance_or_name: node instance object or node instance name
         :type node_instance_or_name: NodeInstance or str
@@ -434,7 +469,7 @@ class BaseWrapper(object):
             node_instance_or_name = node_instance_or_name.get_name()
         rtp = node_instance_or_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
             NodeDecorator.SCALE_IAAS_DONE
-        self._set_runtime_parameter(rtp, 'true')
+        self._set_runtime_parameter(rtp, value)
 
     def is_vertical_scaling(self):
         return self._get_global_scale_state() in self.SCALE_STATES_VERTICAL_SCALABILITY
@@ -443,8 +478,11 @@ class BaseWrapper(object):
         # Needed for thread safety.
         RuntimeParameter(self._get_config_holder_deepcopy()).set(parameter, value)
 
+    def _get_config_holder(self):
+        return self._config_holder
+
     def _get_config_holder_deepcopy(self):
-        return self._config_holder.deepcopy()
+        return self._get_config_holder().deepcopy()
 
     @staticmethod
     def _wait_rtp_equals(node_instances, expected_value, rtp_getter, timeout_at,
@@ -558,4 +596,15 @@ class BaseWrapper(object):
 
     def _put_new_image_id(self, url, new_image_id):
         self._ss_client.put_new_image_id(url, new_image_id)
+
+    def _log_and_set_statecustom(self, msg):
+        self._log(msg)
+        try:
+            self.set_statecustom(msg)
+        except Exception as ex:
+            self._log('Failed to set statecustom with: %s' % str(ex))
+
+    @staticmethod
+    def _log(msg):
+        util.printDetail(msg, verboseThreshold=0)
 

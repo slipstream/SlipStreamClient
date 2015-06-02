@@ -42,20 +42,20 @@ class CloudWrapper(BaseWrapper):
                            KEEP_RUNNING_ON_ERROR,
                            KEEP_RUNNING_ON_SUCCESS]
 
-    def __init__(self, configHolder):
-        super(CloudWrapper, self).__init__(configHolder)
+    def __init__(self, config_holder):
+        super(CloudWrapper, self).__init__(config_holder)
 
         self._instance_names_to_be_gone = []
 
         # Explicitly call initCloudConnector() to set the cloud connector.
         self._cloud_client = None
-        self.configHolder = configHolder
         self.imagesStopped = False
 
         self._instance_names_force_to_compete_states = []
 
-    def initCloudConnector(self, configHolder=None):
-        self._cloud_client = CloudConnectorFactory.createConnector(configHolder or self.configHolder)
+    def initCloudConnector(self, config_holder=None):
+        self._cloud_client = CloudConnectorFactory.createConnector(
+            config_holder or self._get_config_holder())
 
     def build_image(self):
         self._cloud_client.set_slipstream_client_as_listener(self.get_slipstream_client())
@@ -459,17 +459,6 @@ class CloudWrapper(BaseWrapper):
         """
         return [x.get_name() for x in nodeinstances_dict.values()]
 
-    def _log_and_set_statecustom(self, msg):
-        self._log(msg)
-        try:
-            self.set_statecustom(msg)
-        except Exception as ex:
-            self._log('Failed to set statecustom with: %s' % str(ex))
-
-    @staticmethod
-    def _log(msg):
-        util.printDetail(msg, verboseThreshold=0)
-
     #
     # Vertical Scaling
     #
@@ -490,6 +479,10 @@ class CloudWrapper(BaseWrapper):
         self._request_iaas_scaling_action(node_instances, scale_state)
 
         self._wait_scale_state(self.SCALE_STATES_START_STOP_MAP[scale_state], node_instances)
+
+        # Unset scale.iaas.done for the synchronization to work next time.
+        for node_instance in node_instances:
+            self.unset_scale_iaas_done(node_instance)
 
     def _request_iaas_scaling_action(self, node_instances, scale_state):
         """
