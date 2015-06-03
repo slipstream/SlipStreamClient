@@ -29,8 +29,6 @@ class MainProgram(VerticalScaleCommandBase):
         super(MainProgram, self).__init__(argv)
 
     def add_scale_options(self):
-        """INTERFACE
-        """
         self.parser.add_option('--attach', dest='attach_gb', default=None,
                                help='New extra disk to attach in GB.', metavar='ATTACH_GB')
         self.parser.add_option('--detach', dest='device', default=None,
