@@ -110,7 +110,6 @@ class VerticalScaleCommandBase(CommandBase):
             url = node_url + NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
                 str(_id) + NodeDecorator.NODE_PROPERTY_SEPARATOR + cloudservice_name_with_separator
             for scale_key, value in self.rtp_scale_values.items():
-                print(url + scale_key)
                 client.put(url + scale_key, value)
 
     def _get_cloudservice_name(self):
