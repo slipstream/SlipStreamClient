@@ -521,8 +521,7 @@ class BaseWrapper(object):
         :raises: TimeoutException
         """
         timeout_at = 0 # no timeout
-        self._log('Waiting for Orchestrator to finish scaling this node instance until %s' %
-                  util.toTimeInIso8601(timeout_at))
+        self._log('Waiting for Orchestrator to finish scaling this node instance (no timeout).')
 
         node_instances = [self.get_my_node_instance()]
 
