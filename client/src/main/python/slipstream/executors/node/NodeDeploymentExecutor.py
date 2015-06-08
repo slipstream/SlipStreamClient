@@ -75,6 +75,11 @@ class NodeDeploymentExecutor(MachineExecutor):
             self._execute_post_scale_action_target()
             self.wrapper.set_scale_action_done()
             self._skip_execute_due_to_vertical_scaling = True
+        elif self._is_horizontal_scale_down():
+            self._execute_pre_scale_action_target()
+            self._execute_report_target_and_send_reports()
+            self.wrapper.set_pre_scale_done()
+            # We are ready to be terminated.
 
     @override
     def onExecuting(self):
