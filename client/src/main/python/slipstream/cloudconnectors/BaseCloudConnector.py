@@ -37,6 +37,7 @@ from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClien
 from slipstream.utils.ssh import remoteRunScriptNohup, waitUntilSshCanConnectOrTimeout, remoteRunScript, \
                                  generate_keypair, remoteRunCommand
 from slipstream.utils.tasksrunner import TasksRunner
+from slipstream.cloudconnectors.VmScaler import VmScaler
 from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
 from winrm.winrm_service import WinRMWebService
 from winrm.exceptions import WinRMTransportError
@@ -902,33 +903,4 @@ class BaseCloudConnector(object):
         scaler = VmScaler(scale_action, max_workers, self.verboseLevel)
         scaler.set_tasks_and_run(node_instances, done_reporter)
         scaler.wait_tasks_finished()
-
-
-class VmScaler(object):
-
-    def __init__(self, task_executor, max_workers, verbose_level):
-        self._task_executor = task_executor
-        self._max_workers = max_workers
-        self._verbose_level = verbose_level
-
-        self._tasks_runner = None
-
-    def set_tasks_and_run(self, nodes_instances, done_reporter):
-        """
-        :param nodes_instances: list of node instances
-        :type nodes_instances: list [NodeInstance, ]
-        :param done_reporter: function that reports back to SlipStream
-        :type done_reporter: callable with signature `done_reporter(<NoneInstance>)`
-        """
-        self._tasks_runner = TasksRunner(self._task_executor,
-                                         max_workers=self._max_workers,
-                                         verbose=self._verbose_level)
-        for node_instance in nodes_instances:
-            self._tasks_runner.put_task(node_instance, done_reporter)
-
-        self._tasks_runner.run_tasks()
-
-    def wait_tasks_finished(self):
-        if self._tasks_runner is not None:
-            self._tasks_runner.wait_tasks_processed()
 
