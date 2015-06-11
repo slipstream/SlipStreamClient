@@ -145,7 +145,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
 
     def _execute_scale_action_target(self):
-        scale_action = self.wrapper.get_scale_action()
+        scale_action = self.wrapper.get_global_scale_action()
         if scale_action:
             # TODO: Add local scale actions (ondiskresize, etc)
             target = self._get_target_on_scale_action(scale_action)
