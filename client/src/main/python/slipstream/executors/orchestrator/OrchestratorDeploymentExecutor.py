@@ -81,7 +81,14 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         self._run_instances_action(self.wrapper.start_node_instances, 'starting')
 
     def _stop_instances(self):
+        self._wait_pre_scale_done_if_horizontal_scale_down()
         self._run_instances_action(self.wrapper.stop_node_instances, 'stopping')
+
+    def _wait_pre_scale_done_if_horizontal_scale_down(self):
+        if self._is_horizontal_scale_down():
+            node_instances = self.wrapper.get_node_instances_in_scale_state(
+                self.wrapper.SCALE_STATE_REMOVING, self.wrapper._get_cloud_service_name())
+            self.wrapper._wait_pre_scale_done(node_instances.values())
 
     @staticmethod
     def _run_instances_action(action, action_name):

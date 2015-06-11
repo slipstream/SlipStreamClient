@@ -338,7 +338,7 @@ class BaseWrapper(object):
 
     def _get_global_scale_state(self):
         """Return scale state all the node instances are in, or None.
-        Raise ExecutionException if there are instances in different states.
+        Raise InconsistentScaleStateError if there are instances in different states.
         For consistency reasons, only single scalability action is allowed.
         """
         states_node_instances = self._get_effective_scale_states()
@@ -473,6 +473,9 @@ class BaseWrapper(object):
 
     def is_vertical_scaling(self):
         return self._get_global_scale_state() in self.SCALE_STATES_VERTICAL_SCALABILITY
+
+    def is_horizontal_scale_down(self):
+        return self._get_global_scale_state() == self.SCALE_STATE_REMOVING
 
     def _set_runtime_parameter(self, parameter, value):
         # Needed for thread safety.
