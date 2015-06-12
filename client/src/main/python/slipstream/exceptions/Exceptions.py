@@ -85,8 +85,18 @@ class TerminalStateException(ClientError):
 class ExecutionException(ClientError):
     pass
 
+
 class ParameterNotFoundException(ClientError):
     pass
 
+
 class ValidationException(ClientError):
+    pass
+
+
+class InconsistentScaleStateError(ExecutionException):
+    pass
+
+
+class InconsistentScalingNodesError(ExecutionException):
     pass

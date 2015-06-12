@@ -41,7 +41,7 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         wrapper = Mock()
         wrapper.fail = Mock()
         wrapper.isAbort = Mock(return_value=False)
-        nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
+        nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
         target = 'foo'
         nde.node_instance = NodeInstance()
         nde.node_instance.set_image_targets({target: 'oops'})
@@ -53,7 +53,7 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         wrapper = Mock()
         wrapper.fail = Mock()
         wrapper.isAbort = Mock(return_value=False)
-        nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
+        nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
         nde.TARGET_POLL_INTERVAL = 1
         target = 'foo'
         nde.node_instance = NodeInstance()
@@ -66,7 +66,7 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         wrapper = Mock()
         wrapper.get_scale_action = Mock(return_value=None)
         wrapper.get_global_scale_action = Mock(return_value=None)
-        nde = NodeDeploymentExecutor(wrapper, configHolder=self.ch)
+        nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
         nde._execute_scale_action_target()
         assert True == nde.wrapper.get_global_scale_action.called
         assert False == nde.wrapper.get_scale_action.called

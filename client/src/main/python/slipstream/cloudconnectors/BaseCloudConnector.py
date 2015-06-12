@@ -37,6 +37,7 @@ from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClien
 from slipstream.utils.ssh import remoteRunScriptNohup, waitUntilSshCanConnectOrTimeout, remoteRunScript, \
                                  generate_keypair, remoteRunCommand
 from slipstream.utils.tasksrunner import TasksRunner
+from slipstream.cloudconnectors.VmScaler import VmScaler
 from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
 from winrm.winrm_service import WinRMWebService
 from winrm.exceptions import WinRMTransportError
@@ -130,7 +131,7 @@ class BaseCloudConnector(object):
     on any handled error.
     """
 
-    def resize(self, node_instance):
+    def _resize(self, node_instance):
         """
         :param node_instance: node instance object
         :type node_instance: <NodeInstance>
@@ -153,7 +154,7 @@ class BaseCloudConnector(object):
 
         raise NotImplementedError()
 
-    def attach_disk(self, node_instance):
+    def _attach_disk(self, node_instance):
         """Attach extra disk to the VM.
         :param node_instance: node instance object
         :type node_instance: <NodeInstance>
@@ -169,7 +170,7 @@ class BaseCloudConnector(object):
         #vm_id = node_instance.get_instance_id()
 
         # Size of the disk to attach (in GB).
-        #disk_size_GB = node_instance.get_cloud_parameter('disk.attach.size')
+        #disk_size_GB = node_instance.get_disk_attach_size()
 
         # IaaS calls go here.
 
@@ -177,7 +178,7 @@ class BaseCloudConnector(object):
 
         raise NotImplementedError()
 
-    def detach_disk(self, node_instance):
+    def _detach_disk(self, node_instance):
         """Detach disk from the VM.
         :param node_instance: node instance object
         :type node_instance: <NodeInstance>
@@ -189,7 +190,7 @@ class BaseCloudConnector(object):
         #vm_id = node_instance.get_instance_id()
 
         # Name of the block device to detach (/dev/XYZ).
-        #device = node_instance.get_cloud_parameter('disk.detach.device')
+        #device = node_instance.get_disk_detach_device()
 
         # IaaS calls go here.
 
@@ -866,3 +867,40 @@ class BaseCloudConnector(object):
         Returns: True or False."""
         vm_state = self._vm_get_state(vm_instance).lower()
         return vm_state in [fstate.lower() for fstate in self._get_vm_failed_states()]
+
+    def resize(self, node_instances, done_reporter=None):
+        self._scale_action_runner(self._resize_and_report, node_instances, done_reporter)
+
+    # TODO: use decorator for reporter.
+    def _resize_and_report(self, node_instance, reporter):
+        self._resize(node_instance)
+        reporter(node_instance)
+
+    def attach_disk(self, node_instances, done_reporter=None):
+        self._scale_action_runner(self._attach_disk_and_report, node_instances, done_reporter)
+
+    def _attach_disk_and_report(self, node_instance, reporter):
+        self._attach_disk(node_instance)
+        reporter(node_instance)
+
+    def detach_disk(self, node_instances, done_reporter=None):
+        self._scale_action_runner(self._detach_disk_and_report, node_instances, done_reporter)
+
+    def _detach_disk_and_report(self, node_instance, reporter):
+        self._detach_disk(node_instance)
+        reporter(node_instance)
+
+    def _scale_action_runner(self, scale_action, node_instances, done_reporter):
+        """
+        :param scale_action: task executor
+        :type scale_action: callable
+        :param node_instances: list of node instances
+        :type node_instances: list [NodeInstance, ]
+        :param done_reporter: function that reports back to SlipStream
+        :type done_reporter: callable with signature `done_reporter(<NoneInstance>)`
+        """
+        max_workers = self._get_max_workers(self.configHolder)
+        scaler = VmScaler(scale_action, max_workers, self.verboseLevel)
+        scaler.set_tasks_and_run(node_instances, done_reporter)
+        scaler.wait_tasks_finished()
+

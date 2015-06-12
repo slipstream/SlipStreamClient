@@ -24,7 +24,7 @@ import tempfile
 
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.exceptions.Exceptions import AbortException, \
-    TerminalStateException, ExecutionException
+    TerminalStateException, ExecutionException, InconsistentScaleStateError
 from slipstream import util
 from slipstream.Client import Client
 
@@ -34,12 +34,18 @@ class MachineExecutor(object):
     WAIT_NEXT_STATE_SHORT = 15
     WAIT_NEXT_STATE_LONG = 60
 
-    def __init__(self, wrapper, configHolder=ConfigHolder()):
+    def __init__(self, wrapper, config_holder=ConfigHolder()):
+        """
+        :param wrapper: SlipStream client and cloud client wrapper
+        :type wrapper: slipstream.wrappers.CloudWrapper
+        :param config_holder: configuration holder
+        :type config_holder: slipstream.ConfigHolder
+        """
         self.wrapper = wrapper
         self.timeout = 55 * 60  # 50 minutes
         self.ssLogDir = Client.REPORTSDIR
         self.verboseLevel = 0
-        configHolder.assign(self)
+        config_holder.assign(self)
 
         self.reportFilesAndDirsList = [self.ssLogDir]
 
@@ -61,7 +67,13 @@ class MachineExecutor(object):
             raise ExecutionException('Machine executor: No state to execute '
                                      'specified.')
         try:
+            self._set_state_start_time()
             getattr(self, 'on' + state)()
+        except AttributeError as ex:
+            msg = "Machine executor does not implement '%s' state." % state
+            util.printError('Error executing node, with detail: %s (%s)' % (msg, ex))
+            traceback.print_exc()
+            self._fail_str(msg)
         except AbortException as ex:
             util.printError('Abort flag raised: %s' % ex)
         except TerminalStateException:
@@ -77,13 +89,22 @@ class MachineExecutor(object):
         if self._need_to_complete(state):
             self.wrapper.complete_state()
 
+    @staticmethod
+    def _failure_msg_from_exception(exception):
+        """
+        :param exception: exception class
+        :return: string
+        """
+        return "Exception %s with detail: %s" % (exception.__class__, str(exception))
+
     def _fail(self, exception):
-        self.wrapper.fail("Exception %s with detail: %s" % (exception.__class__,
-                                                            str(exception)))
+        self.wrapper.fail(self._failure_msg_from_exception(exception))
 
     def _fail_global(self, exception):
-        self.wrapper.fail_global("Exception %s with detail: %s" % (exception.__class__,
-                                                                   str(exception)))
+        self.wrapper.fail_global(self._failure_msg_from_exception(exception))
+
+    def _fail_str(self, msg):
+        self.wrapper.fail(msg)
 
     def _wait_for_next_state(self, state):
         """Returns the next state after waiting (polling is used) for the state
@@ -184,3 +205,16 @@ class MachineExecutor(object):
 
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
+
+    def _is_vertical_scaling(self):
+        return self.wrapper.is_vertical_scaling()
+
+    def _is_horizontal_scale_down(self):
+        try:
+            return self.wrapper.is_horizontal_scale_down()
+        except InconsistentScaleStateError as ex:
+            util.printDetail("Machine Executor. Ignoring exception: " % str(ex))
+            return False
+
+    def _set_state_start_time(self):
+        self.wrapper.set_state_start_time()
