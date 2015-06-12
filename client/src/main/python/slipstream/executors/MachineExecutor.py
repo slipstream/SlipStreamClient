@@ -24,10 +24,9 @@ import tempfile
 
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.exceptions.Exceptions import AbortException, \
-    TerminalStateException, ExecutionException
+    TerminalStateException, ExecutionException, InconsistentScaleStateError
 from slipstream import util
 from slipstream.Client import Client
-from slipstream.wrappers.BaseWrapper import InconsistentScaleStateError
 
 
 class MachineExecutor(object):
