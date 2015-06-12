@@ -178,7 +178,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         self._set_need_to_send_reports()
 
     def _execute_scale_action_target(self):
-        scale_action = self._get_scale_action()
+        scale_action = self.wrapper.get_global_scale_action()
         if scale_action:
             target = self._get_target_on_scale_action(scale_action)
             if target:
