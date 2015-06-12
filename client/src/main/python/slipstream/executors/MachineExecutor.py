@@ -66,6 +66,7 @@ class MachineExecutor(object):
         if not state:
             raise ExecutionException('Machine executor: No state to execute '
                                      'specified.')
+        self._set_state_start_time()
         try:
             getattr(self, 'on' + state)()
         except AttributeError as ex:
@@ -207,3 +208,6 @@ class MachineExecutor(object):
 
     def _is_vertical_scaling(self):
         return self.wrapper.is_vertical_scaling()
+
+    def _set_state_start_time(self):
+        self.wrapper.set_state_start_time()

@@ -53,6 +53,8 @@ class CloudWrapper(BaseWrapper):
 
         self._instance_names_force_to_compete_states = []
 
+        self._state_start_time = None
+
     def initCloudConnector(self, config_holder=None):
         self._cloud_client = CloudConnectorFactory.createConnector(
             config_holder or self._get_config_holder())
@@ -83,7 +85,7 @@ class CloudWrapper(BaseWrapper):
         self.clean_local_cache()
 
         nodes_instances_list = self._get_node_instances_to_follow(nodes_instances.keys())
-        self._check_provisioning(nodes_instances_list, self._get_provisioning_timeout_time())
+        self._check_provisioning(nodes_instances_list)
 
     def _get_node_instances_to_follow(self, ni_names_starting):
         """
@@ -105,14 +107,20 @@ class CloudWrapper(BaseWrapper):
                                       (util.toTimeInIso8601(time.time()),
                                        util.seconds_to_hms_str(time.time() - time_start_iaas_provision)))
 
-    def _get_provisioning_timeout_time(self):
+    def _get_state_timeout_time(self):
         """Return wall-clock time until which the provisioning is allowed to take place.
         80% of the user's General.Timeout value is used.
         """
         user_timeout_min = self._get_user_timeout()
         # Wait less than defined by user.
         timeout_min = int(user_timeout_min * self.WAIT_TIME_PERCENTAGE)
-        return time.time() + timeout_min * 60
+        return self.get_state_start_time() + timeout_min * 60
+
+    def set_state_start_time(self):
+        self._state_start_time = time.time()
+
+    def get_state_start_time(self):
+        return (self._state_start_time is None) and time.time() or self._state_start_time
 
     def _get_user_timeout(self):
         """
@@ -122,7 +130,7 @@ class CloudWrapper(BaseWrapper):
         user_info = self._get_user_info(self._get_cloud_service_name())
         return int(user_info.get_general('Timeout', self.WAIT_INSTANCES_PROVISIONED_MIN))
 
-    def _check_provisioning(self, node_instances, provisioning_stop_time):
+    def _check_provisioning(self, node_instances):
         """
         node_instances list [NodeInstance, ]
         """
@@ -130,7 +138,7 @@ class CloudWrapper(BaseWrapper):
 
         if self._need_to_wait_instances_provisioned(allowed_failed_vms_per_node):
             all_provisioned = self._sleep_while_instances_provisioned(
-                provisioning_stop_time, node_instances, allowed_failed_vms_per_node)
+                self._get_state_timeout_time(), node_instances, allowed_failed_vms_per_node)
             if self.isAbort():
                 return
             if not all_provisioned:
@@ -507,7 +515,7 @@ class CloudWrapper(BaseWrapper):
         :type node_instances: list [NodeInstance, ]
         :raises: TimeoutException
         """
-        timeout_at = self._get_provisioning_timeout_time()
+        timeout_at = self._get_state_timeout_time()
         self._log('Waiting for node instances to finish pre-scaling before %s' %
                   util.toTimeInIso8601(timeout_at))
 
@@ -524,7 +532,7 @@ class CloudWrapper(BaseWrapper):
         :type node_instances: list [NodeInstance, ]
         :raises: TimeoutException
         """
-        timeout_at = self._get_provisioning_timeout_time()
+        timeout_at = self._get_state_timeout_time()
         self._log("Waiting for node instances to set '%s' to '%s' before %s" %
                   (NodeDecorator.SCALE_STATE_KEY, state, util.toTimeInIso8601(timeout_at)))
 

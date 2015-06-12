@@ -487,7 +487,7 @@ class BaseWrapper(object):
     @staticmethod
     def _wait_rtp_equals(node_instances, expected_value, rtp_getter, timeout_at,
                          polling_interval=None):
-        """Blocking wait with timeout until the RPT is set to the expected value
+        """Blocking wait with timeout until the RTP is set to the expected value
         on the set of node instances.
         NB! RTP name is NOT known. A getter function is used to get the value.
 

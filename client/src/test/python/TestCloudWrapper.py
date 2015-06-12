@@ -333,15 +333,15 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw = CloudWrapper(self.config_holder)
 
         cw.get_pre_scale_done = Mock(return_value='true')
-        cw._get_provisioning_timeout_time = Mock(return_value=(time.time() + 10))
+        cw._get_state_timeout_time = Mock(return_value=(time.time() + 10))
         cw._wait_pre_scale_done(node_instances)
 
         cw.get_pre_scale_done = Mock(return_value='true')
-        cw._get_provisioning_timeout_time = Mock(return_value=(time.time() - 1))
+        cw._get_state_timeout_time = Mock(return_value=(time.time() - 1))
         self.failUnlessRaises(TimeoutException, cw._wait_pre_scale_done, node_instances)
 
         cw.get_pre_scale_done = Mock(return_value='')
-        cw._get_provisioning_timeout_time = Mock(return_value=(time.time() + 2))
+        cw._get_state_timeout_time = Mock(return_value=(time.time() + 2))
         self.failUnlessRaises(TimeoutException, cw._wait_pre_scale_done, node_instances)
 
     def test_wait_scale_state(self):
@@ -355,17 +355,17 @@ class TestCloudWrapper(TestCloudConnectorsBase):
 
         # All set before timeout.
         cw._get_effective_scale_state = Mock(return_value=CloudWrapper.SCALE_STATE_RESIZED)
-        cw._get_provisioning_timeout_time = Mock(return_value=(time.time() + 5))
+        cw._get_state_timeout_time = Mock(return_value=(time.time() + 5))
         cw._wait_scale_state(CloudWrapper.SCALE_STATE_RESIZED, node_instances)
 
         # Timeout is in the past.
         cw._get_effective_scale_state = Mock(return_value=CloudWrapper.SCALE_STATE_RESIZED)
-        cw._get_provisioning_timeout_time = Mock(return_value=(time.time() - 1))
+        cw._get_state_timeout_time = Mock(return_value=(time.time() - 1))
         self.failUnlessRaises(TimeoutException, cw._wait_scale_state, *(CloudWrapper.SCALE_STATE_RESIZED, node_instances))
 
         # VMs do not set proper value and we timeout.
         cw._get_effective_scale_state = Mock(return_value=CloudWrapper.SCALE_STATE_RESIZING)
-        cw._get_provisioning_timeout_time = Mock(return_value=(time.time() + 2))
+        cw._get_state_timeout_time = Mock(return_value=(time.time() + 2))
         self.failUnlessRaises(TimeoutException, cw._wait_scale_state, *(CloudWrapper.SCALE_STATE_RESIZED, node_instances))
 
 
