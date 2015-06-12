@@ -67,8 +67,8 @@ class MachineExecutor(object):
         if not state:
             raise ExecutionException('Machine executor: No state to execute '
                                      'specified.')
-        self._set_state_start_time()
         try:
+            self._set_state_start_time()
             getattr(self, 'on' + state)()
         except AttributeError as ex:
             msg = "Machine executor does not implement '%s' state." % state

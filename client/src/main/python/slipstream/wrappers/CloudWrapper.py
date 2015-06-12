@@ -53,8 +53,6 @@ class CloudWrapper(BaseWrapper):
 
         self._instance_names_force_to_compete_states = []
 
-        self._state_start_time = None
-
     def initCloudConnector(self, config_holder=None):
         self._cloud_client = CloudConnectorFactory.createConnector(
             config_holder or self._get_config_holder())
@@ -115,12 +113,6 @@ class CloudWrapper(BaseWrapper):
         # Wait less than defined by user.
         timeout_min = int(user_timeout_min * self.WAIT_TIME_PERCENTAGE)
         return self.get_state_start_time() + timeout_min * 60
-
-    def set_state_start_time(self):
-        self._state_start_time = time.time()
-
-    def get_state_start_time(self):
-        return (self._state_start_time is None) and time.time() or self._state_start_time
 
     def _get_user_timeout(self):
         """

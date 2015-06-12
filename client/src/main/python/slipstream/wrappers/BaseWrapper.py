@@ -145,6 +145,8 @@ class BaseWrapper(object):
         self._run_parameters = None
         self._nodes_instances = {}
 
+        self._state_start_time = None
+
     @staticmethod
     def _get_my_node_instance_name(config_holder):
         try:
@@ -539,6 +541,12 @@ class BaseWrapper(object):
 
     def _get_cloud_service_name(self):
         return os.environ[util.ENV_CONNECTOR_INSTANCE]
+
+    def set_state_start_time(self):
+        self._state_start_time = time.time()
+
+    def get_state_start_time(self):
+        return (self._state_start_time is None) and time.time() or self._state_start_time
 
     #
     # Local cache of NodesInstances, Run, Run Parameters and User.
