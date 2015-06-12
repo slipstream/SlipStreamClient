@@ -25,15 +25,8 @@ from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 from slipstream.NodeDecorator import NodeDecorator
 from slipstream.exceptions import Exceptions
 from slipstream.NodeInstance import NodeInstance
-from slipstream.exceptions.Exceptions import TimeoutException, ExecutionException
-
-
-class InconsistentScaleStateError(Exceptions.ExecutionException):
-    pass
-
-
-class InconsistentScalingNodesError(Exceptions.ExecutionException):
-    pass
+from slipstream.exceptions.Exceptions import TimeoutException, \
+    ExecutionException, InconsistentScaleStateError, InconsistentScalingNodesError
 
 
 class RuntimeParameter(object):

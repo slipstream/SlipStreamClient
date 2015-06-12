@@ -26,10 +26,10 @@ from mock import Mock
 import time
 
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.exceptions.Exceptions import TimeoutException
-from slipstream.wrappers.CloudWrapper import CloudWrapper
-from slipstream.wrappers.BaseWrapper import BaseWrapper, \
+from slipstream.exceptions.Exceptions import TimeoutException, \
     InconsistentScalingNodesError, InconsistentScaleStateError
+from slipstream.wrappers.CloudWrapper import CloudWrapper
+from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.util import CONFIGPARAM_CONNECTOR_MODULE_NAME, ENV_CONNECTOR_INSTANCE
 from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY, RUN_CATEGORY_DEPLOYMENT
 from slipstream.NodeInstance import NodeInstance
