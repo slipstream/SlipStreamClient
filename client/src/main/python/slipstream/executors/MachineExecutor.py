@@ -27,6 +27,7 @@ from slipstream.exceptions.Exceptions import AbortException, \
     TerminalStateException, ExecutionException
 from slipstream import util
 from slipstream.Client import Client
+from slipstream.wrappers.BaseWrapper import InconsistentScaleStateError
 
 
 class MachineExecutor(object):
@@ -208,6 +209,13 @@ class MachineExecutor(object):
 
     def _is_vertical_scaling(self):
         return self.wrapper.is_vertical_scaling()
+
+    def _is_horizontal_scale_down(self):
+        try:
+            return self.wrapper.is_horizontal_scale_down()
+        except InconsistentScaleStateError as ex:
+            util.printDetail("Machine Executor. Ignoring exception: " % str(ex))
+            return False
 
     def _set_state_start_time(self):
         self.wrapper.set_state_start_time()
