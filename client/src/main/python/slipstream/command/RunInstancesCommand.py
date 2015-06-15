@@ -39,6 +39,7 @@ class RunInstancesCommand(CloudClientCommand):
     IMAGE_ID_KEY = 'image-id'
     PLATFORM_KEY = 'platform'
     LOGIN_USER_KEY = 'login-username'
+    LOGIN_PASS_KEY = 'login-password'
     NETWORK_TYPE = 'network-type'
     EXTRA_DISK_VOLATILE = 'extra-disk-volatile'
     DEFAULT_TIMEOUT = 600
@@ -74,6 +75,10 @@ class RunInstancesCommand(CloudClientCommand):
         parser.add_option('--' + self.LOGIN_USER_KEY, dest=self.LOGIN_USER_KEY,
                           help='Username of the user to use to contextualize the instance',
                           default='', metavar='USER')
+
+        parser.add_option('--' + self.LOGIN_PASS_KEY, dest=self.LOGIN_PASS_KEY,
+                          help='Password of the user to use to contextualize the instance',
+                          default='', metavar='PASS')
 
         parser.add_option('--' + NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY, dest=NodeDecorator.NATIVE_CONTEXTUALIZATION_KEY,
                           help='When SlipStream should use the native Cloud contextualization (instead of SSH/WinRM)\nPossible values: never|always|linux-only|windows-only',
@@ -114,8 +119,15 @@ class RunInstancesCommand(CloudClientCommand):
 
         return NodeInstance(runtime_parameters)
 
+    def _get_command_specific_node_inst_cloud_params(self):
+        cloud_params = {}
+        if self.get_option(self.LOGIN_PASS_KEY):
+            cloud_params[NodeDecorator.LOGIN_PASS_KEY] = self.get_option(self.LOGIN_PASS_KEY)
+        return cloud_params
+
     def do_work(self):
         node_instance = self._get_node_instance()
+        node_instance.set_cloud_parameters(self._get_command_specific_node_inst_cloud_params())
         node_instance.set_cloud_parameters(self.get_cloud_specific_node_inst_cloud_params())
         node_instance.set_image_attributes(self.get_cloud_specific_node_inst_image_attributes())
         node_instance.set_attributes(self.get_cloud_specific_node_inst_attributes())

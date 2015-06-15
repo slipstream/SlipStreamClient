@@ -70,6 +70,7 @@ class NodeDecorator(object):
     RUN_BUILD_RECIPES_KEY = 'run-build-recipes'
     PLATFORM_KEY = 'platform'
     LOGIN_USER_KEY = 'loginUser'
+    LOGIN_PASS_KEY = 'login.password'
     SCALE_STATE_KEY = 'scale.state'
     INSTANCEID_KEY = 'instanceid'
     CLOUDSERVICE_KEY = 'cloudservice'
