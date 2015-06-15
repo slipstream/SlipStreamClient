@@ -160,7 +160,7 @@ class NodeInstance(object):
         return self.get_image_attribute(NodeDecorator.LOGIN_USER_KEY, default_value)
 
     def get_password(self):
-        return self.get_cloud_parameter('login.password')
+        return self.get_cloud_parameter(NodeDecorator.LOGIN_PASS_KEY)
 
     def get_instance_type(self):
         return self.get_cloud_parameter('instance.type')

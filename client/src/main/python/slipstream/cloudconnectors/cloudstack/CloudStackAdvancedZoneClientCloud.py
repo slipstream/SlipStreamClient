@@ -60,8 +60,10 @@ class CloudStackAdvancedZoneClientCloud(CloudStackClientCloud):
         ip_type = node_instance.get_network_type()
 
         keypair = None
+        contextualization_script = None
         if not node_instance.is_windows():
             keypair = user_info.get_keypair_name()
+            contextualization_script = self.is_build_image() and '' or self._get_bootstrap_script(node_instance)
 
         security_groups = node_instance.get_security_groups()
         security_groups = (len(security_groups) > 0) and security_groups or None
@@ -97,6 +99,7 @@ class CloudStackAdvancedZoneClientCloud(CloudStackClientCloud):
                 size=size,
                 image=image,
                 ex_keyname=keypair,
+                ex_userdata=contextualization_script,
                 ex_security_groups=security_groups,
                 networks=networks)
 
