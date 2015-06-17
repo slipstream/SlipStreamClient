@@ -22,6 +22,14 @@ class TestUtil(unittest.TestCase):
         status, out = util.execute(['sleep'], withOutput=True)
         self.assertEqual(status, 1)
         self.assertEqual(out, 'usage: sleep seconds\n')
-        
+
+    def test_sanitize_env(self):
+        assert {} == util._sanitize_env({})
+        assert 'a' == util._sanitize_env({'a': 'a'})['a']
+        assert '' == util._sanitize_env({'a': None})['a']
+        assert '0' == util._sanitize_env({'a': 0})['a']
+        assert 'True' == util._sanitize_env({'a': True})['a']
+
+
 if __name__ == "__main__":
     unittest.main()
