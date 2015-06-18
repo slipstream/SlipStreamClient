@@ -751,7 +751,7 @@ class BaseCloudConnector(object):
         if self.is_start_orchestrator():
             targetScript = 'slipstream-orchestrator'
 
-        command = 'mkdir %(reports)s\n'
+        command = 'If Not Exist %(reports)s mkdir %(reports)s\n'
         command += 'If Not Exist "C:\\Python27\\python.exe" ( '
         command += '  powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'https://www.python.org/ftp/python/2.7.10/python-2.7.10.amd64.msi\', $env:temp+\'\\python.msi\')"\n'
         command += '  start /wait msiexec /i %%TMP%%\\python.msi /qn /quiet /norestart /log log.txt TARGETDIR=C:\\Python27\\ ALLUSERS=1 '
@@ -762,20 +762,6 @@ class BaseCloudConnector(object):
         command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
 
-        password = ''
-        if not self.has_capability(self.CAPABILITY_GENERATE_PASSWORD):
-            password = ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(10))
-            command += 'set pass=%(password)s\n'
-            command += 'net user %(username)s %%pass%%\n'
-            command += 'ss-get nodename > tmp.txt\n'
-            command += 'set /p nodename= < tmp.txt\n'
-            command += 'ss-get index > tmp.txt\n'
-            command += 'set /p index= < tmp.txt\n'
-            command += 'ss-get cloudservice > tmp.txt\n'
-            command += 'set /p cloudservice= < tmp.txt\n'
-            command += 'del tmp.txt\n'
-            command += 'ss-set %%nodename%%.%%index%%:%%cloudservice%%.login.password %%pass%%\n'
-
         # command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s %(targetScript)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
@@ -785,7 +771,6 @@ class BaseCloudConnector(object):
             'reports': reportdir,
             'nodename': instance_name,
             'username': username,
-            'password': password,
             'targetScript': targetScript
         }
 
@@ -794,10 +779,10 @@ class BaseCloudConnector(object):
         reportdir = Client.REPORTSDIR
 
         command = 'mkdir -p %(reports)s; '
-        command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1 '
-        command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >%(reports)s/%(nodename)s.slipstream.log 2>&1) '
+        command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
+        command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         # command += '&& export LIBCLOUD_DEBUG=/dev/stderr '
-        command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >>%(reports)s/%(nodename)s.slipstream.log 2>&1'
+        command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
         return command % {
             'bootstrap': bootstrap,
