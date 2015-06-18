@@ -127,10 +127,7 @@ class MachineExecutor(object):
 
     @staticmethod
     def _sleep(seconds):
-        try:
-            time.sleep(seconds)
-        except IOError:
-            pass
+        util.sleep(seconds)
 
     def _get_sleep_time(self, state):
         if not self._is_mutable() and self._in_ready_and_no_need_to_stop_images(state):

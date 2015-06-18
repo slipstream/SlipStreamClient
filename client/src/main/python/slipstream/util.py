@@ -68,6 +68,12 @@ ENV_SLIPSTREAM_SSH_PUB_KEY = '__SLIPSTREAM_SSH_PUB_KEY'
 ENV_CONNECTOR_INSTANCE = 'SLIPSTREAM_CONNECTOR_INSTANCE'
 ENV_NODE_INSTANCE_NAME = 'SLIPSTREAM_NODE_INSTANCE_NAME'
 
+def sleep(seconds, fail_on_ioerror=False):
+    try:
+        time.sleep(seconds)
+    except IOError:
+        if fail_on_ioerror:
+            raise
 
 def get_cloudconnector_modulenames(base_package='slipstream.cloudconnectors'):
     module_names = []
