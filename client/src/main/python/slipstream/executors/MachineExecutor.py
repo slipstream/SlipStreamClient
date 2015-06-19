@@ -210,7 +210,7 @@ class MachineExecutor(object):
         try:
             return self.wrapper.is_horizontal_scale_down()
         except InconsistentScaleStateError as ex:
-            util.printDetail("Machine Executor. Ignoring exception: " % str(ex))
+            util.printDetail("Machine Executor. Ignoring exception: %s" % str(ex))
             return False
 
     def _set_state_start_time(self):
