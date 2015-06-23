@@ -1,2 +1,2 @@
 export PATH=$PATH:/opt/slipstream/client/bin:/opt/slipstream/client/sbin
-export PYTHONPATH=$PYTHONPATH:/opt/slipstream/client/lib:/opt/amazon:/opt/stratuslab/lib/stratuslab/python
+export PYTHONPATH=$PYTHONPATH:/opt/slipstream/client/lib

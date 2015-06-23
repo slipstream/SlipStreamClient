@@ -22,7 +22,7 @@ import sys
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.executors.Orchestrator import Orchestrator
+from slipstream.executors.Node import Node
 from slipstream.Logger import Logger
 from slipstream import util
 
@@ -30,12 +30,12 @@ from slipstream.daemonr import DaemonRunnable
 from slipstream.daemonr import DaemonRunner
 
 
-LOG_FILE = os.path.join(util.REPORTSDIR, 'slipstream-orchestrator.log')
+LOG_FILE = os.path.join(util.REPORTSDIR, 'slipstream-node.log')
 LOG_LEVEL = 'info'
-PID_FILE = '/var/run/slipstream-orchestrator.pid'
+PID_FILE = '/var/run/slipstream-node.pid'
 
 class NodeExecutor(CommandBase):
-    """SlipStream Orchestrator Executor.
+    """SlipStream Node Executor.
     """
 
     def __init__(self):
@@ -93,16 +93,8 @@ If action is not provided, executor runs on foreground."""
         self._callAndHandleErrorsForCommands(self.doWork.__name__)
 
     def doWork(self):
-        self.config_holder.set('cloud', self._get_cloud())
-        orchestrator = Orchestrator(self.config_holder)
-        orchestrator.execute()
-
-    def _get_cloud(self):
-        try:
-            return os.environ['SLIPSTREAM_CLOUD']
-        except KeyError:
-            print 'ERROR: Missing environment variable SLIPSTREAM_CLOUD.'
-            sys.exit(-1)
+        node = Node(self.config_holder)
+        node.execute()
 
 
 class Runnable(DaemonRunnable):
@@ -112,7 +104,7 @@ class Runnable(DaemonRunnable):
 
     def get_logger(self):
         return self.config_holder.options.get('logger') or \
-               Logger(self.config_holder).get_logger()
+            Logger(self.config_holder).get_logger()
 
     def get_run_action(self):
         return self._executor.get_run_action()

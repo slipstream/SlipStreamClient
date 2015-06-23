@@ -1,0 +1,1 @@
+This directory contains patches to be applied on the external/* packages.
