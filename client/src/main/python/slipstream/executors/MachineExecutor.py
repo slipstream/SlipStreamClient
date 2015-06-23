@@ -127,10 +127,7 @@ class MachineExecutor(object):
 
     @staticmethod
     def _sleep(seconds):
-        try:
-            time.sleep(seconds)
-        except IOError:
-            pass
+        util.sleep(seconds)
 
     def _get_sleep_time(self, state):
         if not self._is_mutable() and self._in_ready_and_no_need_to_stop_images(state):
@@ -213,7 +210,7 @@ class MachineExecutor(object):
         try:
             return self.wrapper.is_horizontal_scale_down()
         except InconsistentScaleStateError as ex:
-            util.printDetail("Machine Executor. Ignoring exception: " % str(ex))
+            util.printDetail("Machine Executor. Ignoring exception: %s" % str(ex))
             return False
 
     def _set_state_start_time(self):

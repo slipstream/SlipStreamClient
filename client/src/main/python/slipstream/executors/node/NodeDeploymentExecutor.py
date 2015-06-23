@@ -18,7 +18,7 @@
 
 import os
 import sys
-import time
+import errno
 import codecs
 import tempfile
 
@@ -264,24 +264,32 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         process = self._launch_process(target_script, exports)
 
-        # The process is still working on the background.
-        while process.poll() is None:
-            # Ask server whether the abort flag is set. If so, kill the
-            # process and exit. Otherwise, sleep for some time.
-            if self.wrapper.isAbort():
-                try:
-                    util.printDetail('Abort flag detected. '
-                                     'Terminating target script execution...')
-                    process.terminate()
-                    time.sleep(5)
-                    if process.poll() is None:
-                        util.printDetail('Termination is taking too long. '
-                                         'Killing the target script...')
-                        process.kill()
-                except OSError:
-                    pass
-                break
-            time.sleep(self.TARGET_POLL_INTERVAL)
+        try:
+            # The process is still working on the background.
+            while process.poll() is None:
+                # Ask server whether the abort flag is set. If so, kill the
+                # process and exit. Otherwise, sleep for some time.
+                if self.wrapper.isAbort():
+                    try:
+                        util.printDetail('Abort flag detected. '
+                                         'Terminating target script execution...')
+                        process.terminate()
+                        util.sleep(5)
+                        if process.poll() is None:
+                            util.printDetail('Termination is taking too long. '
+                                             'Killing the target script...')
+                            process.kill()
+                    except OSError:
+                        pass
+                    break
+                util.sleep(self.TARGET_POLL_INTERVAL)
+        except IOError as e:
+            if e.errno != errno.EINTR:
+                raise
+            else:
+                util.printDetail('Signal EINTR detected. Ignoring it.')
+                return 0
+
         util.printDetail("End of the target script")
 
         return process.returncode

@@ -47,6 +47,17 @@ class TestNodeInstance(unittest.TestCase):
                            'cloud-x.networks': 'foo, bar'})
         assert ['foo', 'bar'] == ni.get_networks()
 
+    def test_get_disk_attach_detach(self):
+        ni = NodeInstance()
+        assert None == ni.get_disk_attach_size()
+        assert None == ni.get_disk_detach_device()
+
+        ni = NodeInstance()
+        ni.set_parameter(NodeDecorator.SCALE_DISK_ATTACH_SIZE, 1)
+        assert 1 == ni.get_disk_attach_size()
+        ni.set_parameter(NodeDecorator.SCALE_DISK_DETACH_DEVICE, 'foo')
+        assert 'foo' == ni.get_disk_detach_device()
+
 
 if __name__ == '__main__':
     unittest.main()

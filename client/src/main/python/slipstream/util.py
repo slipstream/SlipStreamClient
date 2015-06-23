@@ -68,6 +68,12 @@ ENV_SLIPSTREAM_SSH_PUB_KEY = '__SLIPSTREAM_SSH_PUB_KEY'
 ENV_CONNECTOR_INSTANCE = 'SLIPSTREAM_CONNECTOR_INSTANCE'
 ENV_NODE_INSTANCE_NAME = 'SLIPSTREAM_NODE_INSTANCE_NAME'
 
+def sleep(seconds, fail_on_ioerror=False):
+    try:
+        time.sleep(seconds)
+    except IOError:
+        if fail_on_ioerror:
+            raise
 
 def get_cloudconnector_modulenames(base_package='slipstream.cloudconnectors'):
     module_names = []
@@ -136,7 +142,8 @@ def execute(commandAndArgsList, **kwargs):
 
     extra_env = kwargs.pop('extra_env', {})
     if extra_env:
-        kwargs['env'] = dict(chain(os.environ.copy().iteritems(), extra_env.iteritems()))
+        kwargs['env'] = _sanitize_env(dict(chain(os.environ.copy().iteritems(),
+                                                 extra_env.iteritems())))
 
     process = subprocess.Popen(commandAndArgsList, **kwargs)
 
@@ -151,6 +158,16 @@ def execute(commandAndArgsList, **kwargs):
         return process.returncode, output
     else:
         return process.returncode
+
+
+def _sanitize_env(env_dist):
+    for k, v in env_dist.iteritems():
+        if not isinstance(v, basestring):
+            if v is None:
+                env_dist[k] = ''
+            else:
+                env_dist[k] = unicode(v)
+    return env_dist
 
 
 def removeLogger(handler):
