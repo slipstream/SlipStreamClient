@@ -1,0 +1,103 @@
+#!/bin/bash
+#
+#   /etc/rc.d/init.d/slipstream-node
+#
+#   Start up the Slipstream Node Executor daemon.
+#
+# chkconfig: 2345 20 80
+# description: Slipstream Node Executor daemon.
+#
+# processname: slipstream-node
+# config: /etc/slipstream/metering.ini
+# config: /etc/slipstream/metering.conf
+# config: /etc/default/slipstream-node
+# pidfile: /var/run/slipstream-node.pid
+
+### BEGIN INIT INFO
+# Provides: slipstream-node
+# Required-Start: $network $local_fs
+# Required-Stop: $network $local_fs
+# Default-Start: 2 3 4 5
+# Default-Stop: S 0 1 6
+# Short-Description: Start up the Slipstream Node Executor daemon
+# Description:       Slipstream Node Executor daemon enables user
+#                    application depoyment orchestration.
+### END INIT INFO
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+NAME="slipstream-node"
+LOCK_FILE=/var/lock/subsys/$NAME
+RETVAL=0
+
+# default settings
+DAEMON=/opt/slipstream/client/sbin/slipstream-node-execution
+
+if [ -f /etc/default/slipstream-node ]; then
+  . /etc/default/slipstream-node
+fi
+
+DAEMON_ARGS="$DAEMON_ARGS"
+
+
+start() {
+    [ -x $DAEMON ] || exit 5
+    [ $UID -ne 0 ] && exit 4
+    echo -n "Starting ${NAME}: "
+    $DAEMON $DAEMON_ARGS start && success || failure
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && touch $LOCK_FILE
+    echo
+    return $RETVAL
+}
+
+stop() {
+    [ $UID -ne 0 ] && exit 4
+    echo -n "Shutting down ${NAME}: "
+    $DAEMON stop && success || failure
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
+    echo
+    return $RETVAL
+}
+
+status() {
+    [ $UID -ne 0 ] && exit 4
+    $DAEMON status
+    RETVAL=$?
+    return $RETVAL
+}
+
+restart() {
+    [ -x $DAEMON ] || exit 5
+    [ $UID -ne 0 ] && exit 4
+    echo -n "Re-starting ${NAME}: "
+    $DAEMON restart && success || failure
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && touch $LOCK_FILE
+    echo
+    return $RETVAL
+}
+
+case "$1" in
+    start)
+        start
+        ;;
+    stop)
+        stop
+        ;;
+    status)
+        status
+        ;;
+    restart)
+        restart
+        ;;
+    *)
+        echo "Usage: ${SCRIPTNAME} {start|stop|status|restart}"
+        RETVAL=2
+        ;;
+esac
+exit $RETVAL
+

@@ -1,0 +1,11 @@
+apache-libcloud==0.14.1
+deamon==1.1
+httplib2==0.9
+isodate==0.5.1
+lockfile==0.10.2
+paramiko==1.15.2
+pycrypto==2.6.1
+scpclient==0.5
+xmlwitch==0.2.1
+mock==1.0.1
+xmlwitch==0.2.1

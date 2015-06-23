@@ -42,6 +42,14 @@
 			<fileMode>0755</fileMode>
 		</fileSet>
 		<fileSet>
+			<directory>target/main/scripts/etc</directory>
+			<outputDirectory>etc</outputDirectory>
+			<includes>
+				<include>slipstream-*</include>
+			</includes>
+			<fileMode>0755</fileMode>
+		</fileSet>
+		<fileSet>
 			<directory>src/external</directory>
 			<outputDirectory>lib</outputDirectory>
 			<excludes>
