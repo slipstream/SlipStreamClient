@@ -25,7 +25,7 @@
 ### END INIT INFO
 
 # source function library
-. /etc/rc.d/init.d/functions
+. /lib/lsb/init-functions
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 NAME="slipstream-node"
@@ -48,7 +48,7 @@ start() {
     [ -x $DAEMON ] || exit 5
     [ $UID -ne 0 ] && exit 4
     echo -n "Starting ${NAME}: "
-    $DAEMON $DAEMON_ARGS start && success || failure
+    $DAEMON $DAEMON_ARGS start && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
     echo
@@ -58,7 +58,7 @@ start() {
 stop() {
     [ $UID -ne 0 ] && exit 4
     echo -n "Shutting down ${NAME}: "
-    $DAEMON stop && success || failure
+    $DAEMON stop && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
     echo
@@ -76,7 +76,7 @@ restart() {
     [ -x $DAEMON ] || exit 5
     [ $UID -ne 0 ] && exit 4
     echo -n "Re-starting ${NAME}: "
-    $DAEMON restart && success || failure
+    $DAEMON restart && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
     echo
