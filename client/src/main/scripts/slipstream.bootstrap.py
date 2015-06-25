@@ -33,7 +33,8 @@ import getpass
 import time
 import platform
 
-SLIPSTREAM_CLIENT_HOME = os.path.join(os.sep, 'opt', 'slipstream', 'client')
+SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
+SLIPSTREAM_CLIENT_HOME = os.path.join(SLIPSTREAM_HOME, 'client')
 SLIPSTREAM_CLIENT_SETUP_DONE_LOCK = os.path.join(SLIPSTREAM_CLIENT_HOME, 'setup.done.lock')
 
 MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
@@ -41,7 +42,7 @@ MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
-INITD_BASED_DISTROS = ['CentOS', 'RedHat', 'Ubuntu']
+INITD_BASED_DISTROS = ['CentOS', 'CentOS Linux', 'RedHat', 'Ubuntu']
 
 
 class HTTPSConnection(httplib.HTTPSConnection):
@@ -296,7 +297,7 @@ def _paramikoSetup():
         import scpclient  # noqa
 
 
-def _getVerbosity():
+def _get_verbosity():
     verbosity = ''
     verbosityLevel = os.environ.get('SLIPSTREAM_VERBOSITY_LEVEL', '0')
     try:
@@ -335,20 +336,30 @@ def _configure_initd_service(executor_name):
     :return: init.d service name
     """
 
-    service_name = "slipstream-%s" % executor_name
-    dst = '/etc/rc.d/init.d/' + service_name
-    if not os.path.exists(dst):
-        os.symlink(SLIPSTREAM_CLIENT_HOME + '/etc/' + service_name, dst)
+    _create_executor_config(executor_name)
+    service_name = _add_executor_to_initd(executor_name)
 
-    with open('/etc/default/slipstream-node', 'w') as fh:
-        fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib'))
-        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'bin'))
-        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin'))
-        fh.write('export DAEMON_ARGS="%s"\n' % _getVerbosity())
+    return service_name
+
+
+def _add_executor_to_initd(executor_name):
+    service_name = "slipstream-%s" % executor_name
+    dst = '/etc/init.d/' + service_name
+    if not os.path.exists(dst):
+        distro = _is_ubuntu() and 'ubuntu' or 'redhat'
+        os.symlink(SLIPSTREAM_CLIENT_HOME + '/etc/' + service_name + '-' + distro, dst)
 
     commands.getstatusoutput('chkconfig --add %s' % service_name)
 
     return service_name
+
+
+def _create_executor_config(executor_name):
+    with open('/etc/default/slipstream-%s' % executor_name, 'w') as fh:
+        fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib'))
+        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'bin'))
+        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin'))
+        fh.write('export DAEMON_ARGS="%s"\n' % _get_verbosity())
 
 
 def _setup_and_get_initd_service_start_command(executor_name):
@@ -364,6 +375,10 @@ def _system_supports_initd():
         return False
     return True
 
+def _is_ubuntu():
+    distname, _, _ = platform.linux_distribution()
+    return distname.lower().startswith('ubuntu')
+
 
 def _is_linux():
     return sys.platform.startswith('linux')
@@ -373,11 +388,11 @@ def _get_machine_executor_direct_startup_command(executor_name):
     custom_python_bin = os.path.join(os.sep, 'opt', 'python', 'bin')
     print 'Prepending %s to PATH.' % custom_python_bin
     os.putenv('PATH', '%s:%s' % (custom_python_bin, os.environ['PATH']))
-    cmd = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin', executor_name)
+    cmd = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin', 'slipstream-%s' % executor_name)
     os.chdir(cmd.rsplit(os.sep, 1)[0])
     if sys.platform == 'win32':
         cmd = 'C:\\Python27\\python ' + cmd
-    return cmd + ' ' + _getVerbosity()
+    return cmd + ' ' + _get_verbosity()
 
 
 def start_machine_executor(cmd):
@@ -476,7 +491,7 @@ def main():
             machine_executor = sys.argv[1]
         is_orchestration = machine_executor != 'node'
 
-        msg = "=== %s bootstrap script ===" % os.path.basename(machine_executor)
+        msg = "=== %s bootstrap ===" % machine_executor
         print '{sep}\n{msg}\n{sep}'.format(sep=len(msg) * '=', msg=msg)
 
         setup_ss_and_cloud_connector(is_orchestration)
@@ -485,10 +500,10 @@ def main():
 
         print 'PYTHONPATH environment variable set to:', os.environ['PYTHONPATH']
         print 'Done bootstrapping!\n'
-        sys.stdout.flush()
-        sys.stderr.flush()
 
         cmd = get_machine_executor_command(machine_executor)
+        sys.stdout.flush()
+        sys.stderr.flush()
     except:
         publish_failure_to_ss_run(sys.exc_info())
         raise

@@ -736,22 +736,14 @@ class BaseCloudConnector(object):
         instance_name = node_instance.get_name()
 
         if node_instance.is_windows():
-            return self.__build_slipstream_bootstrap_command_for_windows(instance_name, username)
+            return self.__build_slipstream_bootstrap_command_for_windows(instance_name)
         else:
             return self.__build_slipstream_bootstrap_command_for_linux(instance_name)
 
-    def __build_slipstream_bootstrap_command_for_windows(self, instance_name,
-                                                   username):
-        if not username:
-            username = 'administrator'
-        bootstrap = 'slipstream.bootstrap'
-        reportdir = Client.WINDOWS_REPORTSDIR
-
-        targetScript = ''
-        if self.is_start_orchestrator():
-            targetScript = 'slipstream-orchestrator'
+    def __build_slipstream_bootstrap_command_for_windows(self, instance_name):
 
         command = 'If Not Exist %(reports)s mkdir %(reports)s\n'
+        command += 'If Not Exist %(ss_home)s mkdir %(ss_home)s\n'
         command += 'If Not Exist "C:\\Python27\\python.exe" ( '
         command += '  powershell -Command "$wc = New-Object System.Net.WebClient; $wc.DownloadFile(\'https://www.python.org/ftp/python/2.7.10/python-2.7.10.amd64.msi\', $env:temp+\'\\python.msi\')"\n'
         command += '  start /wait msiexec /i %%TMP%%\\python.msi /qn /quiet /norestart /log log.txt TARGETDIR=C:\\Python27\\ ALLUSERS=1 '
@@ -762,34 +754,27 @@ class BaseCloudConnector(object):
         command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
 
-        # command += 'C:\\Python27\\python %%TMP%%\\%(bootstrap)s >> %(reports)s\%(nodename)s.slipstream.log 2>&1\n'
-        command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %%TMP%%\\%(bootstrap)s %(targetScript)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
+        command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python C:\\%(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
-        return command % {
-            'bootstrap': bootstrap,
-            'bootstrapUrl': os.environ['SLIPSTREAM_BOOTSTRAP_BIN'],
-            'reports': reportdir,
-            'nodename': instance_name,
-            'username': username,
-            'targetScript': targetScript
-        }
+        return command % self._get_bootstrap_command_replacements(instance_name, Client.WINDOWS_REPORTSDIR)
 
     def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
-        bootstrap = os.path.join(self.__get_tmp_dir_for_linux(), 'slipstream.bootstrap')
-        reportdir = Client.REPORTSDIR
 
-        command = 'mkdir -p %(reports)s; '
+        command = 'mkdir -p {%(reports)s,%(ss_home)}; '
         command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
-        # command += '&& export LIBCLOUD_DEBUG=/dev/stderr '
-        command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(targetScript)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
+        command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
-        return command % {
-            'bootstrap': bootstrap,
+        return command % self._get_bootstrap_command_replacements(instance_name, Client.REPORTSDIR)
+
+    def _get_bootstrap_command_replacements(self, instance_name, reports_dir):
+        return {
+            'reports': reports_dir,
+            'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
             'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
-            'reports': reportdir,
+            'ss_home': util.SLIPSTREAM_HOME,
             'nodename': instance_name,
-            'targetScript': self._get_machine_target_script_name()
+            'machine_executor': self._get_machine_executor_type()
         }
 
     @staticmethod
@@ -799,11 +784,8 @@ class BaseCloudConnector(object):
         else:
             return '/tmp'
 
-    def _get_machine_target_script_name(self):
-        if self.is_start_orchestrator():
-            return 'slipstream-orchestrator'
-        else:
-            return ''
+    def _get_machine_executor_type(self):
+        return self.is_start_orchestrator() and 'orchestrator' or 'node'
 
     def _wait_can_connect_with_ssh_or_abort(self, host, username='', password='', sshKey=None):
         self._print_detail('Check if we can connect to %s' % host)
