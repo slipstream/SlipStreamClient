@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-12-09 11:14:44.749 UTC" deleted="false" description="Minimal installation of the CentOS 6 operating system." isBase="true" isLatestVersion="true" lastModified="2015-07-02 15:51:57.307 UTC" loginUser="root" logoLink="https://slipstream.sixsq.com/images/modules-logos/centos.svg" parentUri="module/examples/images" platform="centos" shortName="centos-6" version="1806">
+<imageModule category="Image" creation="2013-12-18 13:45:34.454 UTC" deleted="false" description="Standard installation of the Windows Server 2012 R2 operating system (For Exoscale: Please ensure that port 5985 is open in your security group named &quot;default&quot;)" isBase="true" isLatestVersion="true" lastModified="2015-07-02 15:52:17.492 UTC" loginUser="administrator" logoLink="https://slipstream.sixsq.com/images/modules-logos/windows-server-2012.svg" parentUri="module/examples/images" platform="windows" shortName="windows-server-2012" version="1810">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers>
          </groupMembers>
@@ -6,15 +6,23 @@
    <commit author="sixsq">
       <comment>Initial version of this module</comment>
    </commit>
-   <published publicationDate="2015-07-02 15:51:57.307 UTC" />
+   <published publicationDate="2015-07-02 15:52:17.492 UTC" />
    <cloudNames length="12">
       </cloudNames>
    <runs count="0" limit="20" offset="0" totalCount="0" />
    <targets>
       <target name="onvmadd" />
       <target name="onvmremove" />
-      <target name="execute" />
       <target name="report" />
+      <target name="execute">$password = ss-random
+
+net user Administrator $password#1
+
+ss-set windows_username 'Administrator'
+ss-set windows_password $password#1
+
+
+ss-display "Windows-Server-2012 Ready"</target>
    </targets>
    <packages />
    <prerecipe />
@@ -38,12 +46,20 @@
          <parameter category="Output" description="hostname/ip of the image" isSet="false" mandatory="true" name="hostname" order="0" order_="0" readonly="false" type="String" />
       </entry>
       <entry>
+         <string>windows_password</string>
+         <parameter category="Output" description="windows password" isSet="false" mandatory="false" name="windows_password" order="0" order_="0" readonly="false" type="String" />
+      </entry>
+      <entry>
          <string>extra.disk.volatile</string>
          <parameter category="Cloud" description="Volatile extra disk in GB" isSet="false" mandatory="true" name="extra.disk.volatile" order="0" order_="0" readonly="false" type="String" />
       </entry>
       <entry>
          <string>instanceid</string>
          <parameter category="Output" description="Cloud instance id" isSet="false" mandatory="true" name="instanceid" order="0" order_="0" readonly="false" type="String" />
+      </entry>
+      <entry>
+         <string>windows_username</string>
+         <parameter category="Output" description="windows username" isSet="false" mandatory="false" name="windows_username" order="0" order_="0" readonly="false" type="String" />
       </entry>
       </parameters>
    <notes length="0" />

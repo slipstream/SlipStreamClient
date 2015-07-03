@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-12-09 11:14:44.749 UTC" deleted="false" description="Minimal installation of the CentOS 6 operating system." isBase="true" isLatestVersion="true" lastModified="2015-07-02 15:51:57.307 UTC" loginUser="root" logoLink="https://slipstream.sixsq.com/images/modules-logos/centos.svg" parentUri="module/examples/images" platform="centos" shortName="centos-6" version="1806">
+<imageModule category="Image" creation="2015-04-03 09:29:47.216 UTC" deleted="false" description="Standard installation of the Windows Server 2012 R2 operating system (For Exoscale: Please ensure that port 5985 is open in your security group named &quot;default&quot;)" isBase="true" isLatestVersion="true" lastModified="2015-07-02 15:23:56.893 UTC" loginUser="administrator" logoLink="https://slipstream.sixsq.com/images/modules-logos/windows-server-2012.svg" parentUri="module/examples/images" platform="windows" shortName="windows-server-2012-standalone" version="1811">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers>
          </groupMembers>
@@ -6,14 +6,18 @@
    <commit author="sixsq">
       <comment>Initial version of this module</comment>
    </commit>
-   <published publicationDate="2015-07-02 15:51:57.307 UTC" />
    <cloudNames length="12">
       </cloudNames>
    <runs count="0" limit="20" offset="0" totalCount="0" />
    <targets>
-      <target name="onvmadd" />
       <target name="onvmremove" />
-      <target name="execute" />
+      <target name="execute">#!/bin/bash -x
+
+
+URL=http://$(ss-get hostname)
+ss-set url.service $URL
+ss-display "Windows-Server-2012 is ready"</target>
+      <target name="onvmadd" />
       <target name="report" />
    </targets>
    <packages />
