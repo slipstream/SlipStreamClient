@@ -112,10 +112,11 @@ class NodeDeploymentExecutor(MachineExecutor):
         packages = self.node_instance.get_packages()
         if packages:
             message = 'Installing packages: %s' % ', '.join(packages)
+            fail_msg = "Failed installing packages on '%s'" % self._get_node_instance_name()
             util.printStep(message)
             self.wrapper.set_statecustom(message)
             cmd = util.get_packages_install_command(self.node_instance.get_platform(), packages)
-            self._run_target_script('#!/bin/sh -xe\n%s' % cmd)
+            self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg)
         else:
             util.printStep('No packages to install')
 
@@ -206,8 +207,15 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _launch_target_script(self, target_name, exports, abort_on_err):
         fail_msg = "Failed running '%s' target on '%s'" % (target_name, self._get_node_instance_name())
+        script = self.node_instance.get_image_target(target_name)
+
+        self._launch_script(script, exports, abort_on_err, fail_msg)
+
+    def _launch_script(self, script, exports={}, abort_on_err=True, fail_msg=None):
+        if fail_msg is None:
+            fail_msg = "Failed running script on '%s'" % self._get_node_instance_name()
         try:
-            rc = self._run_target_script(self.node_instance.get_image_target(target_name), exports)
+            rc = self._run_target_script(script, exports)
             sys.stdout.flush()
             sys.stderr.flush()
         except Exception as ex:
