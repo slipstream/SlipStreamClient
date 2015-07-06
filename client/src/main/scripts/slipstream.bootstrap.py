@@ -349,7 +349,11 @@ def _add_executor_to_initd(executor_name):
         distro = _is_ubuntu() and 'ubuntu' or 'redhat'
         os.symlink(SLIPSTREAM_CLIENT_HOME + '/etc/' + service_name + '-' + distro, dst)
 
-    commands.getstatusoutput('chkconfig --add %s' % service_name)
+    if _is_ubuntu():
+        cmd = 'update-rc.d %s defaults' % service_name
+    else:
+        cmd = 'chkconfig --add %s' % service_name
+    commands.getstatusoutput(cmd)
 
     return service_name
 
