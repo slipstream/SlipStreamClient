@@ -17,18 +17,20 @@
  limitations under the License.
 """
 
+import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.Node import Node
 from slipstream.Logger import Logger
+from slipstream import util
 
 from slipstream.daemonr import DaemonRunnable
 from slipstream.daemonr import DaemonRunner
 
 
-LOG_FILE = '/var/log/slipstream/client/slipstream-node.log'
+LOG_FILE = os.path.join(util.REPORTSDIR, 'slipstream-node.log')
 LOG_LEVEL = 'info'
 PID_FILE = '/var/run/slipstream-node.pid'
 
@@ -76,6 +78,8 @@ If action is not provided, executor runs on foreground."""
         if len(self.args) >= 1:
             self._run_action = self.args[0]
             self.config_holder.set('log_to_file', True)
+            if not os.path.exists(util.REPORTSDIR):
+                os.makedirs(util.REPORTSDIR)
         else:
             self.config_holder.set('log_to_file', False)
 
