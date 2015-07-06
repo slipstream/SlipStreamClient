@@ -76,7 +76,7 @@ restart() {
     [ -x $DAEMON ] || exit 5
     [ $UID -ne 0 ] && exit 4
     echo -n "Re-starting ${NAME}: "
-    $DAEMON restart && success || failure
+    $DAEMON $DAEMON_ARGS restart && success || failure
     RETVAL=$?
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
     echo

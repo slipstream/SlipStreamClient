@@ -29,7 +29,7 @@
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 NAME="slipstream-node"
-LOCK_FILE=/var/lock/subsys/$NAME
+LOCK_FILE=/var/lock/$NAME
 RETVAL=0
 if [ -z "$UID" ]; then
     UID=$(id -u)
@@ -76,7 +76,7 @@ restart() {
     [ -x $DAEMON ] || exit 5
     [ $UID -ne 0 ] && exit 4
     echo -n "Re-starting ${NAME}: "
-    $DAEMON restart && log_success_msg || log_failure_msg
+    $DAEMON $DAEMON_ARGS restart && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
     echo
