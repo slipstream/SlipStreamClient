@@ -85,14 +85,13 @@ def _set_PATH_to_ss():
         __pathPrepend(os.path.join(SLIPSTREAM_CLIENT_HOME, p))
 
 
-def _buildContextAndConfigSlipStream(cloud, orchestration):
-    _persistSlipStreamContext(cloud)
-    _persistSlipStreamConfig(cloud, orchestration)
+def _persist_ss_context_and_config(cloud, orchestration):
+    _persist_ss_context()
+    _persist_ss_config(cloud, orchestration)
 
 
-def _persistSlipStreamContext(cloud):
-    contextFile = os.path.join(tempfile.gettempdir(), 'slipstream.context')
-    slipstreamContext = """[contextualization]
+def _persist_ss_context():
+    slipstream_context = """[contextualization]
 diid = %s
 username = %s
 cookie = %s
@@ -103,23 +102,27 @@ node_instance_name = %s
        os.environ['SLIPSTREAM_COOKIE'].strip('"'),
        os.environ['SLIPSTREAM_SERVICEURL'],
        os.environ['SLIPSTREAM_NODE_INSTANCE_NAME'])
-    file(contextFile, 'w').write(slipstreamContext)
+    _write_to_ss_client_bin('slipstream.context', slipstream_context)
 
 
-def _persistSlipStreamConfig(cloud, orchestration):
-    cloudConnector = os.environ.get('CLOUDCONNECTOR_PYTHON_MODULENAME', '')
+def _persist_ss_config(cloud, orchestration):
+    cloud_connector = os.environ.get('CLOUDCONNECTOR_PYTHON_MODULENAME', '')
     # cloud connector module name is only required for orchestration
-    if orchestration and not cloudConnector:
+    if orchestration and not cloud_connector:
         raise RuntimeError("Failed to find connector module name for cloud: %s" % cloud)
 
-    clientConfig = """[System]
+    client_config = """[System]
 cloudconnector = %s
 #storageconnector = slipstream.connectors.LocalCloudStorageConnector
 contextualizationconnector = slipstream.connectors.LocalContextualizer
-""" % cloudConnector
+""" % cloud_connector
+    _write_to_ss_client_bin('slipstream.client.conf', client_config)
+
+
+def _write_to_ss_client_bin(fname, content):
     for _dir in ['bin', 'sbin']:
-        clientConfigFile = os.path.join(SLIPSTREAM_CLIENT_HOME, _dir, 'slipstream.client.conf')
-        file(clientConfigFile, 'w').write(clientConfig)
+        client_config_file = os.path.join(SLIPSTREAM_CLIENT_HOME, _dir, fname)
+        file(client_config_file, 'w').write(content)
 
 
 def __pythonpathPrepend(path):
@@ -439,7 +442,7 @@ def get_and_setup_ss(cloud, orchestration):
     print 'Retrieving the latest version of the SlipStream from:', ss_tarball_url
     _downloadAndExtractTarball(ss_tarball_url, SLIPSTREAM_CLIENT_HOME)
     _setup_manual_env()
-    _buildContextAndConfigSlipStream(cloud, orchestration)
+    _persist_ss_context_and_config(cloud, orchestration)
     if orchestration:
         _paramikoSetup()
     _set_setup_done_lock()
