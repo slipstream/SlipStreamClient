@@ -1,6 +1,9 @@
+import re
 
 from daemon.runner import is_pidfile_stale
 from daemon.runner import DaemonRunner as BaseDaemonRunner
+from daemon.runner import DaemonRunnerStopFailureError
+from lockfile import LockTimeout
 
 class DaemonRunner(BaseDaemonRunner):
 
@@ -22,8 +25,9 @@ class DaemonRunner(BaseDaemonRunner):
     action_funcs = dict(BaseDaemonRunner.action_funcs.items() + [(u'status', _status)])
 
     def __init__(self, runnable):
-        """Runnable object - subclass from slipstream.daemonr.DaemonRunnable.DaemonRunnable
-        to get required interface."""
+        """slipstream.daemonr.DaemonRunnable.DaemonRunnable
+        :param runnable: Runnable object
+        :type runnable: subclass from slipstream.daemonr.DaemonRunnable.DaemonRunnable to get required interface."""
         self._action = ''
 
         try:
@@ -46,8 +50,23 @@ class DaemonRunner(BaseDaemonRunner):
         self.action = self.get_action()
 
     def run_action(self, runnable):
-        self.set_action(runnable.get_action())
+        action = runnable.get_action()
+        self.set_action(action)
 
         super(DaemonRunner, self).__init__(runnable)
         self.daemon_context.files_preserve = runnable.get_filedescriptors()
-        self.do_action()
+        try:
+            self.do_action()
+        except DaemonRunnerStopFailureError as ex:
+            if 'stop' == action:
+                raise SystemExit('Failed to stop: %s' % ex)
+            elif 'restart' == action and re.search('PID file.*not locked', str(ex)):
+                self._start()
+            else:
+                raise ex
+        except LockTimeout as ex:
+            if 'start' == action:
+                print 'Failed to start: %s' % ex
+            else:
+                raise ex
+
