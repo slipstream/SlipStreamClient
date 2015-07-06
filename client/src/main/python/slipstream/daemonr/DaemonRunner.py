@@ -1,8 +1,8 @@
 import re
 
-from daemon.runner import is_pidfile_stale
+from daemon.runner import is_pidfile_stale, DaemonRunnerStopFailureError, \
+    DaemonRunnerStartFailureError
 from daemon.runner import DaemonRunner as BaseDaemonRunner
-from daemon.runner import DaemonRunnerStopFailureError
 from lockfile import LockTimeout
 
 class DaemonRunner(BaseDaemonRunner):
@@ -54,6 +54,8 @@ class DaemonRunner(BaseDaemonRunner):
         self.set_action(action)
 
         super(DaemonRunner, self).__init__(runnable)
+        # NB! From now, stdout and stderr are pointing to the files defined by Runnable.
+
         self.daemon_context.files_preserve = runnable.get_filedescriptors()
         try:
             self.do_action()
@@ -64,9 +66,18 @@ class DaemonRunner(BaseDaemonRunner):
                 self._start()
             else:
                 raise ex
+        except DaemonRunnerStartFailureError as ex:
+            if 'start' == action and re.search('PID file.*already locked', str(ex)):
+                self._log_failure(action, str(ex), runnable.get_logger())
+            else:
+                raise ex
         except LockTimeout as ex:
             if 'start' == action:
-                print 'Failed to start: %s' % ex
+                self._log_failure(action, str(ex), runnable.get_logger())
             else:
                 raise ex
 
+    def _log_failure(self, action, reason, logger):
+        msg = 'Failed to %s: %s' % (action, reason)
+        print msg
+        logger.critical(msg)
