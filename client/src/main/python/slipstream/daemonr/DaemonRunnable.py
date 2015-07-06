@@ -12,7 +12,7 @@ class DaemonRunnable(object):
         self.stdin_path = '/dev/null'
         self.stdout_path = self.log_file
         self.stderr_path = self.log_file
-        self.pidfile_timeout = 3
+        self.pidfile_timeout = -1
 
     def run(self):
         raise NotImplementedError()
