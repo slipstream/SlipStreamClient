@@ -108,7 +108,10 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printDetail('Executing build recipes')
 
         self._execute_target(NodeDecorator.NODE_PRERECIPE, abort_on_err=True)
+        self._install_user_packages()
+        self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
 
+    def _install_user_packages(self):
         packages = self.node_instance.get_packages()
         if packages:
             message = 'Installing packages: %s' % ', '.join(packages)
@@ -119,8 +122,6 @@ class NodeDeploymentExecutor(MachineExecutor):
             self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg)
         else:
             util.printStep('No packages to install')
-
-        self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
 
     def _execute_execute_target(self):
         self._execute_target('execute', abort_on_err=True)
