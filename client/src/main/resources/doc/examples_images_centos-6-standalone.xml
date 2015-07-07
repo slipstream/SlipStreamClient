@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-12-02 17:00:37.421 UTC" deleted="false" description="Minimal installation of the Ubuntu 12.04 (LTS) operating system." isBase="true" isLatestVersion="true" lastModified="2015-07-02 15:52:06.32 UTC" loginUser="ubuntu" logoLink="https://slipstream.sixsq.com/images/modules-logos/ubuntu.svg" parentUri="module/examples/images" platform="ubuntu" shortName="ubuntu-12.04" version="1780">
+<imageModule category="Image" creation="2015-03-16 09:22:23.725 UTC" deleted="false" description="Standalone deployment of CentOS 6 machine" isBase="true" isLatestVersion="true" lastModified="2015-07-02 15:16:54.431 UTC" loginUser="root" logoLink="https://slipstream.sixsq.com/images/modules-logos/centos.svg" parentUri="module/examples/images" platform="centos" shortName="centos-6-standalone" version="1807">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers>
          </groupMembers>
@@ -6,15 +6,79 @@
    <commit author="sixsq">
       <comment>Initial version of this module</comment>
    </commit>
-   <published publicationDate="2015-07-02 15:52:06.32 UTC" />
    <cloudNames length="12">
       </cloudNames>
    <runs count="0" limit="20" offset="0" totalCount="0" />
    <targets>
-      <target name="execute" />
+      <target name="report" />
       <target name="onvmremove" />
       <target name="onvmadd" />
-      <target name="report" />
+      <target name="execute">#!/bin/bash -x
+
+# update all of the packages to the latest releases
+yum update
+
+
+#
+# install vnc access server 
+#begin ...
+#
+
+
+#install gnome desktop environment
+yum -y groupinstall Desktop
+
+
+#install VNC package along with dependencies
+yum -y install tigervnc-server pixman pixman-devel libXfont
+
+
+# create a random password for vnc_user
+vnc_password=`openssl rand -base64 6`
+crypt_vnc_password=`echo $vnc_password | openssl passwd -crypt -stdin`
+
+
+# publish password so vnc_user can log in
+# will be visible in machine parameters in SlipStream interface
+ss-set vnc_password $vnc_password
+
+
+#Create VNC password for the root
+mkdir -p ~/.vnc
+echo $vnc_password | vncpasswd -f &gt; ~/.vnc/passwd
+chmod 0400 ~/.vnc/passwd
+
+
+#configure resolution for the root 
+cat &gt; /etc/sysconfig/vncservers &lt;&lt;'EOF'
+VNCSERVERS="1:root"
+VNCSERVERARGS[1]="-geometry 1000x800"
+EOF
+
+
+#Start vnc service
+service vncserver start
+
+
+#ouvre le port utilis&#233; par vnc
+iptables -I INPUT 4 -j ACCEPT -p tcp --dport 5900:5902 
+
+
+#start vnc service automatically during startup
+#chkconfig --levels 235 vncsever on
+
+#
+#End of vnc installation
+#
+
+
+# set the deployment url to SSH url
+url=`ss-get url.ssh`
+ss-set ss:url.service "${url}"
+
+
+# set the customstate to inform user that everything's ready
+ss-set statecustom 'CentOS 6 Ready!'</target>
    </targets>
    <packages />
    <prerecipe />
@@ -36,6 +100,10 @@
       <entry>
          <string>hostname</string>
          <parameter category="Output" description="hostname/ip of the image" isSet="false" mandatory="true" name="hostname" order="0" order_="0" readonly="false" type="String" />
+      </entry>
+      <entry>
+         <string>vnc_password</string>
+         <parameter category="Output" description="vnc-password" isSet="false" mandatory="false" name="vnc_password" order="0" order_="0" readonly="false" type="String" />
       </entry>
       <entry>
          <string>extra.disk.volatile</string>

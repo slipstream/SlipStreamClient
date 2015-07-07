@@ -1,4 +1,4 @@
-<deploymentModule category="Deployment" creation="2013-10-30 09:54:53.989 UTC" deleted="false" description="Deployment binding the apache server and the test client node(s)." isLatestVersion="true" lastModified="2015-07-02 15:35:03.275 UTC" logoLink="" parentUri="module/examples/tutorials/service-testing" shortName="system" version="1814">
+<deploymentModule category="Deployment" creation="2013-12-18 15:19:56.939 UTC" deleted="false" description="Deployment binding the apache server and the test client node(s)." isLatestVersion="true" lastModified="2015-07-02 15:41:59.68 UTC" logoLink="" parentUri="module/examples/tutorials/service-testing-windows" shortName="system" version="1818">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
       <groupMembers>
          </groupMembers>
@@ -12,11 +12,11 @@
    <nodes>
       <entry>
          <string>apache</string>
-         <node cloudService="default" creation="2015-07-02 15:35:03.250 UTC" deleted="false" imageUri="module/examples/tutorials/service-testing/apache" maxProvisioningFailures="0" multiplicity="1" name="apache" network="Public">
+         <node cloudService="default" creation="2015-07-02 15:41:59.54 UTC" deleted="false" imageUri="module/examples/tutorials/service-testing-windows/apache" maxProvisioningFailures="0" multiplicity="1" name="apache" network="Public">
             <parameterMappings />
             <parameters />
             <notes length="0" />
-            <image category="Image" creation="2013-12-03 16:04:03.426 UTC" deleted="false" description="Apache web server appliance with custom landing page." isBase="false" isLatestVersion="true" lastModified="2015-07-02 15:51:20.91 UTC" loginUser="root" logoLink="https://slipstream.sixsq.com/images/modules-logos/apache-httpd.svg" moduleReferenceUri="module/examples/images/ubuntu-14.04" name="examples/tutorials/service-testing/apache" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="1822">
+            <image category="Image" creation="2013-12-18 14:28:17.497 UTC" deleted="false" description="Apache web server appliance with custom landing page (Please ensure that port 8080 is open in your security group named &quot;default&quot;)" isBase="false" isLatestVersion="true" lastModified="2015-07-02 15:50:14.846 UTC" loginUser="ubuntu" logoLink="https://slipstream.sixsq.com/images/modules-logos/apache-httpd.svg" moduleReferenceUri="module/examples/images/ubuntu-12.04" name="examples/tutorials/service-testing-windows/apache" parentUri="module/examples/tutorials/service-testing-windows" platform="ubuntu" shortName="apache" version="1821">
                <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
                   <groupMembers>
                      <string>konstan</string>
@@ -33,35 +33,21 @@
                <targets>
                   <target name="execute">#!/bin/sh -xe
 
-default_site_location='/etc/apache2/sites-available/default'
-if [ ! -f $default_site_location ]; then
-  default_site_location='/etc/apache2/sites-available/000-default.conf'
-fi
 
-http_root_location='/var/www/html'
-if [ ! -d $http_root_location ]; then
-  http_root_location='/var/www'
-fi
-
-echo 'Hello from Apache deployed by SlipStream!' &gt; $http_root_location/data.txt
+echo 'Hello from Apache deployed by SlipStream!' &gt; /var/www/data.txt
 
 service apache2 stop
 port=$(ss-get port)
-
 sed -i -e 's/^Listen.*$/Listen '$port'/' /etc/apache2/ports.conf
 sed -i -e 's/^NameVirtualHost.*$/NameVirtualHost *:'$port'/' /etc/apache2/ports.conf
-sed -i -e 's/^&lt;VirtualHost.*$/&lt;VirtualHost *:'$port'&gt;/' $default_site_location
+sed -i -e 's/^&lt;VirtualHost.*$/&lt;VirtualHost *:'$port'&gt;/' /etc/apache2/sites-available/default
 service apache2 start
-ss-set ready true
-url="http://$(ss-get hostname):$port"
-ss-set url.service $url
-ss-set ss:url.service $url
-</target>
+ss-set ready true</target>
                   <target name="report">#!/bin/sh -x
 cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
 cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR</target>
-                  <target name="onvmremove" />
                   <target name="onvmadd" />
+                  <target name="onvmremove" />
                </targets>
                <packages />
                <prerecipe />
@@ -115,8 +101,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -189,8 +175,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -237,8 +223,15 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
+                     </parameter>
+                  </entry>
+                  <entry>
+                     <string>ec2-eu-west.security.group</string>
+                     <parameter category="ec2-eu-west" description="Security groups (comma separated list)" isSet="true" mandatory="true" name="ec2-eu-west.security.group" order="0" order_="0" readonly="false" type="String">
+                        <value>default</value>
+                        <defaultValue>default</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -278,8 +271,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -326,8 +319,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -340,8 +333,8 @@ apt-get install -y apache2</recipe>
                   <entry>
                      <string>exoscale-ch-gva.instance.type</string>
                      <parameter category="exoscale-ch-gva" description="Instance type (flavor)" isSet="true" mandatory="true" name="exoscale-ch-gva.instance.type" order="0" order_="0" readonly="false" type="String">
-                        <value>Small</value>
-                        <defaultValue>Small</defaultValue>
+                        <value>Micro</value>
+                        <defaultValue>Micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -381,8 +374,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -429,8 +422,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -499,8 +492,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -561,8 +554,8 @@ apt-get install -y apache2</recipe>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                </parameters>
@@ -572,7 +565,7 @@ apt-get install -y apache2</recipe>
       </entry>
       <entry>
          <string>testclient</string>
-         <node cloudService="default" creation="2015-07-02 15:35:03.250 UTC" deleted="false" imageUri="module/examples/tutorials/service-testing/client" maxProvisioningFailures="0" multiplicity="1" name="testclient" network="Public">
+         <node cloudService="default" creation="2015-07-02 15:41:59.54 UTC" deleted="false" imageUri="module/examples/tutorials/service-testing-windows/client" maxProvisioningFailures="0" multiplicity="1" name="testclient" network="Public">
             <parameterMappings>
                <entry>
                   <string>webserver.port</string>
@@ -614,7 +607,7 @@ apt-get install -y apache2</recipe>
                </entry>
             </parameters>
             <notes length="0" />
-            <image category="Image" creation="2013-12-03 15:39:52.706 UTC" deleted="false" description="Web client tests server connectivity and verifies content." isBase="false" isLatestVersion="true" lastModified="2015-07-02 15:48:20.214 UTC" loginUser="root" logoLink="" moduleReferenceUri="module/examples/images/ubuntu-14.04" name="examples/tutorials/service-testing/client" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="client" version="1819">
+            <image category="Image" creation="2013-12-18 15:09:00.471 UTC" deleted="false" description="Windows web client tests server connectivity and verifies content (For Exoscale: Please ensure that port 5985 is open in your security group named &quot;default&quot;)" isBase="false" isLatestVersion="true" lastModified="2015-07-02 15:50:00.292 UTC" loginUser="administrator" logoLink="" moduleReferenceUri="module/examples/images/windows-server-2012" name="examples/tutorials/service-testing-windows/client" parentUri="module/examples/tutorials/service-testing-windows" platform="windows" shortName="client" version="1820">
                <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
                   <groupMembers>
                      <string>konstan</string>
@@ -629,45 +622,29 @@ apt-get install -y apache2</recipe>
                   <comment>Updated Authorization</comment>
                </commit>
                <targets>
-                  <target name="execute">#!/bin/sh -xe
-# Wait for the metadata to be resolved
-web_server_ip=$(ss-get --timeout 360 webserver.hostname)
-web_server_port=$(ss-get --timeout 360 webserver.port)
+                  <target name="onvmremove" />
+                  <target name="execute"># Wait for the metadata to be resolved
+$web_server_ip = ss-get --timeout 360 webserver.hostname
+$web_server_port = ss-get --timeout 360 webserver.port
 ss-get --timeout 360 webserver.ready
 
-# Execute the test
-ENDPOINT=http://${web_server_ip}:${web_server_port}/data.txt
-wget -t 2 -O /tmp/data.txt ${ENDPOINT}
-[ "$?" = "0" ] &amp; ss-set statecustom "OK: $(cat /tmp/data.txt)" || ss-abort "Could not get the test file: ${ENDPOINT}"
+$wc = New-Object System.Net.WebClient;
+
+$url = "http://$web_server_ip"+":$web_server_port/data.txt"
+$file = "$pwd\data.txt"
+
+$wc.DownloadFile($url,$file)
+$success = $?
+
+$data = ""
+try{ $data = [Io.File]::ReadAllText($file) }catch{}
+
+if ($success){ss-set statecustom "OK: $data"} else{ss-abort "Could not get the test file: $url"}
+
 </target>
-                  <target name="onvmremove" />
-                  <target name="report">#!/bin/sh -x
-cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR</target>
-                  <target name="onvmadd">#!/bin/bash
-set -e
-set -x
-
-function on_apache() {
-    for INSTANCE_NAME in $SLIPSTREAM_SCALING_VMS; do
-        echo Processing $INSTANCE_NAME
-        ss-get --timeout 360 $INSTANCE_NAME:ready
-        host_name=$(ss-get $INSTANCE_NAME:hostname)
-        echo "New instance of $SLIPSTREAM_SCALING_NODE: $INSTANCE_NAME, $host_name"
-    done
-}
-
-function on_testclient() {
-    for NAME in $SLIPSTREAM_SCALING_VMS; do
-        echo "test client $NAME was added"
-    done
-}
-
-case $SLIPSTREAM_SCALING_NODE in
-    "apache" )
-        on_apache ;;
-    "testclient" )
-        on_testclient ;;
-esac</target>
+                  <target name="onvmadd" />
+                  <target name="report">Copy-Item -Path $pwd\data.txt -Destination slipstream\reports\
+</target>
                </targets>
                <packages />
                <prerecipe />
@@ -722,8 +699,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -792,8 +769,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -844,8 +821,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -892,8 +869,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -940,8 +917,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -954,8 +931,8 @@ esac</target>
                   <entry>
                      <string>exoscale-ch-gva.instance.type</string>
                      <parameter category="exoscale-ch-gva" description="Instance type (flavor)" isSet="true" mandatory="true" name="exoscale-ch-gva.instance.type" order="0" order_="0" readonly="false" type="String">
-                        <value>Small</value>
-                        <defaultValue>Small</defaultValue>
+                        <value>Micro</value>
+                        <defaultValue>Micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -995,8 +972,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -1043,8 +1020,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -1106,8 +1083,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                   <entry>
@@ -1172,8 +1149,8 @@ esac</target>
                            <string>g2.2xlarge</string>
                            <string>g2.8xlarge</string>
                         </enumValues>
-                        <value>m3.medium</value>
-                        <defaultValue>m3.medium</defaultValue>
+                        <value>t2.micro</value>
+                        <defaultValue>t2.micro</defaultValue>
                      </parameter>
                   </entry>
                </parameters>

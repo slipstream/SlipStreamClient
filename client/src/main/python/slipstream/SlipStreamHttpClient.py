@@ -299,7 +299,7 @@ class DomExtractor(object):
             node_instance = {}
             node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY] = node_instance_name
 
-            # Unfortunately, this doesn't work on Python 2.6.6
+            # Unfortunately, this doesn't work on Python < 2.7
             # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
             query = "runtimeParameters/entry/runtimeParameter"
             for rtp in run_dom.findall(query):
@@ -330,7 +330,7 @@ class DomExtractor(object):
             node = {}
             node[NodeDecorator.NODE_NAME_KEY] = node_name
 
-            # Unfortunately, this doesn't work on Python 2.6.6
+            # Unfortunately, this doesn't work on Python < 2.7
             # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
             query = "runtimeParameters/entry/runtimeParameter"
             for rtp in run_dom.findall(query):

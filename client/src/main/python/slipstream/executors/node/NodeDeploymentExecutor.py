@@ -108,18 +108,20 @@ class NodeDeploymentExecutor(MachineExecutor):
         util.printDetail('Executing build recipes')
 
         self._execute_target(NodeDecorator.NODE_PRERECIPE, abort_on_err=True)
+        self._install_user_packages()
+        self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
 
+    def _install_user_packages(self):
         packages = self.node_instance.get_packages()
         if packages:
             message = 'Installing packages: %s' % ', '.join(packages)
+            fail_msg = "Failed installing packages on '%s'" % self._get_node_instance_name()
             util.printStep(message)
             self.wrapper.set_statecustom(message)
             cmd = util.get_packages_install_command(self.node_instance.get_platform(), packages)
-            self._run_target_script('#!/bin/sh -xe\n%s' % cmd)
+            self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg)
         else:
             util.printStep('No packages to install')
-
-        self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
 
     def _execute_execute_target(self):
         self._execute_target('execute', abort_on_err=True)
@@ -138,7 +140,7 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _execute_report_target_and_send_reports(self):
         try:
-            self._execute_target('report', ssdisplay=False)
+            self._execute_target('report', ssdisplay=False, ignore_abort=True)
         except ExecutionException as ex:
             util.printDetail("Failed executing 'report' with: \n%s" % str(ex),
                              verboseLevel=self.verboseLevel,
@@ -192,7 +194,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target_name, exports={}, abort_on_err=False, ssdisplay=True):
+    def _execute_target(self, target_name, exports={}, abort_on_err=False, ssdisplay=True, ignore_abort=False):
         message = "Executing target '%s'" % target_name
         util.printStep(message)
         if ssdisplay:
@@ -200,14 +202,21 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         target_script = self.node_instance.get_image_target(target_name)
         if target_script:
-            self._launch_target_script(target_name, exports, abort_on_err)
+            self._launch_target_script(target_name, exports, abort_on_err, ignore_abort=ignore_abort)
         else:
             util.printAndFlush('Nothing to do on target: %s\n' % target_name)
 
-    def _launch_target_script(self, target_name, exports, abort_on_err):
+    def _launch_target_script(self, target_name, exports, abort_on_err, ignore_abort=False):
         fail_msg = "Failed running '%s' target on '%s'" % (target_name, self._get_node_instance_name())
+        script = self.node_instance.get_image_target(target_name)
+
+        self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg)
+
+    def _launch_script(self, script, exports=dict(), abort_on_err=True, ignore_abort=False, fail_msg=None):
+        if fail_msg is None:
+            fail_msg = "Failed running script on '%s'" % self._get_node_instance_name()
         try:
-            rc = self._run_target_script(self.node_instance.get_image_target(target_name), exports)
+            rc = self._run_target_script(script, exports, ignore_abort=ignore_abort)
             sys.stdout.flush()
             sys.stderr.flush()
         except Exception as ex:
@@ -251,7 +260,7 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         return process
 
-    def _run_target_script(self, target_script, exports={}):
+    def _run_target_script(self, target_script, exports={}, ignore_abort=False):
         '''Return exit code of the user script.  Output of the script goes
         to stdout/err and will end up in the node executor's log file.
         '''
@@ -269,7 +278,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             while process.poll() is None:
                 # Ask server whether the abort flag is set. If so, kill the
                 # process and exit. Otherwise, sleep for some time.
-                if self.wrapper.isAbort():
+                if not ignore_abort and self.wrapper.isAbort():
                     try:
                         util.printDetail('Abort flag detected. '
                                          'Terminating target script execution...')

@@ -1,4 +1,4 @@
-<imageModule category="Image" creation="2013-12-03 16:04:03.426 UTC" deleted="false" description="Apache web server appliance with custom landing page." isBase="false" isLatestVersion="true" lastModified="2015-07-02 15:51:20.91 UTC" loginUser="root" logoLink="https://slipstream.sixsq.com/images/modules-logos/apache-httpd.svg" moduleReferenceUri="module/examples/images/ubuntu-14.04" parentUri="module/examples/tutorials/service-testing" platform="ubuntu" shortName="apache" version="1822">
+<imageModule category="Image" creation="2013-12-18 14:28:17.497 UTC" deleted="false" description="Apache web server appliance with custom landing page (Please ensure that port 8080 is open in your security group named &quot;default&quot;)" isBase="false" isLatestVersion="true" lastModified="2015-07-02 15:50:14.846 UTC" loginUser="ubuntu" logoLink="https://slipstream.sixsq.com/images/modules-logos/apache-httpd.svg" moduleReferenceUri="module/examples/images/ubuntu-12.04" parentUri="module/examples/tutorials/service-testing-windows" platform="ubuntu" shortName="apache" version="1821">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers>
          </groupMembers>
@@ -10,36 +10,22 @@
       </cloudNames>
    <runs count="0" limit="20" offset="0" totalCount="0" />
    <targets>
-      <target name="report">#!/bin/sh -x
-cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
-cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR</target>
-      <target name="onvmadd" />
       <target name="execute">#!/bin/sh -xe
 
-default_site_location='/etc/apache2/sites-available/default'
-if [ ! -f $default_site_location ]; then
-  default_site_location='/etc/apache2/sites-available/000-default.conf'
-fi
 
-http_root_location='/var/www/html'
-if [ ! -d $http_root_location ]; then
-  http_root_location='/var/www'
-fi
-
-echo 'Hello from Apache deployed by SlipStream!' &gt; $http_root_location/data.txt
+echo 'Hello from Apache deployed by SlipStream!' &gt; /var/www/data.txt
 
 service apache2 stop
 port=$(ss-get port)
-
 sed -i -e 's/^Listen.*$/Listen '$port'/' /etc/apache2/ports.conf
 sed -i -e 's/^NameVirtualHost.*$/NameVirtualHost *:'$port'/' /etc/apache2/ports.conf
-sed -i -e 's/^&lt;VirtualHost.*$/&lt;VirtualHost *:'$port'&gt;/' $default_site_location
+sed -i -e 's/^&lt;VirtualHost.*$/&lt;VirtualHost *:'$port'&gt;/' /etc/apache2/sites-available/default
 service apache2 start
-ss-set ready true
-url="http://$(ss-get hostname):$port"
-ss-set url.service $url
-ss-set ss:url.service $url
-</target>
+ss-set ready true</target>
+      <target name="onvmadd" />
+      <target name="report">#!/bin/sh -x
+cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
+cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR</target>
       <target name="onvmremove" />
    </targets>
    <packages />

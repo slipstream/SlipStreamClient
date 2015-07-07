@@ -1,4 +1,4 @@
-<projectModule category="Project" creation="2013-10-30 09:54:53.776 UTC" deleted="false" description="Demo of complete service testing using Apache as an example." isLatestVersion="true" lastModified="2015-07-02 15:32:42.630 UTC" logoLink="" parentUri="module/examples/tutorials" shortName="service-testing" version="1813">
+<projectModule category="Project" creation="2013-12-18 14:20:46.692 UTC" deleted="false" description="Demo of complete service testing using Apache as a server and Windows as a client" isLatestVersion="true" lastModified="2015-07-02 15:32:10.479 UTC" logoLink="" parentUri="module/examples/tutorials" shortName="service-testing-windows" version="1812">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers>
          </groupMembers>
@@ -10,17 +10,17 @@
       </cloudNames>
    <runs count="0" limit="20" offset="0" totalCount="0" />
    <children>
-      <item category="Image" description="Apache web server appliance with custom landing page." name="apache" version="1822">
+      <item category="Image" description="Apache web server appliance with custom landing page (Please ensure that port 8080 is open in your security group named &quot;default&quot;)" name="apache" version="1821">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
             <groupMembers />
          </authz>
       </item>
-      <item category="Image" description="Web client tests server connectivity and verifies content." name="client" version="1819">
+      <item category="Image" description="Windows web client tests server connectivity and verifies content (For Exoscale: Please ensure that port 5985 is open in your security group named &quot;default&quot;)" name="client" version="1820">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
             <groupMembers />
          </authz>
       </item>
-      <item category="Deployment" description="Deployment binding the apache server and the test client node(s)." name="system" version="1814">
+      <item category="Deployment" description="Deployment binding the apache server and the test client node(s)." name="system" version="1818">
          <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="true" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="true" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="true" publicPut="false">
             <groupMembers />
          </authz>

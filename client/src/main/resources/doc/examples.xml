@@ -1,26 +1,25 @@
-<projectModule category="Project" creation="2013-10-30 10:54:53.570 CET" deleted="false" description="Examples highlighting SlipStream features.  See User Guide on the documentation page." lastModified="2013-11-24 11:46:53.524 CET" parentUri="module/" shortName="examples" version="67">
-   <parameters />
-   <authz groupCreateChildren="true" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="false" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="true" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
-      <groupMembers />
+<projectModule category="Project" creation="2013-10-30 09:54:53.570 UTC" deleted="false" description="Base images and examples highlighting SlipStream features" isLatestVersion="true" lastModified="2015-07-02 13:42:10.363 UTC" logoLink="https://slipstream.sixsq.com/images/modules-logos/cloud-apps.svg" parentUri="module/" shortName="examples" version="1792">
+   <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="false" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+      <groupMembers>
+         </groupMembers>
    </authz>
    <commit author="sixsq">
-      <comment />
+      <comment>Initial version of this module</comment>
    </commit>
-   <cloudNames length="2">
-      <string>stratuslab</string>
-      <string>default</string>
-   </cloudNames>
-   <runs />
-   <children >
-      <item category="Project" description="Standard minimal images of common operating systems." name="images" version="68">
-         <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+   <cloudNames length="12">
+      </cloudNames>
+   <runs count="0" limit="20" offset="0" totalCount="0" />
+   <children>
+      <item category="Project" description="Standard minimal images of common operating systems." name="images" version="1801">
+         <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
             <groupMembers />
          </authz>
       </item>
-      <item category="Project" description="Tutorials highlighting specific features of SlipStream.  See User Guide on the documentation page." name="tutorials" version="69">
-         <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="false" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
+      <item category="Project" description="Tutorials highlighting specific features of SlipStream.  See User Guide on the documentation page." name="tutorials" version="1805">
+         <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="true" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
             <groupMembers />
          </authz>
       </item>
    </children>
+   <parameters />
 </projectModule>
