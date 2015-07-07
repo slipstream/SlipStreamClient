@@ -760,7 +760,7 @@ class BaseCloudConnector(object):
 
     def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
 
-        command = 'mkdir -p {%(reports)s,%(ss_home)}; '
+        command = 'mkdir -p {%(reports)s,%(ss_home)s}; '
         command += '(wget --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
