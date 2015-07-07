@@ -41,40 +41,6 @@
 			  </arguments>
 			</configuration>
 		      </execution>
-
-		      <execution>
-			<id>pyc</id>
-			<goals>
-			  <goal>exec</goal>
-			</goals>
-			<phase>compile</phase>
-			<configuration>
-			  <executable>python</executable>
-			  <arguments>
-			    <argument>-m</argument>
-			    <argument>compileall</argument>
-			    <argument>${project.build.directory}/client</argument>
-			  </arguments>
-			</configuration>
-		      </execution>
-		      
-		      <execution>
-			<id>pyo</id>
-			<goals>
-			  <goal>exec</goal>
-			</goals>
-			<phase>compile</phase>
-			<configuration>
-			  <executable>python</executable>
-			  <arguments>
-			    <argument>-O</argument>
-			    <argument>-m</argument>
-			    <argument>compileall</argument>
-			    <argument>${project.build.directory}/client</argument>
-			  </arguments>
-			</configuration>
-		      </execution>
-		      
 		    </executions>
 		  </plugin>
 
@@ -133,9 +99,7 @@
 				<configuration>
 					<classifier>${package.os}</classifier>
 					<release>${BUILD_NUMBER}.${package.os}</release>
-					<summary>SlipStream Client API and CLI
-%include %{_rpmconfigdir}/macros.python
-					</summary>
+					<summary>SlipStream Client API and CLI</summary>
 					<name>slipstream-client${slipstream.edition}</name>
 					<group>Applications/Engineering</group>
 					<vendor>SixSq</vendor>
@@ -194,7 +158,7 @@
 						</mapping>
 
 						<mapping>
-							<directory>%{py_sitedir}</directory>
+							<directory>/usr/lib/python2.6/site-packages</directory>
 							<filemode>644</filemode>
 							<username>slipstream</username>
 							<groupname>slipstream</groupname>
@@ -206,6 +170,9 @@
 									  <include>slipstream/**/*</include>
 									  <include>winrm/**/*</include>
 									</includes>
+									<excludes>
+										<exclude>**/*.pyc</exclude>
+									</excludes>
 								</source>
 							</sources>
 						</mapping>
@@ -284,28 +251,27 @@
 
 					</mappings>
 
-<installScriptlet>
-  <script>
-mkdir -p $RPM_BUILD_ROOT/%{py_sitedir}
-mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
-  </script>
-</installScriptlet>
+<prepareScriptlet>
+<script>
+# Turn off the brp-python-bytecompile script                                                        
+%global __os_install_post %(echo '%{__os_install_post}' | sed -e 's!/usr/lib[^[:space:]]*/brp-python-bytecompile[[:space:]].*$!!g')
+</script>
+ </prepareScriptlet>
 
-<preinstallScriptlet>
-  <script>
+         <preinstallScriptlet>
+             <script>
 /bin/rm -f /usr/bin/cloudstack-*
 /bin/rm -f /usr/bin/openstack-*
-  </script>
-</preinstallScriptlet>
+             </script>
+         </preinstallScriptlet>
 
-<postinstallScriptlet>
-
-  <!-- fixing a bug in client -->
-  <script>
+          <postinstallScriptlet>
+            <!-- fixing a bug in client -->
+            <script>
 /bin/touch /usr/bin/slipstream.client.conf
 /bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf
-  </script>
-</postinstallScriptlet>
+            </script>
+          </postinstallScriptlet>
 
 				</configuration>
 				<executions>
