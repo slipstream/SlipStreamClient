@@ -109,3 +109,6 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
     def _complete_state_for_failed_node_instances(self):
         self.wrapper.complete_state_for_failed_node_instances()
+
+    def _is_vertical_scaling(self):
+        return self.wrapper.is_vertical_scaling()

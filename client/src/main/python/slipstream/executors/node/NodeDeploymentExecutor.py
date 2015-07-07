@@ -329,3 +329,6 @@ class NodeDeploymentExecutor(MachineExecutor):
     def _is_pre_scale_done(self):
         return self.wrapper.is_pre_scale_done()
 
+    def _is_vertical_scaling(self):
+        return self.wrapper.is_vertical_scaling_vm()
+
