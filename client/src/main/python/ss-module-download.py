@@ -98,10 +98,10 @@ class MainProgram(CommandBase):
             parameters = root.find('parameters')
             if parameters is not None:
                 for cloud_name in cloud_names.findall('*'):
+                    # The following XPath query doesn't work with Python < 2.7
                     cloud_parameters = parameters.findall("./entry/parameter[@category='%s'].." % cloud_name.text)
                     if cloud_parameters is not None:
                         for cloud_parameter in cloud_parameters:
-                            #ET.dump(cloud_parameter)
                             parameters.remove(cloud_parameter)
                         cloud_names.remove(cloud_name)
 
@@ -162,6 +162,11 @@ class MainProgram(CommandBase):
         return children
 
     def doWork(self):
+
+        if self.options.remove_clouds and sys.version_info[0:3] < (2, 7, 0):
+            print('Error: The use of "--remove-cloud-specific" require Python >= 2.7', file=sys.stderr)
+            sys.exit(1)
+
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
