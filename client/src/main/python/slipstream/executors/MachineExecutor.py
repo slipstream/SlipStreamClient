@@ -74,6 +74,7 @@ class MachineExecutor(object):
             util.printError('Error executing node, with detail: %s (%s)' % (msg, ex))
             traceback.print_exc()
             self._fail_str(msg)
+            self.onSendingReports()
         except AbortException as ex:
             util.printError('Abort flag raised: %s' % ex)
         except TerminalStateException:
@@ -84,6 +85,7 @@ class MachineExecutor(object):
             util.printError('Error executing node, with detail: %s' % ex)
             traceback.print_exc()
             self._fail(ex)
+            self.onSendingReports()
 
     def _complete_state(self, state):
         if self._need_to_complete(state):
