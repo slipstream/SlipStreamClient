@@ -112,3 +112,11 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
 
     def _is_vertical_scaling(self):
         return self.wrapper.is_vertical_scaling()
+
+    def _is_horizontal_scale_down(self):
+        try:
+            return self.wrapper.is_horizontal_scale_down()
+        except Exceptions.InconsistentScaleStateError as ex:
+            util.printDetail("Machine Executor. Ignoring exception: %s" % str(ex))
+            return False
+

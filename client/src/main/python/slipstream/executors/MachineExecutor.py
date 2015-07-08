@@ -205,12 +205,5 @@ class MachineExecutor(object):
     def _killItself(self, is_build_image=False):
         self.wrapper.stopOrchestrator(is_build_image)
 
-    def _is_horizontal_scale_down(self):
-        try:
-            return self.wrapper.is_horizontal_scale_down()
-        except InconsistentScaleStateError as ex:
-            util.printDetail("Machine Executor. Ignoring exception: %s" % str(ex))
-            return False
-
     def _set_state_start_time(self):
         self.wrapper.set_state_start_time()
