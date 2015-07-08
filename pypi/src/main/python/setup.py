@@ -48,12 +48,16 @@ setup(
         'bin/ss-run-get',
         'bin/ss-user-get',
         'bin/ss-user-put',
+        'bin/ss-scale-resize',
+        'bin/ss-scale-disk',
     ],
     packages=[
         'slipstream',
         'slipstream.contextualizers',
         'slipstream.contextualizers.dummy',
         'slipstream.commands',
+        'slipstream.command',
+        'slipstream.wrappers',
     ],
     package_dir={'slipstream': 'lib/slipstream'},
     py_modules=[
