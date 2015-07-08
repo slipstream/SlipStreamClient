@@ -469,8 +469,14 @@ class BaseWrapper(object):
     def is_vertical_scaling(self):
         return self._get_global_scale_state() in self.SCALE_STATES_VERTICAL_SCALABILITY
 
+    def is_vertical_scaling_vm(self):
+        return self.get_scale_state() in self.SCALE_STATES_VERTICAL_SCALABILITY
+
     def is_horizontal_scale_down(self):
         return self._get_global_scale_state() == self.SCALE_STATE_REMOVING
+
+    def is_horizontal_scale_down_vm(self):
+        return self.get_scale_state() == self.SCALE_STATE_REMOVING
 
     def _set_runtime_parameter(self, parameter, value):
         # Needed for thread safety.
