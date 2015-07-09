@@ -8,8 +8,6 @@
 # description: Slipstream Node Executor daemon.
 #
 # processname: slipstream-node
-# config: /etc/slipstream/metering.ini
-# config: /etc/slipstream/metering.conf
 # config: /etc/default/slipstream-node
 # pidfile: /var/run/slipstream-node.pid
 

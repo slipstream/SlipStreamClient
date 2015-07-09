@@ -17,44 +17,120 @@
  limitations under the License.
 """
 
+import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.Orchestrator import Orchestrator
-from os import environ
+from slipstream.Logger import Logger
+from slipstream import util
+
+from slipstream.daemonr import DaemonRunnable
+from slipstream.daemonr import DaemonRunner
 
 
-class MainProgram(CommandBase):
-    '''A command-line program to execute the Orchestrator sequence.'''
+LOG_FILE = os.path.join(util.REPORTSDIR, 'slipstream-orchestrator.log')
+LOG_LEVEL = 'info'
+PID_FILE = '/var/run/slipstream-orchestrator.pid'
 
-    def __init__(self, argv=None):
-        super(MainProgram, self).__init__(argv)
+class NodeExecutor(CommandBase):
+    """SlipStream Orchestrator Executor.
+    """
+
+    def __init__(self):
+        self.config_holder = None
+        self._run_action = ''
+        self.verboseLevel = 0
+        self.vebosity_to_loglevel = {0: 'ERROR',
+                                     2: 'WARNING',
+                                     2: 'INFO',
+                                     3: 'DEBUG'}
+
+    def parse_args(self):
+        self._setParserAndParse()
 
     def parse(self):
-        usage = '''usage: %prog [options]'''
+        usage = """usage: %prog [options] [start|stop|status|restart]
+If action is not provided, executor runs on foreground."""
 
         self.parser.usage = usage
 
+        self.parser.add_option('--log-file', dest='log_file',
+                               help='Log file. Not used when ran in foreground. Default: %s' % LOG_FILE,
+                               metavar='LOGFILE', default=LOG_FILE)
+        # self.parser.add_option('--log-level', dest='log_level',
+        #                        help='Log level. Default: %s' % LOG_LEVEL,
+        #                        metavar='LOGLEVEL', default=LOG_LEVEL)
+        self.parser.add_option('--pid-file', dest='pidfile_path',
+                               help='PID file. Default: %s' % PID_FILE,
+                               metavar='PIDFILE', default=PID_FILE)
         self.options, self.args = self.parser.parse_args()
 
+        self.config_holder = ConfigHolder(self.options)
+
+        self.config_holder.set('logger_name', 'NodeExecutor')
+
+        self.config_holder.set(
+            'log_level',
+            self.vebosity_to_loglevel.get(self.options.verboseLevel, 'INFO'))
+
+        if len(self.args) >= 1:
+            self._run_action = self.args[0]
+            self.config_holder.set('log_to_file', True)
+            if not os.path.exists(util.REPORTSDIR):
+                os.makedirs(util.REPORTSDIR)
+        else:
+            self.config_holder.set('log_to_file', False)
+
+    def get_action(self):
+        return self._run_action
+
+    def get_config_holder(self):
+        return self.config_holder
+
+    def do_work(self):
+        self._callAndHandleErrorsForCommands(self.doWork.__name__)
+
     def doWork(self):
-        configHolder = ConfigHolder(self.options)
-        configHolder.set('cloud', self._get_cloud())
-        orchestrator = Orchestrator(configHolder)
+        self.config_holder.set('cloud', self._get_cloud())
+        orchestrator = Orchestrator(self.config_holder)
         orchestrator.execute()
 
     def _get_cloud(self):
         try:
-            return environ['SLIPSTREAM_CLOUD']
+            return os.environ['SLIPSTREAM_CLOUD']
         except KeyError:
             print 'ERROR: Missing environment variable SLIPSTREAM_CLOUD.'
             sys.exit(-1)
 
 
+class Runnable(DaemonRunnable):
+
+    def get_action(self):
+        return self._executor.get_action()
+
+    def get_logger(self):
+        return self.config_holder.options.get('logger') or \
+               Logger(self.config_holder).get_logger()
+
+    def get_run_action(self):
+        return self._executor.get_run_action()
+
+    def __init__(self, executor):
+        super(Runnable, self).__init__(executor.get_config_holder())
+        self._executor = executor
+
+    def run(self):
+        self._executor.do_work()
+
+
 if __name__ == '__main__':
     try:
-        MainProgram()
+        ne = NodeExecutor()
+        ne.parse_args()
+        runnable = Runnable(ne)
+        DaemonRunner(runnable)
     except KeyboardInterrupt:
         print '\nExecution interrupted by the user... goodbye!'
         sys.exit(-1)

@@ -1,43 +1,43 @@
 #!/bin/bash
 #
-#   /etc/rc.d/init.d/slipstream-node
+#   /etc/rc.d/init.d/slipstream-orchestrator
 #
-#   Start up the Slipstream Node Executor daemon.
+#   Start up the Slipstream Orchestrator Executor daemon.
 #
 # chkconfig: 2345 20 80
-# description: Slipstream Node Executor daemon.
+# description: Slipstream Orchestrator Executor daemon.
 #
-# processname: slipstream-node
-# config: /etc/default/slipstream-node
-# pidfile: /var/run/slipstream-node.pid
+# processname: slipstream-orchestrator
+# config: /etc/default/slipstream-orchestrator
+# pidfile: /var/run/slipstream-orchestrator.pid
 
 ### BEGIN INIT INFO
-# Provides: slipstream-node
+# Provides: slipstream-orchestrator
 # Required-Start: $network $local_fs
 # Required-Stop: $network $local_fs
 # Default-Start: 2 3 4 5
 # Default-Stop: S 0 1 6
-# Short-Description: Start up the Slipstream Node Executor daemon
-# Description:       Slipstream Node Executor daemon enables user
+# Short-Description: Start up the Slipstream Orchestrator Executor daemon
+# Description:       Slipstream Orchestrator Executor daemon enables user
 #                    application depoyment orchestration.
 ### END INIT INFO
 
 # source function library
-. /etc/rc.d/init.d/functions
+. /lib/lsb/init-functions
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-NAME="slipstream-node"
-LOCK_FILE=/var/lock/subsys/$NAME
+NAME="slipstream-orchestrator"
+LOCK_FILE=/var/lock/$NAME
 RETVAL=0
 if [ -z "$UID" ]; then
     UID=$(id -u)
 fi
 
 # default settings
-DAEMON=/opt/slipstream/client/sbin/slipstream-node
+DAEMON=/opt/slipstream/client/sbin/slipstream-orchestrator
 
-if [ -f /etc/default/slipstream-node ]; then
-  . /etc/default/slipstream-node
+if [ -f /etc/default/slipstream-orchestrator ]; then
+  . /etc/default/slipstream-orchestrator
 fi
 
 DAEMON_ARGS="$DAEMON_ARGS"
@@ -46,7 +46,7 @@ start() {
     [ -x $DAEMON ] || exit 5
     [ $UID -ne 0 ] && exit 4
     echo -n "Starting ${NAME}: "
-    $DAEMON $DAEMON_ARGS start && success || failure
+    $DAEMON $DAEMON_ARGS start && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
     echo
@@ -56,7 +56,7 @@ start() {
 stop() {
     [ $UID -ne 0 ] && exit 4
     echo -n "Shutting down ${NAME}: "
-    $DAEMON stop && success || failure
+    $DAEMON stop && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && rm -f $LOCK_FILE
     echo
@@ -74,7 +74,7 @@ restart() {
     [ -x $DAEMON ] || exit 5
     [ $UID -ne 0 ] && exit 4
     echo -n "Re-starting ${NAME}: "
-    $DAEMON $DAEMON_ARGS restart && success || failure
+    $DAEMON $DAEMON_ARGS restart && log_success_msg || log_failure_msg
     RETVAL=$?
     [ $RETVAL -eq 0 ] && touch $LOCK_FILE
     echo
