@@ -28,7 +28,9 @@ from threading  import Thread
 import slipstream.util as util
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.MachineExecutor import MachineExecutor
-from slipstream.exceptions.Exceptions import ExecutionException, AbortException
+import slipstream.util as util
+from slipstream.exceptions.Exceptions import ExecutionException, AbortException, \
+    InconsistentScaleStateError
 from slipstream.util import append_ssh_pubkey_to_authorized_keys, override
 from slipstream.NodeDecorator import NodeDecorator
 
@@ -348,4 +350,14 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _is_pre_scale_done(self):
         return self.wrapper.is_pre_scale_done()
+
+    def _is_vertical_scaling(self):
+        return self.wrapper.is_vertical_scaling_vm()
+
+    def _is_horizontal_scale_down(self):
+        try:
+            return self.wrapper.is_horizontal_scale_down_vm()
+        except InconsistentScaleStateError as ex:
+            util.printDetail("Machine Executor. Ignoring exception: %s" % str(ex))
+            return False
 
