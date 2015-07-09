@@ -448,6 +448,16 @@ class BaseWrapper(object):
         """
         self._set_scale_iaas_done_rtp(node_instance_or_name, NodeDecorator.SCALE_IAAS_DONE_SUCCESS)
 
+    def set_scale_iaas_done_and_set_attached_disk(self, node_instance_or_name, disk):
+        """To be called on Orchestrator.  Thread-safe implementation.
+        :param node_instance_or_name: node instance object or node instance name
+        :type node_instance_or_name: NodeInstance or str
+        :param disk: identifier of the attached disk
+        :type disk: str
+        """
+        self.set_scale_iaas_done(node_instance_or_name)
+        self.set_attached_disk(node_instance_or_name, disk)
+
     def unset_scale_iaas_done(self, node_instance_or_name):
         """To be called on Orchestrator.  Thread-safe implementation.
         :param node_instance_or_name: node instance object or node instance name
@@ -460,10 +470,18 @@ class BaseWrapper(object):
         :param node_instance_or_name: node instance object or node instance name
         :type node_instance_or_name: NodeInstance or str
         """
+        self._set_rtp(node_instance_or_name, NodeDecorator.SCALE_IAAS_DONE, value)
+
+    def set_attached_disk(self, node_instance_or_name, disk):
+        self._set_attached_disk_rtp(node_instance_or_name, disk)
+
+    def _set_attached_disk_rtp(self, node_instance_or_name, value):
+        self._set_rtp(node_instance_or_name, NodeDecorator.SCALE_DISK_ATTACHED_DEVICE, value)
+
+    def _set_rtp(self, node_instance_or_name, key, value):
         if isinstance(node_instance_or_name, NodeInstance):
             node_instance_or_name = node_instance_or_name.get_name()
-        rtp = node_instance_or_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-            NodeDecorator.SCALE_IAAS_DONE
+        rtp = node_instance_or_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + key
         self._set_runtime_parameter(rtp, value)
 
     def is_vertical_scaling(self):

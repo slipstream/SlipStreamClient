@@ -55,6 +55,7 @@ class DummyClientCloud(BaseCloudConnector):
     def _attach_disk(self, node_instance):
         print 'Attaching disk to VM. Dummy implementation.'
         print 'Node Instance:', node_instance
+        return 'foo'
 
     def _detach_disk(self, node_instance):
         print 'Detaching disk from VM. Dummy implementation.'
