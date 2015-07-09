@@ -372,6 +372,7 @@ def _create_executor_config(executor_name):
             fh.write('export SLIPSTREAM_CLOUD="%s"\n' % cloud_name)
             fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(os.sep, 'opt', cloud_name.lower()))
             fh.write('export SLIPSTREAM_CONNECTOR_INSTANCE="%s"\n' % os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'])
+            fh.write('export SLIPSTREAM_BOOTSTRAP_BIN="%s"\n' % os.environ['SLIPSTREAM_BOOTSTRAP_BIN'])
 
 
 def _setup_and_get_initd_service_start_command(executor_name):
