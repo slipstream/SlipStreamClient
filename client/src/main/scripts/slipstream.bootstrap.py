@@ -32,6 +32,7 @@ import traceback
 import getpass
 import time
 import platform
+import re
 
 SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
 SLIPSTREAM_CLIENT_HOME = os.path.join(SLIPSTREAM_HOME, 'client')
@@ -369,10 +370,15 @@ def _create_executor_config(executor_name):
         fh.write('export DAEMON_ARGS="%s"\n' % _get_verbosity())
         if executor_name == 'orchestrator':
             cloud_name = os.environ['SLIPSTREAM_CLOUD']
-            fh.write('export SLIPSTREAM_CLOUD="%s"\n' % cloud_name)
             fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(os.sep, 'opt', cloud_name.lower()))
-            fh.write('export SLIPSTREAM_CONNECTOR_INSTANCE="%s"\n' % os.environ['SLIPSTREAM_CONNECTOR_INSTANCE'])
-            fh.write('export SLIPSTREAM_BOOTSTRAP_BIN="%s"\n' % os.environ['SLIPSTREAM_BOOTSTRAP_BIN'])
+
+            env_matcher = re.compile('SLIPSTREAM_')
+            for var, val in os.environ.items():
+                if env_matcher.match(var) and var != 'SLIPSTREAM_NODE_INSTANCE_NAME':
+                    #if re.search(' ', val) and not (val.startswith('"') and val.endswith('"')):
+                    if re.search(' ', val) and not 'SLIPSTREAM_COOKIE':
+                        val = '"%s"' % val
+                    fh.write('export %s="%s"\n' % (var, val))
 
 
 def _setup_and_get_initd_service_start_command(executor_name):
