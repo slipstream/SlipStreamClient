@@ -114,9 +114,14 @@ def is_windows():
 def execute(commandAndArgsList, **kwargs):
     wait = not kwargs.pop('noWait', False)
 
+    withStdout = kwargs.pop('withStdout', False)
     withStderr = kwargs.pop('withStderr', False)
     withStdOutErr = kwargs.pop('withOutput', False)
-    # Getting stderr takes precedence on getting stdout&stderr.
+    # Getting stderr or stdout takes precedence on getting stdout&stderr.
+    if withStdout:
+        kwargs['stdout'] = subprocess.PIPE
+        withStdOutErr = False
+
     if withStderr:
         kwargs['stderr'] = subprocess.PIPE
         withStdOutErr = False
@@ -152,9 +157,11 @@ def execute(commandAndArgsList, **kwargs):
 
     output, errors = process.communicate()
 
-    if withStderr:
+    if withStdout and withStderr:
+        return process.returncode, output, errors
+    elif withStderr:
         return process.returncode, errors
-    elif withStdOutErr:
+    elif withStdOutErr or withStdout:
         return process.returncode, output
     else:
         return process.returncode
