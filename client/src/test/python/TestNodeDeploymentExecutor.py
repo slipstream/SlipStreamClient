@@ -62,6 +62,22 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
                           *(target, {}, True))
         assert 1 == nde.wrapper.fail.call_count
 
+    def test_launch_target_script_failure_with_stderr(self):
+        wrapper = Mock()
+        wrapper.fail = Mock()
+        wrapper.isAbort = Mock(return_value=False)
+        nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
+        nde.TARGET_POLL_INTERVAL = 1
+        target = 'foo'
+        error = 'The error'
+        nde.node_instance = NodeInstance()
+        nde.node_instance.set_image_targets({target: '#!/bin/bash \n>&2 echo "' + error + '" \nexit 1\n'})
+        try:
+            nde._launch_target_script(target)
+        except AbortException as e:
+            assert error in str(e)
+        assert 1 == nde.wrapper.fail.call_count
+
     def test_execute_scale_action_target_gets_global_scale_action(self):
         wrapper = Mock()
         wrapper.get_scale_action = Mock(return_value=None)
