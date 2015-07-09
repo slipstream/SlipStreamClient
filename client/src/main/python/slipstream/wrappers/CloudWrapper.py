@@ -496,7 +496,7 @@ class CloudWrapper(BaseWrapper):
                 node_instances, done_reporter=self.set_scale_iaas_done)
         elif scale_state == self.SCALE_STATE_DISK_ATTACHING:
             self._cloud_client.attach_disk(
-                node_instances, done_reporter=self.set_scale_iaas_done)
+                node_instances, done_reporter=self.set_scale_iaas_done_and_set_attached_disk)
         elif scale_state == self.SCALE_STATE_DISK_DETACHING:
             self._cloud_client.detach_disk(
                 node_instances, done_reporter=self.set_scale_iaas_done)
