@@ -859,21 +859,24 @@ class BaseCloudConnector(object):
     # TODO: use decorator for reporter.
     def _resize_and_report(self, node_instance, reporter):
         self._resize(node_instance)
-        reporter(node_instance)
+        if hasattr(reporter, '__call__'):
+            reporter(node_instance)
 
     def attach_disk(self, node_instances, done_reporter=None):
         self._scale_action_runner(self._attach_disk_and_report, node_instances, done_reporter)
 
     def _attach_disk_and_report(self, node_instance, reporter):
         self._attach_disk(node_instance)
-        reporter(node_instance)
+        if hasattr(reporter, '__call__'):
+            reporter(node_instance)
 
     def detach_disk(self, node_instances, done_reporter=None):
         self._scale_action_runner(self._detach_disk_and_report, node_instances, done_reporter)
 
     def _detach_disk_and_report(self, node_instance, reporter):
         self._detach_disk(node_instance)
-        reporter(node_instance)
+        if hasattr(reporter, '__call__'):
+            reporter(node_instance)
 
     def _scale_action_runner(self, scale_action, node_instances, done_reporter):
         """
