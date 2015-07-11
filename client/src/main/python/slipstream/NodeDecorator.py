@@ -77,6 +77,7 @@ class NodeDecorator(object):
     PRE_SCALE_DONE = 'pre.scale.done'
     PRE_SCALE_DONE_SUCCESS = 'true'
     SCALE_DISK_ATTACH_SIZE = 'disk.attach.size'
+    SCALE_DISK_ATTACHED_DEVICE = 'disk.attached.device'
     SCALE_DISK_DETACH_DEVICE = 'disk.detach.device'
     INSTANCEID_KEY = 'instanceid'
     CLOUDSERVICE_KEY = 'cloudservice'

@@ -22,6 +22,10 @@ import errno
 import codecs
 import tempfile
 
+from Queue import Queue
+from threading  import Thread
+
+import slipstream.util as util
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.MachineExecutor import MachineExecutor
 import slipstream.util as util
@@ -195,7 +199,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target_name, exports={}, abort_on_err=False, ssdisplay=True, ignore_abort=False):
+    def _execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
         message = "Executing target '%s'" % target_name
         util.printStep(message)
         if ssdisplay:
@@ -207,17 +211,18 @@ class NodeDeploymentExecutor(MachineExecutor):
         else:
             util.printAndFlush('Nothing to do on target: %s\n' % target_name)
 
-    def _launch_target_script(self, target_name, exports, abort_on_err, ignore_abort=False):
+    def _launch_target_script(self, target_name, exports=None, abort_on_err=True, ignore_abort=False):
         fail_msg = "Failed running '%s' target on '%s'" % (target_name, self._get_node_instance_name())
         script = self.node_instance.get_image_target(target_name)
 
         self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg)
 
-    def _launch_script(self, script, exports=dict(), abort_on_err=True, ignore_abort=False, fail_msg=None):
+    def _launch_script(self, script, exports=None, abort_on_err=True, ignore_abort=False, fail_msg=None):
         if fail_msg is None:
             fail_msg = "Failed running script on '%s'" % self._get_node_instance_name()
+
         try:
-            rc = self._run_target_script(script, exports, ignore_abort=ignore_abort)
+            rc, stderr_last_line = self._run_target_script(script, exports, ignore_abort=ignore_abort)
             sys.stdout.flush()
             sys.stderr.flush()
         except Exception as ex:
@@ -227,6 +232,8 @@ class NodeDeploymentExecutor(MachineExecutor):
             raise
         else:
             if rc != self.SCRIPT_EXIT_SUCCESS and abort_on_err:
+                if stderr_last_line is not None:
+                    fail_msg += ': %s' % stderr_last_line
                 self.wrapper.fail(fail_msg)
                 raise AbortException(fail_msg)
 
@@ -238,7 +245,7 @@ class NodeDeploymentExecutor(MachineExecutor):
                    'SLIPSTREAM_SCALING_ACTION': self._get_scale_action()}
         return exports
 
-    def _launch_process(self, target_script, exports):
+    def _launch_process(self, target_script, exports=None):
         '''Returns launched process as subprocess.Popen instance.
         '''
         tmpfilesuffix = ''
@@ -255,15 +262,23 @@ class NodeDeploymentExecutor(MachineExecutor):
         currentDir = os.getcwd()
         os.chdir(tempfile.gettempdir() + os.sep)
         try:
-            process = util.execute(fn, noWait=True, extra_env=exports)
+            process = util.execute(fn, noWait=True, extra_env=exports, withStderr=True)
         finally:
             os.chdir(currentDir)
 
         return process
 
-    def _run_target_script(self, target_script, exports={}, ignore_abort=False):
-        '''Return exit code of the user script.  Output of the script goes
-        to stdout/err and will end up in the node executor's log file.
+    def print_and_keep_last_stderr(self, stderr, result):
+        last_line = None
+        for line in iter(stderr.readline, b''):
+            sys.stderr.write(line)
+            if line.strip():
+                last_line = line.strip()
+        result.put(last_line)
+
+    def _run_target_script(self, target_script, exports=None, ignore_abort=False):
+        '''Return exit code of the user script and the last line of stderr
+        Output of the script goes to stdout/err and will end up in the node executor's log file.
         '''
         if not target_script:
             util.printAndFlush('Script is empty\n')
@@ -273,6 +288,11 @@ class NodeDeploymentExecutor(MachineExecutor):
             raise ExecutionException('Not a string buffer provided as target script. Type is: %s' % type(target_script))
 
         process = self._launch_process(target_script, exports)
+
+        result = Queue()
+        t = Thread(target=self.print_and_keep_last_stderr, args=(process.stderr, result))
+        t.daemon = True # thread dies with the program
+        t.start()
 
         try:
             # The process is still working on the background.
@@ -302,7 +322,8 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         util.printDetail("End of the target script")
 
-        return process.returncode
+        stderr_last_line = result.get(timeout=60)
+        return process.returncode, stderr_last_line
 
     def _add_ssh_pubkey(self, login_user):
         if not util.is_windows():
