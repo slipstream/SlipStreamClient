@@ -710,8 +710,6 @@ class BaseCloudConnector(object):
 
         for var, val in os.environ.items():
             if env_matcher.match(var) and var != util.ENV_NODE_INSTANCE_NAME:
-                if var == 'SLIPSTREAM_REPORT_DIR' and node_instance.is_windows():
-                    val = Client.WINDOWS_REPORTSDIR
                 if re.search(' ', val):
                     val = '"%s"' % val
                 script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var,
@@ -776,13 +774,6 @@ class BaseCloudConnector(object):
             'nodename': instance_name,
             'machine_executor': self._get_machine_executor_type()
         }
-
-    @staticmethod
-    def __get_tmp_dir_for_linux():
-        if sys.platform.startswith('linux'):
-            return tempfile.gettempdir()
-        else:
-            return '/tmp'
 
     def _get_machine_executor_type(self):
         return self.is_start_orchestrator() and 'orchestrator' or 'node'

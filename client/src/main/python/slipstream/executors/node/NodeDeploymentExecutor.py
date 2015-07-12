@@ -144,8 +144,9 @@ class NodeDeploymentExecutor(MachineExecutor):
                              verboseThreshold=util.VERBOSE_LEVEL_QUIET)
 
     def _execute_report_target_and_send_reports(self):
+        exports = {'SLIPSTREAM_REPORT_DIR': util.get_platform_reports_dir()}
         try:
-            self._execute_target('report', ssdisplay=False, ignore_abort=True)
+            self._execute_target('report', exports=exports, ssdisplay=False, ignore_abort=True)
         except ExecutionException as ex:
             util.printDetail("Failed executing 'report' with: \n%s" % str(ex),
                              verboseLevel=self.verboseLevel,

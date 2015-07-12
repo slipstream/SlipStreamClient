@@ -48,8 +48,7 @@ PRINT_TO_STDERR_ONLY = False
 SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
 
 TMPDIR = os.path.join(tempfile.gettempdir(), 'slipstream')
-REPORTSDIR = os.environ.get('SLIPSTREAM_REPORT_DIR',
-                            os.path.join(os.sep, 'var', 'log', 'slipstream', 'client'))
+REPORTSDIR = os.path.join(os.sep, 'var', 'log', 'slipstream', 'client')
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
 HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 
@@ -731,3 +730,6 @@ def user_exists(user):
     else:
         return True
 
+
+def get_platform_reports_dir():
+    return is_windows() and WINDOWS_REPORTSDIR or REPORTSDIR

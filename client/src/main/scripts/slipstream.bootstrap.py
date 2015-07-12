@@ -470,17 +470,6 @@ def _to_time_in_iso8601(_time):
     return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_time))
 
 
-def create_reports_directory():
-    reportsDir = os.environ.get('SLIPSTREAM_REPORT_DIR',
-                                os.path.join(tempfile.gettempdir(),
-                                             'slipstream', 'reports'))
-    print 'Creating reports directory: %s' % reportsDir
-    try:
-        os.makedirs(reportsDir)
-    except OSError:
-        pass
-
-
 def setup_ss_and_cloud_connector(is_orchestration):
     cloud = get_cloud_name()
     get_and_setup_ss(cloud, is_orchestration)
@@ -514,8 +503,6 @@ def main():
         print '{sep}\n{msg}\n{sep}'.format(sep=len(msg) * '=', msg=msg)
 
         setup_ss_and_cloud_connector(is_orchestration)
-
-        create_reports_directory()
 
         print 'PYTHONPATH environment variable set to:', os.environ['PYTHONPATH']
         print 'Done bootstrapping!\n'
