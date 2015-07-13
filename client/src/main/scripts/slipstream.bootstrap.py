@@ -30,12 +30,20 @@ import tempfile
 import commands
 import traceback
 import getpass
+import time
+import platform
+import re
 
-SLIPSTREAM_CLIENT_HOME = os.path.join(os.sep, 'opt', 'slipstream', 'client')
+SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
+SLIPSTREAM_CLIENT_HOME = os.path.join(SLIPSTREAM_HOME, 'client')
+SLIPSTREAM_CLIENT_SETUP_DONE_LOCK = os.path.join(SLIPSTREAM_CLIENT_HOME, 'setup.done.lock')
+
+MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
 
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
+INITD_BASED_DISTROS = ['CentOS', 'CentOS Linux', 'RedHat', 'Ubuntu']
 
 
 class HTTPSConnection(httplib.HTTPSConnection):
@@ -67,25 +75,24 @@ class HTTPSHandler(urllib2.HTTPSHandler):
 urllib2.install_opener(urllib2.build_opener(HTTPSHandler()))
 
 
-def _setPythonpathSlipStream():
+def _set_PYTHONPATH_to_ss():
     ss_lib = os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib')
     __pythonpathPrepend(ss_lib)
     sys.path.append(ss_lib)
 
 
-def _setPathSlipStream():
+def _set_PATH_to_ss():
     for p in ['bin', 'sbin']:
         __pathPrepend(os.path.join(SLIPSTREAM_CLIENT_HOME, p))
 
 
-def _buildContextAndConfigSlipStream(cloud, orchestration):
-    _persistSlipStreamContext(cloud)
-    _persistSlipStreamConfig(cloud, orchestration)
+def _persist_ss_context_and_config(cloud, orchestration):
+    _persist_ss_context()
+    _persist_ss_config(cloud, orchestration)
 
 
-def _persistSlipStreamContext(cloud):
-    contextFile = os.path.join(tempfile.gettempdir(), 'slipstream.context')
-    slipstreamContext = """[contextualization]
+def _persist_ss_context():
+    slipstream_context = """[contextualization]
 diid = %s
 username = %s
 cookie = %s
@@ -96,23 +103,27 @@ node_instance_name = %s
        os.environ['SLIPSTREAM_COOKIE'].strip('"'),
        os.environ['SLIPSTREAM_SERVICEURL'],
        os.environ['SLIPSTREAM_NODE_INSTANCE_NAME'])
-    file(contextFile, 'w').write(slipstreamContext)
+    _write_to_ss_client_bin('slipstream.context', slipstream_context)
 
 
-def _persistSlipStreamConfig(cloud, orchestration):
-    cloudConnector = os.environ.get('CLOUDCONNECTOR_PYTHON_MODULENAME', '')
+def _persist_ss_config(cloud, orchestration):
+    cloud_connector = os.environ.get('CLOUDCONNECTOR_PYTHON_MODULENAME', '')
     # cloud connector module name is only required for orchestration
-    if orchestration and not cloudConnector:
+    if orchestration and not cloud_connector:
         raise RuntimeError("Failed to find connector module name for cloud: %s" % cloud)
 
-    clientConfig = """[System]
+    client_config = """[System]
 cloudconnector = %s
 #storageconnector = slipstream.connectors.LocalCloudStorageConnector
 contextualizationconnector = slipstream.connectors.LocalContextualizer
-""" % cloudConnector
+""" % cloud_connector
+    _write_to_ss_client_bin('slipstream.client.conf', client_config)
+
+
+def _write_to_ss_client_bin(fname, content):
     for _dir in ['bin', 'sbin']:
-        clientConfigFile = os.path.join(SLIPSTREAM_CLIENT_HOME, _dir, 'slipstream.client.conf')
-        file(clientConfigFile, 'w').write(clientConfig)
+        client_config_file = os.path.join(SLIPSTREAM_CLIENT_HOME, _dir, fname)
+        file(client_config_file, 'w').write(content)
 
 
 def __pythonpathPrepend(path):
@@ -175,7 +186,7 @@ def _setup_manual_env():
         shutil.copyfile(setenv_file_source, setenv_file_destination_in_tmp)
     except IOError, ex:
         pass
-    
+
 def _deployRemoteTarball(url, extract_to, name):
     print 'Retrieving %s library from %s' % (name, url)
     _downloadAndExtractTarball(url, extract_to)
@@ -290,7 +301,7 @@ def _paramikoSetup():
         import scpclient  # noqa
 
 
-def _getVerbosity():
+def _get_verbosity():
     verbosity = ''
     verbosityLevel = os.environ.get('SLIPSTREAM_VERBOSITY_LEVEL', '0')
     try:
@@ -308,7 +319,7 @@ def _getVerbosity():
     return verbosity
 
 
-def getCloudName():
+def get_cloud_name():
     envCloud = 'SLIPSTREAM_CLOUD'
     try:
         return os.environ[envCloud]
@@ -316,18 +327,99 @@ def getCloudName():
         raise RuntimeError('%s environment variable is not defined.' % envCloud)
 
 
-def _getTargetScriptCommand(targetScript):
+def get_machine_executor_command(executor_name):
+    if _system_supports_initd():
+        try:
+            return _setup_and_get_initd_service_start_command(executor_name)
+        except Exception as ex:
+            print 'Failed to setup and get init.d service start command for %s executor: %s' % (executor_name, str(ex))
+            print 'Falling back to direct startup of %s executor.' % executor_name
+            return _get_machine_executor_direct_startup_command(executor_name)
+    else:
+        return _get_machine_executor_direct_startup_command(executor_name)
+
+
+def _configure_initd_service(executor_name):
+    """
+    :param executor_name: name of the executor (node or orchestrator)
+    :return: init.d service name
+    """
+
+    _create_executor_config(executor_name)
+    service_name = _add_executor_to_initd(executor_name)
+
+    return service_name
+
+
+def _add_executor_to_initd(executor_name):
+    service_name = "slipstream-%s" % executor_name
+    dst = '/etc/init.d/' + service_name
+    if not os.path.exists(dst):
+        distro = _is_ubuntu() and 'ubuntu' or 'redhat'
+        os.symlink(SLIPSTREAM_CLIENT_HOME + '/etc/' + service_name + '-' + distro, dst)
+
+    if _is_ubuntu():
+        cmd = 'update-rc.d %s defaults' % service_name
+    else:
+        cmd = 'chkconfig --add %s' % service_name
+    commands.getstatusoutput(cmd)
+
+    return service_name
+
+
+def _create_executor_config(executor_name):
+    with open('/etc/default/slipstream-%s' % executor_name, 'w') as fh:
+        fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib'))
+        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'bin'))
+        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin'))
+        fh.write('export DAEMON_ARGS="%s"\n' % _get_verbosity())
+        if executor_name == 'orchestrator':
+            cloud_name = os.environ['SLIPSTREAM_CLOUD']
+            fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(os.sep, 'opt', cloud_name.lower()))
+
+            env_matcher = re.compile('SLIPSTREAM_')
+            for var, val in os.environ.items():
+                if env_matcher.match(var) and var != 'SLIPSTREAM_NODE_INSTANCE_NAME':
+                    #if re.search(' ', val) and not (val.startswith('"') and val.endswith('"')):
+                    if re.search(' ', val) and not 'SLIPSTREAM_COOKIE':
+                        val = '"%s"' % val
+                    fh.write('export %s="%s"\n' % (var, val))
+
+
+def _setup_and_get_initd_service_start_command(executor_name):
+    service_name = _configure_initd_service(executor_name)
+    return "service %s start" % service_name
+
+
+def _system_supports_initd():
+    if not _is_linux():
+        return False
+    distname, version, _id = platform.linux_distribution()
+    if distname not in INITD_BASED_DISTROS:
+        return False
+    return True
+
+def _is_ubuntu():
+    distname, _, _ = platform.linux_distribution()
+    return distname.lower().startswith('ubuntu')
+
+
+def _is_linux():
+    return sys.platform.startswith('linux')
+
+
+def _get_machine_executor_direct_startup_command(executor_name):
     custom_python_bin = os.path.join(os.sep, 'opt', 'python', 'bin')
     print 'Prepending %s to PATH.' % custom_python_bin
     os.putenv('PATH', '%s:%s' % (custom_python_bin, os.environ['PATH']))
-    cmd = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin', targetScript)
+    cmd = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin', 'slipstream-%s' % executor_name)
     os.chdir(cmd.rsplit(os.sep, 1)[0])
     if sys.platform == 'win32':
         cmd = 'C:\\Python27\\python ' + cmd
-    return cmd + ' ' + _getVerbosity()
+    return cmd + ' ' + _get_verbosity()
 
 
-def runTargetScript(cmd):
+def start_machine_executor(cmd):
     print 'Calling target script:', cmd
     os.environ['SLIPSTREAM_HOME'] = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin')
     subprocess.call(cmd, shell=True)
@@ -336,7 +428,7 @@ def runTargetScript(cmd):
     sys.exit(0)
 
 
-def getAndSetupCloudConnector(cloud_name):
+def get_and_setup_cloud_connector(cloud_name):
     bundle_url = os.environ.get('CLOUDCONNECTOR_BUNDLE_URL')
     if not bundle_url:
         msg = (bundle_url is None) and 'NOT DEFINED' or 'NOT INITIALIZED'
@@ -349,35 +441,45 @@ def getAndSetupCloudConnector(cloud_name):
                          cloud_name.lower())
 
 
-def getAndSetupSlipStream(cloud, orchestration):
-    slipstreamTarballUrl = os.environ['SLIPSTREAM_BUNDLE_URL']
+def _set_env_paths_to_ss():
+    _set_PYTHONPATH_to_ss()
+    _set_PATH_to_ss()
 
-    print 'Retrieving the latest version of the SlipStream from:', slipstreamTarballUrl
-    _downloadAndExtractTarball(slipstreamTarballUrl, SLIPSTREAM_CLIENT_HOME)
+
+def get_and_setup_ss(cloud, orchestration):
+    _set_env_paths_to_ss()
+
+    if os.path.exists(SLIPSTREAM_CLIENT_SETUP_DONE_LOCK):
+        print 'NOTE: Skipping download and configuration of SlipStream machine executor.'
+        print 'NOTE: SlipStream machine executor was already configured on the host on %s' % \
+              open(SLIPSTREAM_CLIENT_SETUP_DONE_LOCK, 'r').read()
+        return
+
+    ss_tarball_url = os.environ['SLIPSTREAM_BUNDLE_URL']
+    print 'Retrieving the latest version of the SlipStream from:', ss_tarball_url
+    _downloadAndExtractTarball(ss_tarball_url, SLIPSTREAM_CLIENT_HOME)
     _setup_manual_env()
-    _setPythonpathSlipStream()
-    _setPathSlipStream()
-    _buildContextAndConfigSlipStream(cloud, orchestration)
+    _persist_ss_context_and_config(cloud, orchestration)
     if orchestration:
         _paramikoSetup()
+    _set_setup_done_lock()
 
 
-def createReportsDirectory():
-    reportsDir = os.environ.get('SLIPSTREAM_REPORT_DIR',
-                                os.path.join(tempfile.gettempdir(),
-                                             'slipstream', 'reports'))
-    print 'Creating reports directory: %s' % reportsDir
-    try:
-        os.makedirs(reportsDir)
-    except OSError:
-        pass
+def _set_setup_done_lock():
+    with open(SLIPSTREAM_CLIENT_SETUP_DONE_LOCK, 'w') as fh:
+        fh.write(_to_time_in_iso8601(time.time()))
 
 
-def setupSlipStreamAndCloudConnector(is_orchestration):
-    cloud = getCloudName()
-    getAndSetupSlipStream(cloud, is_orchestration)
+def _to_time_in_iso8601(_time):
+    """Convert int or float to time in iso8601 format."""
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(_time))
+
+
+def setup_ss_and_cloud_connector(is_orchestration):
+    cloud = get_cloud_name()
+    get_and_setup_ss(cloud, is_orchestration)
     if is_orchestration:
-        getAndSetupCloudConnector(cloud)
+        get_and_setup_cloud_connector(cloud)
 
 
 def _formatException(exc_info):
@@ -389,7 +491,7 @@ def _formatException(exc_info):
     return ''.join(msg_list).strip()
 
 
-def publishFailureToSlipStreamRun(exc_info):
+def publish_failure_to_ss_run(exc_info):
     "exc_info - three-element list as returned by sys.exc_info()"
     AbortPublisher().publish('Bootstrap failed: %s' %
                              _formatException(exc_info))
@@ -397,29 +499,27 @@ def publishFailureToSlipStreamRun(exc_info):
 
 def main():
     try:
-        targetScript = 'slipstream-node-execution'
+        machine_executor = 'node'
         if len(sys.argv) > 1:
-            targetScript = sys.argv[1]
-        is_orchestration = targetScript != 'slipstream-node-execution'
+            machine_executor = sys.argv[1]
+        is_orchestration = machine_executor != 'node'
 
-        msg = "=== %s bootstrap script ===" % os.path.basename(targetScript)
+        msg = "=== %s bootstrap ===" % machine_executor
         print '{sep}\n{msg}\n{sep}'.format(sep=len(msg) * '=', msg=msg)
 
-        setupSlipStreamAndCloudConnector(is_orchestration)
-
-        createReportsDirectory()
+        setup_ss_and_cloud_connector(is_orchestration)
 
         print 'PYTHONPATH environment variable set to:', os.environ['PYTHONPATH']
         print 'Done bootstrapping!\n'
+
+        cmd = get_machine_executor_command(machine_executor)
         sys.stdout.flush()
         sys.stderr.flush()
-
-        cmd = _getTargetScriptCommand(targetScript)
     except:
-        publishFailureToSlipStreamRun(sys.exc_info())
+        publish_failure_to_ss_run(sys.exc_info())
         raise
 
-    runTargetScript(cmd)
+    start_machine_executor(cmd)
 
 
 class AbortPublisher(object):

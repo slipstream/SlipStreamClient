@@ -24,9 +24,8 @@ import tempfile
 
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.exceptions.Exceptions import AbortException, \
-    TerminalStateException, ExecutionException, InconsistentScaleStateError
+    TerminalStateException, ExecutionException
 from slipstream import util
-from slipstream.Client import Client
 
 
 class MachineExecutor(object):
@@ -43,7 +42,7 @@ class MachineExecutor(object):
         """
         self.wrapper = wrapper
         self.timeout = 55 * 60  # 50 minutes
-        self.ssLogDir = Client.REPORTSDIR
+        self.ssLogDir = util.REPORTSDIR
         self.verboseLevel = 0
         config_holder.assign(self)
 
