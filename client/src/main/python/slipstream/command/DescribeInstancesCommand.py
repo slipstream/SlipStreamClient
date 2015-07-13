@@ -32,8 +32,30 @@ class DescribeInstancesCommand(CloudClientCommand):
     def _vm_get_state(self, cc, vm):
         raise NotImplementedError()
 
+    def _sanitize_for_output(self, text):
+        if text is None:
+            text = ''
+        elif not isinstance(text, basestring):
+            text = str(text)
+        return text.replace(',', '')
+
     def _vm_get_id(self, cc, vm):
-        return cc._vm_get_id(vm)
+        return self._sanitize_for_output(cc._vm_get_id(vm))
+
+    def _vm_get_ip(self, cc, vm):
+        return self._sanitize_for_output(cc._vm_get_ip_from_list_instances(vm))
+
+    def _vm_get_cpu(self, cc, vm):
+        return self._sanitize_for_output(cc._vm_get_cpu(vm))
+
+    def _vm_get_ram(self, cc, vm):
+        return self._sanitize_for_output(cc._vm_get_ram(vm))
+
+    def _vm_get_root_disk(self, cc, vm):
+        return self._sanitize_for_output(cc._vm_get_root_disk(vm))
+
+    def _vm_get_instance_type(self, cc, vm):
+        return self._sanitize_for_output(cc._vm_get_instance_type(vm))
 
     def _list_instances(self, cc):
         return cc.list_instances()
@@ -60,6 +82,13 @@ class DescribeInstancesCommand(CloudClientCommand):
         return cc, vms
 
     def _print_results(self, cc, vms):
-        print "id state"
+        print "id, state, ip, cpu [nb], ram [MB], root disk [GB], instance-type [name]"
         for vm in vms:
-            print self._vm_get_id(cc, vm), self._vm_get_state(cc, vm)
+            print ', '.join([
+                self._vm_get_id(cc, vm),
+                self._vm_get_state(cc, vm) or 'Unknown',
+                self._vm_get_ip(cc, vm),
+                self._vm_get_cpu(cc, vm),
+                self._vm_get_ram(cc, vm),
+                self._vm_get_root_disk(cc, vm),
+                self._vm_get_instance_type(cc, vm)])

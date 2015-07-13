@@ -103,14 +103,42 @@ class BaseCloudConnector(object):
         Returns: one IP - Public or Private."""
         raise NotImplementedError()
 
-    def _vm_get_state(self, vm_instance):
-        """Retrieve VM state from the vm_instance object returned by _start_image().
-        Returns: VM cloud state."""
-        return ""
-
     def _vm_get_password(self, vm_instance):
         """Retrieve the password of the VM from the vm_instance object returned by _start_image().
         Returns: the password needed to connect to the VM"""
+        pass
+
+    def _vm_get_state(self, vm_instance):
+        """Retrieve VM state from the vm_instance object returned by list_instances().
+        Returns: VM cloud state."""
+        return ""
+
+    ''' The methods below are used to generate the reply of *-describe-instances
+    '''
+
+    def _vm_get_ip_from_list_instances(self, vm_instance):
+        """Retrieve an IP from the vm_instance object returned by list_instances().
+        Returns: one IP - Public or Private."""
+        pass
+
+    def _vm_get_cpu(self, vm_instance):
+        """Retrieve the number of CPU of the VM from the vm_instance object returned by list_instances().
+        Returns: the number of CPU of VM"""
+        pass
+
+    def _vm_get_ram(self, vm_instance):
+        """Retrieve the amount of RAM memory of the VM from the vm_instance object returned by list_instances().
+        Returns: the amount of RAM memory of the VM in MB"""
+        pass
+
+    def _vm_get_root_disk(self, vm_instance):
+        """Retrieve the size of the root disk of the VM from the vm_instance object returned by list_instances().
+        Returns: the size of the root disk of the VM in GB"""
+        pass
+
+    def _vm_get_instance_type(self, vm_instance):
+        """Retrieve the instance type of the VM from the vm_instance object returned by list_instances().
+        Returns: the name of the instance type of the VM"""
         pass
 
     def _get_vm_failed_states(self):
