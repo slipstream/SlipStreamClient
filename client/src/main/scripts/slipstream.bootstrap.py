@@ -329,7 +329,12 @@ def get_cloud_name():
 
 def get_machine_executor_command(executor_name):
     if _system_supports_initd():
-        return _setup_and_get_initd_service_start_command(executor_name)
+        try:
+            return _setup_and_get_initd_service_start_command(executor_name)
+        except Exception as ex:
+            print 'Failed to setup and get init.d service start command for %s executor: %s' % (executor_name, str(ex))
+            print 'Falling back to direct startup of %s executor.' % executor_name
+            return _get_machine_executor_direct_startup_command(executor_name)
     else:
         return _get_machine_executor_direct_startup_command(executor_name)
 
