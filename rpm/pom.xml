@@ -36,6 +36,7 @@
 			    <argument>bin</argument>
 			    <argument>lib</argument>
 			    <argument>sbin</argument>
+				<argument>etc</argument>
 			    <argument>setup.cfg</argument>
 			    <argument>setup.py</argument>
 			  </arguments>
