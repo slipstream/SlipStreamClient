@@ -81,9 +81,12 @@ class MachineExecutor(object):
         except KeyboardInterrupt:
             raise
         except (SystemExit, Exception) as ex:
-            util.printError('Error executing node, with detail: %s' % ex)
-            traceback.print_exc()
-            self._fail(ex)
+            if isinstance(ex, SystemExit) and str(ex).startswith('Terminating on signal'):
+                self._log_and_set_statecustom('Machine executor is stopping with: %s' % ex)
+            else:
+                util.printError('Error executing node, with detail: %s' % ex)
+                traceback.print_exc()
+                self._fail(ex)
             self.onSendingReports()
 
     def _complete_state(self, state):
@@ -206,3 +209,6 @@ class MachineExecutor(object):
 
     def _set_state_start_time(self):
         self.wrapper.set_state_start_time()
+
+    def _log_and_set_statecustom(self, msg):
+        self.wrapper._log_and_set_statecustom(msg)
