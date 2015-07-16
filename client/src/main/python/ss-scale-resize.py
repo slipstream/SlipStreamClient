@@ -55,6 +55,8 @@ class MainProgram(VerticalScaleCommandBase):
 
     def doWork(self):
         super(MainProgram, self).doWork()
+        print('Requested resizing of %s' % self.node_name)
+
 
 if __name__ == "__main__":
     try:
