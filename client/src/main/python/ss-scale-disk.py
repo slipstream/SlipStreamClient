@@ -51,6 +51,8 @@ class MainProgram(VerticalScaleCommandBase):
 
     def doWork(self):
         super(MainProgram, self).doWork()
+        action = self.options.attach_gb and 'attach' or 'detach'
+        print('Requested %sment of extra disk on %s' % (action, self.node_name))
 
 if __name__ == "__main__":
     try:
