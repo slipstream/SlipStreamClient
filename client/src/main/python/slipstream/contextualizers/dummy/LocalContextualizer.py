@@ -40,8 +40,9 @@ class LocalContextualizer(object):
     """
     LOCAL_CONTEXTUALIZATION_FILENAME = 'slipstream.context'
     LOCAL_CONTEXTUALIZATION_LOCATIONS = [os.getcwd(), os.path.expanduser('~'),
-                                         tempfile.gettempdir(),
-                                         '/opt/slipstream/client/sbin']
+                                         os.path.join(util.SLIPSTREAM_HOME, 'client', 'bin'),
+                                         os.path.join(util.SLIPSTREAM_HOME, 'client', 'sbin'),
+                                         tempfile.gettempdir()]
     SECTION = 'contextualization'
 
     def __init__(self):
