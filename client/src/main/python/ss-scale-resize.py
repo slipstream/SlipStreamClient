@@ -49,6 +49,7 @@ class MainProgram(VerticalScaleCommandBase):
             self.rtp_scale_values['cpu'] = self.options.cpu
         if self.options.ram:
             self.rtp_scale_values['ram'] = self.options.ram
+        if self.rtp_scale_values:
             return
 
         self.rtp_scale_values['instance.type'] = self.options.instance_type
