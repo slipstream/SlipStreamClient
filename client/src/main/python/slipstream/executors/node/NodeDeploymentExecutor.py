@@ -22,7 +22,7 @@ import errno
 import codecs
 import tempfile
 
-from Queue import Queue
+from Queue import Queue, Empty
 from threading  import Thread
 
 import slipstream.util as util
@@ -323,7 +323,11 @@ class NodeDeploymentExecutor(MachineExecutor):
 
         util.printDetail("End of the target script")
 
-        stderr_last_line = result.get(timeout=60)
+        stderr_last_line = ''
+        try:
+            stderr_last_line = result.get(timeout=60)
+        except Empty:
+            pass
         return process.returncode, stderr_last_line
 
     def _add_ssh_pubkey(self, login_user):
