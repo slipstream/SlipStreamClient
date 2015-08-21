@@ -55,7 +55,7 @@ Different sections (categories) of the configuration can be extracted with --cat
         self._add_endpoint_option()
 
         self.parser.add_option('-o', '--output', dest='output', metavar='FILE',
-                               help='File to output the configuration. By default,'
+                               help='File to output the configuration. By default, '
                                     'the configuration is printed to stdout.',
                                default=None)
         self.parser.add_option('-i', '--input', dest='input', metavar='FILE',
