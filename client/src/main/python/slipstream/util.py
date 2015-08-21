@@ -55,6 +55,7 @@ HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
 RUN_RESOURCE_PATH = '/run'
 MODULE_RESOURCE_PATH = '/module'
 USER_RESOURCE_PATH = '/user'
+CONFIGURATION_RESOURCE_PATH = '/configuration'
 
 RUN_PARAM_REFQNAME = 'refqname'
 RUN_PARAM_MUTABLE = 'mutable'
@@ -68,6 +69,14 @@ SUPPORTED_PLATFORMS = [y for x in SUPPORTED_PLATFORMS_BY_DISTRO.values() for y i
 ENV_SLIPSTREAM_SSH_PUB_KEY = '__SLIPSTREAM_SSH_PUB_KEY'
 ENV_CONNECTOR_INSTANCE = 'SLIPSTREAM_CONNECTOR_INSTANCE'
 ENV_NODE_INSTANCE_NAME = 'SLIPSTREAM_NODE_INSTANCE_NAME'
+
+SERVER_CONFIG_FILE_EXT = '.conf'
+SERVER_CONFIGURATION_BASICS_CATEGORY = 'SlipStream_Basics'
+SERVER_CONFIGURATION_DEFAULT_CATEGORIES = ['SlipStream_Support',
+                                           SERVER_CONFIGURATION_BASICS_CATEGORY,
+                                           'SlipStream_Advanced']
+SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY = 'cloud.connector.class'
+
 
 def sleep(seconds, fail_on_ioerror=False):
     try:
