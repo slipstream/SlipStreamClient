@@ -50,6 +50,7 @@ setup(
         'bin/ss-user-put',
         'bin/ss-scale-resize',
         'bin/ss-scale-disk',
+        'bin/ss-config-dump',
     ],
     packages=[
         'slipstream',

@@ -18,6 +18,7 @@
 from __future__ import print_function
 
 import os
+from collections import defaultdict
 
 import slipstream.util as util
 import slipstream.exceptions.Exceptions as Exceptions
@@ -62,6 +63,9 @@ class SlipStreamHttpClient(object):
 
         self.userEndpoint = '%s/user/%s' % (self.serviceurl,
                                             self.username)
+
+        self.configuration_endpoint = '%s%s' % (self.serviceurl,
+                                                util.CONFIGURATION_RESOURCE_PATH)
 
     def get_user_info(self, cloud_qualifier):
 
@@ -277,6 +281,10 @@ class SlipStreamHttpClient(object):
             body = body + '&delete-ids-only=true'
         self._httpDelete(url, body=body)
 
+    def get_server_configuration(self):
+        _, config = self._retrieve(self.configuration_endpoint)
+        return config
+
 
 class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'
@@ -475,3 +483,24 @@ class DomExtractor(object):
         for targetNode in image_dom.findall('targets/target'):
             targets[targetNode.get('name')] = targetNode.text
         return targets
+
+    @staticmethod
+    def server_config_dom_into_dict(config_dom, categories=[]):
+        '''
+        :param config_dom: Element Tree representation of the server's configuration.
+        :param categories: categories to extract; if empty, extracts all categories.
+        :return: dictionary {'category': [('param', 'value'),],}
+        '''
+        config = defaultdict(list)
+        for param in config_dom.findall('parameters/entry'):
+            category = param.find('parameter').get('category')
+            if categories and (category not in categories):
+                continue
+            name = param.find('parameter').get('name')
+            value = param.find('parameter/value').text
+            if value is None:
+                value = ''
+            if '\n' in value:
+                value = value.replace('\n', '')
+            config[category].append((name, value))
+        return config

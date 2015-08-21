@@ -221,3 +221,6 @@ class Client(object):
 
     def getGlobalAbortMessage(self):
         return self.httpClient.getGlobalAbortMessage()
+
+    def get_server_configuration(self):
+        return self.httpClient.get_server_configuration()
