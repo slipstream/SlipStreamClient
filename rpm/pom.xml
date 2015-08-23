@@ -222,7 +222,6 @@
 				                   <location>${project.build.directory}/client/sbin/</location>
 				                   <includes>
 				                       <include>cloudstack-*</include>
-				                       <include>openstack-*</include>
 				                   </includes>
 				               </source>
 			              </sources>
@@ -238,15 +237,6 @@
 			                    </softlinkSource>
 			                    <softlinkSource>
 			                        <location>${slipstream.base.dir}/connectors/bin/cloudstack-terminate-instances</location>
-			                    </softlinkSource>
-			                    <softlinkSource>
-			                        <location>${slipstream.base.dir}/connectors/bin/openstack-describe-instances</location>
-			                    </softlinkSource>
-			                    <softlinkSource>
-			                        <location>${slipstream.base.dir}/connectors/bin/openstack-run-instances</location>
-			                    </softlinkSource>
-			                    <softlinkSource>
-			                        <location>${slipstream.base.dir}/connectors/bin/openstack-terminate-instances</location>
 			                    </softlinkSource>
 			                </sources>
 			            </mapping>
@@ -295,7 +285,6 @@ mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
 <preinstallScriptlet>
   <script>
 /bin/rm -f /usr/bin/cloudstack-*
-/bin/rm -f /usr/bin/openstack-*
   </script>
 </preinstallScriptlet>
 
