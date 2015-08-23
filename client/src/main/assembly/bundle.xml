@@ -36,6 +36,7 @@
 				<include>*.setup</include>
 				<include>*.setenv</include>
                 <include>*.setenv.*</include>
+				<include>cloudstack-*</include>
 			</includes>
 			<fileMode>0755</fileMode>
 		</fileSet>
