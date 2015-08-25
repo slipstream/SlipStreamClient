@@ -43,7 +43,26 @@ MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
-INITD_BASED_DISTROS = ['CentOS', 'CentOS Linux', 'RedHat', 'Ubuntu']
+RedHat_ver_min_incl_max_excl = ((5,), (8,))
+Ubuntu_ver_min_incl_max_excl = ((10,), (15,))
+INITD_BASED_DISTROS = dict([('CentOS', RedHat_ver_min_incl_max_excl),
+                            ('CentOS Linux', RedHat_ver_min_incl_max_excl),
+                            ('RedHat', RedHat_ver_min_incl_max_excl),
+                            ('Ubuntu', Ubuntu_ver_min_incl_max_excl)])
+
+
+def _versiontuple(v):
+    return tuple(map(int, (v.split("."))))
+
+
+def version_in_range(ver, vrange):
+    """Checks if the provided version is in the defined range.
+    :param ver: version number to compare
+    :type ver: str
+    :param vrange: two-tuple with version range ((min included,), (max excluded,)).
+    :type vrange: tuple
+    """
+    return vrange[0] <= _versiontuple(ver) < vrange[1]
 
 
 class HTTPSConnection(httplib.HTTPSConnection):
@@ -391,13 +410,20 @@ def _setup_and_get_initd_service_start_command(executor_name):
     return "service %s start" % service_name
 
 
+def _get_linux_distribution():
+    return platform.linux_distribution()
+
+
 def _system_supports_initd():
     if not _is_linux():
         return False
-    distname, version, _id = platform.linux_distribution()
-    if distname not in INITD_BASED_DISTROS:
+    distname, version, _id = _get_linux_distribution()
+    if distname not in INITD_BASED_DISTROS.keys():
         return False
-    return True
+    else:
+        initd_dist_version_range = INITD_BASED_DISTROS[distname]
+        return version_in_range(version, initd_dist_version_range)
+
 
 def _is_ubuntu():
     distname, _, _ = platform.linux_distribution()

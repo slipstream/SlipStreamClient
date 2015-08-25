@@ -36,7 +36,7 @@
                 <configuration>
                   <executable>nosetests</executable>
                   <environmentVariables>
-                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./target/dependencies</PYTHONPATH>
+                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./src/main/scripts/:./target/dependencies</PYTHONPATH>
                   </environmentVariables>
                   <arguments>
                     <argument>-v</argument>
