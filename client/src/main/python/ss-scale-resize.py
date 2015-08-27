@@ -25,7 +25,9 @@ from slipstream.command.VerticalScaleCommandBase import VerticalScaleCommandBase
 
 class MainProgram(VerticalScaleCommandBase):
 
+
     def __init__(self, argv=None):
+        self._usage_options = "[options] [--cpu <num>, --ram <num>]|[--instance-type <type>] <run> <node-name> <ids> [<ids> ...]"
         super(MainProgram, self).__init__(argv)
 
     def add_scale_options(self):

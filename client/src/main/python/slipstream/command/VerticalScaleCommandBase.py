@@ -33,6 +33,8 @@ class VerticalScaleCommandBase(CommandBase):
     in a deployment.
     """
 
+    _usage_options = ''
+
     def __init__(self, argv=None):
         self.run_url = None
         self.run_dom = None
@@ -58,10 +60,11 @@ class VerticalScaleCommandBase(CommandBase):
         raise NotImplementedError("_validate_and_set_scale_options() should be implemented.")
 
     def parse(self):
-        usage = """usage: %prog [options] [--attach <GB> | --detach <device>] <run> <node-name> <ids> [<ids> ...]
+        usage = """%(prog)s %(usage_options)s
 <run>        Run ID. Run should be mutable and in Ready state.
 <node-name>  Node name to scale the instances of.
-<ids>        IDs of the node instances to scale."""
+<ids>        IDs of the node instances to scale.""" % {'prog': '%prog',
+                                                       'usage_options': self._usage_options}
 
         self.parser.usage = usage
         self.add_authentication_options()

@@ -25,7 +25,9 @@ from slipstream.wrappers.BaseWrapper import BaseWrapper
 
 class MainProgram(VerticalScaleCommandBase):
 
+
     def __init__(self, argv=None):
+        self._usage_options = "[options] [--attach <GB> | --detach <device>] <run> <node-name> <ids> [<ids> ...]"
         super(MainProgram, self).__init__(argv)
 
     def add_scale_options(self):
