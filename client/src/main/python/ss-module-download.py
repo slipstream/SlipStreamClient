@@ -20,6 +20,7 @@ from __future__ import print_function
 
 import os
 import os.path
+import re
 import sys
 import xml.etree.ElementTree as ET
 
@@ -46,11 +47,19 @@ class MainProgram(CommandBase):
         self.parser.usage = usage
 
         self.add_authentication_options()
-        self.addEndpointOption()        
+        self.addEndpointOption()
 
         self.parser.add_option('--remove-cloud-specific', dest='remove_clouds',
                                help='Remove all cloud specific elements (image ids, cloud parameters, ...)',
                                default=False, action='store_true')
+
+        self.parser.add_option('--dump-image-ids', dest='dump_image_ids',
+            help='Store image IDs found in image modules into per module files.',
+            default=False, action='store_true')
+
+        self.parser.add_option('--dump-image-ids-dir', dest='dump_image_ids_dir',
+            help='Path to the directory to store the image IDs files. Default: current directory.',
+            default='.')
 
         self.parser.add_option('--remove-group-members', dest='remove_group_members',
                                help='Remove members of the group in the authorizations',
@@ -161,6 +170,29 @@ class MainProgram(CommandBase):
             children.append(module_path)
         return children
 
+    @staticmethod
+    def _is_image(root):
+        return root.tag == 'imageModule'
+
+    def _dump_image_ids(self, root):
+        ids = root.find('cloudImageIdentifiers')
+        if ids is not None:
+            module_name = root.get('shortName')
+            module_path = re.sub('^module/', '', root.get('parentUri'))
+            module_uri = "%s/%s" % (module_path, module_name)
+            cloud_ids = ''
+            for _id in ids.findall('*'):
+                cloud_ids += "%s = %s:%s\n" % (module_uri, _id.get('cloudServiceName'),
+                        _id.get('cloudImageIdentifier'))
+            if cloud_ids:
+                ids_dir = self.options.dump_image_ids_dir
+                if not os.path.exists(ids_dir):
+                    os.makedirs(ids_dir)
+                fn = '%s_%s' % (module_path.replace('/','_'), module_name)
+                ids_file = "%s/%s.conf" % (ids_dir, fn)
+                with open(ids_file, 'w') as fh:
+                    fh.write(cloud_ids)
+
     def doWork(self):
 
         if self.options.remove_clouds and sys.version_info[0:3] < (2, 7, 0):
@@ -171,13 +203,14 @@ class MainProgram(CommandBase):
         client.verboseLevel = self.verboseLevel
 
         queue = [self.module]
-
         while len(queue) > 0:
             module = queue.pop(0)
             print('Processing: %s' % module)
 
             root = self._retrieveModuleAsXml(client, module)
             self._removeRuns(root)
+            if self._is_image(root) and self.options.dump_image_ids:
+                self._dump_image_ids(root)
             if self.options.remove_clouds:
                 self._remove_clouds(root)
             if self.options.remove_group_members:
@@ -188,6 +221,7 @@ class MainProgram(CommandBase):
 
             for child in self._getModuleChildren(module, root):
                 queue.append(child)
+
 
 if __name__ == "__main__":
     try:
