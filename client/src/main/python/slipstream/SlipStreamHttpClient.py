@@ -485,7 +485,7 @@ class DomExtractor(object):
         return targets
 
     @staticmethod
-    def server_config_dom_into_dict(config_dom, categories=[]):
+    def server_config_dom_into_dict(config_dom, categories=[], value_updater=None):
         '''
         :param config_dom: Element Tree representation of the server's configuration.
         :param categories: categories to extract; if empty, extracts all categories.
@@ -502,5 +502,7 @@ class DomExtractor(object):
                 value = ''
             if '\n' in value:
                 value = value.replace('\n', '')
+            if hasattr(value_updater, '__call__'):
+                value = value_updater(value)
             config[category].append((name, value))
         return config
