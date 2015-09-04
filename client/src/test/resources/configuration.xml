@@ -1,0 +1,1107 @@
+<serviceConfiguration deleted="false" creation="2015-09-01 20:36:58.540 UTC">
+   <parameters class="org.hibernate.collection.internal.PersistentMap">
+      <entry>
+         <string>ec2-us-west-1.region</string>
+         <parameter name="ec2-us-west-1.region" description="EC2 region" category="ec2-us-west-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[us-west-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.region</string>
+         <parameter name="ec2-us-west-2.region" description="EC2 region" category="ec2-us-west-2" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[us-west-2]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.orchestrator.imageid</string>
+         <parameter name="ec2-ap-northeast-1.orchestrator.imageid" description="Image Id of the orchestrator for ec2-ap-northeast-1" category="ec2-ap-northeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-18ba4018]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.orchestrator.instance.type</string>
+         <parameter name="ec2-eu-west.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-eu-west" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[m3.medium]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.update.clienturl</string>
+         <parameter name="ec2-ap-northeast-1.update.clienturl" description="URL with the cloud client specific connector" category="ec2-ap-northeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.metering.enable</string>
+         <parameter name="slipstream.metering.enable" description="Metering enabled" category="SlipStream_Advanced" mandatory="true" type="Boolean" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[true]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.orchestrator.instance.type</string>
+         <parameter name="ec2-ap-southeast-1.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-ap-southeast-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.zone</string>
+         <parameter name="exoscale-ch-gva.zone" description="Zone" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[CH-GV2]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.quota.vm</string>
+         <parameter name="ultimum-cz1.quota.vm" description="VM quota for ultimum-cz1 (i.e. maximum number of VMs allowed)" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.security.group</string>
+         <parameter name="ec2-ap-southeast-2.security.group" description="Orchestrator security group" category="ec2-ap-southeast-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.security.group</string>
+         <parameter name="ec2-eu-central-1.security.group" description="Orchestrator security group" category="ec2-eu-central-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.version</string>
+         <parameter name="slipstream.version" description="Installed SlipStream version" category="SlipStream_Advanced" mandatory="true" type="String" readonly="true" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[2.15]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.quota.enable</string>
+         <parameter name="slipstream.quota.enable" description="Quota enforcement enabled" category="SlipStream_Advanced" mandatory="true" type="Boolean" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[true]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.max.iaas.workers</string>
+         <parameter name="ultimum-cz1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-1.orchestrator.imageid</string>
+         <parameter name="ec2-us-west-1.orchestrator.imageid" description="Image Id of the orchestrator for ec2-us-west-1" category="ec2-us-west-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-dffb199b]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.orchestrator.instance.type</string>
+         <parameter name="ec2-ap-northeast-1.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-ap-northeast-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.orchestrator.imageid</string>
+         <parameter name="exoscale-ch-gva.orchestrator.imageid" description="Image Id of the orchestrator for exoscale-ch-gva" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[605d1ad4-b3b2-4b60-af99-843c7b8278f8]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.reports.location</string>
+         <parameter name="slipstream.reports.location" description="Location where the deployments and build reports are saved" category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[/var/tmp/slipstream/reports]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.quota.vm</string>
+         <parameter name="exoscale-ch-gva.quota.vm" description="VM quota for exoscale-ch-gva (i.e. maximum number of VMs allowed)" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.orchestrator.ssh.password</string>
+         <parameter name="exoscale-ch-gva.orchestrator.ssh.password" description="Orchestrator password" category="exoscale-ch-gva" mandatory="true" type="Password" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.update.clienturl</string>
+         <parameter name="ec2-eu-west.update.clienturl" description="URL with the cloud client specific connector" category="ec2-eu-west" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.max.iaas.workers</string>
+         <parameter name="ec2-us-west-2.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-us-west-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.quota.vm</string>
+         <parameter name="ec2-ap-northeast-1.quota.vm" description="VM quota for ec2-ap-northeast-1 (i.e. maximum number of VMs allowed)" category="ec2-ap-northeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.orchestrator.instance.type</string>
+         <parameter name="ec2-us-east-1.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-us-east-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.orchestrator.imageid</string>
+         <parameter name="ec2-eu-west.orchestrator.imageid" description="Image Id of the orchestrator for ec2-eu-west" category="ec2-eu-west" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-a0dd3dd7]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.quota.vm</string>
+         <parameter name="ec2-ap-southeast-2.quota.vm" description="VM quota for ec2-ap-southeast-2 (i.e. maximum number of VMs allowed)" category="ec2-ap-southeast-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.mail.host</string>
+         <parameter name="slipstream.mail.host" description="Host for SMTP server for email notifications." category="SlipStream_Support" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[smtp.gmail.com]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.service.name</string>
+         <parameter name="ultimum-cz1.service.name" description="Name of the service which provides the instances functionality" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[nova]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.update.clienturl</string>
+         <parameter name="ec2-sa-east-1.update.clienturl" description="URL with the cloud client specific connector" category="ec2-sa-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.max.iaas.workers</string>
+         <parameter name="exoscale-ch-gva.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.native-contextualization</string>
+         <parameter name="ultimum-cz1.native-contextualization" description="Use native cloud contextualisation" category="ultimum-cz1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="4">
+               <string>never</string>
+               <string>linux-only</string>
+               <string>windows-only</string>
+               <string>always</string>
+            </enumValues>
+            <value><![CDATA[linux-only]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.security.group</string>
+         <parameter name="ec2-sa-east-1.security.group" description="Orchestrator security group" category="ec2-sa-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.orchestrator.imageid</string>
+         <parameter name="ec2-us-west-2.orchestrator.imageid" description="Image Id of the orchestrator for ec2-us-west-2" category="ec2-us-west-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-ed557fdd]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.update.clienturl</string>
+         <parameter name="slipstream.update.clienturl" description="Endpoint of the SlipStream client tarball" category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[https://54.220.0.118/downloads/slipstreamclient.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.security.group</string>
+         <parameter name="ec2-ap-northeast-1.security.group" description="Orchestrator security group" category="ec2-ap-northeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.max.iaas.workers</string>
+         <parameter name="ec2-ap-northeast-1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-ap-northeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.quota.vm</string>
+         <parameter name="ec2-ap-southeast-1.quota.vm" description="VM quota for ec2-ap-southeast-1 (i.e. maximum number of VMs allowed)" category="ec2-ap-southeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.mail.username</string>
+         <parameter name="slipstream.mail.username" description="Username for SMTP server." category="SlipStream_Support" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[Username of the mail server account you want to use to send registration emails.]]></instructions>
+            <value><![CDATA[mailer@sixsq.com]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.endpoint</string>
+         <parameter name="exoscale-ch-gva.endpoint" description="Service endpoint for exoscale-ch-gva (e.g. http://example.com:5000)" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://api.exoscale.ch/compute]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.mail.port</string>
+         <parameter name="slipstream.mail.port" description="Port on SMTP server (defaults to standard ports)." category="SlipStream_Support" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[465]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>cloud.connector.orchestrator.privatesshkey</string>
+         <parameter name="cloud.connector.orchestrator.privatesshkey" description="Path to the SSH private key used to connect to the orchestrator (used only for some Clouds)" category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[/opt/slipstream/server/.ssh/id_rsa]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.update.clienturl</string>
+         <parameter name="ec2-ap-southeast-2.update.clienturl" description="URL with the cloud client specific connector" category="ec2-ap-southeast-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.mail.ssl</string>
+         <parameter name="slipstream.mail.ssl" description="Use SSL for SMTP server." category="SlipStream_Support" mandatory="true" type="Boolean" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[true]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.service.region</string>
+         <parameter name="ultimum-cz1.service.region" description="Region used by this cloud connector" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[RegionOne]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.region</string>
+         <parameter name="ec2-ap-southeast-2.region" description="EC2 region" category="ec2-ap-southeast-2" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[ap-southeast-2]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.max.iaas.workers</string>
+         <parameter name="ec2-eu-west.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-eu-west" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.quota.vm</string>
+         <parameter name="ec2-sa-east-1.quota.vm" description="VM quota for ec2-sa-east-1 (i.e. maximum number of VMs allowed)" category="ec2-sa-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.update.clienturl</string>
+         <parameter name="ec2-eu-central-1.update.clienturl" description="URL with the cloud client specific connector" category="ec2-eu-central-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.orchestrator.ssh.username</string>
+         <parameter name="exoscale-ch-gva.orchestrator.ssh.username" description="Orchestrator username" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.orchestrator.instance.type</string>
+         <parameter name="exoscale-ch-gva.orchestrator.instance.type" description="Orchestrator instance type" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[Micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>cloud.connector.library.libcloud.url</string>
+         <parameter name="cloud.connector.library.libcloud.url" description="URL to fetch libcloud library from" category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[URL should point to a valid gzipped tarball.]]></instructions>
+            <value><![CDATA[https://54.220.0.118/downloads/libcloud.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.max.iaas.workers</string>
+         <parameter name="ec2-us-east-1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-us-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.update.clienturl</string>
+         <parameter name="ec2-us-west-2.update.clienturl" description="URL with the cloud client specific connector" category="ec2-us-west-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.security.group</string>
+         <parameter name="ec2-us-west-2.security.group" description="Orchestrator security group" category="ec2-us-west-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.orchestrator.instance.type</string>
+         <parameter name="ec2-eu-central-1.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-eu-central-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.network.private</string>
+         <parameter name="ultimum-cz1.network.private" description="Mapping for Private network" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[private]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.quota.vm</string>
+         <parameter name="ec2-eu-west.quota.vm" description="VM quota for ec2-eu-west (i.e. maximum number of VMs allowed)" category="ec2-eu-west" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.orchestrator.instance.type</string>
+         <parameter name="ultimum-cz1.orchestrator.instance.type" description="OpenStack Flavor for the orchestrator. The actual image should support the desired Flavor" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[Basic]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.service.type</string>
+         <parameter name="ultimum-cz1.service.type" description="Type-name of the service which provides the instances functionality" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[compute]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.region</string>
+         <parameter name="ec2-us-east-1.region" description="EC2 region" category="ec2-us-east-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[us-east-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.quota.vm</string>
+         <parameter name="ec2-us-west-2.quota.vm" description="VM quota for ec2-us-west-2 (i.e. maximum number of VMs allowed)" category="ec2-us-west-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.orchestrator.ssh.username</string>
+         <parameter name="ultimum-cz1.orchestrator.ssh.username" description="Orchestrator username" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.support.email</string>
+         <parameter name="slipstream.support.email" description="Email address for SlipStream support requests" category="SlipStream_Support" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[support@sixsq.com]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-1.max.iaas.workers</string>
+         <parameter name="ec2-us-west-1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-us-west-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.orchestrator.instance.type</string>
+         <parameter name="ec2-ap-southeast-2.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-ap-southeast-2" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>cloud.connector.orchestrator.publicsshkey</string>
+         <parameter name="cloud.connector.orchestrator.publicsshkey" description="Path to the SSH public key to put in the orchestrator" category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[/opt/slipstream/server/.ssh/id_rsa.pub]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.region</string>
+         <parameter name="ec2-ap-southeast-1.region" description="EC2 region" category="ec2-ap-southeast-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[ap-southeast-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.region</string>
+         <parameter name="ec2-eu-central-1.region" description="EC2 region" category="ec2-eu-central-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[eu-central-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.orchestrator.imageid</string>
+         <parameter name="ec2-ap-southeast-2.orchestrator.imageid" description="Image Id of the orchestrator for ec2-ap-southeast-2" category="ec2-ap-southeast-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-933944a9]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.registration.email</string>
+         <parameter name="slipstream.registration.email" description="Email address for account approvals, etc." category="SlipStream_Support" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[Email address to use for registration.]]></instructions>
+            <value><![CDATA[register@sixsq.com]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.region</string>
+         <parameter name="ec2-eu-west.region" description="EC2 region" category="ec2-eu-west" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[eu-west-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.region</string>
+         <parameter name="ec2-sa-east-1.region" description="EC2 region" category="ec2-sa-east-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[sa-east-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.orchestrator.instance.type</string>
+         <parameter name="ec2-sa-east-1.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-sa-east-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.security.group</string>
+         <parameter name="ec2-us-east-1.security.group" description="Orchestrator security group" category="ec2-us-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.max.iaas.workers</string>
+         <parameter name="ec2-ap-southeast-1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-ap-southeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.registration.enable</string>
+         <parameter name="slipstream.registration.enable" description="Allow user self registration. If checked, user will be able to create accounts themselves." category="SlipStream_Basics" mandatory="true" type="Boolean" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[true]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.orchestrator.imageid</string>
+         <parameter name="ultimum-cz1.orchestrator.imageid" description="Image Id of the orchestrator for ultimum-cz1" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[970da64c-c4be-4bb3-879b-75433751e71f]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-1.orchestrator.instance.type</string>
+         <parameter name="ec2-us-west-1.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-us-west-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-1.update.clienturl</string>
+         <parameter name="ec2-us-west-1.update.clienturl" description="URL with the cloud client specific connector" category="ec2-us-west-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.quota.vm</string>
+         <parameter name="ec2-eu-central-1.quota.vm" description="VM quota for ec2-eu-central-1 (i.e. maximum number of VMs allowed)" category="ec2-eu-central-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.update.clientbootstrapurl</string>
+         <parameter name="slipstream.update.clientbootstrapurl" description="Endpoint of the SlipStream client bootstrap script" category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[https://54.220.0.118/downloads/slipstream.bootstrap]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.update.clienturl</string>
+         <parameter name="ultimum-cz1.update.clienturl" description="URL pointing to the tarball containing the client for ultimum-cz1" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/openstackclient.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.security.group</string>
+         <parameter name="ec2-ap-southeast-1.security.group" description="Orchestrator security group" category="ec2-ap-southeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.orchestrator.imageid</string>
+         <parameter name="ec2-ap-southeast-1.orchestrator.imageid" description="Image Id of the orchestrator for ec2-ap-southeast-1" category="ec2-ap-southeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-5acefc08]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-1.quota.vm</string>
+         <parameter name="ec2-us-west-1.quota.vm" description="VM quota for ec2-us-west-1 (i.e. maximum number of VMs allowed)" category="ec2-us-west-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.mail.debug</string>
+         <parameter name="slipstream.mail.debug" description="Debug mail sending." category="SlipStream_Support" mandatory="true" type="Boolean" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[true]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.update.clienturl</string>
+         <parameter name="ec2-us-east-1.update.clienturl" description="URL with the cloud client specific connector" category="ec2-us-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-2.orchestrator.instance.type</string>
+         <parameter name="ec2-us-west-2.orchestrator.instance.type" description="Orchestrator instance type" category="ec2-us-west-2" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="32">
+               <string>t2.micro</string>
+               <string>t2.small</string>
+               <string>t2.medium</string>
+               <string>m3.medium</string>
+               <string>m3.large</string>
+               <string>m3.xlarge</string>
+               <string>m3.2xlarge</string>
+               <string>c4.large</string>
+               <string>c4.xlarge</string>
+               <string>c4.2xlarge</string>
+               <string>c4.4xlarge</string>
+               <string>c4.8xlarge</string>
+               <string>c3.large</string>
+               <string>c3.xlarge</string>
+               <string>c3.2xlarge</string>
+               <string>c3.4xlarge</string>
+               <string>c3.8xlarge</string>
+               <string>r3.large</string>
+               <string>r3.xlarge</string>
+               <string>r3.2xlarge</string>
+               <string>r3.4xlarge</string>
+               <string>r3.8xlarge</string>
+               <string>i2.xlarge</string>
+               <string>i2.2xlarge</string>
+               <string>i2.4xlarge</string>
+               <string>i2.8xlarge</string>
+               <string>d2.xlarge</string>
+               <string>d2.2xlarge</string>
+               <string>d2.4xlarge</string>
+               <string>d2.8xlarge</string>
+               <string>g2.2xlarge</string>
+               <string>g2.8xlarge</string>
+            </enumValues>
+            <value><![CDATA[t2.micro]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.max.iaas.workers</string>
+         <parameter name="ec2-sa-east-1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-sa-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.mail.password</string>
+         <parameter name="slipstream.mail.password" description="Password for SMTP server." category="SlipStream_Support" mandatory="true" type="Password" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-northeast-1.region</string>
+         <parameter name="ec2-ap-northeast-1.region" description="EC2 region" category="ec2-ap-northeast-1" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="9">
+               <string>us-east-1</string>
+               <string>us-west-2</string>
+               <string>us-west-1</string>
+               <string>eu-west-1</string>
+               <string>ap-southeast-1</string>
+               <string>ap-southeast-2</string>
+               <string>ap-northeast-1</string>
+               <string>sa-east-1</string>
+               <string>eu-central-1</string>
+            </enumValues>
+            <value><![CDATA[ap-northeast-1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.max.iaas.workers</string>
+         <parameter name="ec2-eu-central-1.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-eu-central-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-2.max.iaas.workers</string>
+         <parameter name="ec2-ap-southeast-2.max.iaas.workers" description="Max number of concurrently provisioned VMs by orchestrator" category="ec2-ap-southeast-2" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[20]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.network.public</string>
+         <parameter name="ultimum-cz1.network.public" description="Mapping for Public network" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[public]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.orchestrator.imageid</string>
+         <parameter name="ec2-us-east-1.orchestrator.imageid" description="Image Id of the orchestrator for ec2-us-east-1" category="ec2-us-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-d8132bb0]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.service.catalog.enable</string>
+         <parameter name="slipstream.service.catalog.enable" description="Enable service catalog feature." category="SlipStream_Advanced" mandatory="true" type="Boolean" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[false]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.native-contextualization</string>
+         <parameter name="exoscale-ch-gva.native-contextualization" description="Use native cloud contextualisation" category="exoscale-ch-gva" mandatory="true" type="Enum" readonly="false" order_="0" order="0">
+            <enumValues length="4">
+               <string>never</string>
+               <string>linux-only</string>
+               <string>windows-only</string>
+               <string>always</string>
+            </enumValues>
+            <value><![CDATA[linux-only]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.metering.hostname</string>
+         <parameter name="slipstream.metering.hostname" description="Metering server full hostname, including protocol, hostname/ip and port (e.g. http://localhost:2005)." category="SlipStream_Advanced" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[http://localhost:2005]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-west.security.group</string>
+         <parameter name="ec2-eu-west.security.group" description="Orchestrator security group" category="ec2-eu-west" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>slipstream.base.url</string>
+         <parameter name="slipstream.base.url" description="Default URL and port for the SlipStream RESTlet" category="SlipStream_Basics" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[https://nuv.la]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-sa-east-1.orchestrator.imageid</string>
+         <parameter name="ec2-sa-east-1.orchestrator.imageid" description="Image Id of the orchestrator for ec2-sa-east-1" category="ec2-sa-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-6be46176]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-ap-southeast-1.update.clienturl</string>
+         <parameter name="ec2-ap-southeast-1.update.clienturl" description="URL with the cloud client specific connector" category="ec2-ap-southeast-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/ec2client.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-eu-central-1.orchestrator.imageid</string>
+         <parameter name="ec2-eu-central-1.orchestrator.imageid" description="Image Id of the orchestrator for ec2-eu-central-1" category="ec2-eu-central-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[ami-accff2b1]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-west-1.security.group</string>
+         <parameter name="ec2-us-west-1.security.group" description="Orchestrator security group" category="ec2-us-west-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[default]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>exoscale-ch-gva.update.clienturl</string>
+         <parameter name="exoscale-ch-gva.update.clienturl" description="URL pointing to the tarball containing the client for exoscale-ch-gva" category="exoscale-ch-gva" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://54.220.0.118/downloads/cloudstackclient.tgz]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ec2-us-east-1.quota.vm</string>
+         <parameter name="ec2-us-east-1.quota.vm" description="VM quota for ec2-us-east-1 (i.e. maximum number of VMs allowed)" category="ec2-us-east-1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.endpoint</string>
+         <parameter name="ultimum-cz1.endpoint" description="Service endpoint for ultimum-cz1 (e.g. http://example.com:5000)" category="ultimum-cz1" mandatory="true" type="String" readonly="false" order_="0" order="0">
+            <value><![CDATA[https://console.ulticloud.com:5000/v2.0/tokens]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>ultimum-cz1.orchestrator.ssh.password</string>
+         <parameter name="ultimum-cz1.orchestrator.ssh.password" description="Orchestrator password" category="ultimum-cz1" mandatory="true" type="Password" readonly="false" order_="0" order="0">
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
+         <string>cloud.connector.class</string>
+         <parameter name="cloud.connector.class" description="Cloud connector java class name(s) (comma separated for multi-cloud configuration)" category="SlipStream_Basics" mandatory="true" type="Text" readonly="false" order_="0" order="0">
+            <instructions><![CDATA[]]></instructions>
+            <value><![CDATA[exoscale-ch-gva:cloudstack, 
+ec2-eu-west:ec2,
+ec2-eu-central-1:ec2,
+ec2-us-east-1:ec2,
+ec2-us-west-1:ec2,
+ec2-us-west-2:ec2,
+ec2-ap-northeast-1:ec2,
+ec2-ap-southeast-1:ec2,
+ec2-ap-southeast-2:ec2,
+ec2-sa-east-1:ec2,
+ultimum-cz1:openstack]]></value>
+         </parameter>
+      </entry>
+   </parameters>
+</serviceConfiguration>

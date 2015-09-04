@@ -45,6 +45,10 @@ RUN_ETREE = etree.fromstring(RUN_XML)
 with open(os.path.join(_get_resources_path(), 'user.xml')) as fd:
     USER_XML = fd.read()
 
+with open(os.path.join(_get_resources_path(), 'configuration.xml')) as fd:
+    CONFIGURATION_XML = fd.read()
+CONFIGURATION_ETREE = etree.fromstring(CONFIGURATION_XML)
+
 NODES_NUM = 2
 NODE_INSTANCES_NUM = 2
 CLOUD_NAME = 'myCloud'
@@ -190,6 +194,27 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
         assert 'on' == userInfo.get_general('On Error Run Forever')
         assert '3' == userInfo.get_general('Verbosity Level')
+
+    def test_server_config_dom_into_dict(self):
+        conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
+        assert conf
+        assert isinstance(conf, dict)
+
+    def test_server_config_dom_into_dict_value_updater(self):
+        base_url_param ='slipstream.base.url'
+        base_url_value_orig = ''
+        base_url_value_new = 'UPDATED'
+        conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
+        for k, v in conf['SlipStream_Basics']:
+            if k == base_url_param:
+                base_url_value_orig = v
+        def _updater(value):
+            return value == base_url_value_orig and base_url_value_new or value
+        conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE,
+                value_updater=_updater)
+        for k, v in conf['SlipStream_Basics']:
+            if k == base_url_param:
+                assert v == base_url_value_new
 
 
 if __name__ == '__main__':

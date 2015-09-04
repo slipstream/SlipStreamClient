@@ -22,6 +22,8 @@ import copy
 import os
 import sys
 import xml.etree.ElementTree as etree
+import re
+import urlparse
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.SlipStreamHttpClient import DomExtractor
@@ -36,9 +38,11 @@ from slipstream.util import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
 class MainProgram(CommandBase):
 
     NO_CONNECTOR_CLASS_MAPPING_MSG = '<CONNECTOR IS INACTIVE. CONNECTOR CLASS NOT KNOWN!>'
+    HOSTNAME_MASK = '<CHANGE_HOSTSNAME>'
 
     def __init__(self, argv=None):
         self._categories = []
+        self._mask_hostname_re = None
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
@@ -76,6 +80,9 @@ Different sections (categories) of the configuration can be extracted with --cat
         self.parser.add_option('--inactive-connectors', dest='inactive_connectors',
                                help='Dump inactive connectors as well.  By default only active '
                                     'connectors are processed.', default=False, action='store_true')
+        self.parser.add_option('--mask-hostname', dest='mask_hostname', metavar='MASK_HOSTNAME',
+                               help='Substitute provided hostnames/IPs in URLs with %s' % self.HOSTNAME_MASK,
+                               default='')
         self.parser.remove_option('--cookie')
 
         self.options, _ = self.parser.parse_args()
@@ -99,6 +106,10 @@ Different sections (categories) of the configuration can be extracted with --cat
         if self.options.categories:
             self._categories = self.options.categories.split(',')
 
+        if self.options.mask_hostname:
+            pattern = '^http[s]?://(%s)' % self.options.mask_hostname.replace(',', '|')
+            self._mask_hostname_re = re.compile(pattern)
+
     def _add_endpoint_option(self):
         default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT', None)
         self.parser.add_option('-e', '--endpoint', dest='serviceurl', metavar='URL',
@@ -106,8 +117,15 @@ Different sections (categories) of the configuration can be extracted with --cat
                                default=default_endpoint)
 
     def _get_config(self):
+        """Returns dict representation of the configuration.
+        :rtype: dict
+        """
         config_dom = self._get_config_dom()
-        return DomExtractor.server_config_dom_into_dict(config_dom)
+        if self.options.mask_hostname:
+            return DomExtractor.server_config_dom_into_dict(config_dom,
+                    value_updater=self._mask_hostname)
+        else:
+            return DomExtractor.server_config_dom_into_dict(config_dom)
 
     def _get_config_dom(self):
         if self.options.input:
@@ -127,14 +145,21 @@ Different sections (categories) of the configuration can be extracted with --cat
         return client.get_server_configuration()
 
     def _output_config(self, config):
+        """
+        :param config: dict representation of the configuration
+        :type config: dict
+        """
         if self.options.list_categories:
             self._print_categories(config)
-        elif self.options.output:
-            self._write_to_file(self._config_generate_for_categories(config), self.options.output)
+            return
+
+        config = self._config_generate_for_categories(config)
+        if self.options.output:
+            self._write_to_file(config, self.options.output)
         elif self.options.file_per_category:
-            self._write_to_file_per_category(self._config_generate_for_categories(config))
+            self._write_to_file_per_category(config)
         else:
-            self._print_config(self._config_generate_for_categories(config))
+            self._print_config(config)
 
     def _config_update_for_connector(self, config, connector_class, category, params):
         if not connector_class and self.options.inactive_connectors:
@@ -169,11 +194,24 @@ Different sections (categories) of the configuration can be extracted with --cat
 
         return config_new
 
+    def _mask_hostname(self, value):
+        if self._mask_hostname_re and self._mask_hostname_re.search(value):
+            parts = list(urlparse.urlsplit(value))
+            parts[1] = self.HOSTNAME_MASK
+            return urlparse.urlunsplit(parts)
+        else:
+            return value
+
     def _print_warning(self, msg):
         print('# WARNING: %s' % msg)
 
     @staticmethod
     def _get_cloud_connector_classes(config):
+        """
+        :param config: ElementTree representation of the configuration
+        :type config: ElementTree
+        :rtype: dict
+        """
         cloud_connector_classes = {}
         for p in config.get(SERVER_CONFIGURATION_BASICS_CATEGORY):
             k, v = p
@@ -212,7 +250,8 @@ Different sections (categories) of the configuration can be extracted with --cat
                     fh.write('%s = %s\n' % param)
 
     def doWork(self):
-        self._output_config(self._get_config())
+        conf_dict = self._get_config()
+        self._output_config(conf_dict)
 
 
 if __name__ == "__main__":
