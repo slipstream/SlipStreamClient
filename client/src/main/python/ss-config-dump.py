@@ -38,7 +38,7 @@ from slipstream.util import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
 class MainProgram(CommandBase):
 
     NO_CONNECTOR_CLASS_MAPPING_MSG = '<CONNECTOR IS INACTIVE. CONNECTOR CLASS NOT KNOWN!>'
-    HOSTNAME_MASK = '<CHANGE_HOSTSNAME>'
+    HOSTNAME_MASK = '<CHANGE_HOSTNAME>'
 
     def __init__(self, argv=None):
         self._categories = []
