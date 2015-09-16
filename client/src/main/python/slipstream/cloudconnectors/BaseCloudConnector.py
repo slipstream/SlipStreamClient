@@ -113,6 +113,11 @@ class BaseCloudConnector(object):
         Returns: VM cloud state."""
         return ""
 
+    def _create_allow_all_security_group(self):
+        """If the conncector support security groups, this method should create a security group named
+        NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME with everything allowed if it doesn't exist yet."""
+        pass
+
     ''' The methods below are used to generate the reply of *-describe-instances
     '''
 
@@ -361,9 +366,21 @@ class BaseCloudConnector(object):
         if len(ids) > 0:
             self.stop_vms_by_ids(ids)
 
+    def __create_allow_all_security_group_if_needed(self, nodes_instances):
+        sg_key = NodeDecorator.SECURITY_GROUPS_KEY
+        sg_name = NodeDecorator.SECURITY_GROUP_ALLOW_ALL_KEY
+        ni_with_allow_all = [ni for ni in nodes_instances.itervalues() if ni.get_cloud_parameter(sg_key, '').strip() == sg_name]
+
+        if len(ni_with_allow_all):
+            self._create_allow_all_security_group()
+
+        for node_instance in ni_with_allow_all:
+            node_instance.set_cloud_parameters({sg_key: NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME})
+
     def start_nodes_and_clients(self, user_info, nodes_instances, init_extra_kwargs={}):
         self._initialization(user_info, **init_extra_kwargs)
         self.__set_contextualization_capabilities(user_info)
+        self.__create_allow_all_security_group_if_needed(nodes_instances)
         try:
             self.__start_nodes_instantiation_tasks_wait_finished(user_info,
                                                                  nodes_instances)

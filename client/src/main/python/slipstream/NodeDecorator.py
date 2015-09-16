@@ -85,6 +85,10 @@ class NodeDecorator(object):
     MAX_PROVISIONING_FAILURES_KEY = 'max-provisioning-failures'
     NATIVE_CONTEXTUALIZATION_KEY = 'native-contextualization'
 
+    SECURITY_GROUP_ALLOW_ALL_KEY = '[allow all]'
+    SECURITY_GROUP_ALLOW_ALL_NAME = 'ss_allow_all'
+    SECURITY_GROUP_ALLOW_ALL_DESCRIPTION = 'Security group created by SlipStream which allows all kind of traffic.'
+
     urlIgnoreAbortAttributeFragment = '?ignoreabort=true'
 
     SLIPSTREAM_DIID_ENV_NAME = 'SLIPSTREAM_DIID'
