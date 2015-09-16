@@ -34,6 +34,8 @@ from slipstream.util import SERVER_CONFIGURATION_DEFAULT_CATEGORIES
 from slipstream.util import SERVER_CONFIGURATION_BASICS_CATEGORY
 from slipstream.util import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
 
+from slipstream.resources.configuration import get_cloud_connector_classes
+
 
 class MainProgram(CommandBase):
 
@@ -177,7 +179,7 @@ Different sections (categories) of the configuration can be extracted with --cat
                 "inactive connectors." % category)
 
     def _config_generate_for_categories(self, config):
-        cloud_connector_classes = self._get_cloud_connector_classes(config)
+        cloud_connector_classes = get_cloud_connector_classes(config)
         config_new= {}
         for category, params in config.iteritems():
             not_in_requested_category_set = self._categories and (category not in self._categories)
@@ -204,20 +206,6 @@ Different sections (categories) of the configuration can be extracted with --cat
 
     def _print_warning(self, msg):
         print('# WARNING: %s' % msg)
-
-    @staticmethod
-    def _get_cloud_connector_classes(config):
-        """
-        :param config: ElementTree representation of the configuration
-        :type config: ElementTree
-        :rtype: dict
-        """
-        cloud_connector_classes = {}
-        for p in config.get(SERVER_CONFIGURATION_BASICS_CATEGORY):
-            k, v = p
-            if k == SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY:
-                cloud_connector_classes = dict(map(lambda x: x.strip().split(':'), v.split(',')))
-        return cloud_connector_classes
 
     @staticmethod
     def _print_categories(config):
