@@ -368,14 +368,12 @@ class BaseCloudConnector(object):
 
     def __create_allow_all_security_group_if_needed(self, nodes_instances):
         sg_key = NodeDecorator.SECURITY_GROUPS_KEY
-        sg_name = NodeDecorator.SECURITY_GROUP_ALLOW_ALL_KEY
-        ni_with_allow_all = [ni for ni in nodes_instances.itervalues() if ni.get_cloud_parameter(sg_key, '').strip() == sg_name]
+        sg_name = NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME
 
-        if len(ni_with_allow_all):
-            self._create_allow_all_security_group()
-
-        for node_instance in ni_with_allow_all:
-            node_instance.set_cloud_parameters({sg_key: NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME})
+        for ni in nodes_instances.itervalues():
+            if ni.get_cloud_parameter(sg_key, '').strip() == sg_name:
+                self._create_allow_all_security_group()
+                break
 
     def start_nodes_and_clients(self, user_info, nodes_instances, init_extra_kwargs={}):
         self._initialization(user_info, **init_extra_kwargs)
