@@ -89,7 +89,7 @@ class CloudWrapper(BaseWrapper):
         """
         ni_names_to_be_started : list of node instance names [string, ]
         """
-        all_node_instances = self._get_nodes_instances(self._get_cloud_service_name())
+        all_node_instances = self._get_nodes_instances()
         instances = []
         for name, instance in all_node_instances.iteritems():
             if name in ni_names_starting:
@@ -281,20 +281,17 @@ class CloudWrapper(BaseWrapper):
         """Return dict {'node_name': [NodeInstance, ], } of instances that
         hasn't reported back to SlipStream server.
         """
-        instances = self.get_node_instances_in_scale_state(
-            self.SCALE_STATE_CREATING, self._get_cloud_service_name())
+        instances = self.get_node_instances_in_scale_state(self.SCALE_STATE_CREATING)
         creating_instances = {}
         for instance in instances.values():
             creating_instances.setdefault(instance.get_node_name(), []).append(instance)
         return creating_instances
 
     def _get_node_instances_to_start(self):
-        return self.get_node_instances_in_scale_state(
-            self.SCALE_STATE_CREATING, self._get_cloud_service_name())
+        return self.get_node_instances_in_scale_state(self.SCALE_STATE_CREATING)
 
     def _get_node_instances_to_stop(self):
-        return self.get_node_instances_in_scale_state(
-            self.SCALE_STATE_REMOVING, self._get_cloud_service_name())
+        return self.get_node_instances_in_scale_state(self.SCALE_STATE_REMOVING)
 
     def stop_node_instances(self):
         """
@@ -419,9 +416,6 @@ class CloudWrapper(BaseWrapper):
                          self._get_cloud_service_name())
         self._put_new_image_id(url, new_image_id)
 
-    def _get_cloud_service_name(self):
-        return self._cloud_client.get_cloud_service_name()
-
     def complete_state_for_failed_node_instances(self):
         for node_instance_name in self._instance_names_force_to_compete_states:
             self.complete_state(node_instance_name)
@@ -468,8 +462,7 @@ class CloudWrapper(BaseWrapper):
         if scale_state not in self.SCALE_STATES_VERTICAL_SCALABILITY:
             raise ExecutionException('Wrong scale state \'%s\' for vertical scalability (expected one of: %s)' %
                                      (scale_state, self.SCALE_STATES_VERTICAL_SCALABILITY))
-        node_instances = self.get_node_instances_in_scale_state(
-            scale_state, self._get_cloud_service_name()).values()
+        node_instances = self.get_node_instances_in_scale_state(scale_state).values()
 
         # wait pre.scale.done == True on all instances that are being scaled.
         self._wait_pre_scale_done(node_instances)

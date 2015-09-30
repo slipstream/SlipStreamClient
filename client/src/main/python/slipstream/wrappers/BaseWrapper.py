@@ -394,13 +394,13 @@ class BaseWrapper(object):
     def _state_to_action(self, state):
         return self.STATE_TO_ACTION.get(state, None)
 
-    def get_node_instances_in_scale_state(self, scale_state, cloud_service_name=None):
+    def get_node_instances_in_scale_state(self, scale_state):
         """Return dict {<node_instance_name>: NodeInstance, } with the node instances
         in the scale_state.
         """
         instances = {}
 
-        nodes_instances = self._get_nodes_instances(cloud_service_name)
+        nodes_instances = self._get_nodes_instances()
         for instance_name, instance in nodes_instances.iteritems():
             if instance.get_scale_state() == scale_state:
                 instances[instance_name] = instance
@@ -571,11 +571,11 @@ class BaseWrapper(object):
     def discard_nodes_info_locally(self):
         self._nodes_instances = {}
 
-    def _get_nodes_instances(self, cloud_service_name=None):
+    def _get_nodes_instances(self):
         """Return dict {<node_instance_name>: NodeInstance, }
         """
         if not self._nodes_instances:
-            self._nodes_instances = self._ss_client.get_nodes_instances(cloud_service_name)
+            self._nodes_instances = self._ss_client.get_nodes_instances(self._get_cloud_service_name())
         return self._nodes_instances
 
     def get_my_node_instance(self):
