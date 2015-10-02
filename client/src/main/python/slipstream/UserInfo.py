@@ -41,8 +41,8 @@ class UserInfo(dict):
 
     def __setitem__(self, key, val):
         if not key.startswith(self.qualifires):
-            raise ValueError('Key should start with one of: %s' %
-                ', '.join(self.qualifires))
+            raise ValueError('Invalid key: %s. Key should start with one of: %s' %
+                             (key, ', '.join(self.qualifires)))
         dict.__setitem__(self, key, val)
 
     def get_first_name(self):

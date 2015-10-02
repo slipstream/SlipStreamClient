@@ -392,6 +392,7 @@ def _create_executor_config(executor_name):
         fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'bin'))
         fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin'))
         fh.write('export DAEMON_ARGS="%s"\n' % _get_verbosity())
+        fh.write('export SLIPSTREAM_CONNECTOR_INSTANCE="%s"\n' % os.environ.get('SLIPSTREAM_CONNECTOR_INSTANCE'))
         if executor_name == 'orchestrator':
             cloud_name = os.environ['SLIPSTREAM_CLOUD']
             fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(os.sep, 'opt', cloud_name.lower()))
