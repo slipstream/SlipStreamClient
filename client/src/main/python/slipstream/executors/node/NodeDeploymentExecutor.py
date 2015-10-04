@@ -16,19 +16,9 @@
  limitations under the License.
 """
 
-import os
-import sys
-import errno
-import codecs
-import tempfile
-
-from Queue import Queue, Empty
-from threading  import Thread
-
-import slipstream.util as util
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.executors.MachineExecutor import MachineExecutor
-import slipstream.util as util
+from slipstream import util
 from slipstream.exceptions.Exceptions import ExecutionException, AbortException, \
     InconsistentScaleStateError
 from slipstream.util import append_ssh_pubkey_to_authorized_keys, override
@@ -50,15 +40,10 @@ class NodeDeploymentExecutor(MachineExecutor):
         self.verboseLevel = 0
         super(NodeDeploymentExecutor, self).__init__(wrapper, config_holder)
 
-        self.node_instance = self._retrieve_my_node_instance()
-
-        self.recovery_mode = False
-
         self.SCALE_ACTION_TO_TARGET = \
             {self.wrapper.SCALE_ACTION_CREATION: 'onvmadd',
              self.wrapper.SCALE_ACTION_REMOVAL: 'onvmremove'}
 
-        self._send_reports = False
         self._skip_execute_due_to_vertical_scaling = False
 
     @override
@@ -128,10 +113,6 @@ class NodeDeploymentExecutor(MachineExecutor):
         else:
             util.printStep('No packages to install')
 
-    def _execute_execute_target(self):
-        self._execute_target('execute', abort_on_err=True)
-        self._set_need_to_send_reports()
-
     @override
     def onSendingReports(self):
         util.printAction('Sending report')
@@ -159,18 +140,6 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onReady(self):
         super(NodeDeploymentExecutor, self).onReady()
         self.wrapper.set_scale_state_operational()
-
-    def _get_recovery_mode(self):
-        self.recovery_mode = self.wrapper.get_recovery_mode()
-
-    def _is_recovery_mode(self):
-        return self.recovery_mode == True
-
-    def _retrieve_my_node_instance(self):
-        node_instance = self.wrapper.get_my_node_instance()
-        if node_instance is None:
-            raise ExecutionException("Couldn't get the node instance for the current VM.")
-        return node_instance
 
     def _get_target_on_scale_action(self, action):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
@@ -200,44 +169,6 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printDetail("WARNING: deployment is scaling, but no "
                              "scaling action defined.")
 
-    def _execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
-        message = "Executing target '%s'" % target_name
-        util.printStep(message)
-        if ssdisplay:
-            self.wrapper.set_statecustom(message)
-
-        target_script = self.node_instance.get_image_target(target_name)
-        if target_script:
-            self._launch_target_script(target_name, exports, abort_on_err, ignore_abort=ignore_abort)
-        else:
-            util.printAndFlush('Nothing to do on target: %s\n' % target_name)
-
-    def _launch_target_script(self, target_name, exports=None, abort_on_err=True, ignore_abort=False):
-        fail_msg = "Failed running '%s' target on '%s'" % (target_name, self._get_node_instance_name())
-        script = self.node_instance.get_image_target(target_name)
-
-        self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg)
-
-    def _launch_script(self, script, exports=None, abort_on_err=True, ignore_abort=False, fail_msg=None):
-        if fail_msg is None:
-            fail_msg = "Failed running script on '%s'" % self._get_node_instance_name()
-
-        try:
-            rc, stderr_last_line = self._run_target_script(script, exports, ignore_abort=ignore_abort)
-            sys.stdout.flush()
-            sys.stderr.flush()
-        except Exception as ex:
-            msg = '%s: %s' % (fail_msg, str(ex))
-            if abort_on_err:
-                self.wrapper.fail(msg)
-            raise
-        else:
-            if rc != self.SCRIPT_EXIT_SUCCESS and abort_on_err:
-                if stderr_last_line is not None:
-                    fail_msg += ': %s' % stderr_last_line
-                self.wrapper.fail(fail_msg)
-                raise AbortException(fail_msg)
-
     def _get_scaling_exports(self):
         node_name, node_instance_names = \
             self.wrapper.get_scaling_node_and_instance_names()
@@ -246,90 +177,6 @@ class NodeDeploymentExecutor(MachineExecutor):
                    'SLIPSTREAM_SCALING_ACTION': self._get_scale_action()}
         return exports
 
-    def _launch_process(self, target_script, exports=None):
-        '''Returns launched process as subprocess.Popen instance.
-        '''
-        tmpfilesuffix = ''
-        if util.is_windows():
-            tmpfilesuffix = '.ps1'
-        fn = tempfile.mktemp(suffix=tmpfilesuffix)
-        if isinstance(target_script, unicode):
-            with codecs.open(fn, 'w', 'utf8') as fh:
-                fh.write(target_script)
-        else:
-            with open(fn, 'w') as fh:
-                fh.write(target_script)
-        os.chmod(fn, 0755)
-        currentDir = os.getcwd()
-        os.chdir(tempfile.gettempdir() + os.sep)
-        try:
-            process = util.execute(fn, noWait=True, extra_env=exports, withStderr=True)
-        finally:
-            os.chdir(currentDir)
-
-        return process
-
-    def print_and_keep_last_stderr(self, stderr, result):
-        last_line = None
-        for line in iter(stderr.readline, b''):
-            sys.stderr.write(line)
-            if line.strip():
-                last_line = line.strip()
-        result.put(last_line)
-
-    def _run_target_script(self, target_script, exports=None, ignore_abort=False):
-        '''Return exit code of the user script and the last line of stderr
-        Output of the script goes to stdout/err and will end up in the node executor's log file.
-        '''
-        if not target_script:
-            util.printAndFlush('Script is empty\n')
-            return self.SCRIPT_EXIT_SUCCESS
-
-        if not isinstance(target_script, basestring):
-            raise ExecutionException('Not a string buffer provided as target script. Type is: %s' % type(target_script))
-
-        process = self._launch_process(target_script, exports)
-
-        result = Queue()
-        t = Thread(target=self.print_and_keep_last_stderr, args=(process.stderr, result))
-        t.daemon = True # thread dies with the program
-        t.start()
-
-        try:
-            # The process is still working on the background.
-            while process.poll() is None:
-                # Ask server whether the abort flag is set. If so, kill the
-                # process and exit. Otherwise, sleep for some time.
-                if not ignore_abort and self.wrapper.isAbort():
-                    try:
-                        util.printDetail('Abort flag detected. '
-                                         'Terminating target script execution...')
-                        process.terminate()
-                        util.sleep(5)
-                        if process.poll() is None:
-                            util.printDetail('Termination is taking too long. '
-                                             'Killing the target script...')
-                            process.kill()
-                    except OSError:
-                        pass
-                    break
-                util.sleep(self.TARGET_POLL_INTERVAL)
-        except IOError as e:
-            if e.errno != errno.EINTR:
-                raise
-            else:
-                util.printDetail('Signal EINTR detected. Ignoring it.')
-                return 0
-
-        util.printDetail("End of the target script")
-
-        stderr_last_line = ''
-        try:
-            stderr_last_line = result.get(timeout=60)
-        except Empty:
-            pass
-        return process.returncode, stderr_last_line
-
     def _add_ssh_pubkey(self, login_user):
         if not util.is_windows():
             util.printStep('Adding the public keys')
@@ -337,9 +184,6 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     def _get_user_ssh_pubkey(self):
         return self.wrapper.get_user_ssh_pubkey()
-
-    def _set_need_to_send_reports(self):
-        self._send_reports = True
 
     def _unset_need_to_send_reports(self):
         self._send_reports = False
