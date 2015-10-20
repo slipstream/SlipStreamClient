@@ -21,7 +21,7 @@ from distutils.core import setup
 
 setup(
     name='slipstream-client',
-    version='${project.version}',
+    version='2.18-SNAPSHOT',
     description='SlipStream end-user client (CLI)',
     long_description='SlipStream client (CLI) to communicate '
                      'with SlipStream server.',
@@ -59,6 +59,7 @@ setup(
         'slipstream.commands',
         'slipstream.command',
         'slipstream.wrappers',
+        'slipstream.resources',
     ],
     package_dir={'slipstream': 'lib/slipstream'},
     py_modules=[
