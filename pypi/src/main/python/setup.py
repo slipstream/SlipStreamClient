@@ -59,6 +59,7 @@ setup(
         'slipstream.commands',
         'slipstream.command',
         'slipstream.wrappers',
+        'slipstream.resources',
     ],
     package_dir={'slipstream': 'lib/slipstream'},
     py_modules=[
