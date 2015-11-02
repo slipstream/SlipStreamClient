@@ -67,13 +67,11 @@ class MachineExecutor(object):
                                      'specified.')
         try:
             self._set_state_start_time()
-            getattr(self, 'on' + state)()
-        except AttributeError as ex:
-            msg = "Machine executor does not implement '%s' state." % state
-            util.printError('Error executing node, with detail: %s (%s)' % (msg, ex))
-            traceback.print_exc()
-            self._fail_str(msg)
-            self.onSendingReports()
+            method_name = 'on' + state
+            if hasattr(self, method_name):
+                getattr(self, method_name)()
+            else:
+                self._state_not_implemented(state)
         except AbortException as ex:
             util.printError('Abort flag raised: %s' % ex)
         except TerminalStateException:
@@ -88,6 +86,12 @@ class MachineExecutor(object):
                 traceback.print_exc()
                 self._fail(ex)
             self.onSendingReports()
+
+    def _state_not_implemented(self, state):
+        msg = "Machine executor does not implement '%s' state." % state
+        traceback.print_exc()
+        self._fail_str(msg)
+        self.onSendingReports()
 
     def _complete_state(self, state):
         if self._need_to_complete(state):
