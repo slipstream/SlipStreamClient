@@ -19,6 +19,7 @@
 from __future__ import print_function
 
 from slipstream.command.CommandBase import CommandBase
+from slipstream.util import truncate_middle
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeDecorator import NodeDecorator
@@ -60,7 +61,8 @@ class MainProgram(CommandBase):
         if self.options.cancel:
             client.cancel_abort()
         else:
-            client.setRuntimeParameter(NodeDecorator.ABORT_KEY, self.reason)
+            value = truncate_middle(Client.VALUE_LENGTH_LIMIT, self.reason, '\n(truncated)\n')
+            client.setRuntimeParameter(NodeDecorator.ABORT_KEY, value)
 
 if __name__ == "__main__":
     try:

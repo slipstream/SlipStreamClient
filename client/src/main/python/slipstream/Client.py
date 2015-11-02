@@ -210,6 +210,7 @@ class Client(object):
 
     def fail(self, message):
         abort = self._qualifyKey(NodeDecorator.ABORT_KEY)
+
         self.httpClient.setRuntimeParameter(abort, message)
 
     def complete_state(self):

@@ -742,3 +742,11 @@ def user_exists(user):
 
 def get_platform_reports_dir():
     return is_windows() and WINDOWS_REPORTSDIR or REPORTSDIR
+
+
+def truncate_middle(max_len, message, truncate_message='...'):
+    if message and max_len and len(message) > max_len:
+        subsize = int((max_len - len(truncate_message)) / 2)
+        message = message[0:subsize] + truncate_message + message[-subsize:]
+    return message
+
