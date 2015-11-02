@@ -268,7 +268,7 @@ def _pipInstallParamiko(pycrypto=True):
     if pycrypto:
         _installPycryptoDependencies()
 
-    _pipInstall('paramiko==1.9.0')
+    _pipInstall('paramiko==1.15.3')
 
 
 def _pipInstallScpclient():
