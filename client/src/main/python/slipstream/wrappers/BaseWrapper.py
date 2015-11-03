@@ -24,6 +24,7 @@ from slipstream import util
 from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 from slipstream.NodeDecorator import NodeDecorator
 from slipstream.exceptions import Exceptions
+from slipstream.Client import Client
 from slipstream.NodeInstance import NodeInstance
 from slipstream.exceptions.Exceptions import TimeoutException, \
     ExecutionException, InconsistentScaleStateError, InconsistentScalingNodesError
@@ -173,7 +174,8 @@ class BaseWrapper(object):
     def _fail(self, key, message):
         util.printError('Failing... %s' % message)
         traceback.print_exc()
-        self._ss_client.setRuntimeParameter(key, message)
+        value = util.truncate_middle(Client.VALUE_LENGTH_LIMIT, message, '\n(truncated)\n')
+        self._ss_client.setRuntimeParameter(key, value)
 
     def getState(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
