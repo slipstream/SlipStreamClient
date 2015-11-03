@@ -224,3 +224,4 @@ class Client(object):
 
     def get_server_configuration(self):
         return self.httpClient.get_server_configuration()
+        
