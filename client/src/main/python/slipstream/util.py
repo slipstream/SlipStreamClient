@@ -78,6 +78,34 @@ SERVER_CONFIGURATION_DEFAULT_CATEGORIES = ['SlipStream_Support',
 SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY = 'cloud.connector.class'
 
 
+def deprecated(func):
+    """This is a decorator which can be used to mark functions as deprecated.
+    It will result in a warning being emitted when the function is used."""
+
+    def new_func(*args, **kwargs):
+        warnings.warn("Call to deprecated function %s." % func.__name__,
+                      category=DeprecationWarning, stacklevel=2)
+        return func(*args, **kwargs)
+
+    # warnings.simplefilter('default', DeprecationWarning)
+    new_func.__name__ = func.__name__
+    new_func.__doc__ = func.__doc__
+    new_func.__dict__.update(func.__dict__)
+    return new_func
+
+
+def override(func):
+    """This is a decorator which can be used to check that a method override a method of the base class.
+    If not the case it will result in a warning being emitted."""
+
+    def overrided_func(self, *args, **kwargs):
+        if func.__name__ not in dir(self.__class__.__bases__[0]):
+            warnings.warn("The method '%s' should override a method of the base class '%s'." %
+                          (func.__name__, self.__class__.__bases__[0].__name__), category=SyntaxWarning, stacklevel=2)
+        return func(self, *args, **kwargs)
+
+    return overrided_func
+
 def sleep(seconds, fail_on_ioerror=False):
     try:
         time.sleep(seconds)
@@ -481,12 +509,13 @@ def fileAppendContent(filename, data):
     fd.write(data)
     fd.close()
 
-
+@deprecated
 def fileGetContent(filename):
-    fd = open(filename, 'rb')
-    content = fd.read()
-    fd.close()
-    return content
+    return file_get_content(filename)
+
+def file_get_content(filename):
+    with open(filename, 'rb') as fd:
+        return fd.read()
 
 
 def importETree():
@@ -561,10 +590,6 @@ def ping(host, timeout=5, number=1, **kwargs):
     p.wait()
     success = (p.returncode == 0)
     return success
-
-
-def sleep(seconds):
-    time.sleep(seconds)
 
 
 def _getSecureHostPortFromUrl(endpoint):
@@ -672,34 +697,18 @@ def nostdouterr(override=False):
         sys.stdout = save_stdout
         sys.stderr = save_stderr
 
-
-def deprecated(func):
-    """This is a decorator which can be used to mark functions as deprecated.
-    It will result in a warning being emitted when the function is used."""
-
-    def new_func(*args, **kwargs):
-        warnings.warn("Call to deprecated function %s." % func.__name__,
-                      category=DeprecationWarning, stacklevel=2)
-        return func(*args, **kwargs)
-
-    # warnings.simplefilter('default', DeprecationWarning)
-    new_func.__name__ = func.__name__
-    new_func.__doc__ = func.__doc__
-    new_func.__dict__.update(func.__dict__)
-    return new_func
-
-
-def override(func):
-    """This is a decorator which can be used to check that a method override a method of the base class.
-    If not the case it will result in a warning being emitted."""
-
-    def overrided_func(self, *args, **kwargs):
-        if func.__name__ not in dir(self.__class__.__bases__[0]):
-            warnings.warn("The method '%s' should override a method of the base class '%s'." %
-                          (func.__name__, self.__class__.__bases__[0].__name__), category=SyntaxWarning, stacklevel=2)
-        return func(self, *args, **kwargs)
-
-    return overrided_func
+@contextlib.contextmanager
+def mkstemp(suffix='', prefix='tmp', dir=None, text=False):
+    """This function does the same as tempfile.mkstemp except that it's meant
+    to be used with the 'with' statement.
+    The file is closed at the end of the context but not deleted. """
+    fd = None
+    try:
+        fd, filename = tempfile.mkstemp(suffix, prefix, dir, text)
+        yield fd, filename
+    finally:
+        if fd is not None:
+            os.close(fd)
 
 
 def str2bool(v):
@@ -742,3 +751,11 @@ def user_exists(user):
 
 def get_platform_reports_dir():
     return is_windows() and WINDOWS_REPORTSDIR or REPORTSDIR
+
+
+def truncate_middle(max_len, message, truncate_message='...'):
+    if message and max_len and len(message) > max_len:
+        subsize = int((max_len - len(truncate_message)) / 2)
+        message = message[0:subsize] + truncate_message + message[-subsize:]
+    return message
+
