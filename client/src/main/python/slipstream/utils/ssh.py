@@ -417,7 +417,7 @@ def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False)
         # Check stderr as atd may not be running, though return code was 0.
         # Starting atd service will start the command.
         if re.search('.*No atd running\?', stderr, re.MULTILINE):
-            remoteRunCommand(user, host, 'service atd start', sshKey, password)
+            remote_start_service('atd', user, host, sshKey, password)
 
     return rc, stderr
 
@@ -426,3 +426,8 @@ def _remote_command_exists(command, user, host, sshKey=None, password=''):
     rc, stderr = sshCmdWithStderr('which %s' % command, host, user, sshKey, password)
     return rc == 0
 
+
+def remote_start_service(service, user, host, sshKey=None, password=''):
+    command = 'service %(s)s start || initctl %(s)s atd || systemctl %(s)s atd || /etc/init.d/%(s)s start' % \
+              {'s': service}
+    remoteRunCommand(user, host, command, sshKey, password)
