@@ -396,14 +396,25 @@ def remoteRunScriptNohup(user, host, script, sshKey=None, password=''):
 
 
 def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False):
-    sudo = (user != 'root') and 'sudo' or ''
+    if nohup:
+        return remote_run_command_nohup(user, host, command, sshKey, password)
+    else:
+        return _remote_run_command(user, host, command, sshKey, password)
 
-    nohup_cmd = (nohup is True) and 'at now -f %s' or '%s'
-    cmd = ('%s %s' % (sudo, nohup_cmd % command)).strip()
+def _remote_run_command(user, host, command, sshKey=None, password=''):
+    sudo = (user != 'root') and 'sudo' or ''
+    cmd = ('%s %s' % (sudo, command)).strip()
+    return sshCmdWithStderr(cmd, host, user, sshKey, password)
+
+
+def remote_run_command_nohup(user, host, command, sshKey=None, password=''):
+    sudo = (user != 'root') and 'sudo' or ''
+    nohup_cmd = 'at now -f %s' % command
+    cmd = ('%s %s' % (sudo, nohup_cmd)).strip()
     rc, stderr = sshCmdWithStderr(cmd, host, user, sshKey, password)
     if rc != 0:
-        if nohup and (re.search('.* (command )?not found.*', stderr, re.MULTILINE) or
-                      not _remote_command_exists('at', host, user, sshKey, password)):
+        if re.search('.* (command )?not found.*', stderr, re.MULTILINE) or \
+                not _remote_command_exists('at', host, user, sshKey, password):
             nohup_cmd = _remote_command_exists('nohup', host, user, sshKey, password) and 'nohup %s' or '%s'
             cmd = ('%s %s >/dev/null 2>&1 </dev/null &' % (sudo, nohup_cmd % command)).strip()
             rc, stderr = sshCmdWithStderr(cmd, host, user, sshKey, password)
