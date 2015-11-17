@@ -428,6 +428,6 @@ def _remote_command_exists(command, user, host, sshKey=None, password=''):
 
 
 def remote_start_service(service, user, host, sshKey=None, password=''):
-    command = 'service %(s)s start || initctl %(s)s atd || systemctl %(s)s atd || /etc/init.d/%(s)s start' % \
+    command = 'service %(s)s start || initctl start %(s)s || systemctl start %(s)s || /etc/init.d/%(s)s start' % \
               {'s': service}
     remoteRunCommand(user, host, command, sshKey, password)
