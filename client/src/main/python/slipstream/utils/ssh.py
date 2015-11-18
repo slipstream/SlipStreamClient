@@ -400,13 +400,13 @@ def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False)
 
     nohup_cmd = (nohup is True) and 'at now -f %s' or '%s'
     cmd = ('%s %s' % (sudo, nohup_cmd % command)).strip()
-    rc, stderr = sshCmdWithStderr(cmd, host, user, sshKey, password)
+    rc, stderr = sshCmdWithStderr(cmd, host, user=user, sshKey=sshKey, password=password)
     if rc != 0:
         if nohup and (re.search('.* (command )?not found.*', stderr, re.MULTILINE) or
                       not _remote_command_exists('at', host, user, sshKey, password)):
             nohup_cmd = _remote_command_exists('nohup', host, user, sshKey, password) and 'nohup %s' or '%s'
             cmd = ('%s %s >/dev/null 2>&1 </dev/null &' % (sudo, nohup_cmd % command)).strip()
-            rc, stderr = sshCmdWithStderr(cmd, host, user, sshKey, password)
+            rc, stderr = sshCmdWithStderr(cmd, host, user=user, sshKey=sshKey, password=password)
             if rc != 0:
                 raise Exceptions.ExecutionException("An error occurred while executing the command: %s\n%s." %
                                                     (command, stderr))
@@ -422,8 +422,8 @@ def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False)
     return rc, stderr
 
 
-def _remote_command_exists(command, user, host, sshKey=None, password=''):
-    rc, stderr = sshCmdWithStderr('which %s' % command, host, user, sshKey, password)
+def _remote_command_exists(command, host, user, sshKey=None, password=''):
+    rc, stderr = sshCmdWithStderr('which %s' % command, host, user=user, sshKey=sshKey, password=password)
     return rc == 0
 
 
