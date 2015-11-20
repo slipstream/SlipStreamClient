@@ -141,7 +141,7 @@ class MachineExecutor(object):
                          self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
 
         while True:
-            new_state = self.wrapper.getState()
+            new_state = self._get_state()
             if state != new_state:
                 return new_state
             self._sleep(self._get_sleep_time(state))
