@@ -193,7 +193,8 @@ class MachineExecutor(object):
         try:
             archive = tarfile.open(reportFileName, 'w:gz')
             for element in self.reportFilesAndDirsList:
-                archive.add(element)
+                name = '_'.join(os.path.abspath(element).strip(os.sep).split(os.sep))
+                archive.add(element, name)
         except Exception as e:
             raise RuntimeError("Failed to bundle reports:\n%s" % e)
         archive.close()
