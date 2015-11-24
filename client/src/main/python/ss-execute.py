@@ -38,8 +38,7 @@ class MainProgram(CommandBase):
 
     RUN_TYPE = 'type'
     REF_QNAME = util.RUN_PARAM_REFQNAME
-    IMAGE_CLOUD_SERVICE = 'parameter--cloudservice'
-    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE, RUN_TYPE, IMAGE_CLOUD_SERVICE)
+    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE, RUN_TYPE)
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
@@ -70,7 +69,8 @@ class MainProgram(CommandBase):
         self.parser.add_option('--parameters', dest='parameters',
                                help='Deployment or image parameters override. '
                                     'The key must be in a form: '
-                                    '<node-name>:<parameter-name>. '
+                                    '<node-name>:<parameter-name> (for deployment)'
+                                    'or <parameter-name> (for image). '
                                     'Several pairs can be provided comma '
                                     'separated.',
                                metavar="KEY1=VALUE1,KEY2=VALUE2",
@@ -245,10 +245,14 @@ class MainProgram(CommandBase):
         if key in filter_out:
             return key
         parts = key.split(':')
-        if len(parts) != 2:
+        if len(parts) == 1:
+            key = parts[0]
+            return 'parameter--' + key
+        elif len(parts) == 2:
+            nodename, key = parts
+            return 'parameter--node--' + nodename + '--' + key
+        else:
             self.parser.error('Invalid key format: ' + key)
-        nodename, key = parts
-        return 'parameter--node--' + nodename + '--' + key
 
     def _decorate_parameters(self, params, filter_out=[]):
         return ['%s=%s' % (self._decorate_node_param_key(k, filter_out), v)

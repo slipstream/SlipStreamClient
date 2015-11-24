@@ -95,7 +95,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def _wait_pre_scale_done_if_horizontal_scale_down(self):
         if self._is_horizontal_scale_down():
             node_instances = self.wrapper.get_node_instances_in_scale_state(
-                self.wrapper.SCALE_STATE_REMOVING, self.wrapper._get_cloud_service_name())
+                self.wrapper.SCALE_STATE_REMOVING)
             self.wrapper._wait_pre_scale_done(node_instances.values())
 
     @staticmethod

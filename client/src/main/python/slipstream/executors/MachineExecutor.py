@@ -24,6 +24,7 @@ import codecs
 import traceback
 import tarfile
 import tempfile
+import random
 
 from Queue import Queue, Empty
 from threading import Thread
@@ -38,6 +39,7 @@ class MachineExecutor(object):
 
     WAIT_NEXT_STATE_SHORT = 15
     WAIT_NEXT_STATE_LONG = 60
+    EMPTY_STATE_RETRIES_NUM = 4
 
     def __init__(self, wrapper, config_holder=ConfigHolder()):
         """
@@ -65,15 +67,32 @@ class MachineExecutor(object):
             self._fail_global(ex)
 
     def _execute(self):
-        state = self.wrapper.getState()
+        state = self._get_state()
         while True:
             self._execute_state(state)
             self._complete_state(state)
             state = self._wait_for_next_state(state)
 
+    def _get_state(self):
+        state = self.wrapper.getState()
+        if state:
+            return state
+        else:
+            for stime in self._get_state_retry_sleep_times():
+                util.printDetail('WARNING: Got no state. Retrying after %s sec.' % stime)
+                self._sleep(stime)
+                state = self.wrapper.getState()
+                if state:
+                    return state
+        raise ExecutionException('ERROR: Machine executor: Got no state from server.')
+
+    def _get_state_retry_sleep_times(self):
+        return [1] + random.sample(range(1, self.EMPTY_STATE_RETRIES_NUM + 2),
+                                   self.EMPTY_STATE_RETRIES_NUM)
+
     def _execute_state(self, state):
         if not state:
-            raise ExecutionException('Machine executor: No state to execute '
+            raise ExecutionException('ERROR: Machine executor: No state to execute '
                                      'specified.')
         try:
             self._set_state_start_time()
@@ -132,7 +151,7 @@ class MachineExecutor(object):
                          self.verboseLevel, util.VERBOSE_LEVEL_NORMAL)
 
         while True:
-            new_state = self.wrapper.getState()
+            new_state = self._get_state()
             if state != new_state:
                 return new_state
             self._sleep(self._get_sleep_time(state))
@@ -325,7 +344,8 @@ class MachineExecutor(object):
         try:
             archive = tarfile.open(reportFileName, 'w:gz')
             for element in self.reportFilesAndDirsList:
-                archive.add(element)
+                name = '_'.join(os.path.abspath(element).strip(os.sep).split(os.sep))
+                archive.add(element, name)
         except Exception as e:
             raise RuntimeError("Failed to bundle reports:\n%s" % e)
         archive.close()
@@ -367,3 +387,4 @@ class MachineExecutor(object):
 
     def _log_and_set_statecustom(self, msg):
         self.wrapper._log_and_set_statecustom(msg)
+

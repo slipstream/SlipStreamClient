@@ -394,15 +394,40 @@ def remoteRunScript(user, host, script, sshKey=None, password='', nohup=False):
 def remoteRunScriptNohup(user, host, script, sshKey=None, password=''):
     return remoteRunScript(user, host, script, sshKey=sshKey, password=password, nohup=True)
 
+
 def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False):
-    nohup_cmd = (nohup is True) and 'at now -f' or ''
     sudo = (user != 'root') and 'sudo' or ''
 
-    cmd = ('%s %s %s' % (sudo, nohup_cmd, command)).strip()
-
+    nohup_cmd = (nohup is True) and 'at now -f %s' or '%s'
+    cmd = ('%s %s' % (sudo, nohup_cmd % command)).strip()
     rc, stderr = sshCmdWithStderr(cmd, host, user=user, sshKey=sshKey, password=password)
     if rc != 0:
-        raise Exceptions.ExecutionException("An error occurred while executing the command: %s\n%s." % (command,stderr))
+        if nohup and (re.search('.* (command )?not found.*', stderr, re.MULTILINE) or
+                      not _remote_command_exists('at', host, user, sshKey, password)):
+            nohup_cmd = _remote_command_exists('nohup', host, user, sshKey, password) and 'nohup %s' or '%s'
+            cmd = ('%s %s >/dev/null 2>&1 </dev/null &' % (sudo, nohup_cmd % command)).strip()
+            rc, stderr = sshCmdWithStderr(cmd, host, user=user, sshKey=sshKey, password=password)
+            if rc != 0:
+                raise Exceptions.ExecutionException("An error occurred while executing the command: %s\n%s." %
+                                                    (command, stderr))
+        else:
+            raise Exceptions.ExecutionException("An error occurred while executing the command: %s\n%s." %
+                                                (command, stderr))
+    else:
+        # Check stderr as atd may not be running, though return code was 0.
+        # Starting atd service will start the command.
+        if re.search('.*No atd running\?', stderr, re.MULTILINE):
+            remote_start_service('atd', user, host, sshKey, password)
 
     return rc, stderr
 
+
+def _remote_command_exists(command, host, user, sshKey=None, password=''):
+    rc, stderr = sshCmdWithStderr('which %s' % command, host, user=user, sshKey=sshKey, password=password)
+    return rc == 0
+
+
+def remote_start_service(service, user, host, sshKey=None, password=''):
+    command = 'service %(s)s start || initctl start %(s)s || systemctl start %(s)s || /etc/init.d/%(s)s start' % \
+              {'s': service}
+    remoteRunCommand(user, host, command, sshKey, password)

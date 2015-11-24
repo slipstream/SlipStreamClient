@@ -9,7 +9,7 @@
 	<parent>
 		<groupId>com.sixsq.slipstream</groupId>
 		<artifactId>SlipStreamClient</artifactId>
-		<version>2.20-SNAPSHOT</version>
+		<version>2.19.2-SNAPSHOT</version>
 	</parent>
 
 	<build>
@@ -250,12 +250,6 @@ mkdir -p $RPM_BUILD_ROOT/%{py_sitedir}
 mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
   </script>
 </installScriptlet>
-
-<preinstallScriptlet>
-  <script>
-/bin/rm -f /usr/bin/cloudstack-*
-  </script>
-</preinstallScriptlet>
 
 <postinstallScriptlet>
 
