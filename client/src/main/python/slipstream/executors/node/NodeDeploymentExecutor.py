@@ -31,11 +31,6 @@ def getExecutor(wrapper, configHolder):
 
 class NodeDeploymentExecutor(MachineExecutor):
 
-    SCRIPT_EXIT_SUCCESS = 0
-
-    # Wait interval (seconds) between server calls when executing a target script.
-    TARGET_POLL_INTERVAL = 10
-
     def __init__(self, wrapper, config_holder=ConfigHolder()):
         self.verboseLevel = 0
         super(NodeDeploymentExecutor, self).__init__(wrapper, config_holder)
