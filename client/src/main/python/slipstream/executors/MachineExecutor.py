@@ -17,11 +17,17 @@
 """
 
 import os
+import sys
 import time
+import errno
+import codecs
 import traceback
 import tarfile
 import tempfile
 import random
+
+from Queue import Queue, Empty
+from threading import Thread
 
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.exceptions.Exceptions import AbortException, \
@@ -34,6 +40,10 @@ class MachineExecutor(object):
     WAIT_NEXT_STATE_SHORT = 15
     WAIT_NEXT_STATE_LONG = 60
     EMPTY_STATE_RETRIES_NUM = 4
+
+    # Wait interval (seconds) between server calls when executing a target script.
+    TARGET_POLL_INTERVAL = 10
+    SCRIPT_EXIT_SUCCESS = 0
 
     def __init__(self, wrapper, config_holder=ConfigHolder()):
         """
@@ -49,6 +59,10 @@ class MachineExecutor(object):
         config_holder.assign(self)
 
         self.reportFilesAndDirsList = [self.ssLogDir]
+
+        self.node_instance = self._retrieve_my_node_instance()
+        self.recovery_mode = False
+        self._send_reports = False
 
     def execute(self):
         try:
@@ -161,11 +175,152 @@ class MachineExecutor(object):
             return self.WAIT_NEXT_STATE_LONG
         return self.WAIT_NEXT_STATE_SHORT
 
+    def _retrieve_my_node_instance(self):
+        node_instance = self.wrapper.get_my_node_instance()
+        if node_instance is None:
+            raise ExecutionException("Couldn't get the node instance for the current VM.")
+        return node_instance
+
+    def _get_recovery_mode(self):
+        self.recovery_mode = self.wrapper.get_recovery_mode()
+
+    def _is_recovery_mode(self):
+        return self.recovery_mode == True
+
     def _is_mutable(self):
         return self.wrapper.is_mutable()
 
     def _need_to_complete(self, state):
         return state not in ['Finalizing', 'Done', 'Cancelled', 'Aborted']
+
+    def _set_need_to_send_reports(self):
+        self._send_reports = True
+
+    def _execute_execute_target(self):
+        self._execute_target('execute', abort_on_err=True)
+        self._set_need_to_send_reports()
+
+    def _execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
+        message = "Executing target '%s'" % target_name
+        util.printStep(message)
+        if ssdisplay:
+            self.wrapper.set_statecustom(message)
+
+        target_script = self.node_instance.get_image_target(target_name)
+        if target_script:
+            self._launch_target_script(target_name, exports, abort_on_err, ignore_abort=ignore_abort)
+        else:
+            util.printAndFlush('Nothing to do on target: %s\n' % target_name)
+
+    def _launch_target_script(self, target_name, exports=None, abort_on_err=True, ignore_abort=False):
+        fail_msg = "Failed running '%s' target on '%s'" % (target_name, self._get_node_instance_name())
+        script = self.node_instance.get_image_target(target_name)
+
+        self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg)
+
+    def _launch_script(self, script, exports=None, abort_on_err=True, ignore_abort=False, fail_msg=None):
+        if fail_msg is None:
+            fail_msg = "Failed running script on '%s'" % self._get_node_instance_name()
+
+        try:
+            rc, stderr_last_line = self._run_target_script(script, exports, ignore_abort=ignore_abort)
+            sys.stdout.flush()
+            sys.stderr.flush()
+        except Exception as ex:
+            msg = '%s: %s' % (fail_msg, str(ex))
+            if abort_on_err:
+                self.wrapper.fail(msg)
+            raise
+        else:
+            if rc != self.SCRIPT_EXIT_SUCCESS and abort_on_err:
+                if stderr_last_line is not None:
+                    fail_msg += ': %s' % stderr_last_line
+                self.wrapper.fail(fail_msg)
+                raise AbortException(fail_msg)
+
+    def _run_target_script(self, target_script, exports=None, ignore_abort=False):
+        '''Return exit code of the user script and the last line of stderr
+        Output of the script goes to stdout/err and will end up in the node executor's log file.
+        '''
+        if not target_script:
+            util.printAndFlush('Script is empty\n')
+            return self.SCRIPT_EXIT_SUCCESS
+
+        if not isinstance(target_script, basestring):
+            raise ExecutionException('Not a string buffer provided as target script. Type is: %s' % type(target_script))
+
+        process = self._launch_process(target_script, exports)
+
+        result = Queue()
+        t = Thread(target=self.print_and_keep_last_stderr, args=(process.stderr, result))
+        t.daemon = True # thread dies with the program
+        t.start()
+
+        try:
+            # The process is still working on the background.
+            while process.poll() is None:
+                # Ask server whether the abort flag is set. If so, kill the
+                # process and exit. Otherwise, sleep for some time.
+                if not ignore_abort and self.wrapper.isAbort():
+                    try:
+                        util.printDetail('Abort flag detected. '
+                                         'Terminating target script execution...')
+                        process.terminate()
+                        util.sleep(5)
+                        if process.poll() is None:
+                            util.printDetail('Termination is taking too long. '
+                                             'Killing the target script...')
+                            process.kill()
+                    except OSError:
+                        pass
+                    break
+                util.sleep(self.TARGET_POLL_INTERVAL)
+        except IOError as e:
+            if e.errno != errno.EINTR:
+                raise
+            else:
+                util.printDetail('Signal EINTR detected. Ignoring it.')
+                return 0
+
+        util.printDetail("End of the target script")
+
+        stderr_last_line = ''
+        try:
+            stderr_last_line = result.get(timeout=60)
+        except Empty:
+            pass
+        return process.returncode, stderr_last_line
+
+    def _launch_process(self, target_script, exports=None):
+        '''Returns launched process as subprocess.Popen instance.
+        '''
+        tmpfilesuffix = ''
+        if util.is_windows():
+            tmpfilesuffix = '.ps1'
+        fn = tempfile.mktemp(suffix=tmpfilesuffix)
+        if isinstance(target_script, unicode):
+            with codecs.open(fn, 'w', 'utf8') as fh:
+                fh.write(target_script)
+        else:
+            with open(fn, 'w') as fh:
+                fh.write(target_script)
+        os.chmod(fn, 0755)
+        currentDir = os.getcwd()
+        os.chdir(tempfile.gettempdir() + os.sep)
+        try:
+            process = util.execute(fn, noWait=True, extra_env=exports, withStderr=True)
+        finally:
+            os.chdir(currentDir)
+
+        return process
+
+    def print_and_keep_last_stderr(self, stderr, result):
+        last_line = None
+        for line in iter(stderr.readline, b''):
+            sys.stderr.write(line)
+            if line.strip():
+                last_line = line.strip()
+        result.put(last_line)
 
     def onInitializing(self):
         util.printAction('Initializing')

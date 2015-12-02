@@ -576,13 +576,19 @@ class BaseWrapper(object):
     def _get_nodes_instances(self):
         """Return dict {<node_instance_name>: NodeInstance, }
         """
+        node_instances = self._get_nodes_instances_with_orchestrators()
+        return dict([(k, ni) for k, ni in node_instances.iteritems() if not ni.is_orchestrator()])
+
+    def _get_nodes_instances_with_orchestrators(self):
+        """Return dict {<node_instance_name>: NodeInstance, }
+        """
         if not self._nodes_instances:
             self._nodes_instances = self._ss_client.get_nodes_instances(self._get_cloud_service_name())
         return self._nodes_instances
 
     def get_my_node_instance(self):
         node_name = self.get_my_node_instance_name()
-        return self._get_nodes_instances().get(node_name)
+        return self._get_nodes_instances_with_orchestrators().get(node_name)
 
     def discard_run_locally(self):
         self._ss_client.discard_run()

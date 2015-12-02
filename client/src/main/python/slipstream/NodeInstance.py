@@ -96,6 +96,9 @@ class NodeInstance(object):
     def is_windows(self):
         return self.get_platform().lower() == 'windows'
 
+    def is_orchestrator(self):
+        return NodeDecorator.is_orchestrator_name(self.get_name())
+
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
 

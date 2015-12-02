@@ -124,9 +124,8 @@ class SlipStreamHttpClient(object):
             image_attributes = DomExtractor.extract_node_image_attributes(self.run_dom, node_name)
             node_instance.set_image_attributes(image_attributes)
 
-            if not node_instance.is_orchestrator():
-                image_targets = DomExtractor.extract_node_image_targets(self.run_dom, node_name)
-                node_instance.set_image_targets(image_targets)
+            image_targets = DomExtractor.extract_node_image_targets(self.run_dom, node_name)
+            node_instance.set_image_targets(image_targets)
 
             nodes_instances[node_instance_name] = node_instance
 
@@ -301,9 +300,6 @@ class DomExtractor(object):
         for node_instance_name in run_dom.attrib['nodeNames'].split(','):
             node_instance_name = node_instance_name.strip()
 
-            if NodeDecorator.is_orchestrator_name(node_instance_name):
-                continue
-
             node_instance = {}
             node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY] = node_instance_name
 
@@ -331,10 +327,6 @@ class DomExtractor(object):
         node_names = DomExtractor._get_node_names(run_dom)
 
         for node_name in node_names:
-
-            if NodeDecorator.is_orchestrator_name(node_name):
-                continue
-
             node = {}
             node[NodeDecorator.NODE_NAME_KEY] = node_name
 
@@ -396,12 +388,22 @@ class DomExtractor(object):
         return image
 
     @staticmethod
+    def extract_deployment(run_dom, nodename):
+        ''' Return the deployment module of a run.
+        '''
+        return run_dom.find('module')
+
+    @staticmethod
     def extract_node_image_targets(run_dom, node_name):
         targets = {}
-        image_dom = DomExtractor.extract_node_image(run_dom, node_name)
 
-        targets.update(DomExtractor.get_build_targets(image_dom))
-        targets.update(DomExtractor.get_deployment_targets_from_image(image_dom))
+        if NodeDecorator.is_orchestrator_name(node_name):
+            deployment_dom = DomExtractor.extract_deployment(run_dom, node_name)
+            targets.update(DomExtractor.get_deployment_targets_from_deployment(deployment_dom))
+        else:
+            image_dom = DomExtractor.extract_node_image(run_dom, node_name)
+            targets.update(DomExtractor.get_build_targets(image_dom))
+            targets.update(DomExtractor.get_deployment_targets_from_image(image_dom))
 
         return targets
 
@@ -482,6 +484,15 @@ class DomExtractor(object):
         targets = {}
         for targetNode in image_dom.findall('targets/target'):
             targets[targetNode.get('name')] = targetNode.text
+        return targets
+
+    @staticmethod
+    def get_deployment_targets_from_deployment(deployment_dom):
+        '''Return deployment targets of the given deployment.
+        '''
+        targets = {}
+        for target in deployment_dom.findall('targets/target'):
+            targets[target.get('name')] = target.text
         return targets
 
     @staticmethod

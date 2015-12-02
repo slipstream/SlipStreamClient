@@ -51,6 +51,14 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
         self._complete_state_for_failed_node_instances()
         self.wrapper.check_scale_state_consistency()
 
+        self._get_recovery_mode()
+        if self._is_recovery_mode():
+            util.printDetail("Recovery mode enabled, recipes will not be executed.",
+                             verboseThreshold=util.VERBOSE_LEVEL_QUIET)
+            return
+
+        self._execute_execute_target()
+
     @override
     def onSendingReports(self):
         super(OrchestratorDeploymentExecutor, self).onSendingReports()
