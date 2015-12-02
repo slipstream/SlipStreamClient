@@ -90,12 +90,10 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         nodes = DomExtractor.extract_nodes_instances_runtime_parameters(
             RUN_ETREE, CLOUD_NAME)
         self.assertEquals(NODE_INSTANCES_NUM, len(nodes) - 1)
-        # assert False == any(map(NodeDecorator.is_orchestrator_name, nodes.keys()))
         for node_instance_name, node_instance in nodes.iteritems():
             assert node_instance_name == node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY]
             assert isinstance(node_instance, dict)
             self.assertEquals('myCloud', node_instance['cloudservice'])
-            #self.assertEquals('false', node_instance['is.orchestrator'])
 
     def test_extract_nodes_runtime_parameters(self):
         nodes = DomExtractor.extract_nodes_runtime_parameters(RUN_ETREE)
