@@ -1,0 +1,13 @@
+[Unit]
+Description=SlipStream Node Executor
+After=syslog.target
+
+[Service]
+EnvironmentFile=-/etc/default/slipstream-node
+ExecStart=/opt/slipstream/client/sbin/slipstream-node ${DAEMON_ARGS} start
+ExecStop=/opt/slipstream/client/sbin/slipstream-node stop
+Type=forking
+PIDFile=/var/run/slipstream-node.pid
+
+[Install]
+WantedBy=multi-user.target
