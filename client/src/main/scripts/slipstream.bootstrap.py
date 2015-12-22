@@ -43,18 +43,18 @@ MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
-RedHat_ver_min_incl_max_excl = ((5,), (7,))
-Ubuntu_ver_min_incl_max_excl = ((10,), (14,))
-INITD_BASED_DISTROS = dict([('CentOS', RedHat_ver_min_incl_max_excl),
-                            ('CentOS Linux', RedHat_ver_min_incl_max_excl),
-                            ('RedHat', RedHat_ver_min_incl_max_excl),
-                            ('Ubuntu', Ubuntu_ver_min_incl_max_excl)])
-RedHat_ver_min_incl_max_excl = ((7,), (8,))
-Ubuntu_ver_min_incl_max_excl = ((14,), (16,))
-SYSTEMD_BASED_DISTROS = dict([('CentOS', RedHat_ver_min_incl_max_excl),
-                            ('CentOS Linux', RedHat_ver_min_incl_max_excl),
-                            ('RedHat', RedHat_ver_min_incl_max_excl),
-                            ('Ubuntu', Ubuntu_ver_min_incl_max_excl)])
+INITD_RedHat_ver_min_incl_max_excl = ((5,), (7,))
+INITD_Ubuntu_ver_min_incl_max_excl = ((10,), (14,))
+INITD_BASED_DISTROS = dict([('CentOS', INITD_RedHat_ver_min_incl_max_excl),
+                            ('CentOS Linux', INITD_RedHat_ver_min_incl_max_excl),
+                            ('RedHat', INITD_RedHat_ver_min_incl_max_excl),
+                            ('Ubuntu', INITD_Ubuntu_ver_min_incl_max_excl)])
+SYSTEMD_RedHat_ver_min_incl_max_excl = ((7,), (8,))
+SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((14,), (16,))
+SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
+                            ('CentOS Linux', SYSTEMD_RedHat_ver_min_incl_max_excl),
+                            ('RedHat', SYSTEMD_RedHat_ver_min_incl_max_excl),
+                            ('Ubuntu', SYSTEMD_Ubuntu_ver_min_incl_max_excl)])
 
 def _versiontuple(v):
     return tuple(map(int, (v.split("."))))

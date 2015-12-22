@@ -23,8 +23,8 @@ from mock import Mock
 import slipstream_bootstrap
 from slipstream_bootstrap import version_in_range
 from slipstream_bootstrap import _system_supports_initd
-from slipstream_bootstrap import RedHat_ver_min_incl_max_excl
-from slipstream_bootstrap import Ubuntu_ver_min_incl_max_excl
+from slipstream_bootstrap import INITD_RedHat_ver_min_incl_max_excl
+from slipstream_bootstrap import INITD_Ubuntu_ver_min_incl_max_excl
 
 
 class TestBootstrap(unittest.TestCase):
@@ -39,25 +39,25 @@ class TestBootstrap(unittest.TestCase):
     def test_system_supports_initd_default_ranges(self):
         slipstream_bootstrap._is_linux = Mock(return_value=True)
 
-        min_incl = RedHat_ver_min_incl_max_excl[0][0]
+        min_incl = INITD_RedHat_ver_min_incl_max_excl[0][0]
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('CentOS', str(min_incl), None))
         assert True == _system_supports_initd()
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('CentOS', str(min_incl - 0.1), None))
         assert False == _system_supports_initd()
 
-        max_excl = RedHat_ver_min_incl_max_excl[1][0]
+        max_excl = INITD_RedHat_ver_min_incl_max_excl[1][0]
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('CentOS', str(max_excl), None))
         assert False == _system_supports_initd()
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('CentOS', str(max_excl - 0.1), None))
         assert True == _system_supports_initd()
 
-        min_incl = Ubuntu_ver_min_incl_max_excl[0][0]
+        min_incl = INITD_Ubuntu_ver_min_incl_max_excl[0][0]
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('Ubuntu', str(min_incl), None))
         assert True == _system_supports_initd()
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('Ubuntu', str(min_incl - 0.1), None))
         assert False == _system_supports_initd()
 
-        max_excl = Ubuntu_ver_min_incl_max_excl[1][0]
+        max_excl = INITD_Ubuntu_ver_min_incl_max_excl[1][0]
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('Ubuntu', str(max_excl), None))
         assert False == _system_supports_initd()
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('Ubuntu', str(max_excl - 0.1), None))
@@ -71,7 +71,7 @@ class TestBootstrap(unittest.TestCase):
         slipstream_bootstrap._get_linux_distribution = Mock(return_value=('foo', '0', None))
         assert False == _system_supports_initd()
 
-        for ver in ['0', '4.0', '8']:
+        for ver in ['0', '4.0', '7']:
             slipstream_bootstrap._get_linux_distribution = Mock(return_value=('CentOS', ver, None))
             assert False == _system_supports_initd()
 
