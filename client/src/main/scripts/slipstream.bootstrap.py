@@ -403,7 +403,10 @@ def _add_executor_to_initd(executor_name):
         cmd = 'update-rc.d %s defaults' % service_name
     else:
         cmd = 'chkconfig --add %s' % service_name
-    commands.getstatusoutput(cmd)
+
+    rc, output = _get_rc_output(cmd)
+    if rc != 0:
+        raise Exception('Failed registering machine executor with initd: %s' % output)
 
     return service_name
 
@@ -429,9 +432,16 @@ def _add_executor_to_systemd(executor_name):
     except: pass
     os.symlink(src, dst)
 
-    commands.getstatusoutput('systemctl daemon-reload')
+    rc, output = _get_rc_output('systemctl daemon-reload')
+    if rc != 0:
+        raise Exception('Failed registering machine executor with systemd: %s' % output)
 
     return sname
+
+
+def _get_rc_output(cmd):
+    status, output = commands.getstatusoutput(cmd)
+    return os.WEXITSTATUS(status), output
 
 
 def _create_executor_config(executor_name):
@@ -527,10 +537,11 @@ def _get_machine_executor_direct_startup_command(executor_name):
 def start_machine_executor(cmd):
     print 'Calling target script:', cmd
     os.environ['SLIPSTREAM_HOME'] = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin')
-    subprocess.call(cmd, shell=True)
+    rc = subprocess.call(cmd, shell=True)
     sys.stdout.flush()
     sys.stderr.flush()
-    sys.exit(0)
+    if rc != 0:
+        raise Exception('Failed starting machine executor: %s. Return code %s.' % (cmd, rc))
 
 
 def get_and_setup_cloud_connector(cloud_name):
@@ -620,12 +631,13 @@ def main():
         cmd = get_machine_executor_command(machine_executor)
         sys.stdout.flush()
         sys.stderr.flush()
+
+        start_machine_executor(cmd)
     except:
         publish_failure_to_ss_run(sys.exc_info())
         raise
-
-    start_machine_executor(cmd)
-
+    else:
+        sys.exit(0)
 
 class AbortPublisher(object):
     def __init__(self):
