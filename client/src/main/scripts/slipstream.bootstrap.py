@@ -50,7 +50,7 @@ INITD_BASED_DISTROS = dict([('CentOS', RedHat_ver_min_incl_max_excl),
                             ('RedHat', RedHat_ver_min_incl_max_excl),
                             ('Ubuntu', Ubuntu_ver_min_incl_max_excl)])
 RedHat_ver_min_incl_max_excl = ((7,), (8,))
-Ubuntu_ver_min_incl_max_excl = ((14,), (15,))
+Ubuntu_ver_min_incl_max_excl = ((14,), (16,))
 SYSTEMD_BASED_DISTROS = dict([('CentOS', RedHat_ver_min_incl_max_excl),
                             ('CentOS Linux', RedHat_ver_min_incl_max_excl),
                             ('RedHat', RedHat_ver_min_incl_max_excl),
@@ -429,13 +429,12 @@ def _create_executor_config(executor_name):
     conf['SLIPSTREAM_CONNECTOR_INSTANCE'] = os.environ.get('SLIPSTREAM_CONNECTOR_INSTANCE')
     if executor_name == 'orchestrator':
         cloud_name = os.environ['SLIPSTREAM_CLOUD']
-        pypath_prep = conf.get('PYTHONPATH', '') and (conf.get('PYTHONPATH', '') + os.pathsep) or ''
-        conf['PYTHONPATH'] =  pypath_prep + os.path.join(os.sep, 'opt', cloud_name.lower())
+        pypath_prep = conf.get('PYTHONPATH', '') and (conf.get('PYTHONPATH') + os.pathsep) or ''
+        conf['PYTHONPATH'] = pypath_prep + os.path.join(os.sep, 'opt', cloud_name.lower())
         env_matcher = re.compile('SLIPSTREAM_')
         for var, val in os.environ.items():
             if env_matcher.match(var) and var != 'SLIPSTREAM_NODE_INSTANCE_NAME':
-                #if re.search(' ', val) and not (val.startswith('"') and val.endswith('"')):
-                if re.search(' ', val) and not 'SLIPSTREAM_COOKIE':
+                if re.search(' ', val) and not (val.startswith('"') and val.endswith('"')):
                     val = '"%s"' % val
                 conf[var] = val
 
