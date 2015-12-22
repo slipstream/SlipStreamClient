@@ -43,14 +43,30 @@ MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
+
+"""
+Matrix showing support of different init implementations by different versions of RedHat and Ubuntu.
+
+                  systemd  | init.d   | upstart
+ RedHat <= 6         NO    |   YES    |   NO
+ RedHat >= 7        YES    |   YES*   |   NO
+ Ubuntu <= 14.04     NO    |   YES    |  YES
+ Ubuntu == 14.10    YES**  |   YES    |  YES
+ Ubuntu >= 15.x     YES    |   YES*   |   ?
+
+ *  - via redirect to systemd, provided LSB info in init.d file is correct for systemd;
+ ** - with 'systemd-sysv' package replaces upstart completely or with 'systemd' package
+      runs along with upstart;
+ ? - I don't know (konstan).
+"""
 INITD_RedHat_ver_min_incl_max_excl = ((5,), (7,))
-INITD_Ubuntu_ver_min_incl_max_excl = ((10,), (14,))
+INITD_Ubuntu_ver_min_incl_max_excl = ((10,), (15,))
 INITD_BASED_DISTROS = dict([('CentOS', INITD_RedHat_ver_min_incl_max_excl),
                             ('CentOS Linux', INITD_RedHat_ver_min_incl_max_excl),
                             ('RedHat', INITD_RedHat_ver_min_incl_max_excl),
                             ('Ubuntu', INITD_Ubuntu_ver_min_incl_max_excl)])
 SYSTEMD_RedHat_ver_min_incl_max_excl = ((7,), (8,))
-SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((14,), (16,))
+SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((15,), (16,))
 SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
                             ('CentOS Linux', SYSTEMD_RedHat_ver_min_incl_max_excl),
                             ('RedHat', SYSTEMD_RedHat_ver_min_incl_max_excl),

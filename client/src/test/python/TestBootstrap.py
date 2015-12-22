@@ -25,6 +25,8 @@ from slipstream_bootstrap import version_in_range
 from slipstream_bootstrap import _system_supports_initd
 from slipstream_bootstrap import INITD_RedHat_ver_min_incl_max_excl
 from slipstream_bootstrap import INITD_Ubuntu_ver_min_incl_max_excl
+from slipstream_bootstrap import SYSTEMD_RedHat_ver_min_incl_max_excl
+from slipstream_bootstrap import SYSTEMD_Ubuntu_ver_min_incl_max_excl
 
 
 class TestBootstrap(unittest.TestCase):
@@ -35,6 +37,17 @@ class TestBootstrap(unittest.TestCase):
         assert False == version_in_range('1', ((0,), (1,)))
 
         assert True == version_in_range('1.2', ((1, 2), (1, 3)))
+
+        assert True == version_in_range('14.04', INITD_Ubuntu_ver_min_incl_max_excl)
+        assert True == version_in_range('14.10', INITD_Ubuntu_ver_min_incl_max_excl)
+        assert False == version_in_range('15.04', INITD_Ubuntu_ver_min_incl_max_excl)
+        assert True == version_in_range('15.04', SYSTEMD_Ubuntu_ver_min_incl_max_excl)
+
+        assert True == version_in_range('5.5', INITD_RedHat_ver_min_incl_max_excl)
+        assert True == version_in_range('6.7', INITD_RedHat_ver_min_incl_max_excl)
+        assert False == version_in_range('7', INITD_RedHat_ver_min_incl_max_excl)
+        assert True == version_in_range('7', SYSTEMD_RedHat_ver_min_incl_max_excl)
+        assert True == version_in_range('7.1', SYSTEMD_RedHat_ver_min_incl_max_excl)
 
     def test_system_supports_initd_default_ranges(self):
         slipstream_bootstrap._is_linux = Mock(return_value=True)
