@@ -43,13 +43,34 @@ MACHINE_EXECUTOR_NAMES = ['node', 'orchestrator']
 INSTALL_CMD = None
 DISTRO = None
 PIP_INSTALLED = False
-RedHat_ver_min_incl_max_excl = ((5,), (8,))
-Ubuntu_ver_min_incl_max_excl = ((10,), (15,))
-INITD_BASED_DISTROS = dict([('CentOS', RedHat_ver_min_incl_max_excl),
-                            ('CentOS Linux', RedHat_ver_min_incl_max_excl),
-                            ('RedHat', RedHat_ver_min_incl_max_excl),
-                            ('Ubuntu', Ubuntu_ver_min_incl_max_excl)])
 
+"""
+Matrix showing support of different init implementations by different versions of RedHat and Ubuntu.
+
+                  systemd  | init.d   | upstart
+ RedHat <= 6         NO    |   YES    |   NO
+ RedHat >= 7        YES    |   YES*   |   NO
+ Ubuntu <= 14.04     NO    |   YES    |  YES
+ Ubuntu == 14.10    YES**  |   YES    |  YES
+ Ubuntu >= 15.x     YES    |   YES*   |   ?
+
+ *  - via redirect to systemd, provided LSB info in init.d file is correct for systemd;
+ ** - with 'systemd-sysv' package replaces upstart completely or with 'systemd' package
+      runs along with upstart;
+ ? - I don't know (konstan).
+"""
+INITD_RedHat_ver_min_incl_max_excl = ((5,), (7,))
+INITD_Ubuntu_ver_min_incl_max_excl = ((10,), (15,))
+INITD_BASED_DISTROS = dict([('CentOS', INITD_RedHat_ver_min_incl_max_excl),
+                            ('CentOS Linux', INITD_RedHat_ver_min_incl_max_excl),
+                            ('RedHat', INITD_RedHat_ver_min_incl_max_excl),
+                            ('Ubuntu', INITD_Ubuntu_ver_min_incl_max_excl)])
+SYSTEMD_RedHat_ver_min_incl_max_excl = ((7,), (8,))
+SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((15,), (16,))
+SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
+                            ('CentOS Linux', SYSTEMD_RedHat_ver_min_incl_max_excl),
+                            ('RedHat', SYSTEMD_RedHat_ver_min_incl_max_excl),
+                            ('Ubuntu', SYSTEMD_Ubuntu_ver_min_incl_max_excl)])
 
 def _versiontuple(v):
     return tuple(map(int, (v.split("."))))
@@ -347,15 +368,17 @@ def get_cloud_name():
 
 
 def get_machine_executor_command(executor_name):
-    if _system_supports_initd():
-        try:
+    try:
+        _create_executor_config(executor_name)
+        if _system_supports_initd():
             return _setup_and_get_initd_service_start_command(executor_name)
-        except Exception as ex:
-            print 'Failed to setup and get init.d service start command for %s executor: %s' % (executor_name, str(ex))
-            print 'Falling back to direct startup of %s executor.' % executor_name
-            return _get_machine_executor_direct_startup_command(executor_name)
-    else:
+        elif _system_supports_systemd():
+            return _setup_and_get_systemd_service_start_command(executor_name)
+    except Exception as ex:
+        print 'Failed to setup and get service start command for %s executor: %s' % (executor_name, str(ex))
+        print 'Falling back to direct startup of %s executor.' % executor_name
         return _get_machine_executor_direct_startup_command(executor_name)
+    return _get_machine_executor_direct_startup_command(executor_name)
 
 
 def _configure_initd_service(executor_name):
@@ -364,7 +387,6 @@ def _configure_initd_service(executor_name):
     :return: init.d service name
     """
 
-    _create_executor_config(executor_name)
     service_name = _add_executor_to_initd(executor_name)
 
     return service_name
@@ -381,29 +403,80 @@ def _add_executor_to_initd(executor_name):
         cmd = 'update-rc.d %s defaults' % service_name
     else:
         cmd = 'chkconfig --add %s' % service_name
-    commands.getstatusoutput(cmd)
+
+    rc, output = _get_rc_output(cmd)
+    if rc != 0:
+        raise Exception('Failed registering machine executor with initd: %s' % output)
 
     return service_name
 
 
-def _create_executor_config(executor_name):
-    with open('/etc/default/slipstream-%s' % executor_name, 'w') as fh:
-        fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib'))
-        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'bin'))
-        fh.write('export PATH=$PATH:%s\n' % os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin'))
-        fh.write('export DAEMON_ARGS="%s"\n' % _get_verbosity())
-        fh.write('export SLIPSTREAM_CONNECTOR_INSTANCE="%s"\n' % os.environ.get('SLIPSTREAM_CONNECTOR_INSTANCE'))
-        if executor_name == 'orchestrator':
-            cloud_name = os.environ['SLIPSTREAM_CLOUD']
-            fh.write('export PYTHONPATH=$PYTHONPATH:%s\n' % os.path.join(os.sep, 'opt', cloud_name.lower()))
+def _configure_systemd_service(executor_name):
+    """
+    :param executor_name: name of the executor (node or orchestrator)
+    :return: systemd service name
+    """
 
-            env_matcher = re.compile('SLIPSTREAM_')
-            for var, val in os.environ.items():
-                if env_matcher.match(var) and var != 'SLIPSTREAM_NODE_INSTANCE_NAME':
-                    #if re.search(' ', val) and not (val.startswith('"') and val.endswith('"')):
-                    if re.search(' ', val) and not 'SLIPSTREAM_COOKIE':
-                        val = '"%s"' % val
-                    fh.write('export %s="%s"\n' % (var, val))
+    service_name = _add_executor_to_systemd(executor_name)
+
+    return service_name
+
+
+def _add_executor_to_systemd(executor_name):
+    sname = 'slipstream-%s.service' % executor_name
+
+    src = '/opt/slipstream/client/etc/%s' % sname
+    dst = '/etc/systemd/system/%s' % sname
+
+    try: os.unlink(dst)
+    except: pass
+    os.symlink(src, dst)
+
+    rc, output = _get_rc_output('systemctl daemon-reload')
+    if rc != 0:
+        raise Exception('Failed registering machine executor with systemd: %s' % output)
+
+    return sname
+
+
+def _get_rc_output(cmd):
+    status, output = commands.getstatusoutput(cmd)
+    return os.WEXITSTATUS(status), output
+
+
+def _create_executor_config(executor_name):
+    conf = {}
+    paths = ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin']
+    paths.append(os.path.join(SLIPSTREAM_CLIENT_HOME, 'bin'))
+    paths.append(os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin'))
+    conf['PATH'] = os.pathsep.join(paths)
+    conf['PYTHONPATH'] = os.path.join(SLIPSTREAM_CLIENT_HOME, 'lib')
+    conf['DAEMON_ARGS'] = _get_verbosity()
+    conf['SLIPSTREAM_CONNECTOR_INSTANCE'] = os.environ.get('SLIPSTREAM_CONNECTOR_INSTANCE')
+    if executor_name == 'orchestrator':
+        cloud_name = os.environ['SLIPSTREAM_CLOUD']
+        pypath_prep = conf.get('PYTHONPATH') + os.pathsep if conf.get('PYTHONPATH', '') else ''
+        conf['PYTHONPATH'] = pypath_prep + os.path.join(os.sep, 'opt', cloud_name.lower())
+        env_matcher = re.compile('SLIPSTREAM_')
+        for var, val in os.environ.items():
+            if env_matcher.match(var) and var != 'SLIPSTREAM_NODE_INSTANCE_NAME':
+                if re.search(' ', val) and not (val.startswith('"') and val.endswith('"')):
+                    val = '"%s"' % val
+                conf[var] = val
+
+    _write_executor_config(executor_name, conf)
+
+
+def _write_executor_config(executor_name, conf):
+    initd = _system_supports_initd()
+
+    def _write(fh, _str):
+        fh.write((initd and 'export ' or '') + _str)
+
+    defaults_file = '/etc/default/slipstream-%s' % executor_name
+    with open(defaults_file, 'w') as fh:
+        for k, v in conf.items():
+            _write(fh, '%s=%s\n' % (k, v))
 
 
 def _setup_and_get_initd_service_start_command(executor_name):
@@ -411,18 +484,33 @@ def _setup_and_get_initd_service_start_command(executor_name):
     return "service %s start" % service_name
 
 
+def _setup_and_get_systemd_service_start_command(executor_name):
+    service_name = _configure_systemd_service(executor_name)
+    return 'systemctl start %s' % service_name
+
+
 def _get_linux_distribution():
     return platform.linux_distribution()
 
 
 def _system_supports_initd():
+    return _system_supports_init_process(INITD_BASED_DISTROS)
+
+
+def _system_supports_systemd():
+    return _system_supports_init_process(SYSTEMD_BASED_DISTROS)
+
+
+def _system_supports_init_process(distros):
+    """distros - dict {'distro name': (ver_min_incl, ver_max_excl), }
+    """
     if not _is_linux():
         return False
     distname, version, _id = _get_linux_distribution()
-    if distname not in INITD_BASED_DISTROS.keys():
+    if distname not in distros.keys():
         return False
     else:
-        initd_dist_version_range = INITD_BASED_DISTROS[distname]
+        initd_dist_version_range = distros[distname]
         return version_in_range(version, initd_dist_version_range)
 
 
@@ -449,10 +537,11 @@ def _get_machine_executor_direct_startup_command(executor_name):
 def start_machine_executor(cmd):
     print 'Calling target script:', cmd
     os.environ['SLIPSTREAM_HOME'] = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin')
-    subprocess.call(cmd, shell=True)
+    rc = subprocess.call(cmd, shell=True)
     sys.stdout.flush()
     sys.stderr.flush()
-    sys.exit(0)
+    if rc != 0:
+        raise Exception('Failed starting machine executor: %s. Return code %s.' % (cmd, rc))
 
 
 def get_and_setup_cloud_connector(cloud_name):
@@ -542,12 +631,13 @@ def main():
         cmd = get_machine_executor_command(machine_executor)
         sys.stdout.flush()
         sys.stderr.flush()
+
+        start_machine_executor(cmd)
     except:
         publish_failure_to_ss_run(sys.exc_info())
         raise
-
-    start_machine_executor(cmd)
-
+    else:
+        sys.exit(0)
 
 class AbortPublisher(object):
     def __init__(self):

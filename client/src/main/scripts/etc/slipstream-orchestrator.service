@@ -1,0 +1,12 @@
+[Unit]
+Description=SlipStream Orchestrator Executor
+After=syslog.target
+
+[Service]
+EnvironmentFile=-/etc/default/slipstream-orchestrator
+ExecStart=/opt/slipstream/client/sbin/slipstream-orchestrator ${DAEMON_ARGS} start
+ExecStop=/opt/slipstream/client/sbin/slipstream-orchestrator stop
+PIDFile=/var/run/slipstream-orchestrator.pid
+
+[Install]
+WantedBy=multi-user.target
