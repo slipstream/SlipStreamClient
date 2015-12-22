@@ -455,7 +455,7 @@ def _create_executor_config(executor_name):
     conf['SLIPSTREAM_CONNECTOR_INSTANCE'] = os.environ.get('SLIPSTREAM_CONNECTOR_INSTANCE')
     if executor_name == 'orchestrator':
         cloud_name = os.environ['SLIPSTREAM_CLOUD']
-        pypath_prep = conf.get('PYTHONPATH', '') and (conf.get('PYTHONPATH') + os.pathsep) or ''
+        pypath_prep = conf.get('PYTHONPATH') + os.pathsep if conf.get('PYTHONPATH', '') else ''
         conf['PYTHONPATH'] = pypath_prep + os.path.join(os.sep, 'opt', cloud_name.lower())
         env_matcher = re.compile('SLIPSTREAM_')
         for var, val in os.environ.items():
