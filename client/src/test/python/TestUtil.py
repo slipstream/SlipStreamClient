@@ -51,6 +51,13 @@ class TestUtil(unittest.TestCase):
         finally:
             util._sanitize_env = _sanitize_env_save
 
+    def test_execute_NoneType(self):
+        try:
+            util.execute([0, 'foo', None])
+        except Exception as ex:
+            assert str(ex).startswith('Wrong input.')
+        else:
+            self.fail('Should have thrown Exception.')
 
 if __name__ == "__main__":
     unittest.main()
