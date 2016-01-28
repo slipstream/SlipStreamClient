@@ -172,6 +172,12 @@ def execute(commandAndArgsList, **kwargs):
     if not isinstance(commandAndArgsList, list):
         commandAndArgsList = [commandAndArgsList]
 
+    if any(map(lambda x: x == None, commandAndArgsList)):
+        raise Exception('Wrong input. NoneType object is part of the command: %s' %
+                        commandAndArgsList)
+    else:
+        commandAndArgsList = map(str, commandAndArgsList)
+
     if is_windows():
         commandAndArgsList.insert(0, '-File')
         commandAndArgsList.insert(0, 'Bypass')
