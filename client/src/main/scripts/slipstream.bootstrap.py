@@ -272,6 +272,8 @@ def _installPip():
         _setInstallCommandAndDistro()
         subprocess.check_call(INSTALL_CMD + ['python-setuptools'], stdout=subprocess.PIPE)
         subprocess.check_call(_add_sudo_if_needed(['easy_install', 'pip']), stdout=subprocess.PIPE)
+        __pathPrepend('/usr/local/sbin')
+        __pathPrepend('/usr/local/bin')
         PIP_INSTALLED = True
 
 def _installPycryptoDependencies():
