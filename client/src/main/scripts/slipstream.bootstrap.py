@@ -430,11 +430,12 @@ def _add_executor_to_systemd(executor_name):
 
     try: os.unlink(dst)
     except: pass
-    os.symlink(src, dst)
-
-    rc, output = _get_rc_output('systemctl daemon-reload')
-    if rc != 0:
-        raise Exception('Failed registering machine executor with systemd: %s' % output)
+    shutil.copy(src, dst)
+    cmds = ['systemctl enable %s' % sname, 'systemctl daemon-reload']
+    for cmd in cmds:
+        rc, output = _get_rc_output(cmd)
+        if rc != 0:
+            raise Exception('Failed registering machine executor with systemd: %s' % output)
 
     return sname
 
