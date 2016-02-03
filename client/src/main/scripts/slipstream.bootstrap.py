@@ -349,7 +349,7 @@ def _get_verbosity():
     except ValueError:
         print '[WARNING]: Verbosity level not an integer. Defaulting to 0.'
     else:
-        if verbosityLevel == 1:
+        if verbosityLevel in [0, 1]:
             verbosity = '-v'
         elif verbosityLevel == 2:
             verbosity = '-vv'
