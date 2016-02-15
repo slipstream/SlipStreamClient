@@ -90,9 +90,14 @@ class MainProgram(CommandBase):
                                help='Kill VMs on any error.',
                                default=False, action='store_true')
 
+        self.parser.add_option('--scalable',
+                               dest='scalable',
+                               help='Launch a scalable application.',
+                               default=False, action='store_true')
+
         self.parser.add_option('--mutable-run',
-                               dest='mutable_run',
-                               help='Launch a mutable run.',
+                               dest='scalable',
+                               help='deprecated: use --scalable',
                                default=False, action='store_true')
 
         self.parser.add_option('--build-image',
@@ -238,7 +243,7 @@ class MainProgram(CommandBase):
         if self.options.build_image:
             self.parameters[self.RUN_TYPE] = 'Machine'
 
-        if self.options.mutable_run:
+        if self.options.scalable:
             self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
 
     def _decorate_node_param_key(self, key, filter_out=[]):
