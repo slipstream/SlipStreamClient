@@ -48,7 +48,7 @@ class MainProgram(CommandBase):
 
         self._checkArgs()
 
-        self.reason = (len(self.args) and self.args[0]) or None
+        self.reason = (len(self.args) and self.args[0]) or '(unspecified)'
 
     def _checkArgs(self):
         if len(self.args) > 1:
