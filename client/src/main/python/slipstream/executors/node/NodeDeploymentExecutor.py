@@ -118,6 +118,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         else:
             util.printDetail('INFO: Conditionally skipped sending reports.',
                              verboseThreshold=util.VERBOSE_LEVEL_QUIET)
+        self.wrapper.set_scale_state_operational()
 
     def _execute_report_target_and_send_reports(self):
         exports = {'SLIPSTREAM_REPORT_DIR': util.get_platform_reports_dir()}
@@ -134,7 +135,6 @@ class NodeDeploymentExecutor(MachineExecutor):
     @override
     def onReady(self):
         super(NodeDeploymentExecutor, self).onReady()
-        self.wrapper.set_scale_state_operational()
 
     def _get_target_on_scale_action(self, action):
         return self.SCALE_ACTION_TO_TARGET.get(action, None)
