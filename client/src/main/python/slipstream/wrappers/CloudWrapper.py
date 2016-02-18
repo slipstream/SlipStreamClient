@@ -56,9 +56,9 @@ class CloudWrapper(BaseWrapper):
     def initCloudConnector(self, config_holder=None):
         self._cloud_client = CloudConnectorFactory.createConnector(
             config_holder or self._get_config_holder())
+        self._cloud_client.set_slipstream_client_as_listener(self.get_slipstream_client())
 
     def build_image(self):
-        self._cloud_client.set_slipstream_client_as_listener(self.get_slipstream_client())
         user_info = self._get_user_info(self._get_cloud_service_name())
 
         node_instance = self._get_node_instances_to_start().get(NodeDecorator.MACHINE_NAME)
