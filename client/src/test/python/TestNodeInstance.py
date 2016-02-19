@@ -47,6 +47,40 @@ class TestNodeInstance(unittest.TestCase):
                            'cloud-x.networks': 'foo, bar'})
         assert ['foo', 'bar'] == ni.get_networks()
 
+        ni = NodeInstance({'test.networks': []})
+        assert [] == ni.get_networks()
+
+        ni = NodeInstance({NodeDecorator.CLOUDSERVICE_KEY: 'cloud-x',
+                           'cloud-x.networks': ['foo']})
+        assert ['foo'] == ni.get_networks()
+
+    def test_get_security_groups(self):
+
+        ni = NodeInstance()
+        assert [] == ni.get_security_groups()
+
+        ni = NodeInstance({'test.' + NodeDecorator.SECURITY_GROUPS_KEY: ''})
+        assert [] == ni.get_security_groups()
+
+        ni = NodeInstance({NodeDecorator.CLOUDSERVICE_KEY: 'cloud-x',
+                           'cloud-x.' + NodeDecorator.SECURITY_GROUPS_KEY: 'foo'})
+        assert ['foo'] == ni.get_security_groups()
+
+        ni = NodeInstance({NodeDecorator.CLOUDSERVICE_KEY: 'cloud-x',
+                           'cloud-x.' + NodeDecorator.SECURITY_GROUPS_KEY: ' foo, bar'})
+        assert ['foo', 'bar'] == ni.get_security_groups()
+
+        ni = NodeInstance({'test.' + NodeDecorator.SECURITY_GROUPS_KEY: []})
+        assert [] == ni.get_security_groups()
+
+        ni = NodeInstance({NodeDecorator.CLOUDSERVICE_KEY: 'cloud-x',
+                           'cloud-x.' + NodeDecorator.SECURITY_GROUPS_KEY: ['foo']})
+        assert ['foo'] == ni.get_security_groups()
+
+        ni = NodeInstance({NodeDecorator.CLOUDSERVICE_KEY: 'cloud-x',
+                           'cloud-x.' + NodeDecorator.SECURITY_GROUPS_KEY: [' foo', 'bar ']})
+        assert ['foo', 'bar'] == ni.get_security_groups()
+
     def test_get_disk_attach_detach(self):
         ni = NodeInstance()
         assert None == ni.get_disk_attach_size()
