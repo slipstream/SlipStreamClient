@@ -53,19 +53,17 @@ class Client(object):
         return util.loadModule(moduleName)
 
     def getRuntimeParameter(self, key):
+        value = None
 
         _key = self._qualifyKey(key)
 
         if self.noBlock:
-            value = self._getRuntimeParameter(_key, self.ignoreAbort)
+            value = self._getRuntimeParameter(_key)
         else:
-            value = None
             timer = 0
             while True:
-                try:
-                    value = self._getRuntimeParameter(_key, self.ignoreAbort)
-                except NotYetSetException:
-                    pass
+                value = self._getRuntimeParameter(_key)
+
                 if value is not None:
                     break
                 if self.timeout != 0 and timer >= self.timeout:
@@ -77,6 +75,7 @@ class Client(object):
                 sleepTime = 5
                 time.sleep(sleepTime)
                 timer += sleepTime
+
         return value
 
     def launchDeployment(self, params):
@@ -142,14 +141,15 @@ class Client(object):
     def _getNodeName(self):
         return self.context[NodeDecorator.NODE_INSTANCE_NAME_KEY]
 
-    def _getRuntimeParameter(self, key, ignoreAbort=False):
-        specialKeys = [NodeDecorator.NODE_INSTANCE_NAME_KEY]
-        if key in specialKeys:
+    def _getRuntimeParameter(self, key):
+        special_keys = [NodeDecorator.NODE_INSTANCE_NAME_KEY]
+        if key in special_keys:
             return self.context['key']
 
-        content = self.httpClient.getRuntimeParameter(key)
-
-        return content
+        try:
+            return self.httpClient.getRuntimeParameter(key, self.ignoreAbort)
+        except NotYetSetException:
+            return None
 
     def setRuntimeParameter(self, key, value):
         _key = self._qualifyKey(key)
