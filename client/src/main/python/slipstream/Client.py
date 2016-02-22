@@ -53,13 +53,16 @@ class Client(object):
         return util.loadModule(moduleName)
 
     def getRuntimeParameter(self, key):
+        value = None
 
         _key = self._qualifyKey(key)
 
         if self.noBlock:
-            value = self._getRuntimeParameter(_key, self.ignoreAbort)
+            try:
+                value = self._getRuntimeParameter(_key, self.ignoreAbort)
+            except NotYetSetException:
+                pass
         else:
-            value = None
             timer = 0
             while True:
                 try:

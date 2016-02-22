@@ -67,7 +67,7 @@ class MainProgram(CommandBase):
         configHolder = ConfigHolder(self.options)
         client = Client(configHolder)
         value = client.getRuntimeParameter(self.key)
-        print(value)
+        print(value if value is not None else '')
 
 if __name__ == "__main__":
     try:
