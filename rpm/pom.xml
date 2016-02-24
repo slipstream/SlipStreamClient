@@ -155,6 +155,7 @@
 					<requires>
 						<require>python &gt;= 2.6</require>
 						<require>python-httplib2</require>
+						<require>python-paramiko</require>
 					</requires>
 
 					<mappings>
