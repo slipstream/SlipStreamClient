@@ -367,11 +367,10 @@ class BaseCloudConnector(object):
             self.stop_vms_by_ids(ids)
 
     def __create_allow_all_security_group_if_needed(self, nodes_instances):
-        sg_key = NodeDecorator.SECURITY_GROUPS_KEY
-        sg_name = NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME
+        allow_all = NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME
 
         for ni in nodes_instances.itervalues():
-            if ni.get_cloud_parameter(sg_key, '').strip() == sg_name:
+            if allow_all in ni.get_security_groups():
                 self._create_allow_all_security_group()
                 break
 

@@ -21,6 +21,19 @@ import slipstream.util as util
 from slipstream.NodeDecorator import NodeDecorator
 
 
+def as_list(func):
+    def wfun(self):
+        val = func(self)
+        if val:
+            if isinstance(val, list):
+                return map(lambda x: x.strip(), val)
+            else:
+                return map(lambda x: x.strip(), val.split(','))
+        else:
+            return []
+    return wfun
+
+
 class NodeInstance(object):
 
     IMAGE_ATTRIBUTE_PREFIX = 'image'
@@ -135,14 +148,10 @@ class NodeInstance(object):
     def get_network_type(self, default_value=None):
         return self.__get('network', default_value)
 
+    @as_list
     def get_networks(self):
-        '''Return list of user provided network names, or an empty list instead.
-        '''
-        networks = self.get_cloud_parameter('networks', '')
-        if networks:
-            return [n.strip() for n in networks.split(',')]
-        else:
-            return []
+        "Return list of user provided network names, or an empty list instead."
+        return self.get_cloud_parameter('networks', [])
 
     def get_platform(self):
         return self.get_image_attribute(NodeDecorator.PLATFORM_KEY, 'linux')
@@ -168,10 +177,10 @@ class NodeInstance(object):
     def get_instance_type(self):
         return self.get_cloud_parameter('instance.type')
 
+    @as_list
     def get_security_groups(self):
-        security_groups = self.get_cloud_parameter(
-            NodeDecorator.SECURITY_GROUPS_KEY, '').split(',')
-        return [x.strip() for x in security_groups if x and x.strip()]
+        "Return list of security group names, or an empty list instead."
+        return self.get_cloud_parameter(NodeDecorator.SECURITY_GROUPS_KEY, [])
 
     def get_cpu(self):
         return self.get_cloud_parameter('cpu')
