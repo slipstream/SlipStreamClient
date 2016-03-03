@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>SlipStreamClient</artifactId>
-  <version>2.23.2-SNAPSHOT</version>
+  <version>2.23.2</version>
   <packaging>pom</packaging>
   <name>SlipStreamClient</name>
   <url>http://sixsq.com/</url>
@@ -10,7 +10,7 @@
   <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStream</artifactId>
-    <version>2.23.2-SNAPSHOT</version>
+    <version>2.23.2</version>
     <relativePath>../SlipStream</relativePath>
   </parent>
 
@@ -52,6 +52,7 @@
      <connection>${scm.read}/SlipStreamClient.git</connection>
      <developerConnection>${scm.write}/SlipStreamClient.git</developerConnection>
      <url>${scm.public}/SlipStreamClient</url>
+    <tag>v2.23.2-community</tag>
   </scm>
 
 </project>
