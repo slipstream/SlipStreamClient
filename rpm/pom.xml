@@ -156,6 +156,7 @@
 						<require>python &gt;= 2.6</require>
 						<require>python-httplib2</require>
 						<require>python-paramiko</require>
+                        <require>slipstream-useradd${slipstream.edition}</require>
 					</requires>
 
 					<mappings>
@@ -257,6 +258,7 @@ mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
   <!-- fixing a bug in client -->
   <script>
 /bin/touch /usr/bin/slipstream.client.conf
+mkdir -p /opt/slipstream/connectors/bin
 /bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf
   </script>
 </postinstallScriptlet>
