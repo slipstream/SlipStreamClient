@@ -1,4 +1,4 @@
-<projectModule category="Project" creation="2013-10-30 09:54:53.570 UTC" deleted="false" description="Base images and examples highlighting SlipStream features" isLatestVersion="true" lastModified="2015-07-02 13:42:10.363 UTC" logoLink="https://slipstream.sixsq.com/images/modules-logos/cloud-apps.svg" parentUri="module/" shortName="examples" version="1792">
+<projectModule category="Project" creation="2013-10-30 09:54:53.570 UTC" deleted="false" description="Base images and examples highlighting SlipStream features" isLatestVersion="true" lastModified="2015-07-02 13:42:10.363 UTC" logoLink="https://nuv.la/images/modules-logos/cloud-apps.svg" parentUri="module/" shortName="examples" version="1792">
    <authz groupCreateChildren="false" groupDelete="false" groupGet="true" groupPost="false" groupPut="true" inheritedGroupMembers="false" owner="sixsq" ownerCreateChildren="true" ownerDelete="true" ownerGet="true" ownerPost="false" ownerPut="true" publicCreateChildren="false" publicDelete="false" publicGet="true" publicPost="false" publicPut="false">
       <groupMembers>
          </groupMembers>

@@ -34,7 +34,7 @@ class LocalContextualizer(object):
     [contextualization]
     nodename=<node-name>
     diid=<run-id>
-    serviceurl=https://slipstream.sixsq.com
+    serviceurl=https://nuv.la
     username=<username>
     password=<password>
     """

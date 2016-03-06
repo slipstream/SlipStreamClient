@@ -97,7 +97,7 @@
                 <argument>setup.py</argument>
                 <!-- For 'upload' PyPi credentials have to be in ~/.pypirc -->
                 <argument>sdist</argument>
-                <argument>upload</argument>
+                <!-- <argument>upload</argument> -->
               </arguments>
             </configuration>
           </plugin>
