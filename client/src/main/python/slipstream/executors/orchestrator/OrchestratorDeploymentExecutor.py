@@ -63,14 +63,13 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def onSendingReports(self):
         super(OrchestratorDeploymentExecutor, self).onSendingReports()
         self._complete_state_for_failed_node_instances()
+        self.wrapper.set_removed_instances_as_gone()
 
     @override
     def onReady(self):
         super(OrchestratorDeploymentExecutor, self).onReady()
 
         self._complete_state_for_failed_node_instances()
-
-        self.wrapper.set_removed_instances_as_gone()
 
         if not self.wrapper.need_to_stop_images() and not self._is_mutable():
             self._killItself()
