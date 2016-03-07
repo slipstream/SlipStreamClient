@@ -115,7 +115,7 @@ class CommandBase(object):
 
     def addEndpointOption(self):
         default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                          'https://slipstream.sixsq.com')
+                                          'https://nuv.la')
         self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
                                help='SlipStream server endpoint',
                                default=default_endpoint)
