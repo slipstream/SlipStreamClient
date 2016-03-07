@@ -59,6 +59,8 @@ CONFIGURATION_RESOURCE_PATH = '/configuration'
 
 RUN_PARAM_REFQNAME = 'refqname'
 RUN_PARAM_MUTABLE = 'mutable'
+RUN_PARAM_KEEP_RUNNING = 'keep-running'
+RUN_PARAM_TAGS = 'tags'
 
 CONFIGPARAM_CONNECTOR_MODULE_NAME = 'cloudconnector'
 
