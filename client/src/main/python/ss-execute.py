@@ -38,7 +38,11 @@ class MainProgram(CommandBase):
 
     RUN_TYPE = 'type'
     REF_QNAME = util.RUN_PARAM_REFQNAME
-    RUN_LAUNCH_NOT_NODE_PARAMS = (REF_QNAME, util.RUN_PARAM_MUTABLE, RUN_TYPE)
+    RUN_LAUNCH_NOT_NODE_PARAMS = (RUN_TYPE,
+                                  util.RUN_PARAM_REFQNAME,
+                                  util.RUN_PARAM_MUTABLE,
+                                  util.RUN_PARAM_KEEP_RUNNING,
+                                  util.RUN_PARAM_TAGS)
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
