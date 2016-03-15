@@ -47,7 +47,7 @@ class ConfigHolder(object):
     def __init__(self, options={}, config={}, context={}, configFile=''):
         # command line options
         self.options = self._extractDict(options)
-        self.options['ssLogDir'] = util.REPORTSDIR
+        self.options['ssLogDir'] = util.get_platform_reports_dir()
         # classes to instantiate via Factories
         self.config = config or self._getConfigFromFileAsDict(configFile)
         # SlipStream context

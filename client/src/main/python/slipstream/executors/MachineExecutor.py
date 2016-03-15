@@ -53,8 +53,8 @@ class MachineExecutor(object):
         :type config_holder: slipstream.ConfigHolder
         """
         self.wrapper = wrapper
-        self.timeout = 55 * 60  # 50 minutes
-        self.ssLogDir = util.REPORTSDIR
+        self.timeout = 55 * 60  # 55 minutes
+        self.ssLogDir = util.get_platform_reports_dir()
         self.verboseLevel = 0
         config_holder.assign(self)
 
@@ -349,7 +349,7 @@ class MachineExecutor(object):
             archive = tarfile.open(reportFileName, 'w:gz')
             for element in self.reportFilesAndDirsList:
                 name = '_'.join(os.path.abspath(element).strip(os.sep).split(os.sep))
-                archive.add(element, name)
+                archive.add(os.path.expandvars(element), name)
         except Exception as e:
             raise RuntimeError("Failed to bundle reports:\n%s" % e)
         archive.close()

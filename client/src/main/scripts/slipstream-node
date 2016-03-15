@@ -26,13 +26,35 @@ from slipstream.executors.Node import Node
 from slipstream.Logger import Logger
 from slipstream import util
 
-from slipstream.daemonr import DaemonRunnable
-from slipstream.daemonr import DaemonRunner
-
 
 LOG_FILE = os.path.join(util.REPORTSDIR, 'slipstream-node.log')
 LOG_LEVEL = 'info'
 PID_FILE = '/var/run/slipstream-node.pid'
+
+try:
+    from slipstream.daemonr import DaemonRunnable
+    from slipstream.daemonr import DaemonRunner
+
+    class Runnable(DaemonRunnable):
+
+        def get_action(self):
+            return self._executor.get_action()
+
+        def get_logger(self):
+            return self.config_holder.options.get('logger') or Logger(self.config_holder).get_logger()
+
+        def get_run_action(self):
+            return self._executor.get_run_action()
+
+        def __init__(self, executor):
+            super(Runnable, self).__init__(executor.get_config_holder())
+            self._executor = executor
+
+        def run(self):
+            self._executor.do_work()
+except Exception as e:
+    print '\nFailed to import DaemonRunnable and DaemonRunner: %s\n' % e
+
 
 class NodeExecutor(CommandBase):
     """SlipStream Node Executor.
@@ -97,32 +119,16 @@ If action is not provided, executor runs on foreground."""
         node.execute()
 
 
-class Runnable(DaemonRunnable):
-
-    def get_action(self):
-        return self._executor.get_action()
-
-    def get_logger(self):
-        return self.config_holder.options.get('logger') or \
-            Logger(self.config_holder).get_logger()
-
-    def get_run_action(self):
-        return self._executor.get_run_action()
-
-    def __init__(self, executor):
-        super(Runnable, self).__init__(executor.get_config_holder())
-        self._executor = executor
-
-    def run(self):
-        self._executor.do_work()
-
-
 if __name__ == '__main__':
     try:
         ne = NodeExecutor()
         ne.parse_args()
-        runnable = Runnable(ne)
-        DaemonRunner(runnable)
+        try:
+            runnable = Runnable(ne)
+            DaemonRunner(runnable)
+        except ImportError as e:
+            print '\n%s\n' % e
+            ne.do_work()
     except KeyboardInterrupt:
         print '\nExecution interrupted by the user... goodbye!'
         sys.exit(-1)

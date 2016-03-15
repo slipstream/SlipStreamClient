@@ -790,13 +790,13 @@ class BaseCloudConnector(object):
         command += ')\n'
         command += 'setx path "%%path%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin" /M\n'
         command += 'setx PYTHONPATH "%%PYTHONPATH%%;C:\\opt\\slipstream\\client\\lib" /M\n'
-        command += 'powershell -Command "[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}; $wc = New-Object System.Net.WebClient; $wc.Headers.Add(\'User-Agent\',\'PowerShell\'); $wc.DownloadFile(\'%(bootstrapUrl)s\', $env:temp+\'\\%(bootstrap)s\')" > %(reports)s\\%(nodename)s.slipstream.log 2>&1\n'
+        command += 'powershell -Command "[System.Net.ServicePointManager]::ServerCertificateValidationCallback = {$true}; $wc = New-Object System.Net.WebClient; $wc.Headers.Add(\'User-Agent\',\'PowerShell\'); $wc.DownloadFile(\'%(bootstrapUrl)s\', \'%(bootstrap)s\')" > %(reports)s\\%(nodename)s.slipstream.log 2>&1\n'
         command += 'set PATH=%%PATH%%;C:\\Python27;C:\\opt\\slipstream\\client\\bin;C:\\opt\\slipstream\\client\\sbin\n'
         command += 'set PYTHONPATH=C:\\opt\\slipstream\\client\\lib\n'
 
-        command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python C:\\%(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
+        command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
-        return command % self._get_bootstrap_command_replacements(instance_name, Client.WINDOWS_REPORTSDIR)
+        return command % self._get_bootstrap_command_replacements_for_windows(instance_name)
 
     def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
 
@@ -805,14 +805,24 @@ class BaseCloudConnector(object):
         command += '|| curl -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
-        return command % self._get_bootstrap_command_replacements(instance_name, Client.REPORTSDIR)
+        return command % self._get_bootstrap_command_replacements_for_linux(instance_name)
 
-    def _get_bootstrap_command_replacements(self, instance_name, reports_dir):
+    def _get_bootstrap_command_replacements_for_linux(self, instance_name):
         return {
-            'reports': reports_dir,
+            'reports': Client.REPORTSDIR,
             'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
             'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
             'ss_home': util.SLIPSTREAM_HOME,
+            'nodename': instance_name,
+            'machine_executor': self._get_machine_executor_type()
+        }
+
+    def _get_bootstrap_command_replacements_for_windows(self, instance_name):
+        return {
+            'reports': Client.WINDOWS_REPORTSDIR,
+            'bootstrap': '\\'.join([util.WINDOWS_SLIPSTREAM_HOME, 'slipstream.bootstrap']),
+            'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
+            'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
             'nodename': instance_name,
             'machine_executor': self._get_machine_executor_type()
         }
@@ -826,7 +836,8 @@ class BaseCloudConnector(object):
             waitUntilSshCanConnectOrTimeout(host,
                                             self.TIMEOUT_CONNECT,
                                             sshKey=sshKey,
-                                            user=username, password=password)
+                                            user=username, password=password,
+                                            verboseLevel=self.verboseLevel)
         except Exception as ex:
             raise Exceptions.ExecutionException("Failed to connect to "
                                                 "%s: %s, %s" % (host, type(ex),
