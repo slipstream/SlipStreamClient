@@ -46,6 +46,7 @@ VERBOSE_LEVEL_DETAILED = 2
 PRINT_TO_STDERR_ONLY = False
 
 SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
+WINDOWS_SLIPSTREAM_HOME = 'C:\\opt\\slipstream'
 
 TMPDIR = os.path.join(tempfile.gettempdir(), 'slipstream')
 REPORTSDIR = os.path.join(os.sep, 'var', 'log', 'slipstream', 'client')
@@ -758,7 +759,7 @@ def user_exists(user):
 
 
 def get_platform_reports_dir():
-    return is_windows() and WINDOWS_REPORTSDIR or REPORTSDIR
+    return WINDOWS_REPORTSDIR if is_windows() else REPORTSDIR
 
 
 def truncate_middle(max_len, message, truncate_message='...'):
