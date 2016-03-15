@@ -31,10 +31,17 @@ LOG_FILE = os.path.join(util.REPORTSDIR, 'slipstream-node.log')
 LOG_LEVEL = 'info'
 PID_FILE = '/var/run/slipstream-node.pid'
 
+daemonr_available = False
 try:
     from slipstream.daemonr import DaemonRunnable
     from slipstream.daemonr import DaemonRunner
+except Exception as e:
+    print '\nFailed to import DaemonRunnable and DaemonRunner: %s\n' % e
+else:
+    daemonr_available = True
 
+
+if daemonr_available:
     class Runnable(DaemonRunnable):
 
         def get_action(self):
@@ -52,8 +59,6 @@ try:
 
         def run(self):
             self._executor.do_work()
-except Exception as e:
-    print '\nFailed to import DaemonRunnable and DaemonRunner: %s\n' % e
 
 
 class NodeExecutor(CommandBase):
@@ -123,12 +128,13 @@ if __name__ == '__main__':
     try:
         ne = NodeExecutor()
         ne.parse_args()
-        try:
+
+        if daemonr_available:
             runnable = Runnable(ne)
             DaemonRunner(runnable)
-        except ImportError as e:
-            print '\n%s\n' % e
+        else:
             ne.do_work()
+
     except KeyboardInterrupt:
         print '\nExecution interrupted by the user... goodbye!'
         sys.exit(-1)
