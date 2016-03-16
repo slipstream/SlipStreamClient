@@ -174,8 +174,9 @@ class HttpClient(object):
             return resp, content
 
         def _handleResponse(resp, content):
-            self._printDetail('Received response: %s\nwith content:\n %s' % (
-                resp, _convertContent(content)))
+            self._printDetail('Received response: %s\n                         '
+                              'With content: %s'
+                              % (resp, _convertContent(content)))
 
             if str(resp.status).startswith('2'):
                 return _handle2xx(resp)
@@ -285,5 +286,9 @@ class HttpClient(object):
         with open(self.cookieFilename, 'w') as fh:
             fh.write(self.cookie)
 
-    def _printDetail(self, message):
+    def _printDetail(self, message, max_characters=1000):
+        if len(message) > max_characters:
+            message = '%s\n                         %s' \
+                      % (message[:max_characters], '::::: Content truncated :::::')
+
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)

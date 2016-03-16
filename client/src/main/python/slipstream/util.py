@@ -387,7 +387,7 @@ def uuid():
 
 def printDetail(message, verboseLevel=1, verboseThreshold=1, timestamp=True):
     if verboseLevel >= verboseThreshold:
-        printAndFlush('\n    %s\n' % message, timestamp=timestamp)
+        printAndFlush('%s' % message, timestamp=timestamp)
 
 
 def _printDetail(message, kwargs={}):
@@ -406,7 +406,7 @@ def _extractVerboseThreshold(kwargs):
 
 
 def _extractTimestamp(kwargs):
-    return _extractAndDeleteKey('timestamp', False, kwargs)
+    return _extractAndDeleteKey('timestamp', True, kwargs)
 
 
 def _extractAndDeleteKey(key, default, dictionary):
@@ -422,7 +422,7 @@ def printAction(message):
     padding = 4 * '='
     line = (length + 2 * len(padding) + 2) * '='
     _message = padding + ' %s ' % message + padding
-    printAndFlush('\n%s\n%s\n%s\n' % (line, _message, line))
+    printAndFlush('\n\n%s\n%s\n%s\n' % (line, _message, line))
 
 
 def printStep(message):
