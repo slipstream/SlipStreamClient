@@ -31,7 +31,7 @@ from paramiko import SSHClient
 from paramiko.ssh_exception import AuthenticationException
 from Crypto.PublicKey import RSA
 
-from slipstream.util import execute, _printDetail
+from slipstream.util import execute, _printDetail, printError
 from slipstream.exceptions import Exceptions
 from slipstream.utils.pyCryptoPatch import pyCryptoPatch
 import scpclient
@@ -265,7 +265,6 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
     while (time_stop - time.time()) >= 0:
         kwargs_ = copy.copy(kwargs)
         try:
-            print kind
             if True == globals()['_ssh_can_connect_' + kind](host, user,
                                                              sshKey=sshKey, password=password,
                                                              timeout=timeout_connect, **kwargs_):
@@ -290,7 +289,7 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
             _printDetail(str(ex), kwargs_)
             raise
         except SshAuthFailed as ex:
-            _printDetail(('%i: ' % auth_failures) + str(ex), kwargs_)
+            _printDetail('%s - %i attempts left.' % (str(ex).strip('\n\r\t '), auth_failures), kwargs_)
             reason = 'SshAuthFailed'
             if auth_failures <= 0:
                 raise
