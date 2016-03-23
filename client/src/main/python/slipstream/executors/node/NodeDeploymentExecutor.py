@@ -83,8 +83,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             return
 
         if not self.wrapper.is_scale_state_operational():
-            if self.wrapper.has_to_execute_build_recipes():
-                self._execute_build_recipes()
+            self._execute_build_recipes()
             self._execute_execute_target()
         else:
             self._execute_scale_action_target()

@@ -30,8 +30,8 @@ from Queue import Queue, Empty
 from threading import Thread
 
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.exceptions.Exceptions import AbortException, \
-    TerminalStateException, ExecutionException
+from slipstream.exceptions.Exceptions import AbortException, TerminalStateException, ExecutionException
+from slipstream.NodeDecorator import NodeDecorator
 from slipstream import util
 
 
@@ -201,22 +201,52 @@ class MachineExecutor(object):
         self._set_need_to_send_reports()
 
     def _execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
-        message = "Executing target '%s'" % target_name
-        util.printStep(message)
-        if ssdisplay:
-            self.wrapper.set_statecustom(message)
+        target = self.node_instance.get_image_target(target_name)
 
-        target_script = self.node_instance.get_image_target(target_name)
-        if target_script:
-            self._launch_target_script(target_name, exports, abort_on_err, ignore_abort=ignore_abort)
-        else:
-            util.printAndFlush('Nothing to do on target: %s\n' % target_name)
+        if target is None:
+            util.printAndFlush('Nothing to do on target: %s' % target_name)
+            return
 
-    def _launch_target_script(self, target_name, exports=None, abort_on_err=True, ignore_abort=False):
-        fail_msg = "Failed running '%s' target on '%s'" % (target_name, self._get_node_instance_name())
-        script = self.node_instance.get_image_target(target_name)
+        for subtarget in target:
+            full_target_name = '%s.%s' % (subtarget.get('module'), target_name)
 
-        self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg)
+            if target_name in [NodeDecorator.NODE_PRERECIPE, NodeDecorator.NODE_RECIPE] \
+                    and not self._need_to_execute_build_step(target, subtarget):
+                util.printAndFlush('Component already built. Nothing to do on target: %s' % full_target_name)
+                continue
+
+            script = subtarget.get('script')
+            if script:
+                message = "Executing target '%s'" % full_target_name
+                util.printStep(message)
+                if ssdisplay:
+                    self.wrapper.set_statecustom(message)
+
+                fail_msg = "Failed running '%s' target on '%s'" % (full_target_name, self._get_node_instance_name())
+                self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg)
+            else:
+                util.printAndFlush('Nothing to do on target: %s' % full_target_name)
+
+    def _need_to_execute_build_step(self, target, subtarget):
+        return MachineExecutor.need_to_execute_build_step(self._get_node_instance(), target, subtarget)
+
+    @staticmethod
+    def need_to_execute_build_step(node_instance, target, subtarget):
+        module_uri = subtarget.get('module_uri')
+        build_states = node_instance.get_build_state()
+        cloud = node_instance.get_cloud()
+        #util.printAndFlush('\ncloud: %s' % cloud)
+        for st in reversed(target):
+            st_module_uri = st.get('module_uri')
+            build_state = build_states.get(st_module_uri, {})
+            #util.printAndFlush('st: %s\nbuild_state: %s\n%s\n%s' % (st, build_state, st_module_uri, module_uri))
+            if cloud in build_state.get('builded_on', []):
+                return False
+            if st_module_uri == module_uri:
+                return True
+
+        return True
+
 
     def _launch_script(self, script, exports=None, abort_on_err=True, ignore_abort=False, fail_msg=None):
         if fail_msg is None:
@@ -379,6 +409,12 @@ class MachineExecutor(object):
     def _abort_running_in_final_state(self):
         time.sleep(60)
         raise ExecutionException('The run is in a final state but the VM is still running !')
+
+    def get_cloud_service_name(self):
+        return self.wrapper._get_cloud_service_name()
+
+    def _get_node_instance(self):
+        return self.wrapper.get_my_node_instance()
 
     def _get_node_instance_name(self):
         return self.wrapper.get_my_node_instance_name()

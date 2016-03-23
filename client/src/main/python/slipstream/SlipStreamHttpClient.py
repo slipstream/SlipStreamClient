@@ -105,9 +105,10 @@ class SlipStreamHttpClient(object):
         nodes_instances = {}
 
         self._retrieveAndSetRun()
+
         nodes_instances_runtime_parameters = \
-            DomExtractor.extract_nodes_instances_runtime_parameters(
-                self.run_dom, cloud_service_name)
+            DomExtractor.extract_nodes_instances_runtime_parameters(self.run_dom, cloud_service_name)
+
         nodes_runtime_parameters = DomExtractor.extract_nodes_runtime_parameters(self.run_dom)
 
         for node_instance_name, node_instance_runtime_parameters in nodes_instances_runtime_parameters.items():
@@ -126,6 +127,9 @@ class SlipStreamHttpClient(object):
 
             image_targets = DomExtractor.extract_node_image_targets(self.run_dom, node_name)
             node_instance.set_image_targets(image_targets)
+
+            build_state = DomExtractor.extract_node_image_build_state(self.run_dom, node_name)
+            node_instance.set_build_state(build_state)
 
             nodes_instances[node_instance_name] = node_instance
 
@@ -395,21 +399,38 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_node_image_targets(run_dom, node_name):
-        targets = {}
 
         if NodeDecorator.is_orchestrator_name(node_name):
-            deployment_dom = DomExtractor.extract_deployment(run_dom, node_name)
-            targets.update(DomExtractor.get_deployment_targets_from_deployment(deployment_dom))
+            module_dom = DomExtractor.extract_deployment(run_dom, node_name)
         else:
-            image_dom = DomExtractor.extract_node_image(run_dom, node_name)
-            targets.update(DomExtractor.get_build_targets(image_dom))
-            targets.update(DomExtractor.get_deployment_targets_from_image(image_dom))
+            module_dom = DomExtractor.extract_node_image(run_dom, node_name)
 
-        return targets
+        return DomExtractor.get_targets_from_module(module_dom)
+
+    @staticmethod
+    def extract_node_image_build_state(run_dom, node_name):
+
+        if NodeDecorator.is_orchestrator_name(node_name):
+            return {}
+
+        image_dom = DomExtractor.extract_node_image(run_dom, node_name)
+        return DomExtractor.get_build_state_from_image(image_dom)
+
+    @staticmethod
+    def get_build_state_from_image(image_dom):
+        build_state = {}
+
+        for st in image_dom.findall('buildStates/buildState'):
+            module_uri = st.get('moduleUri')
+            builded_on = st.get('buildedOn', '').split(',')
+            build_state[module_uri] = dict(module_uri=module_uri, builded_on=builded_on)
+
+        return build_state
 
     @staticmethod
     def get_module_category(run_dom):
-        return run_dom.find('module').get('category')
+        module = run_dom.find('module')
+        return module.get('category', None) if module is not None else None
 
     @staticmethod
     def get_extra_disks_from_image(image_dom):
@@ -438,20 +459,15 @@ class DomExtractor(object):
         return dom.attrib
 
     @staticmethod
-    def get_build_targets(run_dom):
-        targets = {}
+    def get_packages(module_dom):
+        packages = []
 
-        for target in [NodeDecorator.NODE_PRERECIPE, NodeDecorator.NODE_RECIPE]:
-            targets[target] = DomExtractor.get_element_value_from_element_tree(run_dom, target)
-
-        targets[NodeDecorator.NODE_PACKAGES] = []
-        packages = run_dom.findall('packages/package')
-        for package in packages:
+        for package in module_dom.findall('packagesExpanded/packageExpanded'):
             name = package.get('name')
             if name:
-                targets[NodeDecorator.NODE_PACKAGES].append(name)
+                packages.append(name)
 
-        return targets
+        return packages
 
     @staticmethod
     def extractCategoryFromRun(run_dom):
@@ -478,21 +494,28 @@ class DomExtractor(object):
         return parameters
 
     @staticmethod
-    def get_deployment_targets_from_image(image_dom):
+    def get_targets_from_module(module_dom):
         '''Return deployment targets of the given image.
         '''
         targets = {}
-        for targetNode in image_dom.findall('targets/target'):
-            targets[targetNode.get('name')] = targetNode.text
-        return targets
+        for st in module_dom.findall('targetsExpanded/targetExpanded/subTarget'):
+            name = st.get('name')
+            subtarget = dict(name=name,
+                             order=int(st.get('order')),
+                             module_uri=st.get('moduleUri'),
+                             module=st.get('moduleShortName'),
+                             script=st.text)
 
-    @staticmethod
-    def get_deployment_targets_from_deployment(deployment_dom):
-        '''Return deployment targets of the given deployment.
-        '''
-        targets = {}
-        for target in deployment_dom.findall('targets/target'):
-            targets[target.get('name')] = target.text
+            targets.setdefault(name, [])
+            targets[name].append(subtarget)
+
+        for target in targets.itervalues():
+            target.sort(key=lambda t: t.get('order'))
+
+        if module_dom.tag == "imageModule" or module_dom.tag == "image" \
+                or module_dom.get('category') == NodeDecorator.IMAGE:
+            targets[NodeDecorator.NODE_PACKAGES] = DomExtractor.get_packages(module_dom)
+
         return targets
 
     @staticmethod

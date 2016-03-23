@@ -80,10 +80,10 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def test_get_deployment_targets(self):
         targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'apache')
-        self.assertEquals(True, targets['execute'].startswith('#!/bin/sh -xe\napt-get update -y\n'))
+        self.assertEquals(True, targets['execute'][-1].get('script','').startswith('#!/bin/sh -xe\napt-get update -y\n'))
 
         targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'testclient')
-        self.assertEquals(targets['execute'].startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
+        self.assertEquals(targets['execute'][-1].get('script','').startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
                           True)
 
     def test_extract_node_instances_from_run(self):
@@ -105,12 +105,21 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         prerecipe = 'echo prerecipe'
         recipe = 'echo recipe'
 
-        image_module_xml = """<imageModule>
+        image_module_xml = """
+<imageModule category="Image">
    <targets class="org.hibernate.collection.PersistentBag"/>
-   <packages class="org.hibernate.collection.PersistentBag">
-      <package name="%(package1)s"/>
-      <package name="%(package2)s"/>
-   </packages>
+   <targetsExpanded class="java.util.HashSet">
+      <targetExpanded name="prerecipe">
+         <subTarget name="prerecipe" order="1"><![CDATA[%(prerecipe)s]]></subTarget>
+      </targetExpanded>
+      <targetExpanded name="recipe">
+         <subTarget name="recipe" order="1"><![CDATA[%(recipe)s]]></subTarget>
+      </targetExpanded>
+   </targetsExpanded>
+   <packagesExpanded class="org.hibernate.collection.PersistentBag">
+      <packageExpanded name="%(package1)s"/>
+      <packageExpanded name="%(package2)s"/>
+   </packagesExpanded>
    <prerecipe><![CDATA[%(prerecipe)s]]></prerecipe>
    <recipe><![CDATA[%(recipe)s]]></recipe>
 </imageModule>
@@ -120,11 +129,11 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
        NodeDecorator.NODE_RECIPE: recipe}
 
         dom = etree.fromstring(image_module_xml)
-        targets = DomExtractor.get_build_targets(dom)
+        targets = DomExtractor.get_targets_from_module(dom)
 
         failMsg = "Failure getting '%s' build target."
-        assert targets[NodeDecorator.NODE_PRERECIPE] == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
-        assert targets[NodeDecorator.NODE_RECIPE] == recipe, failMsg % NodeDecorator.NODE_RECIPE
+        assert targets.get(NodeDecorator.NODE_PRERECIPE)[-1].get('script') == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
+        assert targets.get(NodeDecorator.NODE_RECIPE)[-1].get('script') == recipe, failMsg % NodeDecorator.NODE_RECIPE
         assert isinstance(targets[NodeDecorator.NODE_PACKAGES], list), failMsg % NodeDecorator.NODE_PACKAGES
         assert package1 in targets[NodeDecorator.NODE_PACKAGES], failMsg % NodeDecorator.NODE_PACKAGES
         assert package2 in targets[NodeDecorator.NODE_PACKAGES], failMsg % NodeDecorator.NODE_PACKAGES

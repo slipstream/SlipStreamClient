@@ -71,6 +71,7 @@ class NodeDecorator(object):
     PLATFORM_KEY = 'platform'
     LOGIN_USER_KEY = 'loginUser'
     LOGIN_PASS_KEY = 'login.password'
+    BUILD_STATE_KEY = 'build.state'
     SCALE_STATE_KEY = 'scale.state'
     SCALE_IAAS_DONE = 'scale.iaas.done'
     SCALE_IAAS_DONE_SUCCESS = 'true'
