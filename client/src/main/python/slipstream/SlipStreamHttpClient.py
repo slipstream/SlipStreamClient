@@ -422,8 +422,8 @@ class DomExtractor(object):
 
         for st in image_dom.findall('buildStates/buildState'):
             module_uri = st.get('moduleUri')
-            builded_on = st.get('buildedOn', '').split(',')
-            build_state[module_uri] = dict(module_uri=module_uri, builded_on=builded_on)
+            built_on = st.get('builtOn', '').split(',')
+            build_state[module_uri] = dict(module_uri=module_uri, built_on=built_on)
 
         return build_state
 

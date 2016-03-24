@@ -98,7 +98,7 @@ class NodeDeploymentExecutor(MachineExecutor):
     def _install_user_packages(self):
         util.printAndFlush('Installing packages')
 
-        if self.is_image_builded():
+        if self.is_image_built():
             util.printAndFlush('Component already built. No packages to install')
             return
 
