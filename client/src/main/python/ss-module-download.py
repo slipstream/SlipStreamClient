@@ -54,12 +54,12 @@ class MainProgram(CommandBase):
                                default=False, action='store_true')
 
         self.parser.add_option('--dump-image-ids', dest='dump_image_ids',
-            help='Store image IDs found in image modules into per module files.',
-            default=False, action='store_true')
+                               help='Store image IDs found in image modules into per module files.',
+                               default=False, action='store_true')
 
         self.parser.add_option('--dump-image-ids-dir', dest='dump_image_ids_dir',
-            help='Path to the directory to store the image IDs files. Default: current directory.',
-            default='.')
+                               help='Path to the directory to store the image IDs files. Default: current directory.',
+                               default='.')
 
         self.parser.add_option('--remove-group-members', dest='remove_group_members',
                                help='Remove members of the group in the authorizations',
@@ -104,6 +104,7 @@ class MainProgram(CommandBase):
 
         cloud_names = root.find('cloudNames')
         if cloud_names is not None:
+            cloud_names.attrib['length'] = '0'
             parameters = root.find('parameters')
             if parameters is not None:
                 for cloud_name in cloud_names.findall('*'):

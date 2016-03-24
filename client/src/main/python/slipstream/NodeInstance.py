@@ -106,14 +106,16 @@ class NodeInstance(object):
         self.__set(name, value)
 
     def is_orchestrator(self):
-        return util.str2bool(self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY,
-                                        'False'))
+        is_orch = self.__get(NodeDecorator.IS_ORCHESTRATOR_KEY)
+
+        if is_orch is None:
+            return NodeDecorator.is_orchestrator_name(self.get_name())
+        else:
+            return util.str2bool(is_orch)
 
     def is_windows(self):
         return self.get_platform().lower() == 'windows'
 
-    def is_orchestrator(self):
-        return NodeDecorator.is_orchestrator_name(self.get_name())
     def get_build_state(self):
         return self.__get(NodeDecorator.BUILD_STATE_KEY, {})
 
