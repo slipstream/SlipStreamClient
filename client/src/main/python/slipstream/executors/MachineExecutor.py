@@ -235,11 +235,11 @@ class MachineExecutor(object):
         module_uri = subtarget.get('module_uri')
         build_states = node_instance.get_build_state()
         cloud = node_instance.get_cloud()
-        #util.printAndFlush('\ncloud: %s' % cloud)
+
         for st in reversed(target):
             st_module_uri = st.get('module_uri')
             build_state = build_states.get(st_module_uri, {})
-            #util.printAndFlush('st: %s\nbuild_state: %s\n%s\n%s' % (st, build_state, st_module_uri, module_uri))
+
             if cloud in build_state.get('builded_on', []):
                 return False
             if st_module_uri == module_uri:
@@ -247,6 +247,13 @@ class MachineExecutor(object):
 
         return True
 
+    def is_image_builded(self):
+        node_instance = self._get_node_instance()
+        module_uri = node_instance.get_image_resource_uri()
+        build_state = node_instance.get_build_state().get(module_uri, {})
+        cloud = node_instance.get_cloud()
+
+        return cloud in build_state.get('builded_on', [])
 
     def _launch_script(self, script, exports=None, abort_on_err=True, ignore_abort=False, fail_msg=None):
         if fail_msg is None:

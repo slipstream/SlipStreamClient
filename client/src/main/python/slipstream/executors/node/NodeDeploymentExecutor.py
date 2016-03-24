@@ -96,6 +96,12 @@ class NodeDeploymentExecutor(MachineExecutor):
         self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
 
     def _install_user_packages(self):
+        util.printAndFlush('Installing packages')
+
+        if self.is_image_builded():
+            util.printAndFlush('Component already built. No packages to install')
+            return
+
         packages = self.node_instance.get_packages()
         if packages:
             message = 'Installing packages: %s' % ', '.join(packages)
@@ -105,7 +111,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             cmd = util.get_packages_install_command(self.node_instance.get_platform(), packages)
             self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg)
         else:
-            util.printStep('No packages to install')
+            util.printAndFlush('No packages to install')
 
     @override
     def onSendingReports(self):
