@@ -39,6 +39,7 @@ from slipstream.utils.ssh import remoteRunScriptNohup, waitUntilSshCanConnectOrT
 from slipstream.utils.tasksrunner import TasksRunner
 from slipstream.cloudconnectors.VmScaler import VmScaler
 from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
+from slipstream.executors.MachineExecutor import MachineExecutor
 from winrm.winrm_service import WinRMWebService
 from winrm.exceptions import WinRMTransportError
 
@@ -503,6 +504,27 @@ class BaseCloudConnector(object):
         vm = self._get_vm(NodeDecorator.MACHINE_NAME)
         return self._vm_get_id(vm)
 
+    def _remote_run_build_target(self, node_instance, host, target, username, password, private_key_file):
+        for subtarget in target:
+            target_name = subtarget.get('name')
+            full_target_name = '%s.%s' % (subtarget.get('module'), target_name)
+
+            if not MachineExecutor.need_to_execute_build_step(node_instance, target, subtarget):
+                message = 'Component already built. Nothing to do on target "%s" for node "%s"\n' \
+                          % (full_target_name, node_instance.get_name())
+                util.printAndFlush(message)
+                continue
+
+            script = subtarget.get('script')
+            if script:
+                message = 'Executing target "%s" on remote host "%s"' % (full_target_name, node_instance.get_name())
+                self._print_step(message)
+                remoteRunScript(username, host, script, sshKey=private_key_file, password=password)
+            else:
+                message = 'Nothing to do for target "%s" on node "%s""\n' % (full_target_name, node_instance.get_name())
+                util.printAndFlush(message)
+
+
     def _build_image_increment(self, user_info, node_instance, host):
         prerecipe = node_instance.get_prerecipe()
         recipe = node_instance.get_recipe()
@@ -522,7 +544,7 @@ class BaseCloudConnector(object):
 
             if prerecipe:
                 self._print_step('Running Pre-recipe', machine_name)
-                remoteRunScript(username, host, prerecipe, sshKey=ssh_private_key_file, password=password)
+                self._remote_run_build_target(node_instance, host, prerecipe, username, password, ssh_private_key_file)
 
             if packages:
                 self._print_step('Installing Packages', machine_name)
@@ -532,7 +554,7 @@ class BaseCloudConnector(object):
 
             if recipe:
                 self._print_step('Running Recipe', machine_name)
-                remoteRunScript(username, host, recipe, sshKey=ssh_private_key_file, password=password)
+                self._remote_run_build_target(node_instance, host, recipe, username, password, ssh_private_key_file)
 
             if not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
                 self._revert_ssh_security(host, username, ssh_private_key_file, publicKey)

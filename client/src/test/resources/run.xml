@@ -311,6 +311,28 @@ ss-set ready true]]></target>
 cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
 cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></target>
                   </targets>
+                  <targetsExpanded>
+                     <targetExpanded name="execute">
+                        <subTarget name="execute" order="1"><![CDATA[#!/bin/sh -xe
+apt-get update -y
+apt-get install -y apache2
+
+echo 'Hello from Apache deployed by SlipStream!' > /var/www/data.txt
+
+service apache2 stop
+port=$(ss-get port)
+sed -i -e 's/^Listen.*$/Listen '$port'/' /etc/apache2/ports.conf
+sed -i -e 's/^NameVirtualHost.*$/NameVirtualHost *:'$port'/' /etc/apache2/ports.conf
+sed -i -e 's/^<VirtualHost.*$/<VirtualHost *:'$port'>/' /etc/apache2/sites-available/default
+service apache2 start
+ss-set ready true]]></subTarget>
+                     </targetExpanded>
+                     <targetExpanded name="report">
+                        <subTarget name="report" order="1"><![CDATA[#!/bin/sh -x
+cp /var/log/apache2/access.log $SLIPSTREAM_REPORT_DIR
+cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></subTarget>
+                     </targetExpanded>
+                  </targetsExpanded>
                   <packages class="org.hibernate.collection.internal.PersistentSet"/>
                   <prerecipe><![CDATA[]]></prerecipe>
                   <recipe><![CDATA[]]></recipe>
@@ -544,6 +566,25 @@ wget -t 2 -O /tmp/data.txt ${ENDPOINT}
                   <packages class="org.hibernate.collection.internal.PersistentSet"/>
                   <prerecipe><![CDATA[]]></prerecipe>
                   <recipe><![CDATA[]]></recipe>
+                  <targetsExpanded>
+                     <targetExpanded name="execute">
+                        <subTarget name="execute" order="1"><![CDATA[#!/bin/sh -xe
+# Wait for the metadata to be resolved
+web_server_ip=$(ss-get --timeout 360 webserver.hostname)
+web_server_port=$(ss-get --timeout 360 webserver.port)
+ss-get --timeout 360 webserver.ready
+
+# Execute the test
+ENDPOINT=http://${web_server_ip}:${web_server_port}/data.txt
+wget -t 2 -O /tmp/data.txt ${ENDPOINT}
+[ "$?" = "0" ] & ss-set statecustom "OK: $(cat /tmp/data.txt)" || ss-abort "Could not get the test file: ${ENDPOINT}"
+]]></subTarget>
+                     </targetExpanded>
+                     <targetExpanded name="report">
+                        <subTarget name="report" order="1"><![CDATA[#!/bin/sh -x
+cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR]]></subTarget>
+                     </targetExpanded>
+                  </targetsExpanded>
                   <cloudImageIdentifiers class="org.hibernate.collection.internal.PersistentSet"/>
                   <parameters class="org.hibernate.collection.internal.PersistentMap">
                      <entry>

@@ -44,8 +44,8 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         nde = NodeDeploymentExecutor(wrapper, config_holder=self.ch)
         target = 'foo'
         nde.node_instance = NodeInstance()
-        nde.node_instance.set_image_targets({target: 'oops'})
-        self.assertRaises(OSError, nde._launch_target_script,
+        nde.node_instance.set_image_targets({target: [{'script': 'oops'}]})
+        self.assertRaises(OSError, nde._execute_target,
                           *(target, {}, True))
         assert 1 == nde.wrapper.fail.call_count
 
@@ -57,8 +57,8 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         nde.TARGET_POLL_INTERVAL = 1
         target = 'foo'
         nde.node_instance = NodeInstance()
-        nde.node_instance.set_image_targets({target: '#!/bin/bash \n/command/not/found\n'})
-        self.assertRaises(AbortException, nde._launch_target_script,
+        nde.node_instance.set_image_targets({target: [{'script': '#!/bin/bash \n/command/not/found\n'}]})
+        self.assertRaises(AbortException, nde._execute_target,
                           *(target, {}, True))
         assert 1 == nde.wrapper.fail.call_count
 
@@ -71,9 +71,9 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         target = 'foo'
         error = 'The error'
         nde.node_instance = NodeInstance()
-        nde.node_instance.set_image_targets({target: '#!/bin/bash \n>&2 echo "' + error + '" \nexit 1\n'})
+        nde.node_instance.set_image_targets({target: [{'script': '#!/bin/bash \n>&2 echo "' + error + '" \nexit 1\n'}]})
         try:
-            nde._launch_target_script(target)
+            nde._execute_target(target, abort_on_err=True)
         except AbortException as e:
             assert error in str(e)
         assert 1 == nde.wrapper.fail.call_count

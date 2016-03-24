@@ -95,6 +95,9 @@ class NodeInstance(object):
         for key, value in image_targets.items():
             self.__set('%s.%s' % (self.IMAGE_TARGETS_PREFIX, key), value)
 
+    def set_build_state(self, build_state):
+        self.__set(NodeDecorator.BUILD_STATE_KEY, build_state)
+
     def set_cloud_parameters(self, cloud_parameters):
         for key, value in cloud_parameters.items():
             self.__set('%s.%s' % (self.get_cloud(), key), value)
@@ -112,6 +115,9 @@ class NodeInstance(object):
 
     def is_windows(self):
         return self.get_platform().lower() == 'windows'
+
+    def get_build_state(self):
+        return self.__get(NodeDecorator.BUILD_STATE_KEY, {})
 
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
