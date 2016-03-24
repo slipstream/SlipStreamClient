@@ -192,15 +192,25 @@ def _ssh_execute_cli(cmd, host, user, sshKey, tcp_timeout, **kwargs):
         sshCmd.append('-i')
         sshCmd.append(sshKey)
 
+    tty = kwargs.get('pseudoTTY', False)
+
     for keyAppend in [('sshVerb', '-v'), ('sshQuiet', '-q'), ('pseudoTTY', '-t -t')]:
         _appendToSshCommandFromKwargs(*keyAppend)
 
+    sshCmd.append('--')
     sshCmd.append('%s@%s' % (user, host))
     sshCmd.append(cmd)
 
     _removeInvalidExecuteKwargs()
 
-    return execute(sshCmd, **kwargs)
+    rc, stderr = execute(sshCmd, **kwargs)
+
+    if not tty and 'sudo' in stderr and 'tty' in stderr:
+        printError('sudo require tty: "%s". Retrying with tty' % stderr)
+        sshCmd.insert(1, '-tt')
+        return execute(sshCmd, **kwargs)
+
+    return rc, stderr
 
 
 def sshCmdWithOutput(cmd, host, sshKey=None, user='root', password='',
@@ -395,7 +405,7 @@ def remoteRunScriptNohup(user, host, script, sshKey=None, password=''):
 
 
 def remoteRunCommand(user, host, command, sshKey=None, password='', nohup=False):
-    sudo = (user != 'root') and 'sudo' or ''
+    sudo = 'sudo' if user != 'root' else ''
 
     nohup_cmd = (nohup is True) and 'at now -f %s' or '%s'
     cmd = ('%s %s' % (sudo, nohup_cmd % command)).strip()

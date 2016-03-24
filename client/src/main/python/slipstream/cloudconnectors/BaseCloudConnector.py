@@ -726,6 +726,12 @@ class BaseCloudConnector(object):
         command += "[ -x /etc/init.d/sshd ] && { service sshd reload; } || { service ssh reload; }\n"
         return command
 
+    def _get_bootstrap_script_if_not_build_image(self, node_instance, pre_export=None,
+                                                 pre_bootstrap=None, post_bootstrap=None,
+                                                 username=None):
+        return self._get_bootstrap_script(node_instance, pre_export, pre_bootstrap, post_bootstrap, username) \
+            if not self.is_build_image() else ''
+
     def _get_bootstrap_script(self, node_instance, pre_export=None,
                               pre_bootstrap=None, post_bootstrap=None,
                               username=None):
