@@ -632,11 +632,11 @@ def get_packages_install_command(platform, packages):
                                             ', '.join(SUPPORTED_PLATFORMS)))
 
     if platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['debian_based']:
-        cmd = 'export DEBIAN_FRONTEND=noninteractive && apt-get -y update && apt-get -y install'
+        cmd = '/bin/sh -c "export DEBIAN_FRONTEND=noninteractive; apt-get -y update || (sleep 60; apt-get -y update); sleep 15; apt-get -y --force-yes install %s; sync; sleep 5"'
     elif platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['redhat_based']:
-        cmd = 'yum -y install'
-    cmd += ' ' + ' '.join(packages).strip()
-    return cmd
+        cmd = 'yum -y install %s'
+
+    return cmd % ' '.join(packages).strip()
 
 
 def append_ssh_pubkey_to_authorized_keys(pubkey, user=''):
