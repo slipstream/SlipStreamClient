@@ -144,6 +144,19 @@ def debug(*args):
         print "DEBUG:", ' '.join(map(str, args))
 
 
+def _get_rc_output(cmd):
+    status, output = commands.getstatusoutput(cmd)
+    return os.WEXITSTATUS(status), output
+
+
+def _find_executable(name):
+    rc, exe = _get_rc_output('which ' + name)
+    if rc == 0:
+        return exe.strip()
+    else:
+        return ''
+
+
 class HTTPSConnection(httplib.HTTPSConnection):
     def connect(self):
         """Connect to a host on a given (SSL) port.
@@ -268,7 +281,7 @@ def _download_and_extract_tarball(tarball_url, target_dir):
     local_tarball = _download(tarball_url,
                               os.path.join(target_dir, os.path.basename(tarball_url)))
 
-    print 'Expanding tarball:', local_tarball
+    info('Expanding tarball:', local_tarball)
     tarfile.open(local_tarball, 'r:gz').extractall(target_dir)
 
 
@@ -492,6 +505,14 @@ def _configure_initd_service(executor_name):
     return service_name
 
 
+def _chkconfig_cmd(service_name):
+    cli = _find_executable('chkconfig')
+    # /sbin may not be in PATH on SLES 11.
+    if not cli:
+        cli = '/sbin/chkconfig'
+    return cli + ' --add ' + service_name
+
+
 def _add_executor_to_initd(executor_name):
     service_name = "slipstream-%s" % executor_name
     dst = '/etc/init.d/' + service_name
@@ -502,7 +523,7 @@ def _add_executor_to_initd(executor_name):
     if _is_ubuntu():
         cmd = 'update-rc.d %s defaults' % service_name
     else:
-        cmd = '/sbin/chkconfig --add %s' % service_name
+        cmd = _chkconfig_cmd(service_name)
 
     rc, output = _get_rc_output(cmd)
     if rc != 0:
@@ -542,11 +563,6 @@ def _add_executor_to_systemd(executor_name):
     return sname
 
 
-def _get_rc_output(cmd):
-    status, output = commands.getstatusoutput(cmd)
-    return os.WEXITSTATUS(status), output
-
-
 def _create_executor_config(executor_name):
     conf = {}
     paths = ['/usr/local/sbin', '/usr/local/bin', '/usr/sbin', '/usr/bin', '/sbin', '/bin']
@@ -582,9 +598,17 @@ def _write_executor_config(executor_name, conf):
             _write(fh, '%s=%s\n' % (k, v))
 
 
+def _service_cmd(service_name):
+    cli = _find_executable('service')
+    # /sbin may not be in PATH on SLES 11.
+    if not cli:
+        cli = '/sbin/service'
+    return cli + (' %s start' % service_name)
+
+
 def _setup_and_get_initd_service_start_command(executor_name):
     service_name = _configure_initd_service(executor_name)
-    return '/sbin/service %s start' % service_name
+    return _service_cmd(service_name)
 
 
 def _setup_and_get_systemd_service_start_command(executor_name):
