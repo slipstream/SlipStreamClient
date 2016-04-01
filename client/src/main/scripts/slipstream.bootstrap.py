@@ -78,11 +78,12 @@ INITD_BASED_DISTROS = dict([('CentOS', INITD_RedHat_ver_min_incl_max_excl),
                             ('Ubuntu', INITD_Ubuntu_ver_min_incl_max_excl)])
 SYSTEMD_RedHat_ver_min_incl_max_excl = ((7,), (8,))
 SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((15,), (16,))
+SYSTEMD_openSUSE_ver_min_incl_max_excl = ((12,), (14,))
 SYSTEMD_SUSE_ver_min_incl_max_excl = ((12,), (13,))
 SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
                               ('CentOS Linux', SYSTEMD_RedHat_ver_min_incl_max_excl),
                               ('RedHat', SYSTEMD_RedHat_ver_min_incl_max_excl),
-                              ('openSUSE', SYSTEMD_SUSE_ver_min_incl_max_excl),
+                              ('openSUSE', SYSTEMD_openSUSE_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Server', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Desktop', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('Ubuntu', SYSTEMD_Ubuntu_ver_min_incl_max_excl)])
