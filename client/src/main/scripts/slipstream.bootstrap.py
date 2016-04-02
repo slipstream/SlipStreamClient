@@ -518,8 +518,7 @@ def _add_executor_to_initd(executor_name):
     service_name = "slipstream-%s" % executor_name
     dst = '/etc/init.d/' + service_name
     if not os.path.exists(dst):
-        distro = (_is_ubuntu() or _is_suse()) and 'ubuntu' or 'redhat'
-        os.symlink(SLIPSTREAM_CLIENT_HOME + '/etc/' + service_name + '-' + distro, dst)
+        os.symlink(SLIPSTREAM_CLIENT_HOME + '/etc/' + service_name, dst)
 
     if _is_ubuntu():
         cmd = 'update-rc.d %s defaults' % service_name

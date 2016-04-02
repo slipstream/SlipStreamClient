@@ -22,12 +22,28 @@
 #                    application depoyment orchestration.
 ### END INIT INFO
 
+# copies function named $1 to name $2
+copy_function() {
+    declare -F $1 > /dev/null || return 1
+    eval "$(echo "${2}()"; declare -f ${1} | tail -n +2)"
+}
+
 # source function library
-. /etc/rc.d/init.d/functions
+if [ -f /etc/rc.d/init.d/functions ]; then
+    . /etc/rc.d/init.d/functions
+elif [ -f /lib/lsb/init-functions ]; then
+    . /lib/lsb/init-functions
+    copy_function log_success_msg success
+    copy_function log_failure_msg failure
+fi
 
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 NAME="slipstream-node"
-LOCK_FILE=/var/lock/subsys/$NAME
+if [ -d /var/lock/subsys ]; then
+    LOCK_FILE=/var/lock/subsys/$NAME
+else
+    LOCK_FILE=/var/lock/$NAME
+fi
 RETVAL=0
 if [ -z "$UID" ]; then
     UID=$(id -u)
@@ -100,4 +116,3 @@ case "$1" in
         ;;
 esac
 exit $RETVAL
-
