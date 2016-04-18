@@ -208,7 +208,7 @@ class MachineExecutor(object):
             return
 
         for subtarget in target:
-            full_target_name = '%s.%s' % (subtarget.get('module'), target_name)
+            full_target_name = '%s:%s' % (subtarget.get('module_uri'), target_name)
 
             if target_name in [NodeDecorator.NODE_PRERECIPE, NodeDecorator.NODE_RECIPE] \
                     and not self._need_to_execute_build_step(target, subtarget):
