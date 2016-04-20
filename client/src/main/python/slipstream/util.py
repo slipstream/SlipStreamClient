@@ -66,6 +66,7 @@ RUN_PARAM_TAGS = 'tags'
 CONFIGPARAM_CONNECTOR_MODULE_NAME = 'cloudconnector'
 
 SUPPORTED_PLATFORMS_BY_DISTRO = {'debian_based': ('ubuntu',),
+                                 'suse_based': ('opensuse', 'sles'),
                                  'redhat_based': ('fedora', 'redhat', 'centos')}
 SUPPORTED_PLATFORMS = [y for x in SUPPORTED_PLATFORMS_BY_DISTRO.values() for y in x]
 
@@ -635,6 +636,8 @@ def get_packages_install_command(platform, packages):
         cmd = '/bin/sh -c "export DEBIAN_FRONTEND=noninteractive; apt-get -y update || (sleep 60; apt-get -y update); sleep 15; apt-get -y --force-yes install %s; sync; sleep 5"'
     elif platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['redhat_based']:
         cmd = 'yum -y install %s'
+    elif platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['suse_based']:
+        cmd = 'zypper install -yn %s'
 
     return cmd % ' '.join(packages).strip()
 
