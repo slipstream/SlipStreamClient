@@ -83,15 +83,17 @@ class MainProgram(CommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    def _removeRuns(self, root):
-        """Remove the run elements from the given document.
-           The runs are dynamic and cannot be pushed back
-           into the server.  This modified the given XML
-           document!"""
-        runs = root.find('runs')
-        if runs is not None:
-            for run in runs.findall('*'):
-                runs.remove(run)
+    @staticmethod
+    def _remove_element(parent, element):
+        if element is not None:
+            parent.remove(element)
+
+    def _remove_transient_elements(self, root):
+        self._remove_element(root, root.find('inputParametersExpanded'))
+        self._remove_element(root, root.find('packagesExpanded'))
+        self._remove_element(root, root.find('targetsExpanded'))
+        self._remove_element(root, root.find('buildStates'))
+        self._remove_element(root, root.find('runs'))
 
     def _remove_clouds(self, root):
         """Remove the cloudImageIdentifiers, cloudNames and cloud specific parameters element from the given document.
@@ -209,7 +211,7 @@ class MainProgram(CommandBase):
             print('Processing: %s' % module)
 
             root = self._retrieveModuleAsXml(client, module)
-            self._removeRuns(root)
+            self._remove_transient_elements(root)
             if self._is_image(root) and self.options.dump_image_ids:
                 self._dump_image_ids(root)
             if self.options.remove_clouds:
