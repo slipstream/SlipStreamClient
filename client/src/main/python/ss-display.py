@@ -34,9 +34,13 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''%prog [options] <value>
+        usage = '''%prog [options] [--] <value>
 
-<value>          Value to be set.'''
+<value>          Value to be set.
+
+Notice:
+                 If the value might start with a dash (-), please add the two
+                 dashes (--) before the value to prevent possible issues.'''
 
         self.parser.usage = usage
 

@@ -34,9 +34,13 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''usage: %prog [options] [<reason>]
+        usage = '''usage: %prog [options] [--] [<reason>]
 
-<reason>         Reason for abort.'''
+<reason>         Reason for abort.
+
+Notice:
+                 If the reason might start with a dash (-), please add the
+                 two dashes (--) before the reason to prevent possible issues.'''
 
         self.parser.usage = usage
 
