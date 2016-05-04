@@ -722,6 +722,27 @@ def mkstemp(suffix='', prefix='tmp', dir=None, text=False):
         if fd is not None:
             os.close(fd)
 
+def create_directory(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
+def get_state_storage_dir():
+    storage_dir = '/var/lib/slipstream' if not is_windows() else os.path.join(os.getenv('APPDATA'), 'slipstream')
+    try:
+        create_directory(storage_dir)
+    except OSError as e:
+        if is_windows():
+            raise
+        new_storage_dir = '/var/tmp/slipstream'
+        printError('Creating directory "%s" failed with: "%s". Trying with "%s"...' % (storage_dir, e, new_storage_dir))
+        create_directory(new_storage_dir)
+        storage_dir = new_storage_dir
+    return storage_dir
+
+def get_temporary_storage_dir():
+    storage_dir = '/var/tmp/slipstream' if not is_windows() else os.path.join(tempfile.gettempdir(), 'slipstream')
+    create_directory(storage_dir)
+    return storage_dir
 
 def str2bool(v):
     return v is not None and v.lower() in ("yes", "true", "t", "1")

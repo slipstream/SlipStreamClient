@@ -58,6 +58,8 @@ class NodeDecorator(object):
     NODE_RECIPE = 'recipe'
     NODE_PACKAGES = 'packages'
 
+    DEFAULT_SCRIPT_NAME = 'unnamed'
+
     IS_ORCHESTRATOR_KEY = 'is.orchestrator'
 
     # State names
