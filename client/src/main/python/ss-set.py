@@ -32,13 +32,15 @@ class MainProgram(CommandBase):
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
-        usage = '''%prog [options] <key> [<value>]
+        usage = '''%prog [options] [--] <key> <value>
 
-<key>            Key from which to set the value. Note that if the parameter
-                 does not exist, the run will abort.
-<value>          Value to be set.  This parameter is mandatory, unless the
-                 --decrement option is uses, in which case this parameter is
-                 ignored'''
+<key>            Key from which to set the value. This parameter is mandatory.
+                 Note that if the parameter does not exist, the run will abort.
+<value>          Value to be set. This parameter is mandatory.
+
+Notice:
+                 If the key or the value might start with a dash (-), please add
+                 the two dashes (--) before the key to prevent possible issues.'''
 
         self.parser.usage = usage
 
@@ -47,7 +49,7 @@ class MainProgram(CommandBase):
         self.options, self.args = self.parser.parse_args()
 
         if len(self.args) != 2:
-                self.usageExit('Error, two argument must be specified')
+            self.usageExit('Error, two argument must be specified')
 
         self.key = self.args[0]
         self.value = self.args[1]
