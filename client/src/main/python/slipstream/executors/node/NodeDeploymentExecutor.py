@@ -109,7 +109,7 @@ class NodeDeploymentExecutor(MachineExecutor):
             util.printStep(message)
             self.wrapper.set_statecustom(message)
             cmd = util.get_packages_install_command(self.node_instance.get_platform(), packages)
-            self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg)
+            self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg, name='Install packages')
         else:
             util.printAndFlush('No packages to install')
 
