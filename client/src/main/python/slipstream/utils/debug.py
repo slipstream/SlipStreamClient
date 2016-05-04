@@ -7,7 +7,7 @@ import linecache
 class _tracer(object):
 
     def _traceit(self, frame, event, arg):
-        if event == "line":
+        if event == "line" or event == "call":
             name = frame.f_globals["__name__"] or '<Unknown>'
             if self.packages_filter is None or self.packages_filter.search(name):
                 lineno = frame.f_lineno
