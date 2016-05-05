@@ -741,7 +741,7 @@ def get_state_storage_dir():
         storage_dir = new_storage_dir
 
     if not os.access(storage_dir, os.W_OK | os.X_OK):
-        raise OSError(errno.EACCES, 'The directory "%s" is not writable', storage_dir)
+        raise OSError(errno.EACCES, 'The directory is not writable', storage_dir)
 
     return storage_dir
 
