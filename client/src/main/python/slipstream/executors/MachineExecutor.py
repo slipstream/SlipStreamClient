@@ -353,7 +353,12 @@ class MachineExecutor(object):
         if util.is_windows():
             tmpfilesuffix = '.ps1'
 
-        directory = util.get_state_storage_dir()
+        try:
+            directory = util.get_state_storage_dir()
+        except:
+            directory = None
+            name = None
+
         if name is None:
             fn = tempfile.mktemp(suffix=tmpfilesuffix, dir=directory)
         else:
