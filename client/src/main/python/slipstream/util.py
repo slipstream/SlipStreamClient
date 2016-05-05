@@ -16,18 +16,19 @@
  limitations under the License.
 """
 
-import contextlib
-import logging
 import os
-import pkgutil
-import subprocess
 import sys
-import tempfile
 import time
+import errno
 import getpass
+import logging
+import pkgutil
 import urllib2
-import uuid as uuidModule
+import tempfile
 import warnings
+import contextlib
+import subprocess
+import uuid as uuidModule
 
 if sys.platform != 'win32':
     import pwd
@@ -728,6 +729,7 @@ def create_directory(directory):
 
 def get_state_storage_dir():
     storage_dir = '/var/lib/slipstream' if not is_windows() else os.path.join(os.getenv('APPDATA'), 'slipstream')
+
     try:
         create_directory(storage_dir)
     except OSError as e:
@@ -737,6 +739,10 @@ def get_state_storage_dir():
         printError('Creating directory "%s" failed with: "%s". Trying with "%s"...' % (storage_dir, e, new_storage_dir))
         create_directory(new_storage_dir)
         storage_dir = new_storage_dir
+
+    if not os.access(storage_dir, os.W_OK | os.X_OK):
+        raise OSError(errno.EACCES, 'The directory "%s" is not writable', storage_dir)
+
     return storage_dir
 
 def get_temporary_storage_dir():
