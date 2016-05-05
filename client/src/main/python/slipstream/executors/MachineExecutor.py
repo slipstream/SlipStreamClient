@@ -346,25 +346,23 @@ class MachineExecutor(object):
             pass
         return process.returncode, stderr_last_line
 
-    def _launch_process(self, target_script, exports=None, name=None):
-        '''Returns launched process as subprocess.Popen instance.
-        '''
-        tmpfilesuffix = ''
+    def _write_target_script_to_file(self, target_script, name=None):
+        file_suffix = ''
         if util.is_windows():
-            tmpfilesuffix = '.ps1'
+            file_suffix = '.ps1'
 
+        directory = None
         try:
             directory = util.get_state_storage_dir()
-        except:
-            directory = None
-            name = None
+        except Exception as e:
+            util.printError('Creating script storage directory failed with: "%s"' % (e,))
 
-        if name is None:
-            fn = tempfile.mktemp(suffix=tmpfilesuffix, dir=directory)
+        if name is None or directory is None:
+            fn = tempfile.mktemp(suffix=file_suffix, dir=directory)
         else:
             filename = re.sub(r'[^0-9a-z._-]', '', name.replace('/', '_').replace(' ', '-').replace(':', '__').lower())
-            if tmpfilesuffix:
-                filename += tmpfilesuffix
+            if file_suffix:
+                filename += file_suffix
             fn = os.path.join(directory, filename)
 
         if isinstance(target_script, unicode):
@@ -375,6 +373,18 @@ class MachineExecutor(object):
                 fh.write(target_script)
 
         os.chmod(fn, 0755)
+        return fn
+
+    def _launch_process(self, target_script, exports=None, name=None):
+        '''Returns launched process as subprocess.Popen instance.
+        '''
+
+        try:
+            fn = self._write_target_script_to_file(target_script, name)
+        except Exception as e:
+            util.printError('Writing script "%s" to file failed with: "%s". Retrying with random filename.' % (name, e))
+            fn = self._write_target_script_to_file(target_script)
+
         current_dir = os.getcwd()
         os.chdir(util.get_temporary_storage_dir())
         try:
