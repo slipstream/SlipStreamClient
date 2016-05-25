@@ -34,7 +34,7 @@ class RuntimeParameter(object):
 
     def __init__(self, config_holder):
         self._ss = SlipStreamHttpClient(config_holder)
-        self._ss.set_http_max_retries(-5)
+        self._ss.set_retry(True)
 
     def set(self, parameter, value, ignore_abort=True):
         self._ss.setRuntimeParameter(parameter, value, ignoreAbort=ignore_abort)
@@ -47,7 +47,7 @@ class RuntimeParameter(object):
 class NodeInfoPublisher(SlipStreamHttpClient):
     def __init__(self, config_holder):
         super(NodeInfoPublisher, self).__init__(config_holder)
-        self.set_http_max_retries(-5)
+        self.set_retry(True)
 
     def publish(self, nodename, vm_id, vm_ip):
         self.publish_instanceid(nodename, vm_id)
@@ -128,7 +128,7 @@ class BaseWrapper(object):
 
     def __init__(self, config_holder):
         self._ss_client = SlipStreamHttpClient(config_holder)
-        self._ss_client.set_http_max_retries(self.is_mutable() and -5 or 5)
+        self._ss_client.set_retry(True)
         self._ss_client.ignoreAbort = True
 
         self.my_node_instance_name = self._get_my_node_instance_name(config_holder)

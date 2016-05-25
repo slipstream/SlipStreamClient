@@ -103,7 +103,7 @@ class HttpClientTestCase(unittest.TestCase):
         client = HttpClient('username', 'password')
         client.cookie = 'acookie'
 
-        self.assertRaises(NetworkError, client.get, 'url')
+        self.assertRaises(NetworkError, client.get, 'url', retry=False)
 
     def testBasicAuthenticationHeaderSet(self):
 
