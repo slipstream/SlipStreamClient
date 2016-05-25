@@ -87,7 +87,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw._ss_client.httpClient._call.assert_called_with(
             '%s/module/Name/Test' % self.serviceurl,
             'PUT', 'ABC', 'application/xml',
-            'application/xml', retry_number=5)
+            'application/xml', retry=True)
 
     def test_no_scaling(self):
         """

@@ -48,7 +48,7 @@ class TerminateInstancesCommand(CloudClientCommand):
     def do_work(self):
         ids = self.get_option(self.INSTANCE_IDS_KEY)
         ch = ConfigHolder(options={'verboseLevel': self.options.verbose and 3 or 0,
-                                   'http_max_retries': 0,
+                                   'retry': False,
                                    KEY_RUN_CATEGORY: ''},
                           context={'foo': 'bar'})
         cc = self.get_connector_class()(ch)

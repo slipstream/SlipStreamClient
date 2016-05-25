@@ -43,14 +43,14 @@ class SlipStreamHttpClient(object):
         self.node_instance_name = ''
         self.serviceurl = ''
         self.verboseLevel = None
-        self.http_max_retries = 2
+        self.retry = True
 
         configHolder.assign(self)
         self._assemble_endpoints()
         self.httpClient = HttpClient(configHolder=configHolder)
 
-    def set_http_max_retries(self, http_max_retries):
-        self.http_max_retries = http_max_retries
+    def set_retry(self, retry):
+        self.retry = retry
 
     def _assemble_endpoints(self):
         self.runEndpoint = self.serviceurl + util.RUN_RESOURCE_PATH
@@ -243,16 +243,16 @@ class SlipStreamHttpClient(object):
         self._httpDelete(url)
 
     def _httpGet(self, url, accept='application/xml'):
-        return self.httpClient.get(url, accept, retry_number=self.http_max_retries)
+        return self.httpClient.get(url, accept, retry=self.retry)
 
     def _httpPut(self, url, body=None, contentType='application/xml', accept='application/xml'):
-        return self.httpClient.put(url, body, contentType, accept, retry_number=self.http_max_retries)
+        return self.httpClient.put(url, body, contentType, accept, retry=self.retry)
 
     def _httpPost(self, url, body=None, contentType='application/xml'):
-        return self.httpClient.post(url, body, contentType, retry_number=self.http_max_retries)
+        return self.httpClient.post(url, body, contentType, retry=self.retry)
 
     def _httpDelete(self, url, body=None):
-        return self.httpClient.delete(url, body=body, retry_number=self.http_max_retries)
+        return self.httpClient.delete(url, body=body, retry=self.retry)
 
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)

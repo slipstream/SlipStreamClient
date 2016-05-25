@@ -51,24 +51,24 @@ class HttpClient(object):
 
         self.httpObject = self._getHttpObject()
 
-    def get(self, url, accept='application/xml', retry_number=None):
-        return self._call(url, 'GET', accept=accept, retry_number=retry_number)
+    def get(self, url, accept='application/xml', retry=True):
+        return self._call(url, 'GET', accept=accept, retry=retry)
 
-    def put(self, url, body=None, contentType='application/xml', accept='application/xml', retry_number=None):
-        return self._call(url, 'PUT', body, contentType, accept, retry_number=retry_number)
+    def put(self, url, body=None, contentType='application/xml', accept='application/xml', retry=True):
+        return self._call(url, 'PUT', body, contentType, accept, retry=retry)
 
-    def post(self, url, body=None, contentType='application/xml', accept='application/xml', retry_number=None):
-        return self._call(url, 'POST', body, contentType, retry_number=retry_number)
+    def post(self, url, body=None, contentType='application/xml', accept='application/xml', retry=True):
+        return self._call(url, 'POST', body, contentType, retry=retry)
 
-    def delete(self, url, body=None, retry_number=None):
-        return self._call(url, 'DELETE', body, retry_number=retry_number)
+    def delete(self, url, body=None, retry=True):
+        return self._call(url, 'DELETE', body, retry=retry)
 
     def _call(self, url, method,
               body=None,
               contentType='application/xml',
               accept='application/xml',
               headers={},
-              retry_number=None):
+              retry=True):
 
         def _convertContent(content):
             try:
@@ -192,12 +192,13 @@ class HttpClient(object):
 
             raise Exceptions.NetworkError('Unknown return code: %s' % resp.status)
 
-
         self._printDetail('Contacting the server with %s, at: %s' % (method, url))
 
-        if retry_number is None:
-            retry_number = 0
-        max_retry = retry_number
+        retry_until = 60 * 60 * 24 * 7 # 7 days in seconds
+        max_wait_time = 60 * 15 # 15 minutes in seconds
+        retry_count = 0
+
+        first_request_time = time.time()
 
         h = self.httpObject
         while True:
@@ -221,22 +222,17 @@ class HttpClient(object):
 
             except (httplib.HTTPException, httplib2.HttpLib2Error, socket.error,
                     Exceptions.NetworkError, Exceptions.ServerError) as ex:
-                if retry_number == 0 or max_retry == 0:
+                if retry == False or (time.time() - first_request_time) >= retry_until:
                     util.printDetail('HTTP call error: %s' % ex)
                     raise
-                else:
-                    # Sleep between 10 seconds and 1 minute 30 seconds
-                    if max_retry > 0:
-                        sleep = retry_number
-                    else:
-                        sleep = abs(max_retry) - abs(retry_number + abs(max_retry))
-                    sleep = min((abs(max_retry) - float(sleep)) / (abs(max_retry)-1) * 80 + 10, 90)
 
-                    retry_number = retry_number - 1
-                    util.printDetail('HTTP call error: %s \n%s of %s attempts remaining. \nRetrying in %s seconds.' % (ex, retry_number, max_retry, sleep))
-                    time.sleep(sleep)
-                    util.printDetail('Retrying...')
+                sleep = min(float(retry_count) * 10.0, float(max_wait_time))
+                sleep += (random() * sleep * 0.2) - (sleep * 0.1)
+                retry_count += 1
 
+                util.printDetail('Error: %s. Retrying in %s seconds.' % (ex, sleep))
+                time.sleep(sleep)
+                util.printDetail('Retrying...')
 
     def _getHttpObject(self):
         h = httplib2.Http(cache=util.HTTP_CACHEDIR, timeout=300,

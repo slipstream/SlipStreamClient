@@ -143,7 +143,7 @@ class RunInstancesCommand(CloudClientCommand):
 
         verbose_level = self.get_option('verbose') and 3 or 0
         ch = ConfigHolder(options={'verboseLevel': verbose_level,
-                                   'http_max_retries': 0,
+                                   'retry': False,
                                     KEY_RUN_CATEGORY: RUN_CATEGORY_DEPLOYMENT},
                           context={'foo': 'bar'},
                           config={'foo': 'bar'})

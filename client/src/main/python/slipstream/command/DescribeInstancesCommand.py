@@ -73,7 +73,7 @@ class DescribeInstancesCommand(CloudClientCommand):
 
     def _describe_instances(self):
         ch = ConfigHolder(options={'verboseLevel': 0,
-                                   'http_max_retries': 0,
+                                   'retry': False,
                                    KEY_RUN_CATEGORY: ''},
                           context={'foo': 'bar'})
         cc = self.get_connector_class()(ch)
