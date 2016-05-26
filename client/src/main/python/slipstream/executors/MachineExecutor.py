@@ -204,7 +204,7 @@ class MachineExecutor(object):
     def _execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
         target = self.node_instance.get_image_target(target_name)
 
-        target_name = {
+        display_target_name = {
             'prerecipe': 'Pre-install',
             'recipe': 'Post-install',
             'execute': 'Deployment',
@@ -214,11 +214,11 @@ class MachineExecutor(object):
         }.get(target_name, target_name)
 
         if target is None:
-            util.printAndFlush('Nothing to do for script: %s' % target_name)
+            util.printAndFlush('Nothing to do for script: %s' % display_target_name)
             return
 
         for subtarget in target:
-            full_target_name = '%s:%s' % (subtarget.get('module_uri'), target_name)
+            full_target_name = '%s:%s' % (subtarget.get('module_uri'), display_target_name)
 
             if target_name in [NodeDecorator.NODE_PRERECIPE, NodeDecorator.NODE_RECIPE] \
                     and not self._need_to_execute_build_step(target, subtarget):
