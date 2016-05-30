@@ -1,0 +1,162 @@
+"""
+ SlipStream Client
+ =====
+ Copyright (C) 2016 SixSq Sarl (sixsq.com)
+ =====
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+"""
+from __future__ import print_function
+
+import os
+import json
+import urllib2
+from datetime import datetime
+import pprint
+
+from slipstream.HttpClient import HttpClient
+import slipstream.util as util
+from slipstream.NodeDecorator import NodeDecorator
+
+
+def _download(username, password, src_url, dst_file):
+    request = urllib2.Request(src_url)
+    request.add_header('Authorization',
+                       (b'Basic ' + (username + b':' + password).encode('base64')).replace('\n', ''))
+    src_fh = urllib2.urlopen(request)
+
+    dst_fh = open(dst_file, 'wb')
+    while True:
+        data = src_fh.read()
+        if not data:
+            break
+        dst_fh.write(data)
+    src_fh.close()
+    dst_fh.close()
+
+    return dst_file
+
+
+TIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
+
+
+def is_newer(d1, d2, tf=TIME_FORMAT):
+    return datetime.strptime(d1, tf) < datetime.strptime(d2, tf)
+
+
+class ReportsGetter(object):
+    def __init__(self, ch):
+        self.output_dir = os.getcwd()
+        self.verboseLevel = 0
+        self.endpoint = 'https://nuv.la'
+
+        self.h = HttpClient(configHolder=ch)
+        ch.assign(self)
+
+    @staticmethod
+    def latest_only(reports):
+        reports_filtered = {}
+        for r in reports:
+            not_yet_added = r['node'] not in reports_filtered
+            if not_yet_added:
+                reports_filtered[r['node']] = r
+            else:
+                # replace if newer
+                if is_newer(reports_filtered[r['node']]['date'], r['date']):
+                    reports_filtered[r['node']] = r
+
+        return reports_filtered.values()
+
+    @staticmethod
+    def remove_orch(reports):
+        reports_no_orch = []
+        for r in reports:
+            if not NodeDecorator.is_orchestrator_name(r['node']):
+                reports_no_orch.append(r)
+        return reports_no_orch
+
+    @staticmethod
+    def components_only(reports, comps):
+        reports_only = []
+
+        for r in reports:
+            name = r['node']
+            if name.rsplit(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0] in comps or \
+                            name in comps:
+                reports_only.append(r)
+
+        return reports_only
+
+    def reports_path(self, run_uuid):
+        return os.path.join(self.output_dir, run_uuid)
+
+    def output_fullpath(self, run_uuid, name):
+        return os.path.join(self.reports_path(run_uuid), name)
+
+    def mk_download_dir(self, run_uuid):
+        _dir = self.reports_path(run_uuid)
+        try:
+            os.makedirs(_dir, mode=0755)
+        except OSError as ex:
+            # Proceed further even if directory exists.
+            if ex.errno != 17:
+                raise ex
+        return _dir
+
+    def run_reports_url(self, run_uuid):
+        return self.endpoint + util.REPORTS_RESOURCE_PATH + "/" + run_uuid + "/"
+
+    def list_reports(self, run_uuid):
+        _, res = self.h.get(self.run_reports_url(run_uuid), accept='application/json')
+
+        reports = json.loads(res)['files']
+        self.debug("::: List of all reports. :::", reports)
+
+        return reports
+
+    def get_reports(self, run_uuid, components=[], no_orch=False):
+        reports_list_orig = self.list_reports(run_uuid)
+
+        reports_list = self.latest_only(reports_list_orig)
+        self.debug("::: Only latest reports are selected. :::", data=reports_list)
+
+        if no_orch:
+            reports_list = self.remove_orch(reports_list)
+
+        if components:
+            reports_list = self.components_only(reports_list, components)
+
+        if not reports_list:
+            self.info("::: No components or instances selected with your filter.")
+            self.info("::: Options are: %s" % ', '.join(self._get_names(reports_list_orig)))
+            return
+        self._download_reports(reports_list, self.reports_path(run_uuid))
+
+    def _download_reports(self, reports_list, reports_path):
+        self.mk_download_dir(reports_path)
+        self.info("\n::: Downloading reports to '%s'" % reports_path)
+        for f in reports_list:
+            self.info("... %s" % f['uri'])
+            _download(self.h.username, self.h.password, f['uri'],
+                      os.path.join(reports_path, f['name']))
+
+    def _get_names(self, reports):
+        return set(map(lambda x: x['node'], reports))
+
+    def info(self, msg, data=None):
+        print(msg)
+        if data:
+            pprint.pprint(data)
+
+    def debug(self, msg, data=None):
+        if self.verboseLevel > 1:
+            self.info(msg, data)
