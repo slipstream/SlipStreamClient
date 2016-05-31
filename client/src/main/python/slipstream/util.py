@@ -800,3 +800,28 @@ def truncate_middle(max_len, message, truncate_message='...'):
         message = message[0:subsize] + truncate_message + message[-subsize:]
     return message
 
+
+def download_file(src_url, dst_file, creds={}):
+    """creds: {'cookie': '<cookie>',
+               'username': '<name>', 'password': '<pass>'}
+    cookie is preferred over username and password. If none are provided,
+    the download proceeds w/o authentication.
+    """
+    request = urllib2.Request(src_url)
+    if creds.get('cookie'):
+        request.add_header('cookie', creds.get('cookie'))
+    elif creds.get('username') and creds.get('password'):
+        request.add_header('Authorization',
+                           (b'Basic ' + (creds.get('username') + b':' + creds.get('password')).encode('base64')).replace('\n', ''))
+    src_fh = urllib2.urlopen(request)
+
+    dst_fh = open(dst_file, 'wb')
+    while True:
+        data = src_fh.read()
+        if not data:
+            break
+        dst_fh.write(data)
+    src_fh.close()
+    dst_fh.close()
+
+    return dst_file

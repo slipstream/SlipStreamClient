@@ -19,31 +19,12 @@ from __future__ import print_function
 
 import os
 import json
-import urllib2
 from datetime import datetime
 import pprint
 
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 from slipstream.NodeDecorator import NodeDecorator
-
-
-def _download(username, password, src_url, dst_file):
-    request = urllib2.Request(src_url)
-    request.add_header('Authorization',
-                       (b'Basic ' + (username + b':' + password).encode('base64')).replace('\n', ''))
-    src_fh = urllib2.urlopen(request)
-
-    dst_fh = open(dst_file, 'wb')
-    while True:
-        data = src_fh.read()
-        if not data:
-            break
-        dst_fh.write(data)
-    src_fh.close()
-    dst_fh.close()
-
-    return dst_file
 
 
 TIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
@@ -141,13 +122,23 @@ class ReportsGetter(object):
             return
         self._download_reports(reports_list, self.reports_path(run_uuid))
 
+    def _get_creds(self):
+        if self.h.cookie:
+            return {'cookie': self.h.cookie}
+        elif self.h.username and self.h.password:
+            return {'username': self.h.username,
+                    'password': self.h.password}
+        else:
+            return {}
+
     def _download_reports(self, reports_list, reports_path):
         self.mk_download_dir(reports_path)
         self.info("\n::: Downloading reports to '%s'" % reports_path)
+
         for f in reports_list:
             self.info("... %s" % f['uri'])
-            _download(self.h.username, self.h.password, f['uri'],
-                      os.path.join(reports_path, f['name']))
+            util.download_file(f['uri'], os.path.join(reports_path, f['name']),
+                               creds=self._get_creds())
 
     def _get_names(self, reports):
         return set(map(lambda x: x['node'], reports))
