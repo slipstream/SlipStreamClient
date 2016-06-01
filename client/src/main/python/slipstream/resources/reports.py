@@ -106,6 +106,9 @@ class ReportsGetter(object):
 
     def get_reports(self, run_uuid, components=[], no_orch=False):
         reports_list_orig = self.list_reports(run_uuid)
+        if not reports_list_orig:
+            self.info("::: WARNING: No reports available on %s :::" % run_uuid)
+            return
 
         reports_list = self.latest_only(reports_list_orig)
         self.debug("::: Only latest reports are selected. :::", data=reports_list)

@@ -27,6 +27,7 @@ from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.Client import Client
 from slipstream.exceptions.Exceptions import AbortException, TimeoutException
+from slipstream.resources.reports import ReportsGetter
 import slipstream.util as util
 
 RC_SUCCESS = 0
@@ -116,7 +117,26 @@ class MainProgram(CommandBase):
                                callback=self._final_states_callback,
                                metavar='FINAL_STATES', default=self.FINAL_STATES)
 
+        self.parser.add_option('--get-reports-all', dest='get_reports_all',
+                               help='Get all reports after final state is reached.',
+                               default=False, action='store_true')
+
+        self.parser.add_option('--get-reports', dest='reports_components',
+                               help='Comma separated list of components to download reports for. '
+                                    'Example: nginx,worker.1,worker.3 - will download reports for all component '
+                                    'instances of nginx and only for instances 1 and 3 of worker.', default='')
+
+        self.parser.add_option('--get-reports-dir', dest='output_dir',
+                               help='Path to the directory to store the reports. '
+                                    'Default: <working directory>/<run-uuid>.',
+                               default=os.getcwd())
+
         self.options, self.args = self.parser.parse_args()
+
+        if self.options.reports_components:
+            self.options.reports_components = self.options.reports_components.split(',')
+        else:
+            self.options.reports_components = []
 
         self._checkArgs()
 
@@ -156,6 +176,7 @@ class MainProgram(CommandBase):
                 rc = self._wait_run_and_handle_failures(run_url)
                 sys.exit(rc)
             finally:
+                self._download_reports(run_url.rsplit('/', 1)[-1])
                 self._cond_terminate_run(rc)
         else:
             print(run_url)
@@ -308,6 +329,19 @@ class MainProgram(CommandBase):
 
     def _need_to_wait(self):
         return self.options.wait > self.DEAFULT_WAIT
+
+    def _download_reports(self, run_uuid):
+        if not (self.options.reports_components or self.options.get_reports_all):
+            return
+
+        components = []
+        if self.options.reports_components:
+            components = self.options.reports_components.split(',')
+        ch = ConfigHolder(options=self.options, context={'ignore': None})
+        ch.context = {}
+        rg = ReportsGetter(ch)
+        rg.get_reports(run_uuid, components=components)
+
 
 if __name__ == "__main__":
     try:
