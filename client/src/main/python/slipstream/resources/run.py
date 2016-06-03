@@ -25,7 +25,10 @@ RUN_STATES = ('Initializing',
               'Done',
               'Cancelled',
               'Aborted')
-FINAL_STATE = 'Done'
+
+FINAL_STATES = ('Done',
+                'Cancelled',
+                'Aborted')
 
 
 def run_url_to_uuid(run_url):

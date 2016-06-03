@@ -30,7 +30,7 @@ from slipstream.exceptions.Exceptions import AbortException, TimeoutException
 from slipstream.resources.reports import ReportsGetter
 import slipstream.util as util
 from slipstream.resources.run import (run_url_to_uuid, run_states_after,
-                                      RUN_STATES, FINAL_STATE)
+                                      RUN_STATES, FINAL_STATES)
 
 RC_SUCCESS = 0
 RC_CRITICAL_DEFAULT = 1
@@ -55,7 +55,7 @@ class MainProgram(CommandBase):
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = RUN_STATES[0]
-    FINAL_STATES = [FINAL_STATE, ]
+    FINAL_STATES = FINAL_STATES
 
     def __init__(self, argv=None):
         self.moduleUri = None
@@ -120,7 +120,7 @@ class MainProgram(CommandBase):
                                help='Comma separated list of final states. ' +
                                     'Default: %s' % ', '.join(self.FINAL_STATES),
                                type='string', action="callback",
-                               callback=self._final_states_callback,
+                               callback=self._comma_separ_to_list_callback,
                                metavar='FINAL_STATES', default=self.FINAL_STATES)
 
         self.parser.add_option('--get-reports-all', dest='get_reports_all',
@@ -130,7 +130,9 @@ class MainProgram(CommandBase):
         self.parser.add_option('--get-reports', dest='reports_components',
                                help='Comma separated list of components to download reports for. '
                                     'Example: nginx,worker.1,worker.3 - will download reports for all component '
-                                    'instances of nginx and only for instances 1 and 3 of worker.', default='')
+                                    'instances of nginx and only for instances 1 and 3 of worker.',
+                               type='string', action="callback",
+                               callback=self._comma_separ_to_list_callback, default='')
 
         self.parser.add_option('--get-reports-dir', dest='output_dir',
                                help='Path to the directory to store the reports. '
@@ -139,17 +141,16 @@ class MainProgram(CommandBase):
 
         self.options, self.args = self.parser.parse_args()
 
-        if self.options.reports_components:
-            self.options.reports_components = self.options.reports_components.split(',')
-        else:
-            self.options.reports_components = []
-
         self._checkArgs()
 
         self.resourceUrl = self.args[0]
 
+        print(self.options.reports_components)
+        print('EXIT')
+        SystemExit(0)
+
     @staticmethod
-    def _final_states_callback(option, opt, value, parser):
+    def _comma_separ_to_list_callback(option, opt, value, parser):
         setattr(parser.values, option.dest, value.split(','))
 
     def _checkArgs(self):
