@@ -365,7 +365,7 @@ class MainProgram(CommandBase):
 
         components = []
         if self.options.reports_components:
-            components = self.options.reports_components.split(',')
+            components = self.options.reports_components
         ch = ConfigHolder(options=self.options, context={'ignore': None})
         ch.context = {}
         rg = ReportsGetter(ch)
