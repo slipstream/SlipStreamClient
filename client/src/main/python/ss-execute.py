@@ -29,10 +29,17 @@ from slipstream.Client import Client
 from slipstream.exceptions.Exceptions import AbortException, TimeoutException
 from slipstream.resources.reports import ReportsGetter
 import slipstream.util as util
+from slipstream.resources.run import (run_url_to_uuid, run_states_after,
+                                      RUN_STATES, FINAL_STATE)
 
 RC_SUCCESS = 0
 RC_CRITICAL_DEFAULT = 1
 RC_CRITICAL_NAGIOS = 2
+
+
+def print_step(msg):
+    print("::: %s" % msg)
+
 
 class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
@@ -47,9 +54,8 @@ class MainProgram(CommandBase):
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
-    INITIAL_STATE = 'Inactive'
-    FINAL_STATES = ['Done', ]
-
+    INITIAL_STATE = RUN_STATES[0]
+    FINAL_STATES = [FINAL_STATE, ]
 
     def __init__(self, argv=None):
         self.moduleUri = None
@@ -112,7 +118,7 @@ class MainProgram(CommandBase):
 
         self.parser.add_option('--final-states', dest='final_states',
                                help='Comma separated list of final states. ' +
-                               'Default: %s' % ', '.join(self.FINAL_STATES),
+                                    'Default: %s' % ', '.join(self.FINAL_STATES),
                                type='string', action="callback",
                                callback=self._final_states_callback,
                                metavar='FINAL_STATES', default=self.FINAL_STATES)
@@ -176,8 +182,8 @@ class MainProgram(CommandBase):
                 rc = self._wait_run_and_handle_failures(run_url)
                 sys.exit(rc)
             finally:
-                self._download_reports(run_url.rsplit('/', 1)[-1])
-                self._cond_terminate_run(rc)
+                self._cond_terminate_run(rc, run_url)
+                self._download_reports(run_url)
         else:
             print(run_url)
 
@@ -211,9 +217,9 @@ class MainProgram(CommandBase):
         rc = self._get_critical_rc()
 
         try:
-            final_state = self._wait_run_in_final_state(run_url,
-                                                        self.options.wait,
-                                                        self.options.final_states)
+            reached_state = self._wait_run_in_states(run_url,
+                                                     self.options.wait,
+                                                     self.options.final_states)
         except AbortException as ex:
             if self.options.nagios:
                 print('CRITICAL - %s. State: %s. Run: %s' % (
@@ -234,21 +240,44 @@ class MainProgram(CommandBase):
             else:
                 raise
         else:
-            print('OK - State: %s. Run: %s' % (final_state, run_url))
+            print('OK - State: %s. Run: %s' % (reached_state, run_url))
             rc = RC_SUCCESS
 
         return rc
 
-    def _cond_terminate_run(self, returncode):
-        '''Run gets conditionally terminated
+    def _cond_terminate_run(self, returncode, run_url):
+        """Run gets conditionally terminated
         - when we are acting as Nagios check
         - when there was a failure and we were asked to kill the VMs on error.
-        '''
-        if self.options.nagios or\
+
+        Before termination, in case the abort flag was raised, we wait for reports
+        uploaded from components, by waiting for any state after SendingReports.
+        """
+
+        # In case abort message is set, server-side Sate Machine will attempt
+        # to advance the run through all the states up to Aborted.
+        # This ensures that reports get uploaded by the components.
+        if returncode != RC_SUCCESS:
+            self._wait_reports_sent_if_run_aborted(run_url)
+
+        if self.options.nagios or \
                 (returncode != RC_SUCCESS and self.options.kill_vms_on_error):
             self._terminate_run()
 
+    def _wait_reports_sent_if_run_aborted(self, run_url):
+        if self._is_run_aborted(run_url):
+            print_step("Abort flag was raised. Waiting for reports to be uploaded from components.")
+            try:
+                self._wait_run_in_states(run_url, 2, run_states_after('SendingReports'),
+                                         ignore_abort=True)
+            except TimeoutException:
+                pass
+
+    def _is_run_aborted(self, run_url):
+        return self.client.is_run_aborted(run_url_to_uuid(run_url))
+
     def _terminate_run(self):
+        print_step('Terminating run.')
         try:
             self.client.terminateRun()
         except:
@@ -288,10 +317,10 @@ class MainProgram(CommandBase):
         return ['%s=%s' % (self._decorate_node_param_key(k, filter_out), v)
                 for k, v in params.items()]
 
-    def _wait_run_in_final_state(self, run_url, waitmin, final_states):
-        '''Return on reaching final state.
+    def _wait_run_in_states(self, run_url, waitmin, final_states, ignore_abort=False):
+        '''Return on reaching one of the requested state.
         On timeout raise TimeoutException with the last state attribute set.
-        On aborted Run raise AbortException with the last state attribute set.
+        On aborted Run by default raise AbortException with the last state attribute set.
         '''
         def _sleep():
             time_sleep = self.DEFAULT_SLEEP
@@ -305,18 +334,18 @@ class MainProgram(CommandBase):
         _sleep.ncycle = 1
 
         if not self.options.nagios:
-            print('Waiting %s min for Run %s to reach %s' % \
-                  (waitmin, run_url, ','.join(final_states)))
+            print_step('Waiting %s min for Run %s to reach %s' % \
+                       (waitmin, run_url, ','.join(final_states)))
 
-        run_uuid = run_url.rsplit('/', 1)[-1]
+        run_uuid = run_url_to_uuid(run_url)
         time_end = time.time() + waitmin * 60
         state = self.INITIAL_STATE
         while time.time() <= time_end:
             _sleep()
             try:
-                state = self.client.getRunState(run_uuid, ignoreAbort=False)
+                state = self.client.getRunState(run_uuid, ignoreAbort=ignore_abort)
             except AbortException as ex:
-                ex.state = state
+                ex.state = self.client.getRunState(run_uuid, ignoreAbort=True)
                 raise
             if state in final_states:
                 return state
@@ -330,7 +359,7 @@ class MainProgram(CommandBase):
     def _need_to_wait(self):
         return self.options.wait > self.DEAFULT_WAIT
 
-    def _download_reports(self, run_uuid):
+    def _download_reports(self, run_url):
         if not (self.options.reports_components or self.options.get_reports_all):
             return
 
@@ -340,7 +369,7 @@ class MainProgram(CommandBase):
         ch = ConfigHolder(options=self.options, context={'ignore': None})
         ch.context = {}
         rg = ReportsGetter(ch)
-        rg.get_reports(run_uuid, components=components)
+        rg.get_reports(run_url_to_uuid(run_url), components=components)
 
 
 if __name__ == "__main__":
