@@ -56,7 +56,7 @@ class ConfigHolder(object):
     def _getConfigFromFileAsDict(self, filename=''):
         configFileName = filename or util.getConfigFileName()
         if configFileName:
-            logger.info("using cfg. file: %s" % configFileName)
+            # TODO: log which cfg. file was used
             return self.configFileToDict(configFileName)
         else:
             # TODO: log message to user about empty configuration
