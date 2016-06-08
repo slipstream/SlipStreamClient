@@ -19,6 +19,7 @@
 import copy
 import slipstream.util as util
 from slipstream.contextualizers.ContextualizerFactory import ContextualizerFactory
+from slipstream.exceptions.Exceptions import ConfigurationError
 
 
 class ConfigHolder(object):
@@ -51,7 +52,7 @@ class ConfigHolder(object):
         # classes to instantiate via Factories
         self.config = config or self._getConfigFromFileAsDict(configFile)
         # SlipStream context
-        self.context = context or ContextualizerFactory.getContextAsDict()
+        self.context = context or self._get_context()
 
     def _getConfigFromFileAsDict(self, filename=''):
         configFileName = filename or util.getConfigFileName()
@@ -60,6 +61,13 @@ class ConfigHolder(object):
             return self.configFileToDict(configFileName)
         else:
             # TODO: log message to user about empty configuration
+            return {}
+
+    def _get_context(self):
+        try:
+            return ContextualizerFactory.getContextAsDict()
+        except ConfigurationError as ex:
+            # TODO: log message to user about empty contextualization
             return {}
 
     def _extractDict(self, obj):
