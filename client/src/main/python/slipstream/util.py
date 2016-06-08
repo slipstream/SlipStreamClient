@@ -350,6 +350,7 @@ def getConfigFileName():
         1- local directory
         2- installation location
         3- calling module location
+        If a configuration file is not found, then None is returned.
     '''
     filename = 'slipstream.client.conf'
     try:
@@ -361,8 +362,7 @@ def getConfigFileName():
     configFilename = os.path.join(os.path.dirname(sys.argv[0]), filename)
     if os.path.exists(configFilename):
         return configFilename
-    raise Exceptions.ConfigurationError(
-        "Failed to find the configuration file: " + configFilename)
+    return None
 
 
 def getInstallationLocation():
