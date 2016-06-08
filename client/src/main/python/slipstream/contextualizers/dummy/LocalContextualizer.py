@@ -66,9 +66,9 @@ class LocalContextualizer(object):
         for location in LocalContextualizer.LOCAL_CONTEXTUALIZATION_LOCATIONS:
             filename = os.path.join(location, LocalContextualizer.LOCAL_CONTEXTUALIZATION_FILENAME)
             if os.path.exists(filename):
-                util.printDetail('Using local configuration file: %s' % filename, self.verboseLevel)
+                util.printDetail('Using local contextualization file: %s' % filename, self.verboseLevel)
                 return filename
-        raise Exceptions.ConfigurationError('Failed to find local configuration file.')
+        raise Exceptions.ConfigurationError('Failed to find local contextualization file.')
 
     def __getattr__(self, key):
         return self._get(key)
