@@ -18,6 +18,7 @@
 from __future__ import print_function
 
 import os
+import errno
 import json
 from datetime import datetime
 import pprint
@@ -83,13 +84,12 @@ class ReportsGetter(object):
     def output_fullpath(self, run_uuid, name):
         return os.path.join(self.reports_path(run_uuid), name)
 
-    def mk_download_dir(self, run_uuid):
-        _dir = self.reports_path(run_uuid)
+    @staticmethod
+    def mkdir(_dir):
         try:
             os.makedirs(_dir, mode=0755)
         except OSError as ex:
-            # Proceed further even if directory exists.
-            if ex.errno != 17:
+            if ex.errno != errno.EEXIST:
                 raise ex
         return _dir
 
@@ -106,6 +106,9 @@ class ReportsGetter(object):
 
     def get_reports(self, run_uuid, components=[], no_orch=False):
         reports_list_orig = self.list_reports(run_uuid)
+        if not reports_list_orig:
+            self.info("::: WARNING: No reports available on %s :::" % run_uuid)
+            return
 
         reports_list = self.latest_only(reports_list_orig)
         self.debug("::: Only latest reports are selected. :::", data=reports_list)
@@ -132,7 +135,7 @@ class ReportsGetter(object):
             return {}
 
     def _download_reports(self, reports_list, reports_path):
-        self.mk_download_dir(reports_path)
+        self.mkdir(reports_path)
         self.info("\n::: Downloading reports to '%s'" % reports_path)
 
         for f in reports_list:

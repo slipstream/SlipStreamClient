@@ -25,6 +25,7 @@ from SlipStreamHttpClient import SlipStreamHttpClient
 from exceptions.Exceptions import NotYetSetException
 from exceptions.Exceptions import TimeoutException
 from exceptions.Exceptions import ClientError
+from exceptions.Exceptions import AbortException
 
 from NodeDecorator import NodeDecorator
 import slipstream.util as util
@@ -84,6 +85,13 @@ class Client(object):
         @rtype: {str}
         """
         return self.httpClient.launchDeployment(params)
+
+    def is_run_aborted(self, run_uuid):
+        try:
+            self.httpClient.getRunState(run_uuid, ignoreAbort=False)
+            return False
+        except AbortException:
+            return True
 
     def getRunState(self, uuid, ignoreAbort=True):
         return self.httpClient.getRunState(uuid, ignoreAbort=ignoreAbort)
