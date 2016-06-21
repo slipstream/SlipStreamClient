@@ -202,6 +202,43 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert 'on' == userInfo.get_general('On Error Run Forever')
         assert '3' == userInfo.get_general('Verbosity Level')
 
+    def test_getUserInfo_empty_param(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        user_info = client.get_user_info('StratusLab')
+
+        param = 'domain.name'
+
+        # Check when the value of the parameter is emply.
+        assert '' == user_info.get_cloud(param)
+        assert '' == user_info.get_cloud(param, 'default')
+
+        # Re-set value to None.
+        user_info['StratusLab.' + param] = None
+        assert None == user_info.get_cloud(param)
+        assert None == user_info.get_cloud(param, 'default')
+
+    def test_getUserInfo_nonexistent_param(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        user_info = client.get_user_info('StratusLab')
+        param = 'doesnotexist'
+        assert None == user_info.get_cloud(param)
+        assert 'default' == user_info.get_cloud(param, 'default')
+
+    def test_getUserInfo_param_wthout_value_tag(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        user_info = client.get_user_info('StratusLab')
+
+        param = 'no.value'
+
+        assert '' == user_info.get_cloud(param)
+        assert '' == user_info.get_cloud(param, 'default')
+
     def test_server_config_dom_into_dict(self):
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
         assert conf
