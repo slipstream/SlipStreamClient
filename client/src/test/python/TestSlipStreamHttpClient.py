@@ -206,19 +206,27 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('StratusLab')
+        user_info = client.get_user_info('StratusLab')
+
         param = 'domain.name'
-        assert '' == userInfo.get_cloud(param)
-        assert '' == userInfo.get_cloud(param, 'default')
+
+        # Check when the value of the parameter is emply.
+        assert '' == user_info.get_cloud(param)
+        assert '' == user_info.get_cloud(param, 'default')
+
+        # Re-set value to None.
+        user_info['StratusLab.' + param] = None
+        assert None == user_info.get_cloud(param)
+        assert None == user_info.get_cloud(param, 'default')
 
     def test_getUserInfo_nonexistent_param(self):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('StratusLab')
+        user_info = client.get_user_info('StratusLab')
         param = 'doesnotexist'
-        assert None == userInfo.get_cloud(param)
-        assert 'default' == userInfo.get_cloud(param, 'default')
+        assert None == user_info.get_cloud(param)
+        assert 'default' == user_info.get_cloud(param, 'default')
 
     def test_server_config_dom_into_dict(self):
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
