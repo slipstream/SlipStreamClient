@@ -202,6 +202,24 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert 'on' == userInfo.get_general('On Error Run Forever')
         assert '3' == userInfo.get_general('Verbosity Level')
 
+    def test_getUserInfo_empty_param(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        userInfo = client.get_user_info('StratusLab')
+        param = 'domain.name'
+        assert '' == userInfo.get_cloud(param)
+        assert '' == userInfo.get_cloud(param, 'default')
+
+    def test_getUserInfo_nonexistent_param(self):
+        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
+                                                   context=self.context))
+        client._getUserContent = Mock(return_value=USER_XML)
+        userInfo = client.get_user_info('StratusLab')
+        param = 'doesnotexist'
+        assert None == userInfo.get_cloud(param)
+        assert 'default' == userInfo.get_cloud(param, 'default')
+
     def test_server_config_dom_into_dict(self):
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
         assert conf

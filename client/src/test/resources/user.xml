@@ -69,6 +69,13 @@
          </parameter>
       </entry>
       <entry>
+         <string>StratusLab.domain.name</string>
+         <parameter name="StratusLab.domain.name" description="Domain" category="StratusLab" mandatory="true" type="RestrictedString" readonly="false" order_="40" order="40">
+            <instructions><![CDATA[ Only useful if Identity API v3 ]]></instructions>
+            <value><![CDATA[]]></value>
+         </parameter>
+      </entry>
+      <entry>
          <string><![CDATA[StratusLab.marketplace.endpoint]]></string>
          <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.marketplace.endpoint" description="Default marketplace endpoint" category="StratusLab" mandatory="true" type="String" readonly="false">
             <value><![CDATA[http://marketplace.stratuslab.eu]]></value>
