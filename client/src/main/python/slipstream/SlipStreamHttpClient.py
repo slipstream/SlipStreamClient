@@ -81,7 +81,7 @@ class SlipStreamHttpClient(object):
         for param in parameters:
             if param.attrib['category'] in ['General', cloud_qualifier]:
                 name = param.attrib['name']
-                userInfo[name] = param.findtext('value')
+                userInfo[name] = param.findtext('value', '')
 
         return userInfo
 
