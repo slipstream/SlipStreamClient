@@ -48,6 +48,7 @@ class MainProgram(CommandBase):
     BYPASS_SSH_CHECK = 'bypass-ssh-check'
     REF_QNAME = util.RUN_PARAM_REFQNAME
     RUN_LAUNCH_NOT_NODE_PARAMS = (RUN_TYPE,
+                                  BYPASS_SSH_CHECK,
                                   util.RUN_PARAM_REFQNAME,
                                   util.RUN_PARAM_MUTABLE,
                                   util.RUN_PARAM_KEEP_RUNNING,
@@ -308,7 +309,7 @@ class MainProgram(CommandBase):
             self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
             
         if self.options.bypass_ssh_check:
-            self.parameters[util.BYPASS_SSH_CHECK] = 'true'
+            self.parameters[self.BYPASS_SSH_CHECK] = 'true'
 
     def _decorate_node_param_key(self, key, filter_out=[]):
         if key in filter_out:
