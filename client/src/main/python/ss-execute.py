@@ -118,6 +118,13 @@ class MainProgram(CommandBase):
                                help="Check if there is an SSH key in the user profile",
                                default=True, action='store_false')
 
+        self.parser.add_option('--keep-running',
+                               dest='keep_running',
+                               help="Define when the application should be kept running. \n" + \
+                                    "Available values: never, always, on-error, on-success. \n" + \
+                                    "If not set the user default will be used.",
+                               default='')
+
         self.parser.add_option('--build-image',
                                dest='build_image',
                                help='Build the image instead of running it',
@@ -310,6 +317,9 @@ class MainProgram(CommandBase):
             
         if self.options.bypass_ssh_check:
             self.parameters[self.BYPASS_SSH_CHECK] = 'true'
+            
+        if self.options.keep_running:
+            self.parameters[util.RUN_PARAM_KEEP_RUNNING] = self.options.keep_running
 
     def _decorate_node_param_key(self, key, filter_out=[]):
         if key in filter_out:
