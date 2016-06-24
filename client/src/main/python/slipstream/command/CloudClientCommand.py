@@ -158,9 +158,11 @@ class CloudClientCommand(object):
 
     def _set_common_options(self, parser):
         parser.add_option('--' + UserInfo.CLOUD_USERNAME_KEY, dest=UserInfo.CLOUD_USERNAME_KEY,
-                          help='Cloud username', metavar='USERNAME')
+                          help='Cloud username', metavar='USERNAME',
+                          default=os.environ.get('__SLIPSTREAM_CLOUD_USERNAME', ''))
         parser.add_option('--' + UserInfo.CLOUD_PASSWORD_KEY, dest=UserInfo.CLOUD_PASSWORD_KEY,
-                          help='Cloud password', metavar='PASSWORD')
+                          help='Cloud password', metavar='PASSWORD',
+                          default=os.environ.get('__SLIPSTREAM_CLOUD_PASSWORD', ''))
 
     def get_option(self, name):
         return getattr(self.options, name)
