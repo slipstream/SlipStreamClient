@@ -45,6 +45,7 @@ class MainProgram(CommandBase):
     '''A command-line program to execute a run of creating a new machine.'''
 
     RUN_TYPE = 'type'
+    BYPASS_SSH_CHECK = 'bypass-ssh-check'
     REF_QNAME = util.RUN_PARAM_REFQNAME
     RUN_LAUNCH_NOT_NODE_PARAMS = (RUN_TYPE,
                                   util.RUN_PARAM_REFQNAME,
@@ -110,6 +111,11 @@ class MainProgram(CommandBase):
                                dest='scalable',
                                help='deprecated: use --scalable',
                                default=False, action='store_true')
+
+        self.parser.add_option('--check-ssh-key',
+                               dest='bypass_ssh_check',
+                               help="Check if there is an SSH key in the user profile",
+                               default=True, action='store_false')
 
         self.parser.add_option('--build-image',
                                dest='build_image',
@@ -300,6 +306,9 @@ class MainProgram(CommandBase):
 
         if self.options.scalable:
             self.parameters[util.RUN_PARAM_MUTABLE] = 'true'
+            
+        if self.options.bypass_ssh_check:
+            self.parameters[util.BYPASS_SSH_CHECK] = 'true'
 
     def _decorate_node_param_key(self, key, filter_out=[]):
         if key in filter_out:
