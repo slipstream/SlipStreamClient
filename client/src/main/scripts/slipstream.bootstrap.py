@@ -304,6 +304,10 @@ def __env_path_prepend(envvar, path):
     os.environ[envvar] = os.pathsep.join(pathList)
 
 
+def _sha1(filepath):
+    with open(filepath, 'rb') as f:
+        return hashlib.sha1(f.read()).hexdigest()
+
 
 def __urlopen(src_url):
     try:
@@ -311,6 +315,16 @@ def __urlopen(src_url):
     except Exception as ex:
         error('Failed contacting:', str(src_url), 'with error:"', ex, '"retrying...')
         return urllib2.urlopen(src_url)
+
+
+@retry(Exception, tries=10)
+def _download_as_str(src_url):
+    src_fh = __urlopen(src_url)
+    try:
+        return src_fh.read()
+    finally:
+        src_fh.close()
+
 
 @retry(Exception, tries=10)
 def _download(src_url, dst_file):
@@ -348,14 +362,29 @@ def _download(src_url, dst_file):
 
 
 def _download_and_extract_tarball(tarball_url, target_dir):
+    dst_file = os.path.join(target_dir, os.path.basename(tarball_url))
+
+    if os.path.isfile(dst_file):
+        info('Tarball', dst_file, 'exist')
+        try:
+            remote_sha1 = _download_as_str('{}.sha1'.format(tarball_url))
+            local_sha1 = _sha1(dst_file)
+            info('Local :', local_sha1)
+            info('Remote:', remote_sha1)
+            if local_sha1 == remote_sha1.strip():
+                info('Tarball is up to date:', dst_file)
+                return
+        except Exception as e :
+            info(e)
+            pass
+
     try:
         shutil.rmtree(target_dir, ignore_errors=True)
         os.makedirs(target_dir)
     except OSError:
         pass
-
-    local_tarball = _download(tarball_url,
-                              os.path.join(target_dir, os.path.basename(tarball_url)))
+    
+    local_tarball = _download(tarball_url, dst_file)
 
     info('Expanding tarball:', local_tarball)
     tarfile.open(local_tarball, 'r:gz').extractall(target_dir)
