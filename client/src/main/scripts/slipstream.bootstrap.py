@@ -34,6 +34,9 @@ import time
 import platform
 import re
 
+from functools import wraps
+
+
 SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
 SLIPSTREAM_CLIENT_HOME = os.path.join(SLIPSTREAM_HOME, 'client')
 SLIPSTREAM_CLIENT_SETUP_DONE_LOCK = os.path.join(SLIPSTREAM_CLIENT_HOME, 'setup.done.lock')
@@ -87,6 +90,53 @@ SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Server', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Desktop', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('Ubuntu', SYSTEMD_Ubuntu_ver_min_incl_max_excl)])
+
+
+def retry(ExceptionToCheck, tries=5, delay=1, backoff=2, logger=None):
+    """Retry calling the decorated function using an exponential backoff.
+
+    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
+    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+
+    :param ExceptionToCheck: the exception to check. may be a tuple of
+        exceptions to check
+    :type ExceptionToCheck: Exception or tuple
+
+    :param tries: number of times to try (not retry) before giving up
+    :type tries: int
+
+    :param delay: initial delay between retries in seconds
+    :type delay: int
+
+    :param backoff: backoff multiplier e.g. value of 2 will double the delay
+        each retry
+    :type backoff: int
+
+    :param logger: logger to use. If None, print
+    :type logger: logging.Logger instance
+    """
+    def deco_retry(f):
+
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck, e:
+                    msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    if logger:
+                        logger.warning(msg)
+                    else:
+                        print msg
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
 
 
 def _versiontuple(v):
@@ -253,6 +303,7 @@ def __env_path_prepend(envvar, path):
     os.environ[envvar] = os.pathsep.join(pathList)
 
 
+@retry(Exception, tries=10)
 def _download(src_url, dst_file):
     try:
         src_fh = urllib2.urlopen(src_url)
@@ -329,6 +380,7 @@ def _add_sudo_if_needed(cmd):
     return cmd
 
 
+@retry(Exception, tries=3)
 def _check_call(cmd):
     subprocess.check_call(_add_sudo_if_needed(cmd), stdout=subprocess.PIPE)
 
@@ -680,7 +732,7 @@ def start_machine_executor(cmd):
 def get_and_setup_cloud_connector(cloud_name):
     bundle_url = os.environ.get('CLOUDCONNECTOR_BUNDLE_URL')
     if not bundle_url:
-        msg = (bundle_url is None) and 'NOT DEFINED' or 'NOT INITIALIZED'
+        msg = 'NOT DEFINED' if bundle_url is None else 'NOT INITIALIZED'
         warning('CLOUDCONNECTOR_BUNDLE_URL is %s for cloud %s' % (msg, cloud_name))
         warning('Skipping downloading of the bundle for %s' % cloud_name)
         return
@@ -793,6 +845,7 @@ class AbortPublisher(object):
     def publish(self, message):
         self._process_response(self._publish(message))
 
+    @retry(Exception, tries=5)
     def _publish(self, message):
         try:
             self.c.request('PUT', self._get_request_url(),
