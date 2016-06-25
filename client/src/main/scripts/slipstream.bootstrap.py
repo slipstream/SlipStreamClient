@@ -17,22 +17,23 @@
  limitations under the License.
 """
 
-import sys
-import os
-import tarfile
-import httplib
-import ssl
-import urllib2
-import socket
-import shutil
-import subprocess
-import tempfile
 import commands
-import traceback
 import getpass
-import time
+import hashlib
+import httplib
+import os
 import platform
 import re
+import shutil
+import socket
+import ssl
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+import traceback
+import urllib2
 
 from functools import wraps
 
@@ -303,22 +304,45 @@ def __env_path_prepend(envvar, path):
     os.environ[envvar] = os.pathsep.join(pathList)
 
 
+
+def __urlopen(src_url):
+    try:
+        return urllib2.urlopen(src_url)
+    except Exception as ex:
+        error('Failed contacting:', str(src_url), 'with error:"', ex, '"retrying...')
+        return urllib2.urlopen(src_url)
+
 @retry(Exception, tries=10)
 def _download(src_url, dst_file):
-    try:
-        src_fh = urllib2.urlopen(src_url)
-    except Exception as ex:
-        error('Failed contacting:', src_url, 'with error:"', ex, '"retrying...')
-        src_fh = urllib2.urlopen(src_url)
+    resume = False
 
-    dst_fh = open(dst_file, 'wb')
-    while True:
-        data = src_fh.read()
-        if not data:
-            break
-        dst_fh.write(data)
-    src_fh.close()
-    dst_fh.close()
+    if os.path.isfile(dst_file):
+        try:
+            size = os.path.getsize(dst_file)
+            info('Resuming transfer of', src_url, 'from', size, 'bytes')
+            headers = {'Range': 'bytes={}-'.format(size)}
+            url = urllib2.Request(src_url, headers=headers)
+            resume = True
+        except:
+            pass
+
+    src_fh = __urlopen(url if resume else src_url)
+
+    if resume and src_fh.getcode() != 206:
+        info('Resuming transfer of', src_url, 'is not supported')
+        resume = False
+
+    dst_fh = open(dst_file, 'ab' if resume else 'wb')
+
+    try:
+        while True:
+            data = src_fh.read(2**16)
+            if not data:
+                break
+            dst_fh.write(data)
+    finally:
+        src_fh.close()
+        dst_fh.close()
 
     return dst_file
 
