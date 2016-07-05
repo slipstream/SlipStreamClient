@@ -17,22 +17,26 @@
  limitations under the License.
 """
 
-import sys
-import os
-import tarfile
-import httplib
-import ssl
-import urllib2
-import socket
-import shutil
-import subprocess
-import tempfile
 import commands
-import traceback
 import getpass
-import time
+import hashlib
+import httplib
+import os
 import platform
 import re
+import shutil
+import socket
+import ssl
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+import traceback
+import urllib2
+
+from functools import wraps
+
 
 SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
 SLIPSTREAM_CLIENT_HOME = os.path.join(SLIPSTREAM_HOME, 'client')
@@ -87,6 +91,53 @@ SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Server', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Desktop', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('Ubuntu', SYSTEMD_Ubuntu_ver_min_incl_max_excl)])
+
+
+def retry(ExceptionToCheck, tries=5, delay=1, backoff=2, logger=None):
+    """Retry calling the decorated function using an exponential backoff.
+
+    http://www.saltycrane.com/blog/2009/11/trying-out-retry-decorator-python/
+    original from: http://wiki.python.org/moin/PythonDecoratorLibrary#Retry
+
+    :param ExceptionToCheck: the exception to check. may be a tuple of
+        exceptions to check
+    :type ExceptionToCheck: Exception or tuple
+
+    :param tries: number of times to try (not retry) before giving up
+    :type tries: int
+
+    :param delay: initial delay between retries in seconds
+    :type delay: int
+
+    :param backoff: backoff multiplier e.g. value of 2 will double the delay
+        each retry
+    :type backoff: int
+
+    :param logger: logger to use. If None, print
+    :type logger: logging.Logger instance
+    """
+    def deco_retry(f):
+
+        @wraps(f)
+        def f_retry(*args, **kwargs):
+            mtries, mdelay = tries, delay
+            while mtries > 1:
+                try:
+                    return f(*args, **kwargs)
+                except ExceptionToCheck, e:
+                    msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
+                    if logger:
+                        logger.warning(msg)
+                    else:
+                        print msg
+                    time.sleep(mdelay)
+                    mtries -= 1
+                    mdelay *= backoff
+            return f(*args, **kwargs)
+
+        return f_retry  # true decorator
+
+    return deco_retry
 
 
 def _versiontuple(v):
@@ -253,34 +304,87 @@ def __env_path_prepend(envvar, path):
     os.environ[envvar] = os.pathsep.join(pathList)
 
 
-def _download(src_url, dst_file):
-    try:
-        src_fh = urllib2.urlopen(src_url)
-    except Exception as ex:
-        error('Failed contacting:', src_url, 'with error:"', ex, '"retrying...')
-        src_fh = urllib2.urlopen(src_url)
+def _sha1(filepath):
+    with open(filepath, 'rb') as f:
+        return hashlib.sha1(f.read()).hexdigest()
 
-    dst_fh = open(dst_file, 'wb')
-    while True:
-        data = src_fh.read()
-        if not data:
-            break
-        dst_fh.write(data)
-    src_fh.close()
-    dst_fh.close()
+
+def __urlopen(src_url):
+    try:
+        return urllib2.urlopen(src_url)
+    except Exception as ex:
+        error('Failed contacting:', str(src_url), 'with error:"', ex, '"retrying...')
+        return urllib2.urlopen(src_url)
+
+
+@retry(Exception, tries=10)
+def _download_as_str(src_url):
+    src_fh = __urlopen(src_url)
+    try:
+        return src_fh.read()
+    finally:
+        src_fh.close()
+
+
+@retry(Exception, tries=10)
+def _download(src_url, dst_file):
+    resume = False
+
+    if os.path.isfile(dst_file):
+        try:
+            size = os.path.getsize(dst_file)
+            info('Resuming transfer of', src_url, 'from', size, 'bytes')
+            headers = {'Range': 'bytes={}-'.format(size)}
+            url = urllib2.Request(src_url, headers=headers)
+            resume = True
+        except:
+            pass
+
+    src_fh = __urlopen(url if resume else src_url)
+
+    if resume and src_fh.getcode() != 206:
+        info('Resuming transfer of', src_url, 'is not supported')
+        resume = False
+
+    dst_fh = open(dst_file, 'ab' if resume else 'wb')
+
+    try:
+        while True:
+            data = src_fh.read(2**16)
+            if not data:
+                break
+            dst_fh.write(data)
+    finally:
+        src_fh.close()
+        dst_fh.close()
 
     return dst_file
 
 
 def _download_and_extract_tarball(tarball_url, target_dir):
+    dst_file = os.path.join(target_dir, os.path.basename(tarball_url))
+
+    if os.path.isfile(dst_file):
+        info('Tarball', dst_file, 'exist')
+        try:
+            remote_sha1 = _download_as_str('{}.sha1'.format(tarball_url))
+            local_sha1 = _sha1(dst_file)
+            info('Local :', local_sha1)
+            info('Remote:', remote_sha1)
+            if local_sha1 == remote_sha1.strip():
+                info('Tarball is up to date:', dst_file)
+                return
+        except Exception as e :
+            info(e)
+            pass
+
     try:
         shutil.rmtree(target_dir, ignore_errors=True)
         os.makedirs(target_dir)
     except OSError:
         pass
-
-    local_tarball = _download(tarball_url,
-                              os.path.join(target_dir, os.path.basename(tarball_url)))
+    
+    local_tarball = _download(tarball_url, dst_file)
 
     info('Expanding tarball:', local_tarball)
     tarfile.open(local_tarball, 'r:gz').extractall(target_dir)
@@ -329,6 +433,7 @@ def _add_sudo_if_needed(cmd):
     return cmd
 
 
+@retry(Exception, tries=3)
 def _check_call(cmd):
     subprocess.check_call(_add_sudo_if_needed(cmd), stdout=subprocess.PIPE)
 
@@ -680,7 +785,7 @@ def start_machine_executor(cmd):
 def get_and_setup_cloud_connector(cloud_name):
     bundle_url = os.environ.get('CLOUDCONNECTOR_BUNDLE_URL')
     if not bundle_url:
-        msg = (bundle_url is None) and 'NOT DEFINED' or 'NOT INITIALIZED'
+        msg = 'NOT DEFINED' if bundle_url is None else 'NOT INITIALIZED'
         warning('CLOUDCONNECTOR_BUNDLE_URL is %s for cloud %s' % (msg, cloud_name))
         warning('Skipping downloading of the bundle for %s' % cloud_name)
         return
@@ -793,6 +898,7 @@ class AbortPublisher(object):
     def publish(self, message):
         self._process_response(self._publish(message))
 
+    @retry(Exception, tries=5)
     def _publish(self, message):
         try:
             self.c.request('PUT', self._get_request_url(),
