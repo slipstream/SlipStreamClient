@@ -251,14 +251,18 @@
             </mapping>
           </mappings>
           <installScriptlet>
-            <script>mkdir -p $RPM_BUILD_ROOT/%{py_sitedir}
-mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}</script>
+            <script>
+mkdir -p $RPM_BUILD_ROOT/%{py_sitedir}
+mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
+            </script>
           </installScriptlet>
           <postinstallScriptlet>
             <!-- fixing a bug in client -->
-            <script>/bin/touch /usr/bin/slipstream.client.conf
+            <script>
+/bin/touch /usr/bin/slipstream.client.conf
 mkdir -p /opt/slipstream/connectors/bin
-/bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf</script>
+/bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf
+            </script>
           </postinstallScriptlet>
         </configuration>
         <executions>
