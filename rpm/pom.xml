@@ -77,9 +77,11 @@
         <version>1.3</version>
         <executions>
           <execution>
+            <id>generate-sha1</id>
             <goals>
               <goal>files</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
         <configuration>
