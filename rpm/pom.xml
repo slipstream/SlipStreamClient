@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStreamClient</artifactId>
-    <version>3.7-SNAPSHOT</version>
+    <version>3.8-SNAPSHOT</version>
   </parent>
   <build>
     <plugins>
@@ -74,12 +74,13 @@
       <plugin>
         <groupId>net.ju-n.maven.plugins</groupId>
         <artifactId>checksum-maven-plugin</artifactId>
-        <version>1.3</version>
         <executions>
           <execution>
+            <id>generate-sha1</id>
             <goals>
               <goal>files</goal>
             </goals>
+            <phase>package</phase>
           </execution>
         </executions>
         <configuration>
@@ -249,14 +250,18 @@
             </mapping>
           </mappings>
           <installScriptlet>
-            <script>mkdir -p $RPM_BUILD_ROOT/%{py_sitedir}
-mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}</script>
+            <script>
+mkdir -p $RPM_BUILD_ROOT/%{py_sitedir}
+mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
+            </script>
           </installScriptlet>
           <postinstallScriptlet>
             <!-- fixing a bug in client -->
-            <script>/bin/touch /usr/bin/slipstream.client.conf
+            <script>
+/bin/touch /usr/bin/slipstream.client.conf
 mkdir -p /opt/slipstream/connectors/bin
-/bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf</script>
+/bin/touch /opt/slipstream/connectors/bin/slipstream.client.conf
+            </script>
           </postinstallScriptlet>
         </configuration>
         <executions>
