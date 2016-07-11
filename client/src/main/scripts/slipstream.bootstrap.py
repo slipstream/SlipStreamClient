@@ -1,4 +1,9 @@
-#!/usr/bin/env python
+#!/bin/sh
+''''which python2 >/dev/null 2>&1 && exec python2 "$0" "$@"
+which python  >/dev/null 2>&1 && exec python  "$0" "$@"
+which python3 >/dev/null 2>&1 && exec python3 "$0" "$@"
+exec echo "Python not found" # '''
+from __future__ import print_function
 """
  SlipStream Client
  =====
@@ -17,10 +22,8 @@
  limitations under the License.
 """
 
-import commands
 import getpass
 import hashlib
-import httplib
 import os
 import platform
 import re
@@ -33,7 +36,21 @@ import tarfile
 import tempfile
 import time
 import traceback
-import urllib2
+
+try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+
+try:
+    import urllib2
+except ImportError:
+    import urllib.request as urllib2
+
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse
 
 from functools import wraps
 
@@ -81,7 +98,7 @@ INITD_BASED_DISTROS = dict([('CentOS', INITD_RedHat_ver_min_incl_max_excl),
                             ('SUSE Linux Enterprise Desktop', INITD_SUSE_ver_min_incl_max_excl),
                             ('Ubuntu', INITD_Ubuntu_ver_min_incl_max_excl)])
 SYSTEMD_RedHat_ver_min_incl_max_excl = ((7,), (8,))
-SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((15,), (16,))
+SYSTEMD_Ubuntu_ver_min_incl_max_excl = ((15,), (17,))
 SYSTEMD_openSUSE_ver_min_incl_max_excl = ((12,), (14,))
 SYSTEMD_SUSE_ver_min_incl_max_excl = ((12,), (13,))
 SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
@@ -124,12 +141,12 @@ def retry(ExceptionToCheck, tries=5, delay=1, backoff=2, logger=None):
             while mtries > 1:
                 try:
                     return f(*args, **kwargs)
-                except ExceptionToCheck, e:
+                except ExceptionToCheck as e:
                     msg = "%s, Retrying in %d seconds..." % (str(e), mdelay)
                     if logger:
                         logger.warning(msg)
                     else:
-                        print msg
+                        print(msg)
                     time.sleep(mdelay)
                     mtries -= 1
                     mdelay *= backoff
@@ -155,15 +172,15 @@ def version_in_range(ver, vrange):
 
 
 def info(*args):
-    print ' '.join(map(str, args))
+    print(' '.join(map(str, args)))
 
 
 def error(*args):
-    print "ERROR:", ' '.join(map(str, args))
+    print("ERROR:", ' '.join(map(str, args)))
 
 
 def warning(*args):
-    print "WARNING:", ' '.join(map(str, args))
+    print("WARNING:", ' '.join(map(str, args)))
 
 
 def _get_verbosity_level():
@@ -193,12 +210,18 @@ VERBOSITY_LEVEL = _get_verbosity_level()
 
 def debug(*args):
     if VERBOSITY_LEVEL >= 2:
-        print "DEBUG:", ' '.join(map(str, args))
+        print("DEBUG:", ' '.join(map(str, args)))
+
+
+def getstatusoutput(cmd):
+    try:
+        return 0, subprocess.check_output(cmd, shell=True)
+    except CalledProcessError as e:
+        return e.returncode, e.output
 
 
 def _get_rc_output(cmd):
-    status, output = commands.getstatusoutput(cmd)
-    return os.WEXITSTATUS(status), output
+    return getstatusoutput(cmd)
 
 
 def _find_executable(name):
@@ -287,7 +310,8 @@ contextualizationconnector = slipstream.connectors.LocalContextualizer
 def _write_to_ss_client_bin(fname, content):
     for _dir in ['bin', 'sbin']:
         client_config_file = os.path.join(SLIPSTREAM_CLIENT_HOME, _dir, fname)
-        file(client_config_file, 'w').write(content)
+        with open(client_config_file, 'w') as f:
+            f.write(content)
 
 
 def __pythonpath_prepend(path):
@@ -451,8 +475,8 @@ def _set_install_command_and_distro():
             except (subprocess.CalledProcessError, OSError):
                 pass
             else:
-                # TODO: on Ubuntu 10.04 there is no subprocess.check_output()!!!
-                install_cmd = commands.getoutput('which %s' % pkgmngr)
+                install_cmd = subprocess.check_output('which %s' % pkgmngr,
+                                                      shell=True).strip()
                 INSTALL_CMD = [install_cmd, 'install', '-y']
                 DISTRO = pkgmngr_distro[pkgmngr]
                 if DISTRO == 'ubuntu':
@@ -512,6 +536,12 @@ def _with_pip(fn):
 def _pip_install(package):
     _pip_run_cmd(['install', '-I', package])
 
+def install_python2():
+    # Ubuntu 16.04 doesn't have python 2 preinstalled
+    if sys.version_info[0] > 2:
+        info('Installing python 2')
+        _set_install_command_and_distro()
+        _check_call(INSTALL_CMD + ['python'])
 
 def _install_pycrypto_dependencies():
     deps = ['gcc',
@@ -585,16 +615,19 @@ def get_cloud_name():
 def get_machine_executor_command(executor_name):
     try:
         _create_executor_config(executor_name)
-        if _system_supports_initd():
-            debug("System supports init.d.")
-            return _setup_and_get_initd_service_start_command(executor_name)
-        elif _system_supports_systemd():
+
+        if _system_supports_systemd():
             debug("System supports systemd.")
             return _setup_and_get_systemd_service_start_command(executor_name)
+        elif _system_supports_initd():
+            debug("System supports init.d.")
+            return _setup_and_get_initd_service_start_command(executor_name)
+
     except Exception as ex:
         warning('Failed to setup and get service start command for %s executor: %s' % (executor_name, str(ex)))
         warning('Falling back to direct startup of %s executor.' % executor_name)
         return _get_machine_executor_direct_startup_command(executor_name)
+
     warning('Failed to determine support for init.d or systemd.')
     warning('Falling back to direct startup of %s executor.' % executor_name)
     return _get_machine_executor_direct_startup_command(executor_name)
@@ -863,6 +896,8 @@ def main():
 
         setup_ss_and_cloud_connector(is_orchestration)
 
+        install_python2()
+
         info('PYTHONPATH environment variable set to:', os.environ['PYTHONPATH'])
         info('Done bootstrapping!\n')
 
@@ -883,7 +918,6 @@ class AbortPublisher(object):
         self._setup_connection()
 
     def _setup_connection(self):
-        import httplib
         scheme, hostname, port = self._get_service_url_in_parts()
         if scheme == 'https':
             self.c = httplib.HTTPSConnection(hostname, port)
@@ -891,8 +925,7 @@ class AbortPublisher(object):
             self.c = httplib.HTTPConnection(hostname, port)
 
     def _get_service_url_in_parts(self):
-        from urlparse import urlsplit
-        url_split = urlsplit(os.environ['SLIPSTREAM_SERVICEURL'])
+        url_split = urlparse.urlsplit(os.environ['SLIPSTREAM_SERVICEURL'])
         return url_split.scheme, url_split.hostname, url_split.port
 
     def publish(self, message):
@@ -925,13 +958,16 @@ class AbortPublisher(object):
             error(response.status, response.reason)
             error(response.read())
         else:
-            print 'Published abort message to %s' % uri
+            print('Published abort message to %s' % uri)
 
 
 if __name__ == "__main__":
     try:
         main()
-    except Exception, e:
+    except Exception as e:
         fullFilePath = tempfile.gettempdir() + os.sep + 'slipstream.bootstrap.error'
-        file(fullFilePath, 'w').write(str(e))
+        with open(fullFilePath, 'w') as f:
+            f.write(str(e))
         raise
+
+
