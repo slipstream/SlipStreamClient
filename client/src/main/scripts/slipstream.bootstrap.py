@@ -538,7 +538,7 @@ def _pip_install(package):
 
 def install_python2():
     # Ubuntu 16.04 doesn't have python 2 preinstalled
-    if sys.version_info.major > 2:
+    if sys.version_info[0] > 2:
         info('Installing python 2')
         _set_install_command_and_distro()
         _check_call(INSTALL_CMD + ['python'])
