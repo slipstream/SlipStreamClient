@@ -109,6 +109,39 @@ SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
                               ('SUSE Linux Enterprise Desktop', SYSTEMD_SUSE_ver_min_incl_max_excl),
                               ('Ubuntu', SYSTEMD_Ubuntu_ver_min_incl_max_excl)])
 
+# Patch subprocess for Python < 2.7
+if tuple(sys.version_info[0:2]) < (2, 7):
+    from subprocess import Popen, PIPE
+
+    class CalledProcessError(Exception):
+        """This exception is raised when a process run by check_call() or
+        check_output() returns a non-zero exit status.
+        The exit status will be stored in the returncode attribute;
+        check_output() will also store the output in the output attribute.
+        """
+        def __init__(self, returncode, cmd, output=None):
+            self.returncode = returncode
+            self.cmd = cmd
+            self.output = output
+        def __str__(self):
+            return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
+
+    def check_output(*popenargs, **kwargs):
+        if 'stdout' in kwargs:
+            raise ValueError('stdout argument not allowed, it will be overridden.')
+        process = Popen(stdout=PIPE, *popenargs, **kwargs)
+        output, unused_err = process.communicate()
+        retcode = process.poll()
+        if retcode:
+            cmd = kwargs.get("args")
+            if cmd is None:
+                cmd = popenargs[0]
+            raise CalledProcessError(retcode, cmd, output=output)
+        return output
+
+    subprocess.CalledProcessError = CalledProcessError
+    subprocess.check_output = check_output
+
 
 def retry(ExceptionToCheck, tries=5, delay=1, backoff=2, logger=None):
     """Retry calling the decorated function using an exponential backoff.
@@ -216,7 +249,7 @@ def debug(*args):
 def getstatusoutput(cmd):
     try:
         return 0, subprocess.check_output(cmd, shell=True)
-    except CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         return e.returncode, e.output
 
 
@@ -407,7 +440,7 @@ def _download_and_extract_tarball(tarball_url, target_dir):
         os.makedirs(target_dir)
     except OSError:
         pass
-    
+
     local_tarball = _download(tarball_url, dst_file)
 
     info('Expanding tarball:', local_tarball)
