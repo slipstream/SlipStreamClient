@@ -490,7 +490,7 @@ def _add_sudo_if_needed(cmd):
     return cmd
 
 
-@retry(Exception, tries=3)
+@retry(Exception, tries=5, delay=4)
 def _check_call(cmd):
     subprocess.check_call(_add_sudo_if_needed(cmd), stdout=subprocess.PIPE)
 
@@ -964,7 +964,7 @@ class AbortPublisher(object):
     def publish(self, message):
         self._process_response(self._publish(message))
 
-    @retry(Exception, tries=5)
+    @retry(Exception, tries=5, delay=5)
     def _publish(self, message):
         try:
             self.c.request('PUT', self._get_request_url(),
