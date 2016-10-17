@@ -82,7 +82,7 @@ class MainProgram(CommandBase):
         self.parser.add_option('--parameters', dest='parameters',
                                help='Deployment or image parameters override. '
                                     'The key must be in a form: '
-                                    '<node-name>:<parameter-name> (for deployment)'
+                                    '<node-name>:<parameter-name> (for deployment) '
                                     'or <parameter-name> (for image). '
                                     'Several pairs can be provided comma '
                                     'separated.',
