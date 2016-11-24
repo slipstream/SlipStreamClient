@@ -599,9 +599,13 @@ class BaseCloudConnector(object):
         return password
 
     @staticmethod
-    def _generate_vm_name(instance_name):
+    def _get_run_uuid(default=None):
+        return os.environ.get('SLIPSTREAM_DIID', default)
+
+    @classmethod
+    def _generate_vm_name(cls, instance_name):
         vm_name = instance_name
-        run_id = os.environ.get('SLIPSTREAM_DIID', None)
+        run_id = cls._get_run_uuid()
         if run_id:
             vm_name = vm_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + run_id
         return vm_name
