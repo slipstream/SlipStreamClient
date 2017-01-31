@@ -148,7 +148,7 @@
           <release>${BUILD_NUMBER}.${package.os}</release>
           <summary>SlipStream Client API and CLI
 %include %{_rpmconfigdir}/macros.python</summary>
-          <name>slipstream-client${slipstream.edition}</name>
+          <name>slipstream-client</name>
           <group>Applications/Engineering</group>
           <vendor>SixSq</vendor>
           <packager>SixSq</packager>
@@ -157,13 +157,14 @@
           <needarch>noarch</needarch>
           <description>SlipStream Client API and CLI.</description>
           <obsoletes>
-            <obsolete>slipstream-client</obsolete>
+            <obsolete>slipstream-client-community</obsolete>
+            <obsolete>slipstream-client-enterprise</obsolete>
           </obsoletes>
           <requires>
             <require>python &gt;= 2.6</require>
             <require>python-httplib2</require>
             <require>python-paramiko</require>
-            <require>slipstream-useradd${slipstream.edition}</require>
+            <require>slipstream-useradd</require>
           </requires>
           <mappings>
             <mapping>
