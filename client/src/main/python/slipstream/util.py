@@ -685,7 +685,7 @@ def get_packages_install_command(platform, packages):
                                             ', '.join(SUPPORTED_PLATFORMS)))
 
     if platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['debian_based']:
-        cmd = '/bin/sh -c "export DEBIAN_FRONTEND=noninteractive; apt-get -y update || (sleep 60; apt-get -y update); sleep 15; apt-get -y --force-yes install %s; sync; sleep 5"'
+        cmd = '/bin/sh -c "export DEBIAN_FRONTEND=noninteractive; apt-get -y update || (sleep 60; apt-get -y update); sleep 15; apt-get -y --force-yes install %s && sync && sleep 5"'
     elif platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['redhat_based']:
         cmd = 'yum -y install %s'
     elif platform.lower() in SUPPORTED_PLATFORMS_BY_DISTRO['suse_based']:
