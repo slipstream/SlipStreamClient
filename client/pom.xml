@@ -3,7 +3,7 @@
 
   <artifactId>SlipStreamClientAll</artifactId>
   <packaging>pom</packaging>
-  <name>SlipStreamClientAll</name>
+  <name>SlipStreamClient/client</name>
   <url>http://sixsq.com/</url>
 
   <parent>
