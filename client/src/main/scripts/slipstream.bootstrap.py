@@ -489,10 +489,12 @@ def _add_sudo_if_needed(cmd):
         cmd.insert(0, 'sudo')
     return cmd
 
+def _check_call_no_retry(cmd):
+    subprocess.check_call(_add_sudo_if_needed(cmd), stdout=subprocess.PIPE)
 
 @retry(Exception, tries=5, delay=4)
 def _check_call(cmd):
-    subprocess.check_call(_add_sudo_if_needed(cmd), stdout=subprocess.PIPE)
+    _check_call_no_retry(cmd)
 
 
 def _set_install_command_and_distro():
@@ -504,7 +506,7 @@ def _set_install_command_and_distro():
     if not INSTALL_CMD or not DISTRO:
         for pkgmngr in pkgmngr_distro.keys():
             try:
-                _check_call([pkgmngr, '-h'])
+                _check_call_no_retry([pkgmngr, '-h'])
             except (subprocess.CalledProcessError, OSError):
                 pass
             else:
@@ -575,6 +577,8 @@ def install_python2():
         info('Installing python 2')
         _set_install_command_and_distro()
         _check_call(INSTALL_CMD + ['python'])
+        return True
+    return False
 
 def _install_pycrypto_dependencies():
     deps = ['gcc',
@@ -917,6 +921,21 @@ def publish_failure_to_ss_run(exc_info):
                              _formatException(exc_info))
 
 
+def rerun():
+    info('Rerunning the bootstrap script')
+
+    if 'RERUN' in os.environ:
+        raise Exception('Cannot be rerun twice')
+    os.environ['RERUN'] = 'TRUE'
+
+    real_path = os.path.realpath(__file__)
+    args = [real_path] + sys.argv[1:]
+    info('Calling %s' % ' '.join(args))
+    sys.stdout.flush()
+    sys.stderr.flush()
+    return subprocess.call(args, shell=False)
+
+
 def main():
     try:
         machine_executor = 'node'
@@ -927,9 +946,12 @@ def main():
         msg = "=== %s bootstrap ===" % machine_executor
         info('{sep}\n{msg}\n{sep}'.format(sep=len(msg) * '=', msg=msg))
 
-        setup_ss_and_cloud_connector(is_orchestration)
+        info('Python version: %s' % sys.version)
 
-        install_python2()
+        if install_python2():
+            sys.exit(rerun())
+
+        setup_ss_and_cloud_connector(is_orchestration)
 
         info('PYTHONPATH environment variable set to:', os.environ['PYTHONPATH'])
         info('Done bootstrapping!\n')
@@ -939,6 +961,10 @@ def main():
         sys.stderr.flush()
 
         start_machine_executor(cmd)
+    except SystemExit as e:
+        if e.code != 0:
+            publish_failure_to_ss_run(sys.exc_info())
+        raise
     except:
         publish_failure_to_ss_run(sys.exc_info())
         raise
