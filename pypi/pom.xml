@@ -5,25 +5,25 @@
   <name>SlipStreamClient/pypi</name>
   <packaging>pom</packaging>
   <url>http://sixsq.com/</url>
-  
+
   <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStreamClient</artifactId>
     <version>3.24-SNAPSHOT</version>
   </parent>
-  
+
 	<profiles>
 	  <profile>
       <id>release</id>
 
       <build>
-      
+
         <plugins>
-    
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
-    
+
             <executions>
                <execution>
                 <id>unpack</id>
@@ -46,13 +46,13 @@
                 </configuration>
               </execution>
             </executions>
-    
+
           </plugin>
-    
+
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-    
+
             <executions>
               <execution>
                 <id>copy-files</id>
@@ -63,7 +63,7 @@
                 <configuration>
                   <outputDirectory>${project.build.directory}/pypi-pkg</outputDirectory>
                   <overwrite>true</overwrite>
-                  <resources>          
+                  <resources>
                     <resource>
                       <directory>src/main/python</directory>
                       <filtering>true</filtering>
@@ -72,13 +72,13 @@
                       <directory>src/main/resources</directory>
                       <filtering>false</filtering>
                     </resource>
-                  </resources>              
-                </configuration>            
+                  </resources>
+                </configuration>
               </execution>
             </executions>
-    
+
           </plugin>
-    
+
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
@@ -101,10 +101,10 @@
               </arguments>
             </configuration>
           </plugin>
-    
+
         </plugins>
       </build>
-    	  
+
       <dependencies>
         <dependency>
           <groupId>com.sixsq.slipstream</groupId>

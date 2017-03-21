@@ -17,10 +17,22 @@
  limitations under the License.
 """
 
-from distutils.core import setup
+import sys
+
+from setuptools import find_packages, setup
+
+pname = 'slipstream-client'
+
+v = sys.version_info
+if not (2, 6) <= v < (3, 0):
+    raise SystemExit("\n%s requires Python >=2.6 and <3.0.\nYou are using %s" %
+            (pname, v))
 
 setup(
-    name='slipstream-client',
+    # For some reason this doesn't work for me even with setuptools v34.x.
+    # Hence, the above explicit check for the python version.
+    # python_requires='>=2.6,<3.0',
+    name=pname,
     version='${project.version}',
     description='SlipStream end-user client (CLI)',
     long_description='SlipStream client (CLI) to communicate '
@@ -30,6 +42,8 @@ setup(
     license='Apache License, Version 2.0',
     platforms='Any',
     url='http://sixsq.com',
+    install_requires=[
+        'httplib2'],
     scripts=[
         'bin/ss-abort',
         'bin/ss-cancel-abort',
@@ -75,7 +89,6 @@ setup(
         'slipstream.commands.NodeInstanceRuntimeParameter',
         'slipstream.__version__',
     ],
-    requires=['httplib2'],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
