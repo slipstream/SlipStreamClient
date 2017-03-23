@@ -160,7 +160,6 @@ class MainProgram(CommandBase):
         self.resourceUrl = self.args[0]
 
         print(self.options.reports_components)
-        print('EXIT')
         SystemExit(0)
 
     @staticmethod
