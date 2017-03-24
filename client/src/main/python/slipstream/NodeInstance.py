@@ -152,6 +152,9 @@ class NodeInstance(object):
     def get_node_name(self):
         return self.__get(NodeDecorator.NODE_NAME_KEY) or self.get_name()
 
+    def get_root_disk_size(self, default_value=None):
+        return self.__get('disk.GB', default_value)
+
     def get_network_type(self, default_value=None):
         return self.__get('network', default_value)
 

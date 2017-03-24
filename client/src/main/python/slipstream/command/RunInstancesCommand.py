@@ -36,13 +36,14 @@ def publish_vm_info(self, vm, node_instance):
 
 class RunInstancesCommand(CloudClientCommand):
 
-    IMAGE_ID_KEY = 'image-id'
-    PLATFORM_KEY = 'platform'
-    LOGIN_USER_KEY = 'login-username'
-    LOGIN_PASS_KEY = 'login-password'
-    NETWORK_TYPE = 'network-type'
+    IMAGE_ID_KEY        = 'image-id'
+    PLATFORM_KEY        = 'platform'
+    LOGIN_USER_KEY      = 'login-username'
+    LOGIN_PASS_KEY      = 'login-password'
+    NETWORK_TYPE        = 'network-type'
+    ROOT_DISK_SIZE      = 'disk'
     EXTRA_DISK_VOLATILE = 'extra-disk-volatile'
-    DEFAULT_TIMEOUT = 600
+    DEFAULT_TIMEOUT     = 600
 
     def get_cloud_specific_node_inst_cloud_params(self):
         return {}
@@ -67,6 +68,10 @@ class RunInstancesCommand(CloudClientCommand):
         parser.add_option('--' + self.NETWORK_TYPE, dest=self.NETWORK_TYPE,
                           help='Network type (public or private)',
                           default='Public', metavar='NETWORK-TYPE')
+
+        parser.add_option('--' + self.ROOT_DISK_SIZE, dest=self.ROOT_DISK_SIZE,
+                          help='Size of the root disk (in GB)',
+                          default='', metavar='ROOT-DISK-SIZE')
 
         parser.add_option('--' + self.EXTRA_DISK_VOLATILE, dest=self.EXTRA_DISK_VOLATILE,
                           help='Size of the volatile extra disk (in GB)',
@@ -108,6 +113,10 @@ class RunInstancesCommand(CloudClientCommand):
             'image.id': self.get_option(self.IMAGE_ID_KEY),
             'network': self.get_option(self.NETWORK_TYPE)
         }
+
+        if self.get_option(self.ROOT_DISK_SIZE):
+            runtime_parameters.update({'disk.GB':
+                                        self.get_option(self.ROOT_DISK_SIZE)})
 
         if self.get_option(self.EXTRA_DISK_VOLATILE):
             runtime_parameters.update({'extra.disk.volatile':
