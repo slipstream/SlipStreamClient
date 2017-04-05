@@ -1,5 +1,5 @@
 
-# Mutable deployments
+# Scalable deployments
 
 
 In the case of mutable deployments during a scaling action the following 
