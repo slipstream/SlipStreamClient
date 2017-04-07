@@ -86,8 +86,7 @@ class HttpClient(object):
             return resp, content
 
         def _handle3xx(resp):
-            if resp.status == 302:
-                # Redirected
+            if resp.status in [301, 302]:
                 resp, content = self._call(resp['location'], method, body, accept)
             else:
                 raise Exception(
