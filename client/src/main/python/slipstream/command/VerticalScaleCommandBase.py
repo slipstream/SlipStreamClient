@@ -61,8 +61,8 @@ class VerticalScaleCommandBase(CommandBase):
 
     def parse(self):
         usage = """%(prog)s %(usage_options)s
-<run>        Run ID. Run should be mutable and in Ready state.
-<node-name>  Node name to scale the instances of.
+<run>        Run ID. Run should be scalable and in Ready state.
+<node-name>  Node name of the instance to scale.
 <ids>        IDs of the node instances to scale.""" % {'prog': '%prog',
                                                        'usage_options': self._usage_options}
 
@@ -134,14 +134,14 @@ class VerticalScaleCommandBase(CommandBase):
         client.put(self.run_url + '/ss:state', 'Provisioning')
 
     def _check_allowed_to_scale(self, client):
-        err_msg = "ERROR: Run should be mutable and in Ready state."
+        err_msg = "ERROR: Run should be scalable and in Ready state."
 
         ss_state = self._get_ss_state(client)
         if 'Ready' != ss_state:
             self.usageExit(err_msg + " Run is in %s state." % ss_state)
 
-        if not self._is_run_mutable():
-            self.usageExit(err_msg + " Run is not mutable.")
+        if not self._is_run_scalable():
+            self.usageExit(err_msg + " Run is not scalable.")
 
     def _get_ss_state(self, client):
         ss_state_url = self.run_url + "/" + NodeDecorator.globalNamespacePrefix + 'state'
@@ -152,6 +152,6 @@ class VerticalScaleCommandBase(CommandBase):
         _, run_xml = client.get(self.run_url, 'application/xml')
         self.run_dom = etree.fromstring(run_xml)
 
-    def _is_run_mutable(self):
-        mutable = DomExtractor.extract_mutable_from_run(self.run_dom)
-        return util.str2bool(mutable)
+    def _is_run_scalable(self):
+        scalable = DomExtractor.extract_mutable_from_run(self.run_dom)
+        return util.str2bool(scalable)
