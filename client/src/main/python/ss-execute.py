@@ -108,11 +108,6 @@ class MainProgram(CommandBase):
                                help='Launch a scalable application.',
                                default=False, action='store_true')
 
-        self.parser.add_option('--mutable-run',
-                               dest='scalable',
-                               help='deprecated: use --scalable',
-                               default=False, action='store_true')
-
         self.parser.add_option('--check-ssh-key',
                                dest='bypass_ssh_check',
                                help="Check if there is an SSH key in the user profile",

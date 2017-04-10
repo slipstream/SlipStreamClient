@@ -28,7 +28,7 @@ import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimePa
 from slipstream.NodeDecorator import NodeDecorator
 
 class MainProgram(CommandBase):
-    '''A command-line program to add node instance(s) to a mutable deployment.'''
+    '''A command-line program to add node instance(s) to a scalable deployment.'''
 
     def __init__(self, argv=None):
         self.runId = None
@@ -46,11 +46,9 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] <run> <node-name> [<number>]
 
-<run>        Run id of the mutable deployment to which to add instance(s).
-
+<run>        Run id of the scalable deployment to which to add instance(s).
 <node-name>  Node name to add instances to.
-
-<number>     Number of node instances to add to the mutable deployment run.
+<number>     Number of node instances to add to the scalable deployment run.
              By default, add one.
 
 <number-tolerate>   Max number of failed instances to tolerate.

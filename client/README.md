@@ -2,8 +2,8 @@
 # Scalable deployments
 
 
-In the case of mutable deployments during a scaling action the following 
-environment variables are available for the user hook scripts (`OnVmAdd`, `OnVmRemove`, 
+In the case of scalable deployments during a scaling action the following
+environment variables are available for the user hook scripts (`OnVmAdd`, `OnVmRemove`,
 `Pre-Scale`, `Post-Scale`).
 
 ```
@@ -15,8 +15,8 @@ SLIPSTREAM_SCALING_ACTION # name of the scaling action <vm_resize|disk_attach|di
 
 ## Horizontal scalability
 
-If required, the script should be defined in the image module's `OnVmAdd` and/or `OnVmRemove` 
-targets. `SLIPSTREAM_SCALING_NODE` and `SLIPSTREAM_SCALING_VMS` are intended to be used in 
+If required, the script should be defined in the image module's `OnVmAdd` and/or `OnVmRemove`
+targets. `SLIPSTREAM_SCALING_NODE` and `SLIPSTREAM_SCALING_VMS` are intended to be used in
 the following way (`Bash` example).
 
 ```bash
@@ -56,9 +56,9 @@ esac
 
 ## Vertical and horizontal scalability
 
-If required, the scripts should be defined in the image module's `Pre-Scale` and/or `Post-Scale` 
+If required, the scripts should be defined in the image module's `Pre-Scale` and/or `Post-Scale`
 targets and are intended to be used before and/or after the scaling up/down actions.  The scripts
-are only executed on the VMs that are subject to the current scaling action.  Below are the 
+are only executed on the VMs that are subject to the current scaling action.  Below are the
 example scripts for `Bash`.
 
 `Pre-Scale` script.  Note that it can be used on VM remove horizontal scalability action.
@@ -67,7 +67,7 @@ example scripts for `Bash`.
 #!/bin/bash
 set -e
 
-# Pre-scale: intended to be ran before any vertical scaling and horizontal downscaling action. 
+# Pre-scale: intended to be ran before any vertical scaling and horizontal downscaling action.
 
 function before_vm_remove() { echo "Before VM remove"; }
 function before_vm_resize() { echo "Before VM resize"; }
@@ -93,7 +93,7 @@ esac
 #!/bin/bash
 set -e
 
-# Post-Scale: intended to be ran after vertical scaling action. 
+# Post-Scale: intended to be ran after vertical scaling action.
 
 function after_vm_resize() { echo "After VM resize"; }
 function after_disk_attach() { echo "After disk attach"; }

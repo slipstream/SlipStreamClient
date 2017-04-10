@@ -27,7 +27,7 @@ import slipstream.util as util
 import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
 
 class MainProgram(CommandBase):
-    '''A command-line program to remove node instance(s) from a mutable deployment.'''
+    '''A command-line program to remove node instance(s) from a scalable deployment.'''
 
     def __init__(self, argv=None):
         self.runId = None
@@ -43,11 +43,9 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] <run> <node-name> <ids> [<ids> ...]
 
-<run>        Run id of the mutable deployment from which to remove instance(s).
-
+<run>        Run id of the scalable deployment from which to remove instance(s).
 <node-name>  Node name to remove instances from.
-
-<ids>        Ids of the node instances to to remove from a mutable deployment run.'''
+<ids>        Ids of the node instances to to remove from a scalable deployment run.'''
 
         self.parser.usage = usage
         self.add_authentication_options()
