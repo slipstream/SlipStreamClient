@@ -43,9 +43,19 @@
 			<directory>target/main/scripts/etc</directory>
 			<outputDirectory>etc</outputDirectory>
 			<includes>
-				<include>slipstream-*</include>
+				<include>slipstream-node</include>
+				<include>slipstream-orchestrator</include>
 			</includes>
 			<fileMode>0755</fileMode>
+		</fileSet>
+		<fileSet>
+			<directory>target/main/scripts/etc</directory>
+			<outputDirectory>etc</outputDirectory>
+			<includes>
+				<include>slipstream-node.service</include>
+				<include>slipstream-orchestrator.service</include>
+			</includes>
+			<fileMode>0644</fileMode>
 		</fileSet>
 		<fileSet>
 			<directory>src/external</directory>
