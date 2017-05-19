@@ -175,7 +175,7 @@ class MainProgram(CommandBase):
         if not self.options.parameters:
             return parameters
         for pair in self.options.parameters.split(','):
-            parts = pair.split('=')
+            parts = pair.split('=', 1)
             if len(parts) != 2:
                 self.parser.error('Invalid parameter key/value pair: ' + pair)
             key, value = map(lambda x: x.strip(), parts)
