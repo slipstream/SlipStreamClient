@@ -152,6 +152,48 @@ class BaseCloudConnector(object):
         """
         return self.VM_FAILED_STATES
 
+    ''' The methods below are used to generate the reply of *-service-offers
+    '''
+
+    def _list_vm_sizes(self):
+        """
+        Return a list of available VM sizes.
+        The data structure of 'size' element is left to the connector implementation.
+        Methods '_size_get_...(vm_size) are used to retrieve specific data from a 'size' element.
+        """
+        pass
+
+    def _size_get_cpu(self, vm_size):
+        """
+        Extract and return the amount of vCPU from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype int
+        """
+        pass
+
+    def _size_get_ram(self, vm_size):
+        """
+        Extract and return the size of the RAM memory from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype float
+        """
+        pass
+
+    def _size_get_disk(self, vm_size):
+        """
+        Extract and return the size of the root disk from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype float
+        """
+        pass
+
+    def _size_get_instance_type(self, vm_size):
+        """
+        Extract and return the instance type from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype int
+        """
+        pass
 
     """IaaS actions for VM vertical scalability.
 
