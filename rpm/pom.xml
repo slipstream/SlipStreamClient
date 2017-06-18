@@ -164,6 +164,7 @@
             <require>python &gt;= 2.6</require>
             <require>python-httplib2</require>
             <require>python-paramiko</require>
+            <require>python-requests</require>
             <require>slipstream-useradd</require>
           </requires>
           <mappings>
