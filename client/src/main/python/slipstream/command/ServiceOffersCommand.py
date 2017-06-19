@@ -94,10 +94,10 @@ class ServiceOffersCommand(CloudClientCommand):
 
     def _get_platform(self, vm_size):
         """
-        Return the billing period
+        Return the name of platform
         :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         """
-        return 'Unknown'
+        pass
 
     def _get_extra_attributes(self, vm_size):
         """
