@@ -62,7 +62,7 @@ class ServiceOffersCommand(CloudClientCommand):
     def _get_price(self, vm_size, os, root_disk_size=None):
         """
         Get the price for a give vm_size, OS and optionnal root disk size
-        :param vm_size: A vm_size object as returned by the method _get_vm_sizes() of the connector
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         :param os: The name of the operating system type (eg: 'linux', 'suse', 'windows')
         :param root_disk_size: The size of the root disk in GB
         :return: A tuple containing the price per hour and the currency. eg:(0.24, 'USD') )
@@ -72,7 +72,7 @@ class ServiceOffersCommand(CloudClientCommand):
     def _get_root_disk_sizes(self, vm_size, os):
         """
         Return a list of available root disk sizes for the given vm_size
-        :param vm_size: A vm_size object as returned by the method _get_vm_sizes() of the connector
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         :param os: The name of the operating system type (eg: 'linux', 'suse', 'windows')
         :return: A list of available disk sizes
         """
@@ -81,28 +81,28 @@ class ServiceOffersCommand(CloudClientCommand):
     def _get_root_disk_type(self, vm_size):
         """
         Return the type of the root disk (eg: HDD, SSD, EBS, ...)
-        :param vm_size: A vm_size object as returned by the method _get_vm_sizes() of the connector
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         """
         return 'Unknown'
 
     def _get_billing_period(self, vm_size):
         """
         Return the billing period
-        :param vm_size: A vm_size object as returned by the method _get_vm_sizes() of the connector
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         """
         return 'MIN'
 
     def _get_platform(self, vm_size):
         """
         Return the billing period
-        :param vm_size: A vm_size object as returned by the method _get_vm_sizes() of the connector
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         """
         return 'Unknown'
 
     def _get_extra_attributes(self, vm_size):
         """
         Return the billing period
-        :param vm_size: A vm_size object as returned by the method _get_vm_sizes() of the connector
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         """
         pass
 
@@ -172,7 +172,7 @@ class ServiceOffersCommand(CloudClientCommand):
     def _generate_service_offers(self, connector_instance_name):
         service_offers = []
 
-        for vm_size in self.cc._get_vm_sizes():
+        for vm_size in self.cc._list_vm_sizes():
             cpu = int(self.cc._size_get_cpu(vm_size))
             ram = int(self.cc._size_get_ram(vm_size))
             root_disk_type = self._get_root_disk_type(vm_size)
