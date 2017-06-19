@@ -38,37 +38,6 @@
               </arguments>
             </configuration>
           </execution>
-          <execution>
-            <id>pyc</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>compile</phase>
-            <configuration>
-              <executable>python</executable>
-              <arguments>
-                <argument>-m</argument>
-                <argument>compileall</argument>
-                <argument>${project.build.directory}/client</argument>
-              </arguments>
-            </configuration>
-          </execution>
-          <execution>
-            <id>pyo</id>
-            <goals>
-              <goal>exec</goal>
-            </goals>
-            <phase>compile</phase>
-            <configuration>
-              <executable>python</executable>
-              <arguments>
-                <argument>-O</argument>
-                <argument>-m</argument>
-                <argument>compileall</argument>
-                <argument>${project.build.directory}/client</argument>
-              </arguments>
-            </configuration>
-          </execution>
         </executions>
       </plugin>
       <plugin>
@@ -167,6 +136,9 @@
             <require>python-requests</require>
             <require>slipstream-useradd</require>
           </requires>
+          <defineStatements>
+            <defineStatement>__os_install_post %{nil}</defineStatement>
+          </defineStatements>
           <mappings>
             <mapping>
               <directory>/opt/slipstream/downloads</directory>
