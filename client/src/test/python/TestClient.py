@@ -94,7 +94,7 @@ class TestClient(unittest.TestCase):
         assert isinstance(params, list)
         assert len(params) == nrtps
         for _, v in params:
-            assert v == ''
+            assert '' == v
 
     def test_get_rtp_all_somenotset_notimeout(self):
 
