@@ -242,6 +242,7 @@ class ServiceOffersCommand(CloudClientCommand):
 
         self.base_currency = self.get_option(self.BASE_CURRENCY_KEY)
 
+        verbose = self.get_option('verbose')
         dry_run = self.get_option(self.DRY_RUN_KEY)
         ss_endpoint = self.get_option(self.SS_ENDPOINT_KEY)
         ss_username = self.get_option(self.SS_USERNAME_KEY)
@@ -263,15 +264,18 @@ class ServiceOffersCommand(CloudClientCommand):
                 result_count = len(search_result.resources_list)
 
                 if result_count == 0:
-                    print('\nAddinging the following service offer {} to {}...\n{}'.format(service_offer['name'], ss_endpoint, service_offer))
+                    if verbose:
+                        print('\nAddinging the following service offer {} to {}...\n{}'.format(service_offer['name'], ss_endpoint, service_offer))
                     if not dry_run:
                         ssapi.cimi_add('serviceOffers', service_offer)
                 elif result_count == 1:
-                    print('\nUpdating the following service offer {} to {}...\n{}'.format(service_offer['name'], ss_endpoint, service_offer))
+                    if verbose:
+                        print('\nUpdating the following service offer {} to {}...\n{}'.format(service_offer['name'], ss_endpoint, service_offer))
                     if not dry_run:
                         ssapi.cimi_edit(search_result.resources_list[0].id, service_offer)
                 else:
                     print('\n!!! Warning duplicates found of following service offer on {} !!!/n{}'.format(ss_endpoint, service_offer['name']))
+
         print('\n\nCongratulation, executon completed.')
 
     def _set_command_specific_options(self, parser):
