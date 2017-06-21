@@ -18,7 +18,7 @@
 
 import requests
 
-from slipstream.api import Api #TODO add depency to the package
+from slipstream.api import Api, SlipStreamError
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY
 from slipstream.command.CloudClientCommand import CloudClientCommand
