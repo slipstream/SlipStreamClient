@@ -173,7 +173,7 @@ class BaseCloudConnector(object):
 
     def _size_get_ram(self, vm_size):
         """
-        Extract and return the size of the RAM memory from the specified vm_size.
+        Extract and return the size of the RAM memory in MB from the specified vm_size.
         :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
         :rtype float
         """
@@ -181,7 +181,7 @@ class BaseCloudConnector(object):
 
     def _size_get_disk(self, vm_size):
         """
-        Extract and return the size of the root disk from the specified vm_size.
+        Extract and return the size of the root disk in GB from the specified vm_size.
         :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
         :rtype float
         """

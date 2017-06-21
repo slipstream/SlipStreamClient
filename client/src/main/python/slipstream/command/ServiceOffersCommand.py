@@ -47,15 +47,54 @@ class ServiceOffersCommand(CloudClientCommand):
     def _get_default_timeout(self):
         return self.DEFAULT_TIMEOUT
 
+    def _list_vm_sizes(self):
+        """
+        Return a list of available VM sizes.
+        """
+        return self.cc._list_vm_sizes() if self.cc else None
+
+    def _get_cpu(self, vm_size):
+        """
+        Extract and return the amount of vCPU from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype int
+        """
+        return self.cc._size_get_cpu(vm_size) if self.cc else None
+
+    def _get_ram(self, vm_size):
+        """
+        Extract and return the size of the RAM memory in MB from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype int
+        """
+        return self.cc._size_get_ram(vm_size) if self.cc else None
+
+    def _get_disk(self, vm_size):
+        """
+        Extract and return the size of the root disk in GB from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype float
+        """
+        return self.cc._size_get_disk(vm_size) if self.cc else None
+
+    def _get_instance_type(self, vm_size):
+        """
+        Extract and return the instance type from the specified vm_size.
+        :param vm_size: A 'size' object as in the list returned by _list_vm_sizes().
+        :rtype int
+        """
+        return self.cc._size_get_instance_type(vm_size) if self.cc else None
+
     def _get_country(self):
         """
         Return the 2-letters symbol of the country where the Cloud reside.
         """
         return self.get_option(self.COUNTRY_KEY)
 
-    def _get_supported_os(self):
+    def _get_supported_os(self, vm_size):
         """
-        Return a list of supported OS
+        Return a list of supported OS for the specified vm_size
+        :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
         """
         return ['linux', 'windows']
 
@@ -172,16 +211,16 @@ class ServiceOffersCommand(CloudClientCommand):
     def _generate_service_offers(self, connector_instance_name):
         service_offers = []
 
-        for vm_size in self.cc._list_vm_sizes():
-            cpu = int(self.cc._size_get_cpu(vm_size))
-            ram = int(self.cc._size_get_ram(vm_size))
+        for vm_size in self._list_vm_sizes():
+            cpu = int(self._get_cpu(vm_size))
+            ram = int(self._get_ram(vm_size))
             root_disk_type = self._get_root_disk_type(vm_size)
-            instance_type = self.cc._size_get_instance_type(vm_size)
+            instance_type = self._get_instance_type(vm_size)
             billing_period = self._get_billing_period(vm_size)
             platform = self._get_platform(vm_size)
             extra_attributes = self._get_extra_attributes(vm_size)
 
-            for os in self._get_supported_os():
+            for os in self._get_supported_os(vm_size):
                 for root_disk in self._get_root_disk_sizes(vm_size, os):
                     price = None
                     raw_price, currency = self._get_price(vm_size, os, root_disk)
