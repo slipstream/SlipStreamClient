@@ -19,6 +19,8 @@
 import sys
 import time
 import subprocess
+from multiprocessing.dummy import Pool as ThreadPool
+
 
 from SlipStreamHttpClient import SlipStreamHttpClient
 
@@ -46,6 +48,7 @@ class Client(object):
         self.timeout = 30
         self.verboseLevel = 1
         self.verboseThreshold = 1
+        self.ch = configHolder
         configHolder.assignConfigAndOptions(self)
         self.context = configHolder.context
         self.httpClient = SlipStreamHttpClient(configHolder)
@@ -232,4 +235,37 @@ class Client(object):
 
     def get_server_configuration(self):
         return self.httpClient.get_server_configuration()
-        
+
+    def _get_params_list(self, compname, key):
+        ids_param = '%s:ids' % compname
+        ids = self.httpClient.getRuntimeParameter(ids_param).split(',')
+        return ['%s.%s:%s' % (compname, i, key) for i in ids]
+
+    def _get_rtp(self, param):
+        client = Client(self.ch)
+        client.timeout_raise = False
+        try:
+            self._printDetail("%s : Get RPT." % param)
+            t0 = time.time()
+            val = client.getRuntimeParameter(param)
+            self._printDetail("%s : Time to get RTP %s sec." %
+                              (param, (time.time() - t0)))
+            return val
+        except TimeoutException as ex:
+            print >> sys.stderr, ex.arg
+            return ''
+
+    def get_rtp_all(self, compname, key):
+        "Get RTP `key` from all instances of `compname`."
+        POOL_MAX = 9
+        params = self._get_params_list(compname, key)
+        nparams = len(params)
+        pool_size = POOL_MAX if nparams > POOL_MAX else nparams
+        self._printDetail("Get %s RTP instances with pool size: %s" %
+                          (nparams,  pool_size))
+        pool = ThreadPool(pool_size)
+        results = pool.map(self._get_rtp, params)
+        results = [v or '' for v in results]
+        pool.close()
+        pool.join()
+        return zip(params, results)
