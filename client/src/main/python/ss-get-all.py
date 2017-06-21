@@ -61,7 +61,7 @@ class MainProgram(CommandBase):
                                help='expected value; check if all components '
                                'set the parameter to the expected value; exits '
                                'with 1 if parameter not equal to the value on '
-                               'any of the of the components', metavar='VALUE')
+                               'any of the components', metavar='VALUE')
 
         self.options, self.args = self.parser.parse_args()
 
