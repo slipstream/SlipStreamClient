@@ -260,7 +260,7 @@ class Client(object):
         POOL_MAX = 9
         params = self._get_params_list(compname, key)
         nparams = len(params)
-        pool_size = POOL_MAX if nparams > POOL_MAX else nparams
+        pool_size = min(POOL_MAX, nparams)
         self._printDetail("Get %s RTP instances with pool size: %s" %
                           (nparams,  pool_size))
         pool = ThreadPool(pool_size)
