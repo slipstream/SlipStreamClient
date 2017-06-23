@@ -115,6 +115,10 @@ class ServiceOffersCommand(CloudClientCommand):
         :param os: The name of the operating system type (eg: 'linux', 'suse', 'windows')
         :return: A list of available disk sizes
         """
+        disk_size = self._get_disk(vm_size)
+        if disk_size is not None and disk_size > 0:
+            return [disk_size]
+
         return [10, 25, 50, 100, 200, 400, 600, 800, 1000, 1600, 2000, 4000, 6000, 8000, 10000]
 
     def _get_root_disk_type(self, vm_size):
