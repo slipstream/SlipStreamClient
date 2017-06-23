@@ -233,6 +233,8 @@ mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
             <!-- install slipstream-api and fix a bug in client -->
             <script>
 pip install -Iv slipstream-api
+pip install -Iv openpyxl
+pip install -Iv lxml
 
 /bin/touch /usr/bin/slipstream.client.conf
 mkdir -p /opt/slipstream/connectors/bin
