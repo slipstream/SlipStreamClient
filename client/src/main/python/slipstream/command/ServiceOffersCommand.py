@@ -164,14 +164,13 @@ class ServiceOffersCommand(CloudClientCommand):
         resource_type = 'VM'
         resource_class = 'standard'
 
-        if not instance_type:
-            instance_type = '{:d}/{:d}/{:d}'.format(cpu,ram, root_disk)
+        instance_type = instance_type or ''
 
         if not platform and self.cc:
             platform = self.cc.cloudName
 
         service_offer = {
-            "name": "{:d}/{:d}/{:d} {} [{}] ({})".format(cpu,ram, root_disk, os, country, instance_type),
+            "name": "{:d}/{:d}/{:d} {} [{}] ({})".format(cpu, ram, root_disk, os, country, instance_type),
             "description": "{} ({}) with {:d} vCPU, {:d} MiB RAM, {:d} GiB root disk, {} [{}] ({})"
                 .format(resource_type, resource_class, cpu, ram, root_disk, os, country, instance_type),
             "resource:vcpu": cpu,
@@ -183,13 +182,13 @@ class ServiceOffersCommand(CloudClientCommand):
             "resource:country": country,
             "resource:platform": platform,
             "resource:operatingSystem": os,
+            "resource:instanceType": instance_type,
             "price:unitCost": price,
             "price:unitCode": "C62",
             "price:freeUnits": 0,
             "price:currency": self.base_currency,
             "price:billingUnitCode": "HUR",
             "price:billingPeriodCode": billing_period,
-            "schema-org:name": instance_type,
             "connector": {"href": connector_instance_name},
             "acl" : {
                 "owner" : {
