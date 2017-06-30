@@ -169,8 +169,10 @@ class ServiceOffersCommand(CloudClientCommand):
         if not platform and self.cc:
             platform = self.cc.cloudName
 
+        instance_type_in_name = ' {}'.format(instance_type) if instance_type else ''
+
         service_offer = {
-            "name": "{:d}/{:d}/{:d} {} [{}] ({})".format(cpu, ram, root_disk, os, country, instance_type),
+            "name": "({:d}/{:d}/{:d}{} {}) [{}]".format(cpu, ram, root_disk, instance_type_in_name, os, country),
             "description": "{} ({}) with {:d} vCPU, {:d} MiB RAM, {:d} GiB root disk, {} [{}] ({})"
                 .format(resource_type, resource_class, cpu, ram, root_disk, os, country, instance_type),
             "resource:vcpu": cpu,
