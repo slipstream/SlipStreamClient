@@ -259,26 +259,51 @@ class ServiceOffersCommand(CloudClientCommand):
 
         service_offers = self._generate_service_offers(connector_instance_name)
 
+        service_offers_ids = set()
+
         for service_offer in service_offers:
             if dry_run:
                 print('\nService offer {}:\n{}'.format(service_offer['name'], service_offer))
             else:
-                cimi_filter = 'connector/href="{}" and description="{}"'.format(connector_instance_name, service_offer['description'])
+                cimi_filter = 'connector/href="{}" and description="{}"'.format(connector_instance_name,
+                                                                                service_offer['description'])
                 search_result = ssapi.cimi_search('serviceOffers', filter=cimi_filter)
-                result_count = len(search_result.resources_list)
+                result_list = search_result.resources_list
+                result_count = len(result_list)
 
                 if result_count == 0:
                     if verbose:
-                        print('\nAddinging the following service offer {} to {}...\n{}'.format(service_offer['name'], ss_endpoint, service_offer))
-                    if not dry_run:
-                        ssapi.cimi_add('serviceOffers', service_offer)
+                        print('\nAddinging the following service offer {} to {}...\n{}'.format(service_offer['name'],
+                                                                                               ss_endpoint, service_offer))
+
+                    response = ssapi.cimi_add('serviceOffers', service_offer)
+                    service_offers_ids.add(response.json['resource-id'])
                 elif result_count == 1:
                     if verbose:
-                        print('\nUpdating the following service offer {} to {}...\n{}'.format(service_offer['name'], ss_endpoint, service_offer))
-                    if not dry_run:
-                        ssapi.cimi_edit(search_result.resources_list[0].id, service_offer)
+                        print('\nUpdating the following service offer {} to {}...\n{}'.format(service_offer['name'],
+                                                                                              ss_endpoint, service_offer))
+
+                    response = ssapi.cimi_edit(result_list[0].id, service_offer)
+                    service_offers_ids.add(response.id)
                 else:
-                    print('\n!!! Warning duplicates found of following service offer on {} !!!/n{}'.format(ss_endpoint, service_offer['name']))
+                    print('\n!!! Warning duplicates found of following service offer on {} !!!\n{}'.format(ss_endpoint,
+                                                                                                           service_offer['name']))
+                    for result in result_list:
+                        service_offers_ids.add(result.id)
+
+        if not dry_run:
+            cimi_filter = 'connector/href="{}"'.format(connector_instance_name)
+            response = ssapi.cimi_search('serviceOffers', filter=cimi_filter)
+            old_service_offers_ids = set(r.id for r in response.resources())
+            service_offers_ids_to_delete = old_service_offers_ids - service_offers_ids
+
+            for id in service_offers_ids_to_delete:
+                if verbose:
+                    offer = ssapi.cimi_get(id)
+                    print('\nDeleting the following service offer with id {}...\n{}'.format(id, offer.json))
+
+                ssapi.cimi_delete(id)
+
 
         print('\n\nCongratulation, executon completed.')
 
