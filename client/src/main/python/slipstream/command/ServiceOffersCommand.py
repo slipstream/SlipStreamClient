@@ -29,6 +29,8 @@ class ServiceOffersCommand(CloudClientCommand):
     DEFAULT_TIMEOUT = 600
     EXCHANGE_RATES_SERVICE_URL = 'https://api.fixer.io/latest'
 
+    RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES = 'serviceAttributeNamespaces'
+
     DRY_RUN_KEY = 'dry-run'
     COUNTRY_KEY = 'country'
     SS_ENDPOINT_KEY = 'ss-url'
@@ -41,8 +43,15 @@ class ServiceOffersCommand(CloudClientCommand):
         super(ServiceOffersCommand, self).__init__()
 
         self.cc = None
+        self.ssapi = None
         self.base_currency = 'EUR'
         self._exchange_rates = {}
+
+    def _initialize(self):
+        """
+        This method is called once command arguments have been parsed and self.cc and self.ssapi are available
+        """
+        pass
 
     def _get_default_timeout(self):
         return self.DEFAULT_TIMEOUT
@@ -142,6 +151,13 @@ class ServiceOffersCommand(CloudClientCommand):
         """
         pass
 
+    def _get_prefix(self):
+        """
+        Return the prefix (namespace) to use for extra attributes
+        :rtype: str
+        """
+        pass
+
     def _get_extra_attributes(self, vm_size):
         """
         Return the billing period
@@ -158,23 +174,69 @@ class ServiceOffersCommand(CloudClientCommand):
     def convert_currency(self, src_currency, dst_currency, amount):
         return amount * self.get_exchange_rate (src_currency, dst_currency) if src_currency != dst_currency else amount
 
-    def _generate_service_offer(self, connector_instance_name, cpu, ram, root_disk, root_disk_type, os, price,
-                                instance_type=None, billing_period='MIN', platform=None, extra_attributes=None):
-        country = self._get_country()
+    @staticmethod
+    def _generate_service_attribute_namespace(prefix, description=None, acl=None):
+
+        if acl is None:
+            acl = {
+                "owner": {
+                    "principal": "ADMIN",
+                    "type": "ROLE"
+                },
+                "rules": [{
+                    "principal": "USER",
+                    "type": "ROLE",
+                    "right": "VIEW"
+                }, {
+                    "type": "ROLE",
+                    "principal": "ADMIN",
+                    "right": "ALL"
+                }]
+            }
+
+        san = {
+            "prefix": prefix,
+            "id": "service-attribute-namespace/" + prefix,
+            "acl": acl,
+            "resourceURI": "http://sixsq.com/slipstream/1/ServiceAttributeNamespace",
+            "uri": "http://sixsq.com/slipstream/schema/1/" + prefix
+        }
+
+        if description is not None:
+            san['description'] = description
+
+        return san
+
+    def _add_service_attribute_namespace_if_not_exist(self, prefix, description=None, acl=None):
+        verbose = self.get_option('verbose')
+
+        cimi_resp = self.ssapi.cimi_search(self.RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES,
+                                           filter='prefix="{}"'.format(prefix))
+
+        print('\n_add_service_attribute_namespace_if_not_exist({}): {}'.format(prefix, cimi_resp.count))
+
+        if cimi_resp.count == 0:
+            service_attribute_namespace = self._generate_service_attribute_namespace(prefix, description, acl)
+            if verbose:
+                print('\nAddinging the following service attribute namespace {} ...\n{}'.format(prefix,
+                                                                                                service_attribute_namespace))
+            self.ssapi.cimi_add(self.RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES, service_attribute_namespace)
+
+    @staticmethod
+    def _generate_service_offer(connector_instance_name, cpu, ram, root_disk, root_disk_type, os, price,
+                                instance_type=None, base_currency='EUR', billing_period='MIN', country=None,
+                                platform=None, prefix=None, extra_attributes=None):
         resource_type = 'VM'
         resource_class = 'standard'
 
         instance_type = instance_type or ''
-
-        if not platform and self.cc:
-            platform = self.cc.cloudName
-
         instance_type_in_name = ' {}'.format(instance_type) if instance_type else ''
+        instance_type_in_description = ' ({})'.format(instance_type) if instance_type else ''
 
         service_offer = {
             "name": "({:d}/{:d}/{:d}{} {}) [{}]".format(cpu, ram, root_disk, instance_type_in_name, os, country),
-            "description": "{} ({}) with {:d} vCPU, {:d} MiB RAM, {:d} GiB root disk, {} [{}] ({})"
-                .format(resource_type, resource_class, cpu, ram, root_disk, os, country, instance_type),
+            "description": "{} ({}) with {:d} vCPU, {:d} MiB RAM, {:d} GiB root disk, {} [{}]{}"
+                .format(resource_type, resource_class, cpu, ram, root_disk, os, country, instance_type_in_description),
             "resource:vcpu": cpu,
             "resource:ram": ram,
             "resource:disk": root_disk,
@@ -188,7 +250,7 @@ class ServiceOffersCommand(CloudClientCommand):
             "price:unitCost": price,
             "price:unitCode": "C62",
             "price:freeUnits": 0,
-            "price:currency": self.base_currency,
+            "price:currency": base_currency,
             "price:billingUnitCode": "HUR",
             "price:billingPeriodCode": billing_period,
             "connector": {"href": connector_instance_name},
@@ -209,7 +271,10 @@ class ServiceOffersCommand(CloudClientCommand):
             },
         }
         if extra_attributes:
-            service_offer.update(extra_attributes)
+            if not prefix:
+                raise ValueError('A prefix has to be defined with _get_prefix() to specify extra_attributes')
+            for k, v in extra_attributes.items():
+                service_offer['{}:{}'.format(prefix, k)] = v
 
         return service_offer
 
@@ -223,7 +288,12 @@ class ServiceOffersCommand(CloudClientCommand):
             instance_type = self._get_instance_type(vm_size)
             billing_period = self._get_billing_period(vm_size)
             platform = self._get_platform(vm_size)
+            country = self._get_country()
+            prefix = self._get_prefix()
             extra_attributes = self._get_extra_attributes(vm_size)
+
+            if not platform and self.cc:
+                platform = self.cc.cloudName
 
             for os in self._get_supported_os(vm_size):
                 for root_disk in self._get_root_disk_sizes(vm_size, os):
@@ -234,7 +304,8 @@ class ServiceOffersCommand(CloudClientCommand):
 
                     service_offers.append(self._generate_service_offer(connector_instance_name, cpu, ram, root_disk,
                                                                        root_disk_type, os, price, instance_type,
-                                                                       billing_period, platform, extra_attributes))
+                                                                       self.base_currency, billing_period, country,
+                                                                       platform, prefix, extra_attributes))
         return service_offers
 
     def do_work(self):
@@ -254,11 +325,20 @@ class ServiceOffersCommand(CloudClientCommand):
         ss_password = self.get_option(self.SS_PASSWORD_KEY)
         connector_instance_name = self.get_option(self.CONNECTOR_NAME_KEY)
 
-        ssapi = Api(endpoint=ss_endpoint, cookie_file=None, insecure=True)
+        self.ssapi = Api(endpoint=ss_endpoint, cookie_file=None, insecure=True)
         if not dry_run:
-            ssapi.login(ss_username, ss_password)
+            self.ssapi.login(ss_username, ss_password)
+
+        self._initialize()
 
         service_offers = self._generate_service_offers(connector_instance_name)
+
+        if not dry_run and service_offers:
+            self._add_service_attribute_namespace_if_not_exist('resource')
+            self._add_service_attribute_namespace_if_not_exist('price')
+            prefix = self._get_prefix()
+            if prefix:
+                self._add_service_attribute_namespace_if_not_exist(prefix)
 
         service_offers_ids = set()
 
@@ -268,7 +348,7 @@ class ServiceOffersCommand(CloudClientCommand):
             else:
                 cimi_filter = 'connector/href="{}" and description="{}"'.format(connector_instance_name,
                                                                                 service_offer['description'])
-                search_result = ssapi.cimi_search('serviceOffers', filter=cimi_filter)
+                search_result = self.ssapi.cimi_search('serviceOffers', filter=cimi_filter)
                 result_list = search_result.resources_list
                 result_count = len(result_list)
 
@@ -277,14 +357,14 @@ class ServiceOffersCommand(CloudClientCommand):
                         print('\nAddinging the following service offer {} to {}...\n{}'.format(service_offer['name'],
                                                                                                ss_endpoint, service_offer))
 
-                    response = ssapi.cimi_add('serviceOffers', service_offer)
+                    response = self.ssapi.cimi_add('serviceOffers', service_offer)
                     service_offers_ids.add(response.json['resource-id'])
                 elif result_count == 1:
                     if verbose:
                         print('\nUpdating the following service offer {} to {}...\n{}'.format(service_offer['name'],
                                                                                               ss_endpoint, service_offer))
 
-                    response = ssapi.cimi_edit(result_list[0].id, service_offer)
+                    response = self.ssapi.cimi_edit(result_list[0].id, service_offer)
                     service_offers_ids.add(response.id)
                 else:
                     print('\n!!! Warning duplicates found of following service offer on {} !!!\n{}'.format(ss_endpoint,
@@ -294,17 +374,16 @@ class ServiceOffersCommand(CloudClientCommand):
 
         if not dry_run:
             cimi_filter = 'connector/href="{}"'.format(connector_instance_name)
-            response = ssapi.cimi_search('serviceOffers', filter=cimi_filter)
+            response = self.ssapi.cimi_search('serviceOffers', filter=cimi_filter)
             old_service_offers_ids = set(r.id for r in response.resources())
             service_offers_ids_to_delete = old_service_offers_ids - service_offers_ids
 
             for id in service_offers_ids_to_delete:
                 if verbose:
-                    offer = ssapi.cimi_get(id)
+                    offer = self.ssapi.cimi_get(id)
                     print('\nDeleting the following service offer with id {}...\n{}'.format(id, offer.json))
 
-                ssapi.cimi_delete(id)
-
+                self.ssapi.cimi_delete(id)
 
         print('\n\nCongratulation, executon completed.')
 
