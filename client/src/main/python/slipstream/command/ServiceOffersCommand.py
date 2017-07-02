@@ -213,8 +213,6 @@ class ServiceOffersCommand(CloudClientCommand):
         cimi_resp = self.ssapi.cimi_search(self.RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES,
                                            filter='prefix="{}"'.format(prefix))
 
-        print('\n_add_service_attribute_namespace_if_not_exist({}): {}'.format(prefix, cimi_resp.count))
-
         if cimi_resp.count == 0:
             service_attribute_namespace = self._generate_service_attribute_namespace(prefix, description, acl)
             if verbose:
