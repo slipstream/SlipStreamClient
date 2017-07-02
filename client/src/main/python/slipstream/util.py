@@ -107,7 +107,11 @@ def override(func):
     If not the case it will result in a warning being emitted."""
 
     def overrided_func(self, *args, **kwargs):
-        if func.__name__ not in dir(self.__class__.__bases__[0]):
+        bases_functions = []
+        for base in self.__class__.__bases__:
+            bases_functions += dir(base)
+
+        if func.__name__ not in bases_functions:
             warnings.warn("The method '%s' should override a method of the base class '%s'." %
                           (func.__name__, self.__class__.__bases__[0].__name__), category=SyntaxWarning, stacklevel=2)
         return func(self, *args, **kwargs)
