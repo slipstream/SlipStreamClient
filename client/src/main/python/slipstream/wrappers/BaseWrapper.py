@@ -193,6 +193,11 @@ class BaseWrapper(object):
             value = ''
         return (value and True) or False
 
+    def get_max_iaas_workers(self):
+        """Available only on orchestrator.
+        """
+        return self._get_runtime_parameter(self._qualifyKey("max.iaas.workers"))
+
     def get_run_category(self):
         return self._ss_client.get_run_category()
 

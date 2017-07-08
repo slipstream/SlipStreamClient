@@ -289,7 +289,6 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw.initCloudConnector(self.config_holder)
         cw._set_runtime_parameter = Mock()
 
-        cw._cloud_client._get_max_workers = Mock(return_value=1)
         cw._get_user_timeout = Mock(return_value=2)
 
         # No waiting.
