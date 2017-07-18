@@ -323,6 +323,8 @@ class ServiceOffersCommand(CloudClientCommand):
         ss_password = self.get_option(self.SS_PASSWORD_KEY)
         connector_instance_name = self.get_option(self.CONNECTOR_NAME_KEY)
 
+        filter_connector_vm = 'connector/href="{}" and resource:type="{}"'.format(connector_instance_name, "VM")
+
         self.ssapi = Api(endpoint=ss_endpoint, cookie_file=None, insecure=True)
         if not dry_run:
             self.ssapi.login(ss_username, ss_password)
@@ -344,8 +346,7 @@ class ServiceOffersCommand(CloudClientCommand):
             if dry_run:
                 print('\nService offer {}:\n{}'.format(service_offer['name'], service_offer))
             else:
-                cimi_filter = 'connector/href="{}" and description="{}"'.format(connector_instance_name,
-                                                                                service_offer['description'])
+                cimi_filter = '{} and description="{}"'.format(filter_connector_vm, service_offer['description'])
                 search_result = self.ssapi.cimi_search('serviceOffers', filter=cimi_filter)
                 result_list = search_result.resources_list
                 result_count = len(result_list)
@@ -371,8 +372,7 @@ class ServiceOffersCommand(CloudClientCommand):
                         service_offers_ids.add(result.id)
 
         if not dry_run:
-            cimi_filter = 'connector/href="{}"'.format(connector_instance_name)
-            response = self.ssapi.cimi_search('serviceOffers', filter=cimi_filter)
+            response = self.ssapi.cimi_search('serviceOffers', filter=filter_connector_vm)
             old_service_offers_ids = set(r.id for r in response.resources())
             service_offers_ids_to_delete = old_service_offers_ids - service_offers_ids
 
