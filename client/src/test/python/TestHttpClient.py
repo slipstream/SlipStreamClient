@@ -17,12 +17,12 @@
  limitations under the License.
 """
 
-import httplib2
+import cookielib
+import requests
 import unittest
-import tempfile
-import shutil
 
 from mock import Mock
+from requests.cookies import RequestsCookieJar
 
 from slipstream.HttpClient import HttpClient
 from slipstream.exceptions.Exceptions import NetworkError
@@ -36,88 +36,70 @@ class HttpClientTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def testGetWithUsernamePassword(self):
-
-        httpRequestMock = Mock(return_value=(httplib2.Response({}), ''))
-
-        httpObjectMock = Mock()
-        httpObjectMock.request = httpRequestMock
-
-        mock = Mock(return_value=httpObjectMock)
-        HttpClient._getHttpObject = mock
+    def test_get_with_username_password(self):
 
         client = HttpClient('username', 'password')
-        client.get('url')
+        client.verboseLevel = 0
+        client.session = Mock()
+        client.session.cookies = []
+        resp = Mock(spec_set=requests.Response())
+        resp.request = Mock()
+        resp.request.headers = {}
+        resp.status_code = 200
+        client.session.request = Mock(return_value=resp)
 
-        args, kwargs = httpRequestMock.call_args
+        client.get('http://foo.bar', retry=False)
 
-        self.assertEqual(('url', 'GET', None), args)
+        args, kwargs = client.session.request.call_args
+        self.assertEqual(('GET', 'http://foo.bar'), args)
+        self.assertTrue(kwargs['auth'], ('username', 'password'))
 
-        self.assertTrue(kwargs['headers']['Authorization'].startswith('Basic '))
-
-    def testGetSetsCookie(self):
-
-        httpRequestMock = Mock(return_value=(httplib2.Response({'set-cookie': 'acookie'}), ''))
-        
-        httpObjectMock = Mock()
-        httpObjectMock.request = httpRequestMock
-        
-        mock = Mock(return_value=httpObjectMock)
-        HttpClient._getHttpObject = mock
-        
-        client = HttpClient('username', 'password')
-        client.get('http://localhost:9999/url')
-        
-        self.assertEqual('acookie', client.cookie)
-
-    def testGetWithCookie(self):
-
-        httpRequestMock = Mock(return_value=(httplib2.Response({}), ''))
-
-        httpObjectMock = Mock()
-        httpObjectMock.request = httpRequestMock
-
-        mock = Mock(return_value=httpObjectMock)
-        HttpClient._getHttpObject = mock
+    def test_get_with_oldstyle_cookie_string(self):
 
         client = HttpClient()
-        client.cookie = 'acookie'
+        client.verboseLevel = 0
+        client.cookie = 'acookie=data'
+        client.cookie_filename = '/dev/null'
 
-        client.get('url')
+        client.init_session('http://foo.bar')
 
-        _, kwargs = httpRequestMock.call_args
+        jar = RequestsCookieJar()
+        jar.update(client.session.cookies)
+        cookies = jar.get_dict(domain='foo.bar', path='/')
+        self.assertEqual(1, len(cookies))
+        self.assertEqual(cookies['acookie'], 'data')
 
-        headers = kwargs['headers']
-        self.assertEqual(headers['cookie'], 'acookie')
-
-    def testUnknownHttpReturnCode(self):
-
-        httpRequestMock = Mock(return_value=(httplib2.Response({'status': '999'}), ''))
-
-        httpObjectMock = Mock()
-        httpObjectMock.request = httpRequestMock
-
-        mock = Mock(return_value=httpObjectMock)
-        HttpClient._getHttpObject = mock
+    def test_unknown_http_return_code(self):
 
         client = HttpClient('username', 'password')
-        client.cookie = 'acookie'
+        client.verboseLevel = 0
+        client.session = Mock()
+        client.session.cookies = []
+        resp = Mock(spec_set=requests.Response())
+        resp.request = Mock()
+        resp.request.headers = {}
+        resp.status_code = 999
+        client.session.request = Mock(return_value=resp)
 
-        self.assertRaises(NetworkError, client.get, 'url', retry=False)
+        self.assertRaises(NetworkError, client.get, 'http://foo.bar',
+                          retry=False)
 
-    def testBasicAuthenticationHeaderSet(self):
-
+    def test_post_with_data(self):
         client = HttpClient('username', 'password')
-        headers = client._createAuthenticationHeader()
+        client.verboseLevel = 0
+        resp = requests.Response()
+        resp.status_code = 200
+        resp.get = Mock(return_value=None)
+        resp.request = Mock()
+        resp.request.headers = {}
+        requests.sessions.Session.send = Mock(return_value=resp)
 
-        self.assertTrue(headers['Authorization'].startswith('Basic '))
+        client.post('http://example.com', 'a=b\nc=d')
 
-    def testCookieHeaderSet(self):
-
-        client = HttpClient(cookie='acookie')
-        headers = client._createAuthenticationHeader()
-
-        self.assertEqual('acookie', headers['cookie'])
+        args, kwargs = requests.sessions.Session.send.call_args
+        self.assertEqual(len(args), 1)
+        req = args[0]
+        self.assertEqual(req.body, 'a=b\nc=d')
 
 
 if __name__ == '__main__':

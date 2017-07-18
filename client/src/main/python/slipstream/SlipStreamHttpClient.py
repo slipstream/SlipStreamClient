@@ -164,11 +164,6 @@ class SlipStreamHttpClient(object):
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')
 
-    # TODO: LS: Can we remove this method ?
-    def reset(self):
-        url = self.run_url
-        self._httpPost(url, 'reset', 'text/plain')
-
     def execute(self, resourceUri):
         url = self.runEndpoint
         return self._httpPost(url, resourceUri, 'text/plain')
@@ -212,17 +207,23 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extract_run_parameters_from_run(self.run_dom)
 
-    def getRuntimeParameter(self, key, ignoreAbort=False):
+    def getRuntimeParameter(self, key, ignoreAbort=False, stream=False):
 
         url = self.run_url + '/' + key
         if (self.ignoreAbort or ignoreAbort):
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
-            _, content = self._httpGet(url, accept='text/plain')
+            _, content = self._httpGet(url, accept='text/plain', stream=stream)
         except Exceptions.NotFoundError, ex:
             raise Exceptions.NotFoundError('"%s" for %s' % (str(ex), key))
 
-        return content.strip().strip('"').strip("'")
+        if not stream:
+            return content.strip().strip('"').strip("'")
+        else:
+            data = ''
+            for r in content.events():
+                data = r.data
+            return data
 
     def setRuntimeParameter(self, key, value, ignoreAbort=False):
         url = self.run_url + '/' + key
@@ -242,8 +243,8 @@ class SlipStreamHttpClient(object):
 
         self._httpDelete(url)
 
-    def _httpGet(self, url, accept='application/xml'):
-        return self.httpClient.get(url, accept, retry=self.retry)
+    def _httpGet(self, url, accept='application/xml', stream=False):
+        return self.httpClient.get(url, accept, retry=self.retry, stream=stream)
 
     def _httpPut(self, url, body=None, contentType='application/xml', accept='application/xml'):
         return self.httpClient.put(url, body, contentType, accept, retry=self.retry)
@@ -264,8 +265,9 @@ class SlipStreamHttpClient(object):
 
     def launchDeployment(self, params):
         body = '&'.join(params)
-        resp, _ = self._httpPost(self.runEndpoint, body, contentType='text/plain')
-        return resp['location']
+        resp, _ = self._httpPost(self.runEndpoint, body,
+                                 contentType='text/plain')
+        return resp.headers['location']
 
     def getRunState(self, uuid=None, ignoreAbort=True):
         if not uuid and not self.diid:

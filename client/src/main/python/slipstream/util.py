@@ -54,6 +54,7 @@ TMPDIR = os.path.join(tempfile.gettempdir(), 'slipstream')
 REPORTSDIR = os.path.join(os.sep, 'var', 'log', 'slipstream', 'client')
 WINDOWS_REPORTSDIR = '%TMP%\\slipstream\\reports'
 HTTP_CACHEDIR = os.path.join(tempfile.gettempdir(), '.ss_http_cache')
+DEFAULT_COOKIE_FILE = os.path.expanduser('~/.slipstream/cookies.txt')
 
 RUN_RESOURCE_PATH = '/run'
 MODULE_RESOURCE_PATH = '/module'
@@ -444,7 +445,7 @@ def uuid():
 
 def printDetail(message, verboseLevel=1, verboseThreshold=1, timestamp=True):
     if verboseLevel >= verboseThreshold:
-        printAndFlush('%s' % message, timestamp=timestamp)
+        printAndFlush('%s\n' % message, timestamp=timestamp)
 
 
 def _printDetail(message, kwargs={}):

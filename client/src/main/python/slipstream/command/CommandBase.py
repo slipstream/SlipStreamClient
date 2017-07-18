@@ -40,8 +40,7 @@ repDir = os.path.join(slipstreamDirName, repDirName)
 def setEnv():
     newEnv = \
         '.' + os.pathsep + \
-        os.path.join(slipstreamHome, 'bin') + os.pathsep + \
-        os.path.join(slipstreamHome, 'httpurl2')
+        os.path.join(slipstreamHome, 'bin')
     if os.getenv('PYTHONPATH'):
         os.environ['PYTHONPATH'] = newEnv + os.pathsep + os.environ['PYTHONPATH']
     else:
@@ -49,9 +48,7 @@ def setEnv():
 
 
 def setPath():
-    slipstreamHome = util.getInstallationLocation()
     sys.path.insert(1, '.')
-    sys.path.append(os.path.join(slipstreamHome, 'httplib2'))
     setEnv()
 
 
@@ -101,24 +98,27 @@ class CommandBase(object):
         self.verboseLevel = self.options.verboseLevel
 
     def add_authentication_options(self):
-        default_cookie = os.environ.get('SLIPSTREAM_COOKIEFILE',
-                                        os.path.join(util.TMPDIR, 'cookie'))
+        default_cookie = util.DEFAULT_COOKIE_FILE
         self.parser.add_option('-u', '--username', dest='username',
-                               help='SlipStream username', metavar='USERNAME',
+                               help='SlipStream username or $SLIPSTREAM_USERNAME',
+                               metavar='USERNAME',
                                default=os.environ.get('SLIPSTREAM_USERNAME'))
         self.parser.add_option('-p', '--password', dest='password',
-                               help='SlipStream password', metavar='PASSWORD',
+                               help='SlipStream password or $SLIPSTREAM_PASSWORD',
+                               metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
-        self.parser.add_option('--cookie', dest='cookieFilename',
-                               help='SlipStream cookie', metavar='FILE',
+        self.parser.add_option('--cookie', dest='cookie_filename',
+                               help='SlipStream cookie. Default: %s' %
+                                    default_cookie, metavar='FILE',
                                default=default_cookie)
 
     def addEndpointOption(self):
-        default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT',
-                                          'https://nuv.la')
+        default = 'https://nuv.la'
+        effective_default = os.environ.get('SLIPSTREAM_ENDPOINT', default)
         self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
-                               help='SlipStream server endpoint',
-                               default=default_endpoint)
+                               help='SlipStream server endpoint. Default: '
+                                    '$SLIPSTREAM_ENDPOINT or %s' % default,
+                               default=effective_default)
 
     def parse(self):
         pass

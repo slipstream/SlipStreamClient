@@ -46,7 +46,7 @@ class MainProgram(CommandBase):
 
         self.addIgnoreAbortOption()
 
-        self.parser.add_option('--noblock', dest='noBlock',
+        self.parser.add_option('--noblock', dest='no_block',
                                help='return immediately even if the parameter '
                                     'has no value',
                                default=False, action='store_true')

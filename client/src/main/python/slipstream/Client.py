@@ -43,7 +43,7 @@ class Client(object):
     VALUE_LENGTH_LIMIT = 4096  # from RuntimeParameter class on server
 
     def __init__(self, configHolder):
-        self.noBlock = True
+        self.no_block = True
         self.ignoreAbort = False
         self.timeout = 30
         self.verboseLevel = 1
@@ -61,7 +61,7 @@ class Client(object):
 
         _key = self._qualifyKey(key)
 
-        if self.noBlock:
+        if self.no_block:
             value = self._getRuntimeParameter(_key)
         else:
             timer = 0
@@ -155,10 +155,10 @@ class Client(object):
     def _getRuntimeParameter(self, key):
         special_keys = [NodeDecorator.NODE_INSTANCE_NAME_KEY]
         if key in special_keys:
-            return self.context['key']
-
+            return self.context[key]
         try:
-            return self.httpClient.getRuntimeParameter(key, self.ignoreAbort)
+            return self.httpClient.getRuntimeParameter(key, self.ignoreAbort,
+                                                       stream=(not self.no_block))
         except NotYetSetException:
             return None
 
@@ -176,10 +176,6 @@ class Client(object):
 
         _key = self._qualifyKey(NodeDecorator.ABORT_KEY)
         self.httpClient.unset_runtime_parameter(_key, ignore_abort=True)
-
-    # TODO: LS: Can we remove this method ?
-    def reset(self):
-        self.httpClient.reset()
 
     def executScript(self, script):
         return self._systemCall(script, retry=False)

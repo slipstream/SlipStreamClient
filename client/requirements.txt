@@ -1,5 +1,4 @@
 daemon==1.1
-httplib2==0.9
 isodate==0.5.1
 lockfile==0.10.2
 paramiko==1.16.0

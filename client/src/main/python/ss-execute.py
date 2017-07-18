@@ -154,9 +154,6 @@ class MainProgram(CommandBase):
 
         self.resourceUrl = self.args[0]
 
-        print(self.options.reports_components)
-        SystemExit(0)
-
     @staticmethod
     def _comma_separ_to_list_callback(option, opt, value, parser):
         setattr(parser.values, option.dest, value.split(','))
