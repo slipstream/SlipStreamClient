@@ -231,10 +231,14 @@ class HttpClient(object):
                 cookie_used = False
                 if self.session_cookie_exists(self.session, url):
                     cookie_used = True
-                else:
+                elif self.username and self.password:
                     self._log_debug("No session cookie found. Using Basic "
                                     "authentication.")
                     auth = (self.username, self.password)
+                else:
+                    self._log_debug("No session cookie or "
+                                    "username/password found. "
+                                    "No authentication will be performed.")
                 resp = self.session.request(method, url,
                                             auth=auth,
                                             data=body,
