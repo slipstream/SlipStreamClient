@@ -28,7 +28,6 @@ from threading import Lock
 from urlparse import urlparse
 from cookielib import CookieJar
 from requests import Request
-import sseclient
 from requests.cookies import MockResponse, MockRequest, RequestsCookieJar
 from six.moves.http_cookiejar import MozillaCookieJar
 
@@ -93,8 +92,6 @@ TOO_MANY_REQUESTS_ERROR = 429
 # Server Error
 SERVICE_UNAVAILABLE_ERROR = 503
 
-HEADER_SSE = 'text/event-stream'
-
 
 def http_debug():
     import logging
@@ -132,23 +129,8 @@ class HttpClient(object):
 
         self.session = None
 
-    def get(self, url, accept='application/xml', retry=True, stream=False):
-        """
-        NB! If stream is True, the second argument returned is the streamed
-        response wrapped into sseclient.SSEClient. To get the events, one
-        should iterate over `stream.events()` consuming `data` field of each
-        event. When the required data is obtained, `close()` the stream. E.g.:
-        for i, e in enumerate(stream.events()):
-            print e.data
-            if i >= 4:
-                stream.close()
-                break
-        """
-        if stream:
-            accept = '%s, %s' % (accept, HEADER_SSE)
-        resp = self._call(url, 'GET', accept=accept, retry=retry, stream=stream)
-        if stream:
-            return resp, sseclient.SSEClient(resp)
+    def get(self, url, accept='application/xml', retry=True):
+        resp = self._call(url, 'GET', accept=accept, retry=retry)
         return resp, resp.text
 
     def put(self, url, body=None, contentType='application/xml',
@@ -168,8 +150,7 @@ class HttpClient(object):
               body=None,
               contentType='application/xml',
               accept='application/xml',
-              retry=True,
-              stream=False):
+              retry=True):
 
         def _handle3xx(resp):
             raise Exception("Redirect should have been handled by HTTP library."
@@ -242,8 +223,7 @@ class HttpClient(object):
                 resp = self.session.request(method, url,
                                             auth=auth,
                                             data=body,
-                                            headers=headers,
-                                            stream=stream)
+                                            headers=headers)
                 if resp.status_code == 401 and cookie_used and (
                             self.username and self.password):
                     resp = self.session.request(method, url,
@@ -251,8 +231,7 @@ class HttpClient(object):
                                                     self.username,
                                                     self.password),
                                                 data=body,
-                                                headers=headers,
-                                                stream=stream)
+                                                headers=headers)
                 return resp
             except requests.exceptions.InvalidSchema as ex:
                 raise Exceptions.ClientError("Malformed URL: %s" % ex)
@@ -356,11 +335,6 @@ class HttpClient(object):
                 return True
         return False
 
-    @staticmethod
-    def is_streamed_response(resp):
-        streamed = re.search(HEADER_SSE, resp.request.headers.get('Accept', ''))
-        return streamed and resp.ok
-
     def _log_normal(self, message):
         util.printDetail(message, self.verboseLevel,
                          util.VERBOSE_LEVEL_NORMAL)
@@ -370,10 +344,7 @@ class HttpClient(object):
                          util.VERBOSE_LEVEL_DETAILED)
 
     def _log_response(self, resp, max_characters=1000):
-        if self.is_streamed_response(resp):
-            msg = "Received streamed response."
-        else:
-            msg = 'Received response: %s\nWith content: %s' % (resp, resp.text)
+        msg = 'Received response: %s\nWith content: %s' % (resp, resp.text)
         if len(msg) > max_characters:
             msg = '%s\n                         %s' % (
                 msg[:max_characters], '::::: Content truncated :::::')

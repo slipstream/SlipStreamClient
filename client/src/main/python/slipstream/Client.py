@@ -157,8 +157,7 @@ class Client(object):
         if key in special_keys:
             return self.context[key]
         try:
-            return self.httpClient.getRuntimeParameter(key, self.ignoreAbort,
-                                                       stream=(not self.no_block))
+            return self.httpClient.getRuntimeParameter(key, self.ignoreAbort)
         except NotYetSetException:
             return None
 

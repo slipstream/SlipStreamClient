@@ -207,23 +207,17 @@ class SlipStreamHttpClient(object):
         self._retrieveAndSetRun()
         return DomExtractor.extract_run_parameters_from_run(self.run_dom)
 
-    def getRuntimeParameter(self, key, ignoreAbort=False, stream=False):
+    def getRuntimeParameter(self, key, ignoreAbort=False):
 
         url = self.run_url + '/' + key
-        if (self.ignoreAbort or ignoreAbort):
+        if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
-            _, content = self._httpGet(url, accept='text/plain', stream=stream)
+            _, content = self._httpGet(url, accept='text/plain')
         except Exceptions.NotFoundError, ex:
             raise Exceptions.NotFoundError('"%s" for %s' % (str(ex), key))
 
-        if not stream:
-            return content.strip().strip('"').strip("'")
-        else:
-            data = ''
-            for r in content.events():
-                data = r.data
-            return data
+        return content.strip().strip('"').strip("'")
 
     def setRuntimeParameter(self, key, value, ignoreAbort=False):
         url = self.run_url + '/' + key
@@ -243,8 +237,8 @@ class SlipStreamHttpClient(object):
 
         self._httpDelete(url)
 
-    def _httpGet(self, url, accept='application/xml', stream=False):
-        return self.httpClient.get(url, accept, retry=self.retry, stream=stream)
+    def _httpGet(self, url, accept='application/xml'):
+        return self.httpClient.get(url, accept, retry=self.retry)
 
     def _httpPut(self, url, body=None, contentType='application/xml', accept='application/xml'):
         return self.httpClient.put(url, body, contentType, accept, retry=self.retry)
