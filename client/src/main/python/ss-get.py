@@ -20,13 +20,15 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.CommandBase import CommandBase
+from slipstream.command.VMCommandBase import VMCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 
 
-class MainProgram(CommandBase):
-    '''A command-line program to get a runtime parameter value from a run, blocking (by default) if not set.'''
+class MainProgram(VMCommandBase):
+    """A command-line program to get a runtime parameter value from a run,
+    blocking (by default) if not set.
+    """
 
     def __init__(self, argv=None):
         super(MainProgram, self).__init__(argv)
@@ -51,7 +53,7 @@ class MainProgram(CommandBase):
                                     'has no value',
                                default=False, action='store_true')
 
-        self.options, self.args = self.parser.parse_args()
+        self.add_run_authn_opts_and_parse()
 
         self._checkArgs()
 
@@ -64,8 +66,8 @@ class MainProgram(CommandBase):
             self.usageExitTooManyArguments()
 
     def doWork(self):
-        configHolder = ConfigHolder(self.options)
-        client = Client(configHolder)
+        ch = ConfigHolder(self.options)
+        client = Client(ch)
         value = client.getRuntimeParameter(self.key)
         print(value if value is not None else '')
 

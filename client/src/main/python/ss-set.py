@@ -18,13 +18,16 @@
 """
 from __future__ import print_function
 
-from slipstream.command.CommandBase import CommandBase
+import sys
+
+from slipstream.command.VMCommandBase import VMCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 
 
-class MainProgram(CommandBase):
-    '''A command-line program to set a value for an existing runtime parameter.'''
+class MainProgram(VMCommandBase):
+    """A command-line program to set a value for an existing runtime parameter.
+    """
 
     def __init__(self, argv=None):
         self.key = None
@@ -46,7 +49,7 @@ Notice:
 
         self.addIgnoreAbortOption()
 
-        self.options, self.args = self.parser.parse_args()
+        self.add_run_authn_opts_and_parse()
 
         if len(self.args) != 2:
             self.usageExit('Error, two argument must be specified')
@@ -55,8 +58,8 @@ Notice:
         self.value = self.args[1]
 
     def doWork(self):
-        configHolder = ConfigHolder(self.options)
-        client = Client(configHolder)
+        ch = ConfigHolder(self.options)
+        client = Client(ch)
         client.setRuntimeParameter(self.key, self.value)
 
 if __name__ == "__main__":
@@ -64,3 +67,4 @@ if __name__ == "__main__":
         MainProgram()
     except KeyboardInterrupt:
         print('\n\nExecution interrupted by the user... goodbye!')
+        sys.exit(-1)

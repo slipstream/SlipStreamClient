@@ -74,6 +74,7 @@ class CommandBase(object):
 
         self.verboseLevel = 0
         self.options = None
+        self.args = None
         self.parser = None
         self._setParserAndParse()
 
