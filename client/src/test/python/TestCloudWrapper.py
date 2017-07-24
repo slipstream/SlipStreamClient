@@ -81,7 +81,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw = CloudWrapper(self.config_holder)
         cw.initCloudConnector()
 
-        cw._ss_client.httpClient._call = Mock(return_value=('', ''))
+        cw._ss_client.httpClient._call = Mock(return_value=Mock())
 
         cw._update_slipstream_image(NodeInstance({'image.resourceUri': 'module/Name'}), 'ABC')
         cw._ss_client.httpClient._call.assert_called_with(
