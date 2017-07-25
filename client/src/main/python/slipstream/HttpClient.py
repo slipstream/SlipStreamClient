@@ -67,9 +67,9 @@ class SessionStore(requests.Session):
                 self.cookies.set_cookie_if_ok(cookie,
                                               MockRequest(response.request))
 
-    def clear(self, domain):
+    def clear(self, domain, path=None, name=None):
         try:
-            self.cookies.clear(domain)
+            self.cookies.clear(domain, path, name)
             self.cookies.save()
         except KeyError:
             pass
@@ -299,6 +299,12 @@ class HttpClient(object):
             self._log_normal('Error: %s. Retrying in %s seconds.' % (ex, sleep))
             time.sleep(sleep)
             self._log_normal('Retrying...')
+
+    def delete_local_cookie(self, url):
+        _url = urlparse(url)
+        if self.session is None:
+            self.init_session(url)
+        self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
 
     @staticmethod
     def _cookie_from_str(url, cookie):

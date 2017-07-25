@@ -39,6 +39,7 @@ class SlipStreamHttpClient(object):
         self.run_dom = None
         self.ignoreAbort = False
         self.username = ''
+        self.password = ''
         self.diid = ''
         self.node_instance_name = ''
         self.serviceurl = ''
@@ -283,6 +284,15 @@ class SlipStreamHttpClient(object):
     def get_server_configuration(self):
         _, config = self._retrieve(self.configuration_endpoint)
         return config
+
+    def login(self, username, password):
+        self._httpPost(self.serviceurl + '/auth/login', body={
+            'username': username,
+            'password': password
+        }, contentType='application/x-www-form-urlencoded')
+
+    def logout(self):
+        self.httpClient.delete_local_cookie(self.serviceurl + '/')
 
 
 class DomExtractor(object):

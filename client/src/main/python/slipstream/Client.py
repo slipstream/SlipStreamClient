@@ -53,6 +53,12 @@ class Client(object):
         self.context = configHolder.context
         self.httpClient = SlipStreamHttpClient(configHolder)
 
+    def login(self, username, password):
+        self.httpClient.login(username, password)
+
+    def logout(self):
+        self.httpClient.logout()
+
     def _loadModule(self, moduleName):
         return util.loadModule(moduleName)
 

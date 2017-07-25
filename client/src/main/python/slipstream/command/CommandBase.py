@@ -99,7 +99,6 @@ class CommandBase(object):
         self.verboseLevel = self.options.verboseLevel
 
     def add_authentication_options(self):
-        default_cookie = util.DEFAULT_COOKIE_FILE
         self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username or $SLIPSTREAM_USERNAME',
                                metavar='USERNAME',
@@ -108,6 +107,10 @@ class CommandBase(object):
                                help='SlipStream password or $SLIPSTREAM_PASSWORD',
                                metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
+        self.add_cookie_option()
+
+    def add_cookie_option(self):
+        default_cookie = util.DEFAULT_COOKIE_FILE
         self.parser.add_option('--cookie', dest='cookie_filename',
                                help='SlipStream cookie. Default: %s' %
                                     default_cookie, metavar='FILE',
