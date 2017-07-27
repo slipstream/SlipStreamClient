@@ -310,19 +310,37 @@ class HttpClient(object):
             self.init_session(url)
         self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
 
-    @staticmethod
-    def _cookie_from_str(url, cookie):
+    def _is_machine_cookie(self, cookie_str):
+        """Expected structure of the cookie string:
+        com.sixsq.slipstream.cookie=k1=val1&k2=val2; Path=<URI>
+        """
+        base = cookie_str.split(';')[0].split('=', 1)[-1]
+        d = dict(map(lambda x: x.split('='), base.split('&')))
+        return d.get('com.sixsq.isMachine', '') == 'true'
+
+    def _url_for_cookie(self, cookie_str, url):
+        """Machine cookie allows access to /.
+        """
+        if self._is_machine_cookie(cookie_str):
+            _url = urlparse(url)
+            return '%s://%s/' % (_url.scheme, _url.netloc)
+        else:
+            return url
+
+    def _cookie_from_str(self, url, cookie_str):
         from StringIO import StringIO
-        data = "Set-Cookie: %s" % cookie
+        data = "Set-Cookie: %s" % cookie_str
         headers = httplib.HTTPMessage(StringIO(data))
         resp = MockResponse(headers)
-        req = MockRequest(Request(method='GET', url=url))
+        req = MockRequest(Request(method='GET',
+                                  url=self._url_for_cookie(cookie_str, url)))
         jar = CookieJar()
         return jar.make_cookies(resp, req)
 
     def _set_oldstyle_cookie_on_session(self, url):
         if self.cookie and not (self.password and self.username):
-            self.session.set_cookies(self._cookie_from_str(url, self.cookie))
+            cookies = self._cookie_from_str(url, self.cookie)
+            self.session.set_cookies(cookies)
             self.cookie = None
 
     def init_session(self, url):
