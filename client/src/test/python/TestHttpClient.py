@@ -58,7 +58,7 @@ class HttpClientTestCase(unittest.TestCase):
 
         client = HttpClient()
         client.verboseLevel = 0
-        client.cookie = 'acookie=data'
+        client.cookie = 'acookie=foo=bar'
         client.cookie_filename = '/dev/null'
 
         client.init_session('http://foo.bar')
@@ -67,7 +67,7 @@ class HttpClientTestCase(unittest.TestCase):
         jar.update(client.session.cookies)
         cookies = jar.get_dict(domain='foo.bar', path='/')
         self.assertEqual(1, len(cookies))
-        self.assertEqual(cookies['acookie'], 'data')
+        self.assertEqual(cookies['acookie'], 'foo=bar')
 
     def test_unknown_http_return_code(self):
 

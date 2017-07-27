@@ -20,6 +20,7 @@ import os
 import time
 import httplib
 import requests
+import re
 import socket
 import stat
 from random import random
@@ -81,6 +82,7 @@ class SessionStore(requests.Session):
 
 LOGIN_URI = 'auth/login'
 DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
+MACHINE_COOKIE_KEY = 'com.sixsq.isMachine'
 
 # Client Error
 NOT_FOUND_ERROR = 404
@@ -310,13 +312,14 @@ class HttpClient(object):
             self.init_session(url)
         self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
 
-    def _is_machine_cookie(self, cookie_str):
+    @staticmethod
+    def _is_machine_cookie(cookie_str):
         """Expected structure of the cookie string:
         com.sixsq.slipstream.cookie=k1=val1&k2=val2; Path=<URI>
         """
-        base = cookie_str.split(';')[0].split('=', 1)[-1]
-        d = dict(map(lambda x: x.split('='), base.split('&')))
-        return d.get('com.sixsq.isMachine', '') == 'true'
+        if re.search('%s=true' % MACHINE_COOKIE_KEY, cookie_str):
+            return True
+        return False
 
     def _url_for_cookie(self, cookie_str, url):
         """Machine cookie allows access to /.
