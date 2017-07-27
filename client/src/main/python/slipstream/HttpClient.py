@@ -112,6 +112,7 @@ class HttpClient(object):
         self.cookie = cookie
         self.username = username
         self.password = password
+        self.host_cert_validate = False
         self.verboseLevel = util.VERBOSE_LEVEL_NORMAL
         self.cookie_filename = util.DEFAULT_COOKIE_FILE
 
@@ -222,7 +223,8 @@ class HttpClient(object):
                 resp = self.session.request(method, url,
                                             auth=auth,
                                             data=body,
-                                            headers=headers)
+                                            headers=headers,
+                                            verify=self.host_cert_validate)
                 if resp.status_code == 401 and cookie_used and (
                             self.username and self.password):
                     resp = self.session.request(method, url,
@@ -230,7 +232,8 @@ class HttpClient(object):
                                                     self.username,
                                                     self.password),
                                                 data=body,
-                                                headers=headers)
+                                                headers=headers,
+                                                verify=self.host_cert_validate)
                 return resp
             except requests.exceptions.InvalidSchema as ex:
                 raise Exceptions.ClientError("Malformed URL: %s" % ex)
