@@ -72,8 +72,8 @@ class SessionStore(requests.Session):
         try:
             self.cookies.clear(domain, path, name)
             self.cookies.save()
-        except KeyError:
-            pass
+        except KeyError as ex:
+            util.printError("Failed to clear local cookie: %s" % ex)
 
     def set_cookies(self, cookies=[]):
         for c in cookies:
