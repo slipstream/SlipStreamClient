@@ -26,9 +26,8 @@ from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(VMCommandBase):
-    """A command-line program to login to SlipStream.  Expects username and
-    password on input, authenticates with SlipStream and stores the cookie in
-    the local cookie store.
+    """A command-line program to logout from SlipStream.  It deletes the local
+    cookie corresponding to <endpoint>/ resource.
     """
 
     def __init__(self, argv=None):
