@@ -62,7 +62,7 @@ class SessionStore(requests.Session):
 
     def _unsecure_cookie(self, url_str, response):
         url = urlparse(url_str)
-        if url.scheme == 'http':
+        if url.scheme.lower() == 'http':
             for cookie in response.cookies:
                 cookie.secure = False
                 self.cookies.set_cookie_if_ok(cookie,
