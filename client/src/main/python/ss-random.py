@@ -22,14 +22,15 @@ import sys
 import random
 import string
 
-from slipstream.command.CommandBase import CommandBase
+from slipstream.command.VMCommandBase import VMCommandBase
 from slipstream.Client import Client
-import slipstream.util as util
-import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
 from slipstream.ConfigHolder import ConfigHolder
 
-class MainProgram(CommandBase):
-    '''A command-line program to generate random string (e.g. for password) and optionally set it in a runtime parameter.'''
+
+class MainProgram(VMCommandBase):
+    """A command-line program to generate random string (e.g. for password)
+    and optionally set it in a runtime parameter.
+    """
 
     def __init__(self, argv=None):
         self.key = None
@@ -43,16 +44,15 @@ class MainProgram(CommandBase):
     def parse(self):
         usage = '''usage: %prog [options] [<key>]
 
-<key>   Key for which to set the random value. If not provided, the random value is only returned.'''
+<key>   Key for which to set the random value. If not provided, the random
+        value is only returned.'''
 
         self.parser.usage = usage
-        self.parser.add_option('-s','--size',
-                               dest='size',
-                               metavar='NUMBER',
-                               help='Number of characters for the random string (default: 12)',
-                               default=12)
+        self.parser.add_option('-s', '--size', dest='size', metavar='NUMBER',
+                               help='Number of characters for the random ' +
+                               'string (default: 12)', default=12)
 
-        self.options, self.args = self.parser.parse_args()
+        self.add_run_authn_opts_and_parse()
 
         self._check_args()
 
@@ -70,11 +70,12 @@ class MainProgram(CommandBase):
 
     def doWork(self):
 
-        rvalue = ''.join([random.choice(string.ascii_letters + string.digits) for n in xrange(self.size)])
+        rvalue = ''.join([random.choice(string.ascii_letters + string.digits)
+                          for _ in xrange(self.size)])
 
         if self.key is not None:
-            configHolder = ConfigHolder(self.options)
-            client = Client(configHolder)
+            ch = ConfigHolder(self.options)
+            client = Client(ch)
             client.setRuntimeParameter(self.key, rvalue)
 
         print(rvalue)

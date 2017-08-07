@@ -81,7 +81,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw = CloudWrapper(self.config_holder)
         cw.initCloudConnector()
 
-        cw._ss_client.httpClient._call = Mock(return_value=('', ''))
+        cw._ss_client.httpClient._call = Mock(return_value=Mock())
 
         cw._update_slipstream_image(NodeInstance({'image.resourceUri': 'module/Name'}), 'ABC')
         cw._ss_client.httpClient._call.assert_called_with(
@@ -289,7 +289,6 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw.initCloudConnector(self.config_holder)
         cw._set_runtime_parameter = Mock()
 
-        cw._cloud_client._get_max_workers = Mock(return_value=1)
         cw._get_user_timeout = Mock(return_value=2)
 
         # No waiting.

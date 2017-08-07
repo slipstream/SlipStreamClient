@@ -18,13 +18,14 @@
 """
 from __future__ import print_function
 
-from slipstream.command.CommandBase import CommandBase
+import sys
+
+from slipstream.command.VMCommandBase import VMCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.NodeDecorator import NodeDecorator
 
 
-class MainProgram(CommandBase):
+class MainProgram(VMCommandBase):
     '''A command-line program to reset the abort state for a run.'''
 
     def __init__(self, argv=None):
@@ -37,7 +38,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.options, self.args = self.parser.parse_args()
+        self.add_run_authn_opts_and_parse()
 
         self._checkArgs()
 
@@ -46,8 +47,8 @@ class MainProgram(CommandBase):
             self.usageExitTooManyArguments()
 
     def doWork(self):
-        configHolder = ConfigHolder(self.options)
-        client = Client(configHolder)
+        ch = ConfigHolder(self.options)
+        client = Client(ch)
 
         client.cancel_abort()
 
@@ -57,4 +58,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print('\n\nExecution interrupted by the user... goodbye!')
         sys.exit(-1)
-

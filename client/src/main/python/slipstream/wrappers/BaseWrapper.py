@@ -159,10 +159,6 @@ class BaseWrapper(object):
             node_instance_name = self.get_my_node_instance_name()
         self._ss_client.complete_state(node_instance_name)
 
-    # TODO: LS: Can we remove this method ?
-    def reset(self):
-        self._ss_client.reset()
-
     def fail(self, message):
         key = self._qualifyKey(NodeDecorator.ABORT_KEY)
         self._fail(key, message)
@@ -192,6 +188,11 @@ class BaseWrapper(object):
         except Exceptions.NotYetSetException:
             value = ''
         return (value and True) or False
+
+    def get_max_iaas_workers(self):
+        """Available only on orchestrator.
+        """
+        return self._get_runtime_parameter(self._qualifyKey("max.iaas.workers"))
 
     def get_run_category(self):
         return self._ss_client.get_run_category()

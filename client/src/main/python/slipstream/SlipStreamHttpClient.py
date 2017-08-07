@@ -39,6 +39,7 @@ class SlipStreamHttpClient(object):
         self.run_dom = None
         self.ignoreAbort = False
         self.username = ''
+        self.password = ''
         self.diid = ''
         self.node_instance_name = ''
         self.serviceurl = ''
@@ -164,11 +165,6 @@ class SlipStreamHttpClient(object):
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')
 
-    # TODO: LS: Can we remove this method ?
-    def reset(self):
-        url = self.run_url
-        self._httpPost(url, 'reset', 'text/plain')
-
     def execute(self, resourceUri):
         url = self.runEndpoint
         return self._httpPost(url, resourceUri, 'text/plain')
@@ -215,7 +211,7 @@ class SlipStreamHttpClient(object):
     def getRuntimeParameter(self, key, ignoreAbort=False):
 
         url = self.run_url + '/' + key
-        if (self.ignoreAbort or ignoreAbort):
+        if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
             _, content = self._httpGet(url, accept='text/plain')
@@ -264,8 +260,9 @@ class SlipStreamHttpClient(object):
 
     def launchDeployment(self, params):
         body = '&'.join(params)
-        resp, _ = self._httpPost(self.runEndpoint, body, contentType='text/plain')
-        return resp['location']
+        resp, _ = self._httpPost(self.runEndpoint, body,
+                                 contentType='text/plain')
+        return resp.headers['location']
 
     def getRunState(self, uuid=None, ignoreAbort=True):
         if not uuid and not self.diid:
@@ -287,6 +284,15 @@ class SlipStreamHttpClient(object):
     def get_server_configuration(self):
         _, config = self._retrieve(self.configuration_endpoint)
         return config
+
+    def login(self, username, password):
+        self._httpPost(self.serviceurl + '/auth/login', body={
+            'username': username,
+            'password': password
+        }, contentType='application/x-www-form-urlencoded')
+
+    def logout(self):
+        self.httpClient.delete_local_cookie(self.serviceurl + '/')
 
 
 class DomExtractor(object):

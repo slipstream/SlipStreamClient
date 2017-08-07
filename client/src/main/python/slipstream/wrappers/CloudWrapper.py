@@ -58,6 +58,9 @@ class CloudWrapper(BaseWrapper):
             config_holder or self._get_config_holder())
         self._cloud_client.set_slipstream_client_as_listener(self.get_slipstream_client())
 
+    def set_max_iaas_workers(self):
+        self._cloud_client.max_iaas_workers = self.get_max_iaas_workers()
+
     def build_image(self):
         user_info = self._get_user_info(self._get_cloud_service_name())
 

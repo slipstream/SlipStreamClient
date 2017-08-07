@@ -18,14 +18,16 @@
 """
 from __future__ import print_function
 
-from slipstream.command.CommandBase import CommandBase
+import sys
+
+from slipstream.command.VMCommandBase import VMCommandBase
 from slipstream.util import truncate_middle
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeDecorator import NodeDecorator
 
 
-class MainProgram(CommandBase):
+class MainProgram(VMCommandBase):
     '''A command-line program to set the abort state for a run.'''
 
     def __init__(self, argv=None):
@@ -48,7 +50,7 @@ Notice:
                                help='cancel the abort status',
                                default=False, action='store_true')
 
-        self.options, self.args = self.parser.parse_args()
+        self.add_run_authn_opts_and_parse()
 
         self._checkArgs()
 
@@ -59,13 +61,14 @@ Notice:
             self.usageExitTooManyArguments()
 
     def doWork(self):
-        configHolder = ConfigHolder(self.options)
-        client = Client(configHolder)
+        ch = ConfigHolder(self.options)
+        client = Client(ch)
 
         if self.options.cancel:
             client.cancel_abort()
         else:
-            value = truncate_middle(Client.VALUE_LENGTH_LIMIT, self.reason, '\n(truncated)\n')
+            value = truncate_middle(Client.VALUE_LENGTH_LIMIT, self.reason,
+                                    '\n(truncated)\n')
             client.setRuntimeParameter(NodeDecorator.ABORT_KEY, value)
 
 if __name__ == "__main__":
@@ -74,4 +77,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print('\n\nExecution interrupted by the user... goodbye!')
         sys.exit(-1)
-

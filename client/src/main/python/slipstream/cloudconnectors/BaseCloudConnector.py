@@ -20,17 +20,13 @@ import re
 import os
 import time
 import tempfile
-import random
-import string
-import sys
 
 from threading import local
 from threading import Lock
 
 import slipstream.exceptions.Exceptions as Exceptions
 
-from slipstream import util, SlipStreamHttpClient
-from slipstream.Client import Client
+from slipstream import util
 from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
 from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
@@ -276,11 +272,6 @@ class BaseCloudConnector(object):
 
     TIMEOUT_CONNECT = 10 * 60
 
-    DISK_VOLATILE_PARAMETER_NAME = \
-        (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + '.volatile')
-    DISK_PERSISTENT_PARAMETER_NAME = \
-        (SlipStreamHttpClient.DomExtractor.EXTRADISK_PREFIX + '.persistent')
-
     RUN_BOOTSTRAP_SCRIPT = False
     WAIT_IP = False
 
@@ -305,6 +296,7 @@ class BaseCloudConnector(object):
         self.configHolder = configHolder
 
         self.run_category = getattr(configHolder, KEY_RUN_CATEGORY, None)
+        self.max_iaas_workers = None
 
         self.sshPrivKeyFile = '%s/.ssh/id_rsa' % os.path.expanduser("~")
         self.sshPubKeyFile = self.sshPrivKeyFile + '.pub'
@@ -379,17 +371,6 @@ class BaseCloudConnector(object):
     def is_deployment(self):
         return self.run_category == NodeDecorator.DEPLOYMENT
 
-    @staticmethod
-    def _get_max_workers(config_holder):
-        try:
-            ss = Client(config_holder)
-            ss.ignoreAbort = True
-            return ss.getRuntimeParameter('max.iaas.workers')
-        except Exception as ex:  # pylint: disable=broad-except
-            util.printDetail('Failed to get max.iaas.workers: %s %s' %
-                             (ex.__class__, str(ex)), verboseThreshold=0)
-            return None
-
     def stop_deployment(self):
         self._stop_deployment()
 
@@ -433,10 +414,8 @@ class BaseCloudConnector(object):
         self.__wait_nodes_startup_tasks_finished()
 
     def __start_nodes_instances_and_clients(self, user_info, nodes_instances):
-        max_workers = self._get_max_workers(self.configHolder)
-
         self.__tasks_runnner = TasksRunner(self.__start_node_instance_and_client,
-                                           max_workers=max_workers,
+                                           max_workers=self.max_iaas_workers,
                                            verbose=self.verboseLevel)
 
         for node_instance in nodes_instances.values():
@@ -883,7 +862,7 @@ class BaseCloudConnector(object):
 
     def _get_bootstrap_command_replacements_for_linux(self, instance_name):
         return {
-            'reports': Client.REPORTSDIR,
+            'reports': util.REPORTSDIR,
             'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
             'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
             'ss_home': util.SLIPSTREAM_HOME,
@@ -893,7 +872,7 @@ class BaseCloudConnector(object):
 
     def _get_bootstrap_command_replacements_for_windows(self, instance_name):
         return {
-            'reports': Client.WINDOWS_REPORTSDIR,
+            'reports': util.WINDOWS_REPORTSDIR,
             'bootstrap': '\\'.join([util.WINDOWS_SLIPSTREAM_HOME, 'slipstream.bootstrap']),
             'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
             'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
@@ -989,8 +968,7 @@ class BaseCloudConnector(object):
         :param done_reporter: function that reports back to SlipStream
         :type done_reporter: callable with signature `done_reporter(<NoneInstance>)`
         """
-        max_workers = self._get_max_workers(self.configHolder)
-        scaler = VmScaler(scale_action, max_workers, self.verboseLevel)
+        scaler = VmScaler(scale_action, self.max_iaas_workers, self.verboseLevel)
         scaler.set_tasks_and_run(node_instances, done_reporter)
         scaler.wait_tasks_finished()
 

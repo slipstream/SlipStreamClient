@@ -22,10 +22,10 @@ import sys
 
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.command.CommandBase import CommandBase
+from slipstream.command.VMCommandBase import VMCommandBase
 
 
-class MainProgram(CommandBase):
+class MainProgram(VMCommandBase):
     """
     A command-line program to get a runtime parameter value from a run,
     blocking (by default) if not set.
@@ -52,7 +52,7 @@ class MainProgram(CommandBase):
 
         self.addIgnoreAbortOption()
 
-        self.parser.add_option('--noblock', dest='noBlock',
+        self.parser.add_option('--noblock', dest='no_block',
                                help='return immediately even if the parameter '
                                     'has no value',
                                default=False, action='store_true')
@@ -63,7 +63,7 @@ class MainProgram(CommandBase):
                                'with 1 if parameter not equal to the value on '
                                'any of the components', metavar='VALUE')
 
-        self.options, self.args = self.parser.parse_args()
+        self.add_run_authn_opts_and_parse()
 
         self._check_args()
         self.compname = self.args[0]
@@ -78,8 +78,8 @@ class MainProgram(CommandBase):
             self.usageExitTooManyArguments()
 
     def _get_client(self):
-        configHolder = ConfigHolder(self.options)
-        return Client(configHolder)
+        ch = ConfigHolder(self.options)
+        return Client(ch)
 
     @staticmethod
     def _print_rtps(rtps):

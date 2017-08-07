@@ -27,6 +27,7 @@ class OrchestratorDeploymentExecutor(MachineExecutor):
     def __init__(self, wrapper, config_holder=ConfigHolder()):
         super(OrchestratorDeploymentExecutor, self).__init__(wrapper,
                                                              config_holder)
+        self.wrapper.set_max_iaas_workers()
 
     @override
     def onProvisioning(self):
