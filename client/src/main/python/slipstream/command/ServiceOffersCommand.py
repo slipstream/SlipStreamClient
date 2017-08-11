@@ -333,6 +333,9 @@ class ServiceOffersCommand(CloudClientCommand):
 
         service_offers = self._generate_service_offers(connector_instance_name)
 
+        if not service_offers:
+            raise RuntimeError("No service offer found")
+
         if not dry_run and service_offers:
             self._add_service_attribute_namespace_if_not_exist('resource')
             self._add_service_attribute_namespace_if_not_exist('price')
