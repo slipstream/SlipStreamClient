@@ -386,7 +386,14 @@ class MachineExecutor(object):
             fn = self._write_target_script_to_file(target_script)
 
         current_dir = os.getcwd()
-        os.chdir(util.get_temporary_storage_dir())
+        new_dir = util.get_temporary_storage_dir()
+        os.chdir(new_dir)
+
+        if 'HOME' not in os.environ:
+            if exports is None:
+                exports = {}
+            exports['HOME'] = os.path.expanduser('~')
+
         try:
             process = util.execute(fn, noWait=True, extra_env=exports, withStderr=True)
         finally:
