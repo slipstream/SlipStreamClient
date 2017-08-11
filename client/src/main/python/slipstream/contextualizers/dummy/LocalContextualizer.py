@@ -18,7 +18,7 @@
 
 import os
 import tempfile
-from ConfigParser import SafeConfigParser
+from ConfigParser import RawConfigParser
 from ConfigParser import NoOptionError
 from slipstream.exceptions import Exceptions
 from slipstream import util
@@ -57,7 +57,7 @@ class LocalContextualizer(object):
         self.parser = self._getParser()
 
     def _getParser(self):
-        parser = SafeConfigParser()
+        parser = RawConfigParser()
         self.configFile = self._getConfigFile()
         parser.read(self.configFile)
         return parser
