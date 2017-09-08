@@ -1,6 +1,6 @@
 [Unit]
 Description=SlipStream Orchestrator Executor
-After=syslog.target
+After=syslog.target network-online.target
 
 [Service]
 EnvironmentFile=-/etc/default/slipstream-orchestrator

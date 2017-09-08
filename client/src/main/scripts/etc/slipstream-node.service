@@ -1,6 +1,6 @@
 [Unit]
 Description=SlipStream Node Executor
-After=syslog.target
+After=syslog.target network-online.target
 
 [Service]
 EnvironmentFile=-/etc/default/slipstream-node
