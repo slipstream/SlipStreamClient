@@ -43,7 +43,7 @@ class SlipStreamHttpClient(object):
         self.diid = ''
         self.node_instance_name = ''
         self.serviceurl = ''
-        self.verboseLevel = None
+        self.verboseLevel = 0
         self.retry = True
 
         configHolder.assign(self)
@@ -209,13 +209,14 @@ class SlipStreamHttpClient(object):
         return DomExtractor.extract_run_parameters_from_run(self.run_dom)
 
     def getRuntimeParameter(self, key, ignoreAbort=False):
+        print('getRuntimeParameter() key:', key)
 
         url = self.run_url + '/' + key
         if self.ignoreAbort or ignoreAbort:
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
             _, content = self._httpGet(url, accept='text/plain')
-        except Exceptions.NotFoundError, ex:
+        except Exceptions.NotFoundError as ex:
             raise Exceptions.NotFoundError('"%s" for %s' % (str(ex), key))
 
         return content.strip().strip('"').strip("'")
@@ -515,7 +516,7 @@ class DomExtractor(object):
             targets.setdefault(name, [])
             targets[name].append(subtarget)
 
-        for target in targets.itervalues():
+        for target in targets.values():
             target.sort(key=lambda t: t.get('order'))
 
         if module_dom.tag == "imageModule" or module_dom.tag == "image" \

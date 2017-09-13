@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import re
 import sys
 import threading
@@ -17,9 +19,11 @@ class _tracer(object):
                     filename = filename[:-1]
                 line = linecache.getline(filename, lineno)
                 thread = threading.current_thread()
-                print '\033[95mThread \033[94m{0: <35} \033[36m{1: <60} \033[95m-> \033[37m{2}\033[0m'.format('%s (%s)' % (thread.name, thread.ident),
-                                                                                                               '%s:%s' % (name, lineno),
-                                                                                                               line.rstrip())
+                zero = '%s (%s)' % (thread.name, thread.ident)
+                one = '%s:%s' % (name, lineno)
+                two = line.rstrip()
+                print('\033[95mThread \033[94m{0: <35} \033[36m{1: <60} '
+                      '\033[95m-> \033[37m{2}\033[0m'.format(zero, one, two))
         return self._traceit
 
     def set_filter(self, packages_filter=None):

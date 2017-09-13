@@ -27,7 +27,9 @@ import tarfile
 import tempfile
 import random
 
-from Queue import Queue, Empty
+from six import string_types
+from six import text_type
+from six.moves import queue
 from threading import Thread
 
 from slipstream.ConfigHolder import ConfigHolder
@@ -300,13 +302,13 @@ class MachineExecutor(object):
             util.printAndFlush('Script "%s" is empty\n' % (_name,))
             return self.SCRIPT_EXIT_SUCCESS
 
-        if not isinstance(target_script, basestring):
+        if not isinstance(target_script, string_types):
             raise ExecutionException('Not a string buffer provided as target for script "%s". Type is: %s'
                                      % (_name, type(target_script)))
 
         process = self._launch_process(target_script, exports, name)
 
-        result = Queue()
+        result = queue.Queue()
         t = Thread(target=self.print_and_keep_last_stderr, args=(process.stderr, result))
         t.daemon = True # thread dies with the program
         t.start()
@@ -342,7 +344,7 @@ class MachineExecutor(object):
         stderr_last_line = ''
         try:
             stderr_last_line = result.get(timeout=60)
-        except Empty:
+        except queue.Empty:
             pass
         return process.returncode, stderr_last_line
 
@@ -365,14 +367,14 @@ class MachineExecutor(object):
                 filename += file_suffix
             fn = os.path.join(directory, filename)
 
-        if isinstance(target_script, unicode):
+        if isinstance(target_script, text_type):
             with codecs.open(fn, 'w', 'utf8') as fh:
                 fh.write(target_script)
         else:
             with open(fn, 'w') as fh:
                 fh.write(target_script)
 
-        os.chmod(fn, 0755)
+        os.chmod(fn, 0o755)
         return fn
 
     def _launch_process(self, target_script, exports=None, name=None):
@@ -404,7 +406,7 @@ class MachineExecutor(object):
     def print_and_keep_last_stderr(self, stderr, result):
         last_line = None
         for line in iter(stderr.readline, b''):
-            sys.stderr.write(line)
+            sys.stderr.write(text_type(line))
             if line.strip():
                 last_line = line.strip()
         result.put(last_line)

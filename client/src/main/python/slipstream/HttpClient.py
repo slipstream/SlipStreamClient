@@ -18,18 +18,17 @@
 
 import os
 import time
-import httplib
+from six.moves import http_client as httplib
 import requests
 import re
 import socket
 import stat
 from random import random
 from threading import Lock
-from urlparse import urlparse
-from cookielib import CookieJar
+from six.moves.urllib.parse import urlparse
 from requests import Request
 from requests.cookies import MockResponse, MockRequest, RequestsCookieJar
-from six.moves.http_cookiejar import MozillaCookieJar
+from six.moves.http_cookiejar import MozillaCookieJar, CookieJar
 
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
@@ -96,9 +95,8 @@ SERVICE_UNAVAILABLE_ERROR = 503
 
 def http_debug():
     import logging
-    from httplib import HTTPConnection
 
-    HTTPConnection.debuglevel = 3
+    httplib.HTTPConnection.debuglevel = 3
 
     logging.basicConfig()
     logging.getLogger().setLevel(logging.DEBUG)
@@ -312,45 +310,9 @@ class HttpClient(object):
             self.init_session(url)
         self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
 
-    @staticmethod
-    def _is_machine_cookie(cookie_str):
-        """Expected structure of the cookie string:
-        com.sixsq.slipstream.cookie=k1=val1&k2=val2; Path=<URI>
-        """
-        if re.search('%s=true' % MACHINE_COOKIE_KEY, cookie_str):
-            return True
-        return False
-
-    def _url_for_cookie(self, cookie_str, url):
-        """Machine cookie allows access to /.
-        """
-        if self._is_machine_cookie(cookie_str):
-            _url = urlparse(url)
-            return '%s://%s/' % (_url.scheme, _url.netloc)
-        else:
-            return url
-
-    def _cookie_from_str(self, url, cookie_str):
-        from StringIO import StringIO
-        data = "Set-Cookie: %s" % cookie_str
-        headers = httplib.HTTPMessage(StringIO(data))
-        resp = MockResponse(headers)
-        req = MockRequest(Request(method='GET',
-                                  url=self._url_for_cookie(cookie_str, url)))
-        jar = CookieJar()
-        return jar.make_cookies(resp, req)
-
-    def _set_oldstyle_cookie_on_session(self, url):
-        if self.cookie and not (self.password and self.username):
-            cookies = self._cookie_from_str(url, self.cookie)
-            self.session.set_cookies(cookies)
-            self.cookie = None
-
     def init_session(self, url):
         if self.session is None:
             self.session = SessionStore(cookie_file=self.cookie_filename)
-            # TODO: remove when old cookie from ConfigHolder is gone.
-            self._set_oldstyle_cookie_on_session(url)
 
     @staticmethod
     def session_cookie_exists(session, url, no_path_check=False,

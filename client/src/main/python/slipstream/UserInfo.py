@@ -85,5 +85,5 @@ class UserInfo(dict):
         self[self.cloud + 'keypair.name'] = keypair_name
 
     def set_cloud_params(self, params):
-        for k,v in params.iteritems():
+        for k, v in params.items():
             self[self.cloud + k] = v

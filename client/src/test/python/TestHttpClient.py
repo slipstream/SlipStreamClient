@@ -17,7 +17,6 @@
  limitations under the License.
 """
 
-import cookielib
 import requests
 import unittest
 
@@ -53,21 +52,6 @@ class HttpClientTestCase(unittest.TestCase):
         args, kwargs = client.session.request.call_args
         self.assertEqual(('GET', 'http://foo.bar'), args)
         self.assertTrue(kwargs['auth'], ('username', 'password'))
-
-    def test_get_with_oldstyle_cookie_string(self):
-
-        client = HttpClient()
-        client.verboseLevel = 0
-        client.cookie = 'acookie=foo=bar'
-        client.cookie_filename = '/dev/null'
-
-        client.init_session('http://foo.bar')
-
-        jar = RequestsCookieJar()
-        jar.update(client.session.cookies)
-        cookies = jar.get_dict(domain='foo.bar', path='/')
-        self.assertEqual(1, len(cookies))
-        self.assertEqual(cookies['acookie'], 'foo=bar')
 
     def test_unknown_http_return_code(self):
 

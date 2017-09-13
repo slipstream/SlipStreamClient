@@ -327,7 +327,7 @@ class BaseWrapper(object):
         Return {scale_state: [node_instance_name, ], }
         """
         states_instances = {}
-        for node_instance_name, node_instance in self._get_nodes_instances().iteritems():
+        for node_instance_name, node_instance in self._get_nodes_instances().items():
             state = node_instance.get_scale_state()
             if not self._is_scale_state_terminal(state):
                 state = self._get_effective_scale_state(node_instance_name)
@@ -345,7 +345,7 @@ class BaseWrapper(object):
             return None
 
         if len(states_node_instances) == 1:
-            return states_node_instances.keys()[0]
+            return list(states_node_instances.keys())[0]
 
         msg = "Inconsistent scaling situation. Single scaling action allowed," \
             " found: %s" % states_node_instances
@@ -378,7 +378,7 @@ class BaseWrapper(object):
         node_names = set()
         node_instance_names = []
 
-        for node_instance_name, node_instance in self._get_nodes_instances().iteritems():
+        for node_instance_name, node_instance in self._get_nodes_instances().items():
             state = node_instance.get_scale_state()
             if not self._is_scale_state_terminal(state):
                 node_names.add(node_instance.get_node_name())
@@ -404,7 +404,7 @@ class BaseWrapper(object):
         instances = {}
 
         nodes_instances = self._get_nodes_instances()
-        for instance_name, instance in nodes_instances.iteritems():
+        for instance_name, instance in nodes_instances.items():
             if instance.get_scale_state() == scale_state:
                 instances[instance_name] = instance
 
@@ -578,7 +578,7 @@ class BaseWrapper(object):
         """Return dict {<node_instance_name>: NodeInstance, }
         """
         node_instances = self._get_nodes_instances_with_orchestrators()
-        return dict([(k, ni) for k, ni in node_instances.iteritems() if not ni.is_orchestrator()])
+        return dict([(k, ni) for k, ni in node_instances.items() if not ni.is_orchestrator()])
 
     def _get_nodes_instances_with_orchestrators(self):
         """Return dict {<node_instance_name>: NodeInstance, }

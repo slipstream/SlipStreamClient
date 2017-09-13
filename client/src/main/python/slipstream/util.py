@@ -16,14 +16,16 @@
  limitations under the License.
 """
 
+from __future__ import print_function
+
 import os
 import sys
 import time
 import errno
 import getpass
+import importlib
 import logging
 import pkgutil
-import urllib2
 import tempfile
 import warnings
 import contextlib
@@ -35,7 +37,10 @@ if sys.platform != 'win32':
 
 from functools import wraps
 from itertools import chain
-from ConfigParser import SafeConfigParser
+from six import string_types
+from six.moves import urllib
+from six.moves import configparser
+from six import text_type
 
 import slipstream.exceptions.Exceptions as Exceptions
 
@@ -156,7 +161,7 @@ def retry(ExceptionToCheck, tries=5, delay=1, backoff=2, logger=None):
                     if logger:
                         logger.warning(msg)
                     else:
-                        print msg
+                        print(msg)
                     time.sleep(mdelay)
                     mtries -= 1
                     mdelay *= backoff
@@ -174,24 +179,26 @@ def sleep(seconds, fail_on_ioerror=False):
         if fail_on_ioerror:
             raise
 
+
 def get_cloudconnector_modulenames(base_package='slipstream.cloudconnectors'):
-    module_names = []
-    pkgwalk = pkgutil.walk_packages(path=loadModule(base_package).__path__,
+    module_names = set()
+    pkgwalk = pkgutil.walk_packages(path=load_module(base_package).__path__,
                                     prefix=base_package + '.')
-    for _, pkgname, ispkg in pkgwalk:
+    for _, name, ispkg in pkgwalk:
         if ispkg:
-            mdlwalk = pkgutil.iter_modules(path=loadModule(pkgname).__path__,
-                                           prefix=pkgname + '.')
+            mdlwalk = pkgutil.iter_modules(path=load_module(name).__path__,
+                                           prefix=name + '.')
             for _, name, ispkg in mdlwalk:
                 if not ispkg:
-                    if hasattr(loadModule(name), 'getConnector'):
-                        module_names.append(name)
-    return module_names
+                    if hasattr(load_module(name), 'getConnector'):
+                        module_names.add(name)
+
+    return list(module_names)
 
 
 def get_cloudconnector_modulename_by_cloudname(cloudname):
     for module_name in get_cloudconnector_modulenames():
-        connector_class = loadModule(module_name).getConnectorClass()
+        connector_class = load_module(module_name).getConnectorClass()
         if getattr(connector_class, 'cloudName') == cloudname:
             return module_name
     raise Exceptions.NotFoundError(
@@ -210,7 +217,7 @@ def is_windows():
     return sys.platform == 'win32'
 
 
-def execute(commandAndArgsList, **kwargs):
+def execute(cmd_and_args, **kwargs):
     wait = not kwargs.pop('noWait', False)
 
     withStdout = kwargs.pop('withStdout', False)
@@ -230,32 +237,39 @@ def execute(commandAndArgsList, **kwargs):
         kwargs['stderr'] = subprocess.STDOUT
         kwargs['close_fds'] = True
 
-    if not isinstance(commandAndArgsList, list):
-        commandAndArgsList = [commandAndArgsList]
+    if not isinstance(cmd_and_args, list):
+        cmd_and_args = [cmd_and_args]
 
-    if any(map(lambda x: x == None, commandAndArgsList)):
+    if any(map(lambda x: x == None, cmd_and_args)):
         raise Exception('Wrong input. NoneType object is part of the command: %s' %
-                        commandAndArgsList)
+                        cmd_and_args)
     else:
-        commandAndArgsList = map(str, commandAndArgsList)
+        cmd_and_args = list(map(str, cmd_and_args))
 
     if is_windows():
-        commandAndArgsList.insert(0, '-File')
-        commandAndArgsList.insert(0, 'Bypass')
-        commandAndArgsList.insert(0, '-ExecutionPolicy')
-        commandAndArgsList.insert(0, 'powershell')
+        cmd_and_args.insert(0, '-File')
+        cmd_and_args.insert(0, 'Bypass')
+        cmd_and_args.insert(0, '-ExecutionPolicy')
+        cmd_and_args.insert(0, 'powershell')
 
-    printDetail('Calling: %s' % ' '.join(commandAndArgsList), kwargs)
+    print_kwargs = {}
+    if 'verboseLevel' in kwargs:
+        print_kwargs['verboseLevel'] = kwargs['verboseLevel']
+    if 'verboseThreshold' in kwargs:
+        print_kwargs['verboseThreshold'] = kwargs['verboseThreshold']
+    if 'timestamp' in kwargs:
+        print_kwargs['timestamp'] = kwargs['timestamp']
+    printDetail('Calling: %s' % ' '.join(cmd_and_args), **print_kwargs)
 
     if kwargs.get('shell', False):
-        commandAndArgsList = ' '.join(commandAndArgsList)
+        cmd_and_args = ' '.join(cmd_and_args)
 
     extra_env = kwargs.pop('extra_env', {})
     if extra_env:
-        kwargs['env'] = _sanitize_env(dict(chain(os.environ.copy().iteritems(),
-                                                 extra_env.iteritems())))
+        kwargs['env'] = _sanitize_env(dict(chain(os.environ.copy().items(),
+                                                 extra_env.items())))
 
-    process = subprocess.Popen(commandAndArgsList, **kwargs)
+    process = subprocess.Popen(cmd_and_args, **kwargs)
 
     if not wait:
         return process
@@ -273,12 +287,12 @@ def execute(commandAndArgsList, **kwargs):
 
 
 def _sanitize_env(env_dist):
-    for k, v in env_dist.iteritems():
-        if not isinstance(v, basestring):
+    for k, v in env_dist.items():
+        if not isinstance(v, string_types):
             if v is None:
                 env_dist[k] = ''
             else:
-                env_dist[k] = unicode(v)
+                env_dist[k] = text_type(v)
     return env_dist
 
 
@@ -335,7 +349,7 @@ class StdOutWithFile(object):
         self.flush()
 
     def write(self, _string):
-        _string = unicode(_string).encode('utf-8')
+        _string = text_type(_string).encode('utf-8')
         self._stdout.write(_string)
         self.fh.write(_string)
         self.flush()
@@ -369,7 +383,7 @@ class StdOutWithLogger:
         return
 
     def write(self, string):
-        _string = unicode(string).encode('utf-8')
+        _string = text_type(string).encode('utf-8')
         self._std.write(_string)
         if string == '.':
             return
@@ -507,12 +521,12 @@ def printError(message):
 
 def _print(stream, message):
     try:
-        print >> stream, message,
+        print(message, file=stream, end='')
     except UnicodeEncodeError:
-        if not isinstance(message, unicode):
-            message = unicode(message, 'UTF-8')
+        if not isinstance(message, text_type):
+            message = text_type(message, 'UTF-8')
         message = message.encode('ascii', 'ignore')
-        print >> stream, message,
+        print(message, file=stream, end='')
 
 
 def _get_print_stream():
@@ -531,18 +545,12 @@ def assignAttributes(obj, dictionary):
         setattr(obj, key, value)
 
 
-def loadModule(moduleName):
-    namespace = ''
-    name = moduleName
-    if name.find('.') != -1:
-        # There's a namespace so we take it into account
-        namespace = '.'.join(name.split('.')[:-1])
-
-    return __import__(name, fromlist=namespace)
+def load_module(name):
+    return importlib.import_module(name)
 
 
 def parseConfigFile(filename, preserve_case=True):
-    parser = SafeConfigParser()
+    parser = configparser.SafeConfigParser()
     if preserve_case:
         parser.optionxform = str
     parser.read(filename)
@@ -660,7 +668,7 @@ def ping(host, timeout=5, number=1, **kwargs):
 
 
 def _getSecureHostPortFromUrl(endpoint):
-    scheme, netloc, _, _, _, _ = urllib2.urlparse.urlparse(endpoint)
+    scheme, netloc, _, _, _, _ = urllib.urlparse.urlparse(endpoint)
     if scheme == 'http' or not scheme:
         secure = False
     elif scheme == 'https':
@@ -861,13 +869,13 @@ def download_file(src_url, dst_file, creds={}):
     cookie is preferred over username and password. If none are provided,
     the download proceeds w/o authentication.
     """
-    request = urllib2.Request(src_url)
+    request = urllib.Request(src_url)
     if creds.get('cookie'):
         request.add_header('cookie', creds.get('cookie'))
     elif creds.get('username') and creds.get('password'):
         request.add_header('Authorization',
                            (b'Basic ' + (creds.get('username') + b':' + creds.get('password')).encode('base64')).replace('\n', ''))
-    src_fh = urllib2.urlopen(request)
+    src_fh = urllib.urlopen(request)
 
     dst_fh = open(dst_file, 'wb')
     while True:

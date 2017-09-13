@@ -43,7 +43,7 @@ class Logger(object):
         log_dir = os.path.dirname(self.log_file)
         try:
             os.makedirs(log_dir)
-        except OSError, ex:
+        except OSError as ex:
             if ex.errno != errno.EEXIST:
                 raise
 

@@ -18,7 +18,7 @@
 
 from slipstream.exceptions import Exceptions
 from slipstream.wrappers.BaseWrapper import BaseWrapper
-from slipstream.util import loadModule
+from slipstream.util import load_module
 
 NODE_EXECUTORS = {
     'Machine': 'slipstream.executors.node.NodeImageExecutor',
@@ -27,18 +27,18 @@ NODE_EXECUTORS = {
 }
 
 
-def get_executor_module_name(runType):
+def get_executor_module_name(run_type):
     try:
-        return NODE_EXECUTORS[runType]
+        return NODE_EXECUTORS[run_type]
     except KeyError:
-        raise Exceptions.ClientError("Unknown executor type: %s" % runType)
+        raise Exceptions.ClientError("Unknown executor type: %s" % run_type)
 
 
 class NodeExecutorFactory:
     @staticmethod
     def createExecutor(configHolder):
         wrapper = BaseWrapper(configHolder)
-        runType = wrapper.get_run_type()
+        run_type = wrapper.get_run_type()
 
-        return loadModule(get_executor_module_name(runType)). \
+        return load_module(get_executor_module_name(run_type)). \
             getExecutor(wrapper, configHolder)

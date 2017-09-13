@@ -16,7 +16,7 @@
  limitations under the License.
 """
 
-from slipstream.util import loadModule, CONFIGPARAM_CONNECTOR_MODULE_NAME
+from slipstream.util import load_module, CONFIGPARAM_CONNECTOR_MODULE_NAME
 from slipstream.exceptions.Exceptions import NotFoundError
 
 
@@ -34,5 +34,5 @@ def get_connector_module_name(configHolder):
 class CloudConnectorFactory(object):
     @staticmethod
     def createConnector(configHolder):
-        mod = loadModule(get_connector_module_name(configHolder))
+        mod = load_module(get_connector_module_name(configHolder))
         return mod.getConnector(configHolder)

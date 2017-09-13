@@ -61,7 +61,7 @@ CLASSIFIERS = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-root_dir = 'lib'
+root_dir = 'main/python'
 basepkg_name = 'slipstream'
 packages = get_packages(basepkg_name, root_dir)
 
@@ -77,6 +77,6 @@ setup(
     url=URL,
     classifiers=CLASSIFIERS,
     packages=packages,
-    package_dir={'slipstream': 'lib/slipstream'},
+    package_dir={'slipstream': 'main/python/slipstream'},
     requires=['httplib2']
 )

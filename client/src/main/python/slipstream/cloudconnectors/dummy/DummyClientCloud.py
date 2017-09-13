@@ -15,6 +15,8 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
+
 import sys
 
 from slipstream.cloudconnectors.BaseCloudConnector import BaseCloudConnector
@@ -35,31 +37,31 @@ class DummyClientCloud(BaseCloudConnector):
         super(DummyClientCloud, self).__init__(config_holder)
 
     def _build_image(self, user_info, node_instance):
-        print 'Building image. Dummy implementation.'
-        print 'for: ', user_info
-        print 'with: ', node_instance
+        print('Building image. Dummy implementation.')
+        print('for: ', user_info)
+        print('with: ', node_instance)
 
     def _start_image(self, user_info, node_instance, vm_name):
-        print 'Starting image. Dummy implementation.'
-        print 'for: ', user_info
-        print 'with: ', node_instance, vm_name
+        print('Starting image. Dummy implementation.')
+        print('for: ', user_info)
+        print('with: ', node_instance, vm_name)
 
     def _stop_vms_by_ids(self, ids):
-        print 'Stopping VM(s). Dummy implementation.'
-        print 'VM id(s):', ids
+        print('Stopping VM(s). Dummy implementation.')
+        print('VM id(s):', ids)
 
     def _resize(self, node_instance):
-        print 'Resizing VM. Dummy implementation.'
-        print 'Node Instance:', node_instance
+        print('Resizing VM. Dummy implementation.')
+        print('Node Instance:', node_instance)
 
     def _attach_disk(self, node_instance):
-        print 'Attaching disk to VM. Dummy implementation.'
-        print 'Node Instance:', node_instance
+        print('Attaching disk to VM. Dummy implementation.')
+        print('Node Instance:', node_instance)
         return 'foo'
 
     def _detach_disk(self, node_instance):
-        print 'Detaching disk from VM. Dummy implementation.'
-        print 'Node Instance:', node_instance
+        print('Detaching disk from VM. Dummy implementation.')
+        print('Node Instance:', node_instance)
 
     def getInstanceInfos(self):
         return {'node1.1:instanceid': 'id1', 'node1.1:hostname': 'ip1',

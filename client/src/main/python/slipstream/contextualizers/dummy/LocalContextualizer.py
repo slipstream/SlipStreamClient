@@ -18,8 +18,7 @@
 
 import os
 import tempfile
-from ConfigParser import RawConfigParser
-from ConfigParser import NoOptionError
+from six.moves import configparser
 from slipstream.exceptions import Exceptions
 from slipstream import util
 
@@ -57,7 +56,7 @@ class LocalContextualizer(object):
         self.parser = self._getParser()
 
     def _getParser(self):
-        parser = RawConfigParser()
+        parser = configparser.RawConfigParser()
         self.configFile = self._getConfigFile()
         parser.read(self.configFile)
         return parser
@@ -80,7 +79,7 @@ class LocalContextualizer(object):
         value = None
         try:
             value = self.parser.get(LocalContextualizer.SECTION, key)
-        except NoOptionError:
+        except configparser.NoOptionError:
             pass
         value = os.getenv('SLIPSTREAM_' + key.upper(), value)
 

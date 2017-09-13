@@ -393,7 +393,7 @@ class BaseCloudConnector(object):
     def __create_allow_all_security_group_if_needed(self, nodes_instances):
         allow_all = NodeDecorator.SECURITY_GROUP_ALLOW_ALL_NAME
 
-        for ni in nodes_instances.itervalues():
+        for ni in nodes_instances.values():
             if allow_all in ni.get_security_groups():
                 self._create_allow_all_security_group()
                 break
@@ -415,8 +415,7 @@ class BaseCloudConnector(object):
 
     def __start_nodes_instances_and_clients(self, user_info, nodes_instances):
         self.__tasks_runnner = TasksRunner(self.__start_node_instance_and_client,
-                                           max_workers=self.max_iaas_workers,
-                                           verbose=self.verboseLevel)
+                                           max_workers=self.max_iaas_workers)
 
         for node_instance in nodes_instances.values():
             self.__tasks_runnner.put_task(user_info, node_instance)
@@ -600,7 +599,7 @@ class BaseCloudConnector(object):
         fd, ssh_private_key_file = tempfile.mkstemp()
         os.write(fd, user_info.get_private_key())
         os.close(fd)
-        os.chmod(ssh_private_key_file, 0400)
+        os.chmod(ssh_private_key_file, 0o400)
         return ssh_private_key_file
 
     def __get_vm_username_password(self, node_instance, default_user='root'):
@@ -745,7 +744,7 @@ class BaseCloudConnector(object):
             try:
                 stdout, stderr, returnCode = winrm.get_command_output(_shellId, commandId)
             except Exception as e:  # pylint: disable=broad-except
-                print 'WINRM Exception: %s' % str(e)
+                util.printAndFlush('WINRM Exception: %s' % str(e))
 
             util.printAndFlush('\nwinrm.cleanup_command\n')
             winrm.cleanup_command(_shellId, commandId)

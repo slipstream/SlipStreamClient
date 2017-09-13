@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -64,7 +65,7 @@ try:
 
     util.slipstreamHome = slipstreamHome
 except KeyboardInterrupt:
-    print '\nExecution interrupted by the user... goodbye!'
+    print('\nExecution interrupted by the user... goodbye!')
     sys.exit(-1)
 
 
@@ -140,35 +141,35 @@ class CommandBase(object):
             res = self.__class__.__dict__[methodName](self, *args, **kw)
         except KeyboardInterrupt:
             raise
-        except NotYetSetException, ex:
+        except NotYetSetException as ex:
             sys.stderr.writelines('\n%s\n' % str(ex))
             self._exit(1)
-        except ValueError, ex:
+        except ValueError as ex:
             sys.stderr.writelines('\nError: %s\n' % str(ex))
             self._exit(3)
-        except NetworkError, ex:
+        except NetworkError as ex:
             sys.stderr.writelines('\nError: couldn\'t connect to the server. ')
             sys.stderr.writelines('Check network connection and server, and try again.')
             sys.stderr.writelines('\nError details: %s\n' % ex)
             self._exit(4)
-        except SecurityError, ex:
+        except SecurityError as ex:
             sys.stderr.writelines("\nSecurity Error: %s \n" % str(ex))
             self._exit(6)
-        except ServerError, ex:
+        except ServerError as ex:
             sys.stderr.writelines("\nError: the following unexpected error was detected:\n   '%s'\n" % str(ex))
             self._exit(5)
-        except TimeoutException, ex:
+        except TimeoutException as ex:
             sys.stderr.writelines('\nError: %s\n' % str(ex))
             self._exit(9)
-        except AbortException, ex:
+        except AbortException as ex:
             sys.stderr.writelines('\nError: %s\n' % str(ex))
             self._exit(8)
-        except ClientError, ex:
+        except ClientError as ex:
             sys.stderr.writelines("\nError: %s\n" % str(ex))
             self._exit(7)
-        except SystemExit, ex:
+        except SystemExit:
             raise
-        except Exception, ex:
+        except Exception:
             raise
         return res
 
@@ -224,16 +225,16 @@ class CommandBase(object):
 
     def usageExit(self, msg=None):
         if msg:
-            print msg, '\n'
+            print(msg, '\n')
         self.parser.print_help()
-        print ''
+        print('')
         if msg:
-            print msg
-        print 'got: ' + ' '.join(sys.argv)
+            print(msg)
+        print('got: ' + ' '.join(sys.argv))
         self._exit(2)
 
     def getVersion(self):
-        print __version__.getPrettyVersion()
+        print(__version__.getPrettyVersion())
 
     def log(self, message):
         util.printDetail(message, self.verboseLevel)
@@ -242,7 +243,7 @@ class CommandBase(object):
         try:
             return self._read_as_xml(xml)
         except Exception as ex:
-            print str(ex)
+            print(str(ex))
             if self.verboseLevel:
                 raise
             sys.exit(-1)

@@ -94,7 +94,7 @@ class CloudWrapper(BaseWrapper):
         """
         all_node_instances = self._get_nodes_instances()
         instances = []
-        for name, instance in all_node_instances.iteritems():
+        for name, instance in all_node_instances.items():
             if name in ni_names_starting:
                 instances.append(instance)
         return instances
@@ -211,7 +211,7 @@ class CloudWrapper(BaseWrapper):
         if any(instances_failed.values()):
             self._log_and_set_statecustom("WARNING: Instances failed (%s): %s" %
                 (context, self._get_node_instance_names_from_nodes_dict(instances_failed)))
-            for node_name, allowed_failed in allowed_failed_vms_per_node.iteritems():
+            for node_name, allowed_failed in allowed_failed_vms_per_node.items():
                 failed = len(instances_failed.get(node_name, []))
                 if failed > allowed_failed:
                     raise ExecutionException(
@@ -312,7 +312,7 @@ class CloudWrapper(BaseWrapper):
         # TODO: wait pre.scale.done == True if it's not FT case. (How to discover FT context?)
         self._cloud_client.stop_node_instances(node_instances_to_stop.values())
 
-        instance_names_removed = node_instances_to_stop.keys()
+        instance_names_removed = list(node_instances_to_stop.keys())
         self.set_scale_state_on_node_instances(instance_names_removed,
                                                self.SCALE_STATE_REMOVED)
 
@@ -428,7 +428,7 @@ class CloudWrapper(BaseWrapper):
         'instances_to_delete' dict : {'node_name' : [NodeInstance, ], }
         """
         ids_per_node_to_remove = {}
-        for node_name, instances in instances_to_delete.iteritems():
+        for node_name, instances in instances_to_delete.items():
             if len(instances) > 0:
                 ids = map(lambda x: x.get_id(), instances)
                 ids_per_node_to_remove.setdefault(node_name, []).extend(ids)
@@ -437,7 +437,7 @@ class CloudWrapper(BaseWrapper):
     def _delete_instances_from_run_server_side(self, ids_per_node):
         """'ids_per_node' dict : {'node_name': [id,], }
         """
-        for node_name, ids in ids_per_node.iteritems():
+        for node_name, ids in ids_per_node.items():
             self._log_and_set_statecustom('Requesting to terminate and remove instances: (%s: %s)' %
                                           (node_name, sorted(map(int, ids))))
             self._ss_client.remove_instances_from_run(node_name, ids, detele_ids_only=True)

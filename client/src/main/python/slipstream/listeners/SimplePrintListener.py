@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 
 class SimplePrintListener(object):
@@ -29,7 +30,7 @@ class SimplePrintListener(object):
         self.write(nodename + ': ' + msg)
 
     def __beVerbose(self, msg):
-        print msg
+        print(msg)
 
     def onAction(self, msg):
         self.write('action: %s' % msg)

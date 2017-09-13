@@ -36,8 +36,7 @@ class VmScaler(object):
         :type done_reporter: callable with signature `done_reporter(<NoneInstance>)`
         """
         self._tasks_runner = TasksRunner(self._task_executor,
-                                         max_workers=self._max_workers,
-                                         verbose=self._verbose_level)
+                                         max_workers=self._max_workers)
         for node_instance in nodes_instances:
             self._tasks_runner.put_task(node_instance, done_reporter)
 

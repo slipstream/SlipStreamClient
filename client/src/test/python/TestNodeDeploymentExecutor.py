@@ -45,8 +45,7 @@ class TestNodeDeploymentExecutor(TestCloudConnectorsBase):
         target = 'foo'
         nde.node_instance = NodeInstance()
         nde.node_instance.set_image_targets({target: [{'script': 'oops'}]})
-        self.assertRaises(OSError, nde._execute_target,
-                          *(target, {}, True))
+        self.assertRaises(OSError, nde._execute_target, *(target, {}, True))
         assert 1 == nde.wrapper.fail.call_count
 
     def test_launch_target_script_failure(self):

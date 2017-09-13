@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -31,19 +32,20 @@ saved_stdout = sys.stdout
 
 
 def publish_vm_info(self, vm, node_instance):
-    print >> saved_stdout, '%s,%s' % (self._vm_get_id(vm), self._vm_get_ip(vm))
+    print('%s,%s' % (self._vm_get_id(vm), self._vm_get_ip(vm)),
+          file=saved_stdout)
 
 
 class RunInstancesCommand(CloudClientCommand):
 
-    IMAGE_ID_KEY        = 'image-id'
-    PLATFORM_KEY        = 'platform'
-    LOGIN_USER_KEY      = 'login-username'
-    LOGIN_PASS_KEY      = 'login-password'
-    NETWORK_TYPE        = 'network-type'
-    ROOT_DISK_SIZE      = 'disk'
+    IMAGE_ID_KEY = 'image-id'
+    PLATFORM_KEY = 'platform'
+    LOGIN_USER_KEY = 'login-username'
+    LOGIN_PASS_KEY = 'login-password'
+    NETWORK_TYPE = 'network-type'
+    ROOT_DISK_SIZE = 'disk'
     EXTRA_DISK_VOLATILE = 'extra-disk-volatile'
-    DEFAULT_TIMEOUT     = 600
+    DEFAULT_TIMEOUT = 600
 
     def get_cloud_specific_node_inst_cloud_params(self):
         return {}

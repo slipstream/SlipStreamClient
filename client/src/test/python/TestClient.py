@@ -37,7 +37,7 @@ def get_rtp_all(side_effect, no_block=False):
     Client._getRuntimeParameter = Mock(side_effect=side_effect)
     client = Client(ch)
     client.httpClient.getRuntimeParameter = Mock(side_effect=side_effect)
-    return client.get_rtp_all('foo', 'bar')
+    return list(client.get_rtp_all('foo', 'bar'))
 
 
 class TestClient(unittest.TestCase):
@@ -61,10 +61,10 @@ class TestClient(unittest.TestCase):
 
     def test_get_rtp_all_success(self):
         nrtps = 3
-        ids = map(str, range(1, nrtps + 1))
-        rtps = dict(map(lambda i: ('foo.%s:bar' % i, i), ids))
 
         def get_rtp(rtp):
+            ids = list(map(str, range(1, nrtps + 1)))
+            rtps = dict(map(lambda i: ('foo.%s:bar' % i, i), ids))
             if rtp.endswith('ids'):
                 return ','.join(ids)
             else:
@@ -80,10 +80,10 @@ class TestClient(unittest.TestCase):
 
     def test_get_rtp_all_allnotset_timeout(self):
         nrtps = 3
-        ids = map(str, range(1, nrtps + 1))
-        rtps = dict(map(lambda i: ('foo.%s:bar' % i, None), ids))
 
         def get_rtp(rtp):
+            ids = list(map(str, range(1, nrtps + 1)))
+            rtps = dict(map(lambda i: ('foo.%s:bar' % i, None), ids))
             if rtp.endswith('ids'):
                 return ','.join(ids)
             else:
@@ -97,15 +97,14 @@ class TestClient(unittest.TestCase):
             assert '' == v
 
     def test_get_rtp_all_somenotset_notimeout(self):
-
-        def gen_rtp(i):
-            return 'foo.%s:bar' % i, i if (int(i) % 2 == 0) else None
-
         nrtps = 25
-        ids = map(str, range(1, nrtps + 1))
-        rtps = dict(map(gen_rtp, ids))
 
         def get_rtp(rtp):
+            def gen_rtp(i):
+                return 'foo.%s:bar' % i, i if (int(i) % 2 == 0) else None
+
+            ids = list(map(str, range(1, nrtps + 1)))
+            rtps = dict(map(gen_rtp, ids))
             if rtp.endswith('ids'):
                 return ','.join(ids)
             else:

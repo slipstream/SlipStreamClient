@@ -18,7 +18,7 @@
 """
 
 import time
-import Queue
+from six.moves import queue
 from mock import Mock
 import unittest
 
@@ -58,11 +58,11 @@ class TestThreadWrapper(unittest.TestCase):
         assert expl.test_var == 1
 
     def testExceptionQueued(self):
-        queue = Queue.Queue()
+        q = queue.Queue()
         expl = _ExplodeClass()
-        self._run_target_and_assert(expl.explode, args=(1,), exc_queue=queue)
+        self._run_target_and_assert(expl.explode, args=(1,), exc_queue=q)
         assert expl.test_var == 1
-        _assert_exc_info(queue.get())
+        _assert_exc_info(q.get())
 
     def _run_target_and_assert(self, target, args=(), exc_queue=None):
         thr = ThreadWrapper(target=target, args=args, exc_queue=exc_queue)

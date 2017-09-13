@@ -46,8 +46,8 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         self.serviceurl = 'http://example.com'
         self.config_holder = ConfigHolder(
             {
-                'username': base64.b64encode('user'),
-                'password': base64.b64encode('pass'),
+                'username': base64.b64encode(b'user'),
+                'password': base64.b64encode(b'pass'),
                 'cookie_filename': 'cookies',
                 'serviceurl': self.serviceurl,
                 'node_instance_name': 'instance-name'
@@ -300,7 +300,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw._cloud_client.resize = Mock(wraps=cw._cloud_client.resize)
         cw.vertically_scale_instances()
         assert True == cw._cloud_client.resize.called
-        node_instance = cw._cloud_client.resize.call_args[0][0][0]
+        node_instance = list(cw._cloud_client.resize.call_args[0][0])[0]
         assert 'n.1' in node_instance.get_name()
         assert cw._set_runtime_parameter.called_with('n.1:' + NodeDecorator.SCALE_IAAS_DONE, 'true')
 
@@ -309,7 +309,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw._cloud_client.attach_disk = Mock(wraps=cw._cloud_client.attach_disk)
         cw.vertically_scale_instances()
         assert True == cw._cloud_client.attach_disk.called
-        node_instance = cw._cloud_client.attach_disk.call_args[0][0][0]
+        node_instance = list(cw._cloud_client.attach_disk.call_args[0][0])[0]
         assert 'n.2' in node_instance.get_name()
         assert cw._set_runtime_parameter.called_with('n.2:' + NodeDecorator.SCALE_IAAS_DONE, 'true')
 
@@ -318,7 +318,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw._cloud_client.detach_disk = Mock(wraps=cw._cloud_client.detach_disk)
         cw.vertically_scale_instances()
         assert True == cw._cloud_client.detach_disk.called
-        node_instance = cw._cloud_client.detach_disk.call_args[0][0][0]
+        node_instance = list(cw._cloud_client.detach_disk.call_args[0][0])[0]
         assert 'n.3' in node_instance.get_name()
         assert cw._set_runtime_parameter.called_with('n.3:' + NodeDecorator.SCALE_IAAS_DONE, 'true')
 

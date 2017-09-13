@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import sys
 import time
@@ -22,14 +23,14 @@ import subprocess
 from multiprocessing.dummy import Pool as ThreadPool
 
 
-from SlipStreamHttpClient import SlipStreamHttpClient
+from .SlipStreamHttpClient import SlipStreamHttpClient
 
-from exceptions.Exceptions import NotYetSetException
-from exceptions.Exceptions import TimeoutException
-from exceptions.Exceptions import ClientError
-from exceptions.Exceptions import AbortException
+from .exceptions.Exceptions import NotYetSetException
+from .exceptions.Exceptions import TimeoutException
+from .exceptions.Exceptions import ClientError
+from .exceptions.Exceptions import AbortException
 
-from NodeDecorator import NodeDecorator
+from .NodeDecorator import NodeDecorator
 import slipstream.util as util
 
 
@@ -59,9 +60,6 @@ class Client(object):
     def logout(self):
         self.httpClient.logout()
 
-    def _loadModule(self, moduleName):
-        return util.loadModule(moduleName)
-
     def getRuntimeParameter(self, key):
         value = None
 
@@ -80,7 +78,7 @@ class Client(object):
                     raise TimeoutException(
                         "Exceeded timeout limit of %s waiting for key '%s' "
                         "to be set" % (self.timeout, _key))
-                print >> sys.stderr, "Waiting for %s" % _key
+                print("Waiting for %s" % _key, file=sys.stderr)
                 sys.stdout.flush()
                 sleepTime = 5
                 time.sleep(sleepTime)
@@ -240,7 +238,9 @@ class Client(object):
     def _get_params_list(self, compname, key):
         ids_param = '%s:ids' % compname
         ids = self.httpClient.getRuntimeParameter(ids_param).split(',')
-        return ['%s.%s:%s' % (compname, i, key) for i in ids]
+        return ['%s.%s:%s' % (compname, i, key)
+                for i in ids
+                if len(i) > 0]
 
     def _get_rtp(self, param):
         client = Client(self.ch)
@@ -253,7 +253,7 @@ class Client(object):
                               (param, (time.time() - t0)))
             return val
         except TimeoutException as ex:
-            print >> sys.stderr, ex.arg
+            print(ex.arg, file=sys.stderr)
             return ''
 
     def get_rtp_all(self, compname, key):

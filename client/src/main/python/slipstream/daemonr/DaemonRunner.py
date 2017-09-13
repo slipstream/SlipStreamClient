@@ -13,14 +13,14 @@ class DaemonRunner(BaseDaemonRunner):
         pid = self.pidfile.read_pid()
 
         if not pid:
-            print "%s is not running" % app_name
+            print("%s is not running" % app_name)
             return
 
         if is_pidfile_stale(self.pidfile):
-            print "%s is not running. Stale PID file %s" % (app_name,
-                                                            self.pidfile.path)
+            print("%s is not running. Stale PID file %s" % (app_name,
+                                                            self.pidfile.path))
         else:
-            print "%s (pid %s) is running..." % (app_name, pid)
+            print("%s (pid %s) is running..." % (app_name, pid))
 
     action_funcs = dict(BaseDaemonRunner.action_funcs.items() + [(u'status', _status)])
 
@@ -79,5 +79,5 @@ class DaemonRunner(BaseDaemonRunner):
 
     def _log_failure(self, action, reason, logger):
         msg = 'Failed to %s: %s' % (action, reason)
-        print msg
+        print(msg)
         logger.critical(msg)

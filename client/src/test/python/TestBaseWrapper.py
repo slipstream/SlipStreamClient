@@ -39,8 +39,8 @@ class TestBaseWrapper(TestCloudConnectorsBase):
         self.serviceurl = 'http://example.com'
         self.config_holder = ConfigHolder(
             {
-                'username': base64.b64encode('user'),
-                'password': base64.b64encode('pass'),
+                'username': base64.b64encode(b'user'),
+                'password': base64.b64encode(b'pass'),
                 'cookie_filename': 'cookies',
                 'serviceurl': self.serviceurl,
                 'node_instance_name': 'instance-name'

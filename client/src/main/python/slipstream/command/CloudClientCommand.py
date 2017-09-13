@@ -15,6 +15,7 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 """
+from __future__ import print_function
 
 import os
 import sys
@@ -24,7 +25,6 @@ from optparse import OptionParser
 from slipstream import util
 from slipstream.UserInfo import UserInfo
 from slipstream.util import VERBOSE_LEVEL_QUIET, VERBOSE_LEVEL_DETAILED, ENV_SLIPSTREAM_SSH_PUB_KEY
-from slipstream.exceptions.Exceptions import ExecutionException
 
 
 class VerboseException(Exception):
@@ -42,13 +42,13 @@ def main(command):
         command().execute()
         exit(0)
     except KeyboardInterrupt:
-        print '\n\nExecution interrupted by the user... goodbye!'
+        print('\n\nExecution interrupted by the user... goodbye!')
         exit(1)
     except VerboseException as e:
         exc_info = e.traceback
         raise exc_info[0], exc_info[1], exc_info[2]
     except Exception as e:
-        print >> sys.stderr, e
+        print(e, file=sys.stderr)
         exit(2)
 
 

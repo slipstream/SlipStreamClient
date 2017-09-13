@@ -16,6 +16,7 @@
  limitations under the License.
 """
 
+from six import string_types
 import slipstream.util as util
 
 from slipstream.NodeDecorator import NodeDecorator
@@ -26,9 +27,9 @@ def as_list(func):
         val = func(self)
         if val:
             if isinstance(val, list):
-                return map(lambda x: x.strip(), val)
+                return list(map(lambda x: x.strip(), val))
             else:
-                return map(lambda x: x.strip(), val.split(','))
+                return list(map(lambda x: x.strip(), val.split(',')))
         else:
             return []
     return wfun
@@ -56,7 +57,7 @@ class NodeInstance(object):
         return parameter
 
     def __set(self, parameter_name, value):
-        if isinstance(value, basestring):
+        if isinstance(value, string_types):
             value = value.strip()
         self.__parameters[parameter_name] = value
 

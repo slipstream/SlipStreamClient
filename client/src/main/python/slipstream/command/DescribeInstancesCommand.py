@@ -17,6 +17,7 @@
 """
 
 import warnings
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from slipstream.command.CloudClientCommand import CloudClientCommand
@@ -26,7 +27,6 @@ from slipstream.util import nostdouterr
 
 
 class DescribeInstancesCommand(CloudClientCommand):
-
     DEFAULT_TIMEOUT = 30
 
     def _vm_get_state(self, cc, vm):
@@ -77,18 +77,20 @@ class DescribeInstancesCommand(CloudClientCommand):
                                    KEY_RUN_CATEGORY: ''},
                           context={'foo': 'bar'})
         cc = self.get_connector_class()(ch)
-        cc._initialization(self.user_info, **self.get_initialization_extra_kwargs())
+        cc._initialization(self.user_info,
+                           **self.get_initialization_extra_kwargs())
         vms = self._list_instances(cc)
         return cc, vms
 
     def _print_results(self, cc, vms):
-        print "id, state, ip, cpu [nb], ram [MB], root disk [GB], instance-type [name]"
+        print("id, state, ip, cpu [nb], ram [MB], root disk [GB], "
+              "instance-type [name]")
         for vm in vms:
-            print ', '.join([
-                self._vm_get_id(cc, vm),
-                self._vm_get_state(cc, vm) or 'Unknown',
-                self._vm_get_ip(cc, vm),
-                self._vm_get_cpu(cc, vm),
-                self._vm_get_ram(cc, vm),
-                self._vm_get_root_disk(cc, vm),
-                self._vm_get_instance_type(cc, vm)])
+            print(', '.join([
+                  self._vm_get_id(cc, vm),
+                  self._vm_get_state(cc, vm) or 'Unknown',
+                  self._vm_get_ip(cc, vm),
+                  self._vm_get_cpu(cc, vm),
+                  self._vm_get_ram(cc, vm),
+                  self._vm_get_root_disk(cc, vm),
+                  self._vm_get_instance_type(cc, vm)]))

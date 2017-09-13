@@ -16,6 +16,8 @@
  limitations under the License.
 """
 
+from __future__ import print_function
+
 import re
 import copy
 import errno
@@ -24,7 +26,6 @@ import tempfile
 import time
 from contextlib import closing
 import socket
-import exceptions
 
 import paramiko
 from paramiko import SSHClient
@@ -154,7 +155,7 @@ def _ssh_execute_api(cmd, hostname, username, password, sshKey, tcp_timeout,
                 line = stdout.readline()
         else:
             while line:  # or not stdout.channel.exit_status_ready():
-                print line,
+                print(line, end='')
                 line = stdout.readline()
 
         exit_status = stdout.channel.recv_exit_status()
@@ -313,7 +314,7 @@ def waitUntilSshCanConnectOrTimeout(host, timeout, user='root', password='',
             _printDetail(str(ex), kwargs_)
             reason = 'paramiko.SSHException:', str(ex)
             time.sleep(5)
-        except exceptions.EOFError as ex:
+        except EOFError as ex:
             _printDetail(str(ex), kwargs_)
             reason = 'exceptions.EOFError'
             time.sleep(5)
@@ -373,7 +374,7 @@ def remoteRunScript(user, host, script, sshKey=None, password='', nohup=False):
     try:
         os.write(fd, script)
         os.close(fd)
-        os.chmod(scriptFile, 0755)
+        os.chmod(scriptFile, 0o755)
         dstScriptFile = '/tmp/%s' % os.path.basename(scriptFile)
         retry_count = 3
         while True:

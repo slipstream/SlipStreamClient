@@ -34,21 +34,7 @@
                 </goals>
                 <phase>test</phase>
                 <configuration>
-                  <executable>nosetests</executable>
-                  <environmentVariables>
-                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./src/main/scripts/:./target/dependencies</PYTHONPATH>
-                  </environmentVariables>
-                  <arguments>
-                    <argument>-v</argument>
-                    <argument>--where=target/test/python</argument>
-                    <argument>--ignore-files=.*Live.py</argument>
-                    <argument>--with-xunit</argument>
-                    <argument>--xunit-file=${project.build.directory}/nosetests.xml</argument>
-                    <argument>--with-coverage</argument>
-                    <argument>--cover-xml</argument>
-                    <argument>--cover-xml-file=${project.build.directory}/coverage.xml</argument>
-                    <argument>--cover-package=slipstream</argument>
-                  </arguments>
+                  <executable>src/tox</executable>
                 </configuration>
               </execution>
               
@@ -160,7 +146,7 @@
 
         <executions>
           <execution>
-            <id>get-libcloud</id>
+            <id>get-ss-python-api</id>
             <phase>generate-test-sources</phase>
             <goals>
               <goal>unpack</goal>
@@ -170,7 +156,7 @@
               <artifactItems>
                 <artifactItem>
                   <groupId>com.sixsq.slipstream</groupId>
-                  <artifactId>Libcloud-SixSq-zip</artifactId>
+                  <artifactId>SlipStreamPythonAPI-tarball</artifactId>
                   <type>tar.gz</type>
                   <classifier>bundle</classifier>
                 </artifactItem>

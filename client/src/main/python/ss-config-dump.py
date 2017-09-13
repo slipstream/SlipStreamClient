@@ -181,7 +181,7 @@ Different sections (categories) of the configuration can be extracted with --cat
     def _config_generate_for_categories(self, config):
         cloud_connector_classes = get_cloud_connector_classes(config)
         config_new= {}
-        for category, params in config.iteritems():
+        for category, params in config.items():
             not_in_requested_category_set = self._categories and (category not in self._categories)
             if not_in_requested_category_set:
                 continue
@@ -216,7 +216,7 @@ Different sections (categories) of the configuration can be extracted with --cat
 
     @staticmethod
     def _print_config(config):
-        for k, v in config.iteritems():
+        for k, v in config.items():
             print('# [%s]' % k)
             for param in v:
                 print('%s = %s' % param)
@@ -224,14 +224,14 @@ Different sections (categories) of the configuration can be extracted with --cat
     @staticmethod
     def _write_to_file(config, fname):
         with open(fname, 'w') as fh:
-            for k, v in config.iteritems():
+            for k, v in config.items():
                 fh.write('# [%s]\n' % k)
                 for param in v:
                     fh.write('%s = %s\n' % param)
 
     @staticmethod
     def _write_to_file_per_category(config):
-        for k, v in config.iteritems():
+        for k, v in config.items():
             with open(k + SERVER_CONFIG_FILE_EXT, 'w') as fh:
                 fh.write('# [%s]\n' % k)
                 for param in v:

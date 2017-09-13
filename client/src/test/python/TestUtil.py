@@ -15,14 +15,14 @@ class TestUtil(unittest.TestCase):
         self.assertTrue(isinstance(process, subprocess.Popen))
         process.kill()
 
-    def xtest_execute_apple_specific(self):
+    def test_execute_apple_specific(self):
         status, err = util.execute(['sleep'], withStderr=True)
         self.assertEqual(status, 1)
-        self.assertEqual(err, 'usage: sleep seconds\n')
+        self.assertEqual(err, b'usage: sleep seconds\n')
 
         status, out = util.execute(['sleep'], withOutput=True)
         self.assertEqual(status, 1)
-        self.assertEqual(out, 'usage: sleep seconds\n')
+        self.assertEqual(out, b'usage: sleep seconds\n')
 
     def test_sanitize_env(self):
         assert {} == util._sanitize_env({})
@@ -44,10 +44,6 @@ class TestUtil(unittest.TestCase):
         try:
             self.assertRaises(TypeError, util.execute, *(['true'],),
                               **{'extra_env': {'a': None}})
-            try:
-                util.execute(['true'], extra_env={'a': None})
-            except TypeError as ex:
-                assert 'execve() arg 3 contains a non-string value' == str(ex)
         finally:
             util._sanitize_env = _sanitize_env_save
 

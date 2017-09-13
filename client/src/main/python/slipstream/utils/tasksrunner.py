@@ -17,8 +17,10 @@
 """
 
 import sys
-import Queue
 from threading import Thread
+from six.moves import queue
+from six import reraise
+from six import PY2
 
 __all__ = ['TasksRunner']
 
@@ -28,17 +30,16 @@ QUEUE_GET_TIMEOUT = 3
 
 class TasksRunner(object):
 
-    def __init__(self, task_executor=None, max_workers=None, verbose=None,
+    def __init__(self, task_executor=None, max_workers=None,
                  daemonic_workers=True):
         self._executor = task_executor
         self._max_workers = (max_workers == None) and DEFAULT_WORKERS_NUMBER \
             or int(max_workers)
-        self._verbose = verbose
         self.workers = []
         self.daemonic_workers = daemonic_workers
-        self.tasks_queue = Queue.Queue()
+        self.tasks_queue = queue.Queue()
         # Queue with exceptions from threads.
-        self.exc_queue = Queue.Queue()
+        self.exc_queue = queue.Queue()
 
     def put_task(self, *args):
         self.tasks_queue.put(args, timeout=10)
@@ -49,7 +50,7 @@ class TasksRunner(object):
         for _ in range(nworkers):
             worker = Worker(self._executor, self.tasks_queue)
             thr = ThreadWrapper(target=worker.work, exc_queue=self.exc_queue,
-                                verbose=self._verbose, daemonic=self.daemonic_workers)
+                                daemonic=self.daemonic_workers)
             self.workers.append(thr)
             thr.start()
 
@@ -65,16 +66,21 @@ class TasksRunner(object):
         try:
             exc_info = self.exc_queue.get(block=True,
                                           timeout=QUEUE_GET_TIMEOUT)
-        except Queue.Empty:
+        except queue.Empty:
             pass
         else:
             if not ignore_exception:
                 self._stop_all_workers()
-                raise exc_info[0], exc_info[1], exc_info[2]
+                reraise(exc_info[0], exc_info[1], exc_info[2])
 
     def _stop_all_workers(self):
         for t in self.workers:
-            t._Thread__stop()
+            # FIXME: added for compatibility with Py3.  Still need to find a way
+            #        for abrupt termination of threads in Py3.
+            if PY2:
+                t._Thread__stop()
+            else:
+                t.join()
 
 
 class Worker(object):
@@ -87,7 +93,7 @@ class Worker(object):
         while True:
             try:
                 task = self._queue.get(timeout=QUEUE_GET_TIMEOUT)
-            except Queue.Empty:
+            except queue.Empty:
                 break
             self._executor(*task)
             self._queue.task_done()
@@ -95,13 +101,10 @@ class Worker(object):
 
 class ThreadWrapper(Thread):
     def __init__(self, group=None, target=None, name=None,
-                 args=(), kwargs=None, verbose=None, exc_queue=None,
-                 daemonic=True):
-        if verbose != None and int(verbose) >= 3:
-            verbose = True
+                 args=(), kwargs=None, exc_queue=None, daemonic=True):
         super(ThreadWrapper, self).__init__(group=group, target=target,
                                             name=name, args=args,
-                                            kwargs=kwargs, verbose=verbose)
+                                            kwargs=kwargs)
         self.daemon = daemonic
         if exc_queue and not hasattr(exc_queue, 'put'):
             raise TypeError('exc_queue object must support queue interface put()')
@@ -110,11 +113,8 @@ class ThreadWrapper(Thread):
 
     def run(self):
         try:
-            self._note('Starting run()')
             super(ThreadWrapper, self).run()
-            self._note('Finished run()')
         except:
-            self._note('Exception %s', sys.exc_info())
             if self.exc_queue is not None:
                 self.exc_queue.put(sys.exc_info())
             self.exc_info = sys.exc_info()
