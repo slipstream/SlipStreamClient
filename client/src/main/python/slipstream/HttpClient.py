@@ -20,18 +20,18 @@ import os
 import time
 from six.moves import http_client as httplib
 import requests
-import re
 import socket
 import stat
 from random import random
 from threading import Lock
 from six.moves.urllib.parse import urlparse
-from requests import Request
-from requests.cookies import MockResponse, MockRequest, RequestsCookieJar
+from requests.cookies import MockRequest, RequestsCookieJar
 from six.moves.http_cookiejar import MozillaCookieJar, CookieJar
 
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
+
+from slipstream.api.http import SessionStore as SS
 
 etree = util.importETree()
 

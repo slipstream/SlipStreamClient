@@ -40,7 +40,7 @@ def get_packages(basepkg_name, root_dir=''):
     return packages
 
 NAME = 'slipstream-client'
-VERSION = '1.0-0'
+VERSION = '${project.version}'
 DESCRIPTION = 'SlipStream client'
 LONG_DESCRIPTION = 'SlipStream client: API and CLI'
 AUTHOR = 'SixSq Sarl, (sixsq.com)'

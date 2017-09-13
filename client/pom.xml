@@ -39,34 +39,35 @@
                   <arguments>
                     <argument>-c</argument>
                     <argument>tox.ini</argument>
+                    <argument>${project.build.directory}/SlipStreamPythonAPI-tarball-${project.version}-bundle.tar.gz</argument>
                   </arguments>
                 </configuration>
               </execution>
               
-              <execution>
-                <id>pylint</id>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <phase>test</phase>
-                <configuration>
-                  <workingDirectory>${project.build.directory}/main/python</workingDirectory>
-                  <outputFile>${project.build.directory}/pylint.out</outputFile>
-                  <successCodes>
-                    <successCode>0</successCode>
-                    <successCode>30</successCode>
-                    <successCode>31</successCode>
-                  </successCodes>
-                  <executable>pylint</executable>
-                  <arguments>
-                    <argument>-f</argument>
-                    <argument>parseable</argument>
-                    <argument>--rcfile</argument>
-                    <argument>${basedir}/pylint.config</argument>
-                    <argument>slipstream</argument>
-                  </arguments>
-                </configuration>
-              </execution>
+              <!--<execution>-->
+                <!--<id>pylint</id>-->
+                <!--<goals>-->
+                  <!--<goal>exec</goal>-->
+                <!--</goals>-->
+                <!--<phase>test</phase>-->
+                <!--<configuration>-->
+                  <!--<workingDirectory>${project.build.directory}/main/python</workingDirectory>-->
+                  <!--<outputFile>${project.build.directory}/pylint.out</outputFile>-->
+                  <!--<successCodes>-->
+                    <!--<successCode>0</successCode>-->
+                    <!--<successCode>30</successCode>-->
+                    <!--<successCode>31</successCode>-->
+                  <!--</successCodes>-->
+                  <!--<executable>pylint</executable>-->
+                  <!--<arguments>-->
+                    <!--<argument>-f</argument>-->
+                    <!--<argument>parseable</argument>-->
+                    <!--<argument>&#45;&#45;rcfile</argument>-->
+                    <!--<argument>${basedir}/pylint.config</argument>-->
+                    <!--<argument>slipstream</argument>-->
+                  <!--</arguments>-->
+                <!--</configuration>-->
+              <!--</execution>-->
               
             </executions>
           </plugin>
@@ -154,10 +155,10 @@
             <id>get-ss-python-api</id>
             <phase>generate-test-sources</phase>
             <goals>
-              <goal>unpack</goal>
+              <goal>copy</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <outputDirectory>${project.build.directory}</outputDirectory>
               <artifactItems>
                 <artifactItem>
                   <groupId>com.sixsq.slipstream</groupId>
