@@ -34,7 +34,12 @@
                 </goals>
                 <phase>test</phase>
                 <configuration>
-                  <executable>src/tox</executable>
+                  <workingDirectory>${basedir}/src</workingDirectory>
+                  <executable>tox</executable>
+                  <arguments>
+                    <argument>-c</argument>
+                    <argument>tox.ini</argument>
+                  </arguments>
                 </configuration>
               </execution>
               
