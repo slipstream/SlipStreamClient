@@ -20,12 +20,10 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.VMCommandBase import VMCommandBase
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
+from slipstream.command.CommandBase import CommandBase
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(CommandBase):
     """A command-line program to logout from SlipStream.  It deletes the local
     cookie corresponding to <endpoint>/ resource.
     """
@@ -42,6 +40,7 @@ Deletes cookie for / of <URL> from local cookie jar <FILE>."""
 
         self.add_endpoint_option()
         self.add_cookie_option()
+        self.add_insecure_option()
 
         self.options, self.args = self.parser.parse_args()
 
@@ -54,9 +53,7 @@ Deletes cookie for / of <URL> from local cookie jar <FILE>."""
             self.usageExitTooManyArguments()
 
     def do_work(self):
-        ch = ConfigHolder(self.options)
-        client = Client(ch)
-        client.logout()
+        self.cimi.logout()
 
 
 if __name__ == "__main__":

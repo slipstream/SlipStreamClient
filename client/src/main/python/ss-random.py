@@ -21,13 +21,14 @@ from __future__ import print_function
 import sys
 import random
 import string
+from six.moves import range
 
-from slipstream.command.VMCommandBase import VMCommandBase
+from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(DeploymentCommandBase):
     """A command-line program to generate random string (e.g. for password)
     and optionally set it in a runtime parameter.
     """
@@ -35,10 +36,6 @@ class MainProgram(VMCommandBase):
     def __init__(self):
         self.key = None
         self.size = None
-        self.username = None
-        self.password = None
-        self.cookie = None
-        self.endpoint = None
         super(MainProgram, self).__init__()
 
     def parse(self):
@@ -71,7 +68,7 @@ class MainProgram(VMCommandBase):
     def do_work(self):
 
         rvalue = ''.join([random.choice(string.ascii_letters + string.digits)
-                          for _ in xrange(self.size)])
+                          for _ in range(self.size)])
 
         if self.key is not None:
             ch = ConfigHolder(self.options)

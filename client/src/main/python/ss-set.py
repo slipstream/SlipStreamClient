@@ -20,7 +20,7 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.VMCommandBase import VMCommandBase
+from slipstream.command.DeploymentCommandBase import VMCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 

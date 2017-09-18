@@ -20,12 +20,12 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.VMCommandBase import VMCommandBase
+from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(DeploymentCommandBase):
     """A command-line program to set directly the statecustom value, such that
     the dashboard can be made more dynamic.
     """

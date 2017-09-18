@@ -82,11 +82,9 @@ class CommandBase(object):
                         AbortException: 8,
                         TimeoutException: 9,
                         SlipStreamError: 10}
-    def __init__(self):
 
-        self.username = None
-        self.endpoint = None
-        self.password = None
+    def __init__(self):
+        self._user_pass_requested = False
         self._cimi = None
         self.verboseLevel = 0
         self.options = None
@@ -115,6 +113,11 @@ class CommandBase(object):
         self.verboseLevel = self.options.verboseLevel
 
     def add_authentication_options(self):
+        self.add_username_password_option()
+        self.add_cookie_option()
+        self.add_insecure_option()
+
+    def add_username_password_option(self):
         self.parser.add_option('-u', '--username', dest='username',
                                help='SlipStream username or $SLIPSTREAM_USERNAME',
                                metavar='USERNAME',
@@ -123,11 +126,7 @@ class CommandBase(object):
                                help='SlipStream password or $SLIPSTREAM_PASSWORD',
                                metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
-        self.parser.add_option('--insecure', dest='insecure',
-                               help='When set, client will skip the '
-                                    'validation of server certificate.',
-                               default=False, action='store_true')
-        self.add_cookie_option()
+        self._user_pass_requested = True
 
     def add_cookie_option(self):
         default_cookie = util.DEFAULT_COOKIE_FILE
@@ -135,6 +134,12 @@ class CommandBase(object):
                                help='SlipStream cookie. Default: %s' %
                                     default_cookie, metavar='FILE',
                                default=default_cookie)
+
+    def add_insecure_option(self):
+        self.parser.add_option('--insecure', dest='insecure',
+                               help='When set, client will skip the '
+                                    'validation of server certificate.',
+                               default=False, action='store_true')
 
     def add_endpoint_option(self):
         default = 'https://nuv.la'
@@ -274,6 +279,8 @@ class CommandBase(object):
                                 insecure=self.options.insecure,
                                 log_http_detail=(self.options.verboseLevel >= 3))
             cimi = CIMI(http, endpoint=self.options.endpoint)
-            cimi.login_internal(self.username, self.password)
+            if self._user_pass_requested:
+                cimi.login_internal(self.options.username,
+                                    self.options.password)
             self._cimi = cimi
         return self._cimi

@@ -22,10 +22,10 @@ import sys
 
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.command.VMCommandBase import VMCommandBase
+from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(DeploymentCommandBase):
     """
     A command-line program to get a runtime parameter value from a run,
     blocking (by default) if not set.

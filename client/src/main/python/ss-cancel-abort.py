@@ -20,12 +20,12 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.VMCommandBase import VMCommandBase
+from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(DeploymentCommandBase):
     '''A command-line program to reset the abort state for a run.'''
 
     def __init__(self):

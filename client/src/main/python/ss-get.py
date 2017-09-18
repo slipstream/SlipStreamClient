@@ -20,24 +20,30 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.VMCommandBase import VMCommandBase
-from slipstream.api.deployment import Deployment
+from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(DeploymentCommandBase):
     """A command-line program to get a runtime parameter value from a run,
     blocking (by default) if not set.
     """
 
     def __init__(self):
-        self._dpl = None
         super(MainProgram, self).__init__()
         self.key = None
 
     def parse(self):
-        usage = '''usage: %prog [options] <key>
+        usage = '''usage: %prog [options] <name>
 
-<key>    Key (i.e. runtime parameter) from which to retrieve the value'''
+<name>   Name of the deployment parameter from which to retrieve the value
+         The interpretation of the <name> is as follows: 
+         name - parameter of this component
+         ss:name - global parameter (`ss` special namespace)
+         node.1:name - single parameter
+         node:name - parameter values of all the active instances of the `node` 
+                      node.1:name value
+                      node.2:name value
+         '''
 
         self.parser.usage = usage
 
@@ -65,32 +71,26 @@ class MainProgram(VMCommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    @property
-    def deployment(self):
-        if not self._dpl:
-            self._dpl = Deployment(self.cimi, self.options.diid)
-        return self._dpl
-
     def do_work(self):
-        comp, _id, name = self._split_key(self.key)
-        if _id:
-            value = self.deployment.get_deployment_parameter(comp, _id, name)
-        else:
-            value = self.deployment.get_deployment_parameters(comp, name)
-        print(value if value is not None else '')
+        res = self.get_deployment_parameter(self.key)
 
-    def _split_key(self, key):
-        name = key
-        _id = None
-        if ':' in key:
-            comp_id, name = key.split(':')
+        def get_value(param):
+            return param.get('value', '')
+
+        def get_full_key(param):
+            node = param.get('node-name')
+            index = param.get('node-index', None)
+            name = param.get('name')
+            if index:
+                return '{}.{}:{}'.format(node, index, name)
+            else:
+                return '{}:{}'.format(node, name)
+
+        if isinstance(res, list):
+            for p in res:
+                print('{} {}'.format(get_full_key(p), get_value(p)))
         else:
-            return None, None, name
-        if '.' in comp_id:
-            comp, _id = comp_id.split('.')
-        else:
-            comp = comp_id
-        return comp, _id, name
+            print(get_value(res))
 
 
 if __name__ == "__main__":

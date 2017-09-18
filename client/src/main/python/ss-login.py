@@ -21,8 +21,6 @@ from __future__ import print_function
 import sys
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(CommandBase):
@@ -32,25 +30,15 @@ class MainProgram(CommandBase):
     """
 
     def __init__(self):
-        self.username = None
-        self.password = None
         super(MainProgram, self).__init__()
 
     def parse(self):
-        usage = """usage: %prog [options]"""
-
-        self.parser.usage = usage
+        self.parser.usage = """usage: %prog [options]"""
 
         self.add_endpoint_option()
         self.add_authentication_options()
 
         self.options, self.args = self.parser.parse_args()
-
-        self.options.serviceurl = self.options.endpoint
-        self.username = self.options.username
-        self.options.username = None
-        self.password = self.options.password
-        self.options.password = None
 
         self._check_args()
 
@@ -59,9 +47,7 @@ class MainProgram(CommandBase):
             self.usageExitTooManyArguments()
 
     def do_work(self):
-        ch = ConfigHolder(self.options)
-        client = Client(ch)
-        client.login(self.username, self.password)
+        self.cimi
 
 
 if __name__ == "__main__":
