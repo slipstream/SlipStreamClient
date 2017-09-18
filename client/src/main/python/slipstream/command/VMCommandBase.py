@@ -23,13 +23,13 @@ from slipstream.command.CommandBase import CommandBase
 
 class VMCommandBase(CommandBase):
 
-    def __init__(self, argv=None):
-        super(VMCommandBase, self).__init__(argv)
+    def __init__(self):
+        super(VMCommandBase, self).__init__()
 
     def add_run_authn_opts_and_parse(self):
         self.parser.add_option('--run', dest='diid', help='Run UUID.',
                                metavar='UUID', default='')
-        self.addEndpointOption()
+        self.add_endpoint_option()
         self.add_authentication_options()
 
         self.options, self.args = self.parser.parse_args()

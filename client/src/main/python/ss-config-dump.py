@@ -29,12 +29,10 @@ from slipstream.command.CommandBase import CommandBase
 from slipstream.SlipStreamHttpClient import DomExtractor
 from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.util import SERVER_CONFIG_FILE_EXT
-from slipstream.util import SERVER_CONFIGURATION_DEFAULT_CATEGORIES
-from slipstream.util import SERVER_CONFIGURATION_BASICS_CATEGORY
-from slipstream.util import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
-
-from slipstream.resources.configuration import get_cloud_connector_classes
+from slipstream.api.configuration import SERVER_CONFIG_FILE_EXT
+from slipstream.api.configuration import SERVER_CONFIGURATION_DEFAULT_CATEGORIES
+from slipstream.api.configuration import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
+from slipstream.api.configuration import get_cloud_connector_classes
 
 
 class MainProgram(CommandBase):
@@ -42,10 +40,10 @@ class MainProgram(CommandBase):
     NO_CONNECTOR_CLASS_MAPPING_MSG = '<CONNECTOR IS INACTIVE. CONNECTOR CLASS NOT KNOWN!>'
     HOSTNAME_MASK = '<CHANGE_HOSTNAME>'
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self._categories = []
         self._mask_hostname_re = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options]
@@ -237,7 +235,7 @@ Different sections (categories) of the configuration can be extracted with --cat
                 for param in v:
                     fh.write('%s = %s\n' % param)
 
-    def doWork(self):
+    def do_work(self):
         conf_dict = self._get_config()
         self._output_config(conf_dict)
 

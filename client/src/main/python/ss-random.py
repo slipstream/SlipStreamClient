@@ -32,14 +32,14 @@ class MainProgram(VMCommandBase):
     and optionally set it in a runtime parameter.
     """
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.key = None
         self.size = None
         self.username = None
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] [<key>]
@@ -68,7 +68,7 @@ class MainProgram(VMCommandBase):
         except ValueError:
             self.usageExit("Invalid size value, must be a positive integer")
 
-    def doWork(self):
+    def do_work(self):
 
         rvalue = ''.join([random.choice(string.ascii_letters + string.digits)
                           for _ in xrange(self.size)])

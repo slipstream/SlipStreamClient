@@ -31,8 +31,8 @@ class MainProgram(VMCommandBase):
     blocking (by default) if not set.
     """
 
-    def __init__(self, argv=None):
-        super(MainProgram, self).__init__(argv)
+    def __init__(self):
+        super(MainProgram, self).__init__()
         self.compname = None
         self.key = None
 
@@ -95,7 +95,7 @@ class MainProgram(VMCommandBase):
                 self._print_rtps(rtps)
                 raise SystemExit(1)
 
-    def doWork(self):
+    def do_work(self):
         client = self._get_client()
         rtps = client.get_rtp_all(self.compname, self.key)
         if self.options.value:

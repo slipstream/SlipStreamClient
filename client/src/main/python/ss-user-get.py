@@ -28,13 +28,13 @@ import slipstream.util as util
 class MainProgram(CommandBase):
     '''A command-line program to show/list user definition(s).'''
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.user = ''
         self.username = None
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] [<user>]
@@ -44,7 +44,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()        
+        self.add_endpoint_option()
 
         self.options, self.args = self.parser.parse_args()
 
@@ -56,7 +56,7 @@ class MainProgram(CommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
+    def do_work(self):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 

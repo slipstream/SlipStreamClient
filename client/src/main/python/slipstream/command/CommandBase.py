@@ -19,11 +19,15 @@ from __future__ import print_function
 
 import os
 import sys
+import traceback
 from optparse import OptionParser
 
 from slipstream import __version__
 import slipstream.util as util
+from slipstream.api.cimi import CIMI
+from slipstream.api.http import SessionStore
 from slipstream.exceptions.Exceptions import NotYetSetException
+from slipstream.api.exceptions import SlipStreamError
 
 etree = util.importETree()
 
@@ -38,7 +42,7 @@ repDirName = 'repository'
 repDir = os.path.join(slipstreamDirName, repDirName)
 
 
-def setEnv():
+def set_env():
     newEnv = \
         '.' + os.pathsep + \
         os.path.join(slipstreamHome, 'bin')
@@ -48,12 +52,12 @@ def setEnv():
         os.environ['PYTHONPATH'] = newEnv
 
 
-def setPath():
+def set_path():
     sys.path.insert(1, '.')
-    setEnv()
+    set_env()
 
 
-setPath()
+set_path()
 
 try:
     from slipstream.exceptions.Exceptions import NetworkError
@@ -71,8 +75,19 @@ except KeyboardInterrupt:
 
 class CommandBase(object):
 
-    def __init__(self, dummy):
+    exc_to_exit_code = {NotYetSetException: 1,
+                        ValueError: 3,
+                        ServerError: 5,
+                        ClientError: 7,
+                        AbortException: 8,
+                        TimeoutException: 9,
+                        SlipStreamError: 10}
+    def __init__(self):
 
+        self.username = None
+        self.endpoint = None
+        self.password = None
+        self._cimi = None
         self.verboseLevel = 0
         self.options = None
         self.args = None
@@ -87,7 +102,7 @@ class CommandBase(object):
         util.PRINT_TO_STDERR_ONLY = True
 
         util.printDetail("Calling: '%s'" % ' '.join(sys.argv), self.verboseLevel)
-        self._callAndHandleErrorsForCommands(self.doWork.__name__)
+        self._callAndHandleErrorsForCommands(self.do_work.__name__)
 
         util.PRINT_TO_STDERR_ONLY = False
 
@@ -108,6 +123,10 @@ class CommandBase(object):
                                help='SlipStream password or $SLIPSTREAM_PASSWORD',
                                metavar='PASSWORD',
                                default=os.environ.get('SLIPSTREAM_PASSWORD'))
+        self.parser.add_option('--insecure', dest='insecure',
+                               help='When set, client will skip the '
+                                    'validation of server certificate.',
+                               default=False, action='store_true')
         self.add_cookie_option()
 
     def add_cookie_option(self):
@@ -117,7 +136,7 @@ class CommandBase(object):
                                     default_cookie, metavar='FILE',
                                default=default_cookie)
 
-    def addEndpointOption(self):
+    def add_endpoint_option(self):
         default = 'https://nuv.la'
         effective_default = os.environ.get('SLIPSTREAM_ENDPOINT', default)
         self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
@@ -139,44 +158,32 @@ class CommandBase(object):
         res = 0
         try:
             res = self.__class__.__dict__[methodName](self, *args, **kw)
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, SystemExit):
             raise
-        except NotYetSetException as ex:
-            sys.stderr.writelines('\n%s\n' % str(ex))
-            self._exit(1)
-        except ValueError as ex:
-            sys.stderr.writelines('\nError: %s\n' % str(ex))
-            self._exit(3)
-        except NetworkError as ex:
-            sys.stderr.writelines('\nError: couldn\'t connect to the server. ')
-            sys.stderr.writelines('Check network connection and server, and try again.')
-            sys.stderr.writelines('\nError details: %s\n' % ex)
-            self._exit(4)
-        except SecurityError as ex:
-            sys.stderr.writelines("\nSecurity Error: %s \n" % str(ex))
-            self._exit(6)
-        except ServerError as ex:
-            sys.stderr.writelines("\nError: the following unexpected error was detected:\n   '%s'\n" % str(ex))
-            self._exit(5)
-        except TimeoutException as ex:
-            sys.stderr.writelines('\nError: %s\n' % str(ex))
-            self._exit(9)
-        except AbortException as ex:
-            sys.stderr.writelines('\nError: %s\n' % str(ex))
-            self._exit(8)
-        except ClientError as ex:
-            sys.stderr.writelines("\nError: %s\n" % str(ex))
-            self._exit(7)
-        except SystemExit:
-            raise
-        except Exception:
-            raise
+        except Exception as ex:
+            self._exit(ex)
         return res
 
-    def _exit(self, code):
+    def _exit(self, ex):
+        """
+        :param ex: Exception object or string
+        :return:
+        """
         if self.verboseLevel > 1:
-            raise
-        sys.exit(code)
+            sys.stderr.writelines(traceback.format_exc())
+        msg = str(ex)
+        try:
+            # Old style error message in the HTTP body as xml.
+            error = self._read_as_xml(str(ex))
+            msg = '{}: {} - {}'.format(
+                error.get('detail'), error.get('code'), error.get('reason'))
+        except:
+            pass
+        sys.stderr.writelines("ERROR: %s\n" % msg)
+        if isinstance(ex, Exception):
+            sys.exit(self.exc_to_exit_code.get(ex, 1))
+        else:
+            sys.exit(1)
 
     def _getHomeDirectory(self):
         return util.getHomeDirectory()
@@ -224,14 +231,13 @@ class CommandBase(object):
         return self.usageExit('No arguments required')
 
     def usageExit(self, msg=None):
-        if msg:
-            print(msg, '\n')
         self.parser.print_help()
         print('')
-        if msg:
-            print(msg)
         print('got: ' + ' '.join(sys.argv))
-        self._exit(2)
+        if msg:
+            self._exit(msg)
+        else:
+            sys.exit(1)
 
     def getVersion(self):
         print(__version__.getPrettyVersion())
@@ -239,7 +245,7 @@ class CommandBase(object):
     def log(self, message):
         util.printDetail(message, self.verboseLevel)
 
-    def read_xml_and_exit_on_error(self, xml):
+    def parse_xml_or_exit_on_error(self, xml):
         try:
             return self._read_as_xml(xml)
         except Exception as ex:
@@ -252,8 +258,22 @@ class CommandBase(object):
         return etree.fromstring(xml)
 
     def read_input_file(self, ifile):
-        if not os.path.exists(ifile):
-            self.usageExit("Unknown filename: " + ifile)
-        if not os.path.isfile(ifile):
-            self.usageExit("Input is not a file: " + ifile)
+        self.check_is_file(ifile)
         return open(ifile).read()
+
+    def check_is_file(self, file):
+        if not os.path.exists(file):
+            self.usageExit("Unknown filename: " + file)
+        if not os.path.isfile(file):
+            self.usageExit("Input is not a file: " + file)
+
+    @property
+    def cimi(self):
+        if not self._cimi:
+            http = SessionStore(cookie_file=self.options.cookie_filename,
+                                insecure=self.options.insecure,
+                                log_http_detail=(self.options.verboseLevel >= 3))
+            cimi = CIMI(http, endpoint=self.options.endpoint)
+            cimi.login_internal(self.username, self.password)
+            self._cimi = cimi
+        return self._cimi

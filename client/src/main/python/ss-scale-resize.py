@@ -26,9 +26,9 @@ from slipstream.command.VerticalScaleCommandBase import VerticalScaleCommandBase
 class MainProgram(VerticalScaleCommandBase):
 
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self._usage_options = "[options] [--cpu <num>, --ram <num>]|[--instance-type <type>] <run> <node-name> <ids> [<ids> ...]"
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def add_scale_options(self):
         self.parser.add_option('--cpu', dest='cpu', default=None,
@@ -56,8 +56,8 @@ class MainProgram(VerticalScaleCommandBase):
 
         self.rtp_scale_values['instance.type'] = self.options.instance_type
 
-    def doWork(self):
-        super(MainProgram, self).doWork()
+    def do_work(self):
+        super(MainProgram, self).do_work()
         print('Requested resizing of %s' % self.node_name)
 
 

@@ -192,7 +192,7 @@ class CloudClientCommand(object):
             UserInfo.CLOUD_PASSWORD_KEY: self.get_option(UserInfo.CLOUD_PASSWORD_KEY)
         }
 
-    def doWork(self):
+    def do_work(self):
         raise NotImplementedError()
 
     def set_userinfo_cloud(self, params):

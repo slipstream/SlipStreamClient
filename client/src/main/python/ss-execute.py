@@ -27,10 +27,11 @@ from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.Client import Client
 from slipstream.exceptions.Exceptions import AbortException, TimeoutException
-from slipstream.resources.reports import ReportsGetter
 import slipstream.util as util
-from slipstream.resources.run import (run_url_to_uuid, run_states_after,
-                                      RUN_STATES, FINAL_STATES)
+from slipstream.api.reports import ReportsGetter
+from slipstream.api.deployment import (deployment_url_to_uuid,
+                                       deployment_states_after,
+                                       DEPLOYMENT_STATES, FINAL_STATES)
 
 RC_SUCCESS = 0
 RC_CRITICAL_DEFAULT = 1
@@ -56,17 +57,17 @@ class MainProgram(CommandBase):
     DEAFULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
-    INITIAL_STATE = RUN_STATES[0]
+    INITIAL_STATE = DEPLOYMENT_STATES[0]
     FINAL_STATES = FINAL_STATES
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.moduleUri = None
         self.username = None
         self.password = None
         self.cookie = None
         self.endpoint = None
         self.parameters = {}
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] <module-url>
@@ -77,7 +78,7 @@ class MainProgram(CommandBase):
         self.parser.usage = usage
 
         self.add_authentication_options()
-        self.addEndpointOption()
+        self.add_endpoint_option()
 
         self.parser.add_option('--parameters', dest='parameters',
                                help='Deployment or image parameters override. '
@@ -179,7 +180,7 @@ class MainProgram(CommandBase):
             parameters[key] = value
         return parameters
 
-    def doWork(self):
+    def do_work(self):
         self._init_client()
         run_url = self._launch_deployment()
         if self._need_to_wait():
@@ -274,13 +275,13 @@ class MainProgram(CommandBase):
         if self._is_run_aborted(run_url):
             print_step("Abort flag was raised. Waiting for reports to be uploaded from components.")
             try:
-                self._wait_run_in_states(run_url, 2, run_states_after('SendingReports'),
+                self._wait_run_in_states(run_url, 2, deployment_states_after('SendingReports'),
                                          ignore_abort=True)
             except TimeoutException:
                 pass
 
     def _is_run_aborted(self, run_url):
-        return self.client.is_run_aborted(run_url_to_uuid(run_url))
+        return self.client.is_run_aborted(deployment_url_to_uuid(run_url))
 
     def _terminate_run(self):
         print_step('Terminating run.')
@@ -349,7 +350,7 @@ class MainProgram(CommandBase):
             print_step('Waiting %s min for Run %s to reach %s' % \
                        (waitmin, run_url, ','.join(final_states)))
 
-        run_uuid = run_url_to_uuid(run_url)
+        run_uuid = deployment_url_to_uuid(run_url)
         time_end = time.time() + waitmin * 60
         state = self.INITIAL_STATE
         while time.time() <= time_end:
@@ -381,7 +382,7 @@ class MainProgram(CommandBase):
         ch = ConfigHolder(options=self.options, context={'ignore': None})
         ch.context = {}
         rg = ReportsGetter(ch)
-        rg.get_reports(run_url_to_uuid(run_url), components=components)
+        rg.get_reports(deployment_url_to_uuid(run_url), components=components)
 
 
 if __name__ == "__main__":

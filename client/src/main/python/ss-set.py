@@ -29,10 +29,10 @@ class MainProgram(VMCommandBase):
     """A command-line program to set a value for an existing runtime parameter.
     """
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.key = None
         self.value = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''%prog [options] [--] <key> <value>
@@ -57,7 +57,7 @@ Notice:
         self.key = self.args[0]
         self.value = self.args[1]
 
-    def doWork(self):
+    def do_work(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
         client.setRuntimeParameter(self.key, self.value)

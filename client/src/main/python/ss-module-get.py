@@ -18,56 +18,41 @@
 """
 from __future__ import print_function
 
-import os
 import sys
+from slipstream.command.ModuleCommand import ModuleCommand
 
-from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
-import slipstream.util as util
 
-class MainProgram(CommandBase):
-    '''A command-line program to show/list module definition(s).'''
+class MainProgram(ModuleCommand):
+    """A command-line program to show/list module definition(s)."""
 
-    def __init__(self, argv=None):
-        self.module = ''
-        self.username = None
-        self.password = None
-        self.cookie = None
-        self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+    def __init__(self):
+        super(MainProgram, self).__init__()
 
     def parse(self):
-        usage = '''usage: %prog [options] [<module-url>]
+        usage = '''usage: %prog [options] [<module-uri>]
 
 <module-uri>    Name of the module to list or show.
                 For example Public/Tutorials/HelloWorld/client_server'''
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()        
+        self.add_endpoint_option()
 
         self.options, self.args = self.parser.parse_args()
 
-        self._checkArgs()
+        self._check_args()
 
-    def _checkArgs(self):
+    def _check_args(self):
         if len(self.args) == 1:
-            self.module = self.args[0]
+            self.module_uri = self.args[0]
+        if len(self.args) < 1:
+            self.usageExitTooFewArguments()
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
-        client = HttpClient(self.options.username, self.options.password)
-        client.verboseLevel = self.verboseLevel
+    def do_work(self):
+        print(self.module_get(self.module_uri))
 
-        uri = util.MODULE_RESOURCE_PATH
-        if self.module:
-            uri += '/' + self.module
-
-        url = self.options.endpoint + uri
-
-        _, content = client.get(url)
-        print(content)
 
 if __name__ == "__main__":
     try:

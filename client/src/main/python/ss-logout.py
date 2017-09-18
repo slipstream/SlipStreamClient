@@ -30,8 +30,8 @@ class MainProgram(VMCommandBase):
     cookie corresponding to <endpoint>/ resource.
     """
 
-    def __init__(self, argv=None):
-        super(MainProgram, self).__init__(argv)
+    def __init__(self):
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = """usage: %prog [options]
@@ -40,7 +40,7 @@ Deletes cookie for / of <URL> from local cookie jar <FILE>."""
 
         self.parser.usage = usage
 
-        self.addEndpointOption()
+        self.add_endpoint_option()
         self.add_cookie_option()
 
         self.options, self.args = self.parser.parse_args()
@@ -53,7 +53,7 @@ Deletes cookie for / of <URL> from local cookie jar <FILE>."""
         if len(self.args) > 0:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
+    def do_work(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
         client.logout()

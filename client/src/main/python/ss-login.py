@@ -31,17 +31,17 @@ class MainProgram(CommandBase):
     the local cookie store.
     """
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.username = None
         self.password = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = """usage: %prog [options]"""
 
         self.parser.usage = usage
 
-        self.addEndpointOption()
+        self.add_endpoint_option()
         self.add_authentication_options()
 
         self.options, self.args = self.parser.parse_args()
@@ -58,7 +58,7 @@ class MainProgram(CommandBase):
         if len(self.args) > 0:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
+    def do_work(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
         client.login(self.username, self.password)

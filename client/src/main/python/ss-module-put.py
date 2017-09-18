@@ -18,24 +18,17 @@
 """
 from __future__ import print_function
 
-import os
 import sys
 
-from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
-import slipstream.util as util
-import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
+from slipstream.command.ModuleCommand import ModuleCommand
 
-class MainProgram(CommandBase):
-    '''A command-line program to show/list module definition(s).'''
 
-    def __init__(self, argv=None):
-        self.module = ''
-        self.username = None
-        self.password = None
-        self.cookie = None
-        self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+class MainProgram(ModuleCommand):
+    """A command-line program to show/list module definition(s)."""
+
+    def __init__(self):
+        super(MainProgram, self).__init__()
+        self._module_str = ''
 
     def parse(self):
         usage = '''usage: %prog [options] [<module-xml>]
@@ -47,7 +40,7 @@ class MainProgram(CommandBase):
         self.parser.usage = usage
 
         self.add_authentication_options()
-        self.addEndpointOption()        
+        self.add_endpoint_option()
 
         self.parser.add_option('-i', '--ifile', dest='ifile', metavar='FILE',
                                help='Optional input file. '
@@ -55,40 +48,21 @@ class MainProgram(CommandBase):
 
         self.options, self.args = self.parser.parse_args()
 
-        self._checkArgs()
+        self._check_args()
 
-    def _checkArgs(self):
+    def _check_args(self):
         if self.options.ifile:
-            file = self.options.ifile
+            self._module_str = self.read_input_file(self.options.ifile)
         else:
             if len(self.args) < 1:
                 self.parser.error('Missing module-xml')
             if len(self.args) > 1:
                 self.usageExitTooManyArguments()
-            file = self.args[0]
-        self.module = self.read_input_file(file)
+            self._module_str = self.args[0]
 
-    def doWork(self):
-        client = HttpClient(self.options.username, self.options.password)
-        client.verboseLevel = self.verboseLevel
+    def do_work(self):
+        self.module_create(self._module_str)
 
-        dom = self.read_xml_and_exit_on_error(self.module)
-        attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
-
-        root_node_name = dom.tag
-        if root_node_name == 'list':
-            sys.stderr.write('Cannot update root project\n')
-            sys.exit(-1)
-        if not dom.tag in ('imageModule', 'projectModule', 'deploymentModule'):
-            sys.stderr.write('Invalid xml\n')
-            sys.exit(-1)
-
-        parts = [attrs['parentUri'], attrs['shortName']]
-        uri = '/' + '/'.join([part.strip('/') for part in parts])
-
-        url = self.options.endpoint + uri
-
-        client.put(url, self.module)
 
 if __name__ == "__main__":
     try:

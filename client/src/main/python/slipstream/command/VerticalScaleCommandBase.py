@@ -35,7 +35,7 @@ class VerticalScaleCommandBase(CommandBase):
 
     _usage_options = ''
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.run_url = None
         self.run_dom = None
         self.node_name = None
@@ -51,7 +51,7 @@ class VerticalScaleCommandBase(CommandBase):
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(VerticalScaleCommandBase, self).__init__(argv)
+        super(VerticalScaleCommandBase, self).__init__()
 
     def add_scale_options(self):
         raise NotImplementedError("add_scale_options() should be implemented.")
@@ -68,7 +68,7 @@ class VerticalScaleCommandBase(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()
+        self.add_endpoint_option()
         self.add_scale_options()
 
         self.options, self.args = self.parser.parse_args()
@@ -88,7 +88,7 @@ class VerticalScaleCommandBase(CommandBase):
         except ValueError:
             self.usageExit("Invalid ids, they must be integers")
 
-    def doWork(self):
+    def do_work(self):
 
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel

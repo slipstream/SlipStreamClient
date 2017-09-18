@@ -23,19 +23,19 @@ import sys
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.resources.reports import ReportsGetter
+from slipstream.api.reports import ReportsGetter
 
 
 class MainProgram(CommandBase):
     """A command-line program to download deployment reports."""
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.module = ''
         self.username = None
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] [<run-uuid>]
@@ -44,7 +44,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()
+        self.add_endpoint_option()
 
         self.parser.add_option('-c', '--components', dest='components',
                                help='Comma separated list of components to download the reports for. '
@@ -75,7 +75,7 @@ class MainProgram(CommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
+    def do_work(self):
         ch = ConfigHolder(options=self.options, context={})
         ch.context = {}
         rg = ReportsGetter(ch)

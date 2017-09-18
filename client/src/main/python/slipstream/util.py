@@ -84,13 +84,6 @@ ENV_SLIPSTREAM_SSH_PUB_KEY = '__SLIPSTREAM_SSH_PUB_KEY'
 ENV_CONNECTOR_INSTANCE = 'SLIPSTREAM_CONNECTOR_INSTANCE'
 ENV_NODE_INSTANCE_NAME = 'SLIPSTREAM_NODE_INSTANCE_NAME'
 
-SERVER_CONFIG_FILE_EXT = '.conf'
-SERVER_CONFIGURATION_BASICS_CATEGORY = 'SlipStream_Basics'
-SERVER_CONFIGURATION_DEFAULT_CATEGORIES = ['SlipStream_Support',
-                                           SERVER_CONFIGURATION_BASICS_CATEGORY,
-                                           'SlipStream_Advanced']
-SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY = 'cloud.connector.class'
-
 
 def deprecated(func):
     """This is a decorator which can be used to mark functions as deprecated.
@@ -253,12 +246,11 @@ def execute(cmd_and_args, **kwargs):
         cmd_and_args.insert(0, 'powershell')
 
     print_kwargs = {}
-    if 'verboseLevel' in kwargs:
-        print_kwargs['verboseLevel'] = kwargs['verboseLevel']
-    if 'verboseThreshold' in kwargs:
-        print_kwargs['verboseThreshold'] = kwargs['verboseThreshold']
-    if 'timestamp' in kwargs:
-        print_kwargs['timestamp'] = kwargs['timestamp']
+    for k in ['verboseLevel', 'verboseThreshold', 'timestamp']:
+        try:
+            print_kwargs[k] = kwargs.pop(k)
+        except KeyError:
+            pass
     printDetail('Calling: %s' % ' '.join(cmd_and_args), **print_kwargs)
 
     if kwargs.get('shell', False):

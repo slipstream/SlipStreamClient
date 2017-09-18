@@ -29,13 +29,13 @@ import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 class MainProgram(CommandBase):
     '''A command-line program to create/update user definition(s).'''
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.user = None
         self.username = None
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] <file>
@@ -45,7 +45,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()        
+        self.add_endpoint_option()
 
         self.options, self.args = self.parser.parse_args()
 
@@ -58,16 +58,16 @@ class MainProgram(CommandBase):
         else:
             self.usageExitWrongNumberOfArguments()
 
-    def doWork(self):
+    def do_work(self):
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
 
-        dom = self.read_xml_and_exit_on_error(self.user)
+        dom = self.parse_xml_or_exit_on_error(self.user)
         if not dom.tag in ('user'):
             sys.stderr.write('Invalid xml\n')
             sys.exit(-1)
 
-        dom = self.read_xml_and_exit_on_error(self.user)
+        dom = self.parse_xml_or_exit_on_error(self.user)
         attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
 
         user = attrs['name']

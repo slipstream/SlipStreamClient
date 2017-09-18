@@ -117,9 +117,9 @@ If action is not provided, executor runs on foreground."""
         return self.config_holder
 
     def do_work(self):
-        self._callAndHandleErrorsForCommands(self.doWork.__name__)
+        self._callAndHandleErrorsForCommands(self.do_work.__name__)
 
-    def doWork(self):
+    def do_work(self):
         node = Node(self.config_holder)
         node.execute()
 

@@ -18,19 +18,19 @@
 """
 from __future__ import print_function
 
-import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
-import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
+import slipstream.commands.NodeInstanceRuntimeParameter as nirp
 from slipstream.NodeDecorator import NodeDecorator
+
 
 class MainProgram(CommandBase):
     '''A command-line program to add node instance(s) to a scalable deployment.'''
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.runId = None
         self.nodeName = None
         self.numberToAdd = 1
@@ -41,7 +41,7 @@ class MainProgram(CommandBase):
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] <run> <node-name> [<number>]
@@ -56,7 +56,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()
+        self.add_endpoint_option()
         self.parser.add_option('--runtime-parameter',
                                dest='runtimeParameters',
                                metavar='<parameter-name>:<value>[,<value>,...]',
@@ -86,9 +86,9 @@ class MainProgram(CommandBase):
 
         self.runtimeParameters = self.options.runtimeParameters
         for rp in self.runtimeParameters:
-            NodeInstanceRuntimeParameter.validate(rp)
+            nirp.validate(rp)
 
-    def doWork(self):
+    def do_work(self):
 
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel
@@ -100,7 +100,7 @@ class MainProgram(CommandBase):
         self.log("Adding %s node instance(s) to node type %s..." % (self.numberToAdd, self.nodeName))
         _, content = client.post(url, "n=" + str(self.numberToAdd))
 
-        addedIds = NodeInstanceRuntimeParameter.parse_added_node_instances(content)
+        addedIds = nirp.parse_added_node_instances(content)
 
         url = self.options.endpoint + baseUri + '/'
 
@@ -113,8 +113,10 @@ class MainProgram(CommandBase):
 
         if self.runtimeParameters:
             for rp in self.runtimeParameters:
-                name, values = NodeInstanceRuntimeParameter.parse_option_value(rp)
-                mapped = NodeInstanceRuntimeParameter.generate_mapping_index_name_value(self.nodeName, name, values, addedIds)
+                name, values = nirp.parse_option_value(rp)
+                mapped = nirp.generate_mapping_index_name_value(self.nodeName,
+                                                                name, values,
+                                                                addedIds)
                 for k in mapped:
                     print(k, mapped[k])
                     client.put(url + k, mapped[k])

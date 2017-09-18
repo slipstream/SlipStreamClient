@@ -18,18 +18,17 @@
 """
 from __future__ import print_function
 
-import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
 import slipstream.util as util
-import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
+
 
 class MainProgram(CommandBase):
     '''A command-line program to remove node instance(s) from a scalable deployment.'''
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.runId = None
         self.nodeName = None
         self.instancesToRemove = []
@@ -38,7 +37,7 @@ class MainProgram(CommandBase):
         self.password = None
         self.cookie = None
         self.endpoint = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options] <run> <node-name> <ids> [<ids> ...]
@@ -49,7 +48,7 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
         self.add_authentication_options()
-        self.addEndpointOption()
+        self.add_endpoint_option()
 
         self.options, self.args = self.parser.parse_args()
         self._check_args()
@@ -67,7 +66,7 @@ class MainProgram(CommandBase):
             self.usageExit("Invalid ids, they must be integers")
 
 
-    def doWork(self):
+    def do_work(self):
 
         client = HttpClient(self.options.username, self.options.password)
         client.verboseLevel = self.verboseLevel

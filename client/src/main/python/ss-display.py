@@ -30,9 +30,9 @@ class MainProgram(VMCommandBase):
     the dashboard can be made more dynamic.
     """
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.value = None
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''%prog [options] [--] <value>
@@ -54,7 +54,7 @@ Notice:
 
         self.value = self.args[0]
 
-    def doWork(self):
+    def do_work(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
         client.setRuntimeParameter('statecustom', self.value)

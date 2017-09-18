@@ -28,10 +28,10 @@ from slipstream.ConfigHolder import ConfigHolder
 class MainProgram(VMCommandBase):
     '''A command-line program to reset the abort state for a run.'''
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self.reason = None
         self.cancel = False
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def parse(self):
         usage = '''usage: %prog [options]'''
@@ -46,7 +46,7 @@ class MainProgram(VMCommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
+    def do_work(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
 

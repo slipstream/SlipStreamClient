@@ -26,9 +26,9 @@ from slipstream.wrappers.BaseWrapper import BaseWrapper
 class MainProgram(VerticalScaleCommandBase):
 
 
-    def __init__(self, argv=None):
+    def __init__(self):
         self._usage_options = "[options] [--attach <GB> | --detach <device>] <run> <node-name> <ids> [<ids> ...]"
-        super(MainProgram, self).__init__(argv)
+        super(MainProgram, self).__init__()
 
     def add_scale_options(self):
         self.parser.add_option('--attach', dest='attach_gb', default=None,
@@ -51,8 +51,8 @@ class MainProgram(VerticalScaleCommandBase):
             self.rtp_scale_values['disk.detach.device'] = self.options.device
             self._scale_state = BaseWrapper.SCALE_STATE_DISK_DETACHING
 
-    def doWork(self):
-        super(MainProgram, self).doWork()
+    def do_work(self):
+        super(MainProgram, self).do_work()
         action = self.options.attach_gb and 'attach' or 'detach'
         print('Requested %sment of extra disk on %s' % (action, self.node_name))
 

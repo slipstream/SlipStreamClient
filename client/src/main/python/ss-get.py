@@ -21,8 +21,7 @@ from __future__ import print_function
 import sys
 
 from slipstream.command.VMCommandBase import VMCommandBase
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
+from slipstream.api.deployment import Deployment
 
 
 class MainProgram(VMCommandBase):
@@ -30,8 +29,9 @@ class MainProgram(VMCommandBase):
     blocking (by default) if not set.
     """
 
-    def __init__(self, argv=None):
-        super(MainProgram, self).__init__(argv)
+    def __init__(self):
+        self._dpl = None
+        super(MainProgram, self).__init__()
         self.key = None
 
     def parse(self):
@@ -55,21 +55,43 @@ class MainProgram(VMCommandBase):
 
         self.add_run_authn_opts_and_parse()
 
-        self._checkArgs()
+        self._check_args()
 
         self.key = self.args[0]
 
-    def _checkArgs(self):
+    def _check_args(self):
         if len(self.args) < 1:
             self.parser.error('Missing key')
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
-    def doWork(self):
-        ch = ConfigHolder(self.options)
-        client = Client(ch)
-        value = client.getRuntimeParameter(self.key)
+    @property
+    def deployment(self):
+        if not self._dpl:
+            self._dpl = Deployment(self.cimi, self.options.diid)
+        return self._dpl
+
+    def do_work(self):
+        comp, _id, name = self._split_key(self.key)
+        if _id:
+            value = self.deployment.get_deployment_parameter(comp, _id, name)
+        else:
+            value = self.deployment.get_deployment_parameters(comp, name)
         print(value if value is not None else '')
+
+    def _split_key(self, key):
+        name = key
+        _id = None
+        if ':' in key:
+            comp_id, name = key.split(':')
+        else:
+            return None, None, name
+        if '.' in comp_id:
+            comp, _id = comp_id.split('.')
+        else:
+            comp = comp_id
+        return comp, _id, name
+
 
 if __name__ == "__main__":
     try:
