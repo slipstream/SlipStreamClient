@@ -18,8 +18,9 @@
 """
 from __future__ import print_function
 
-from slipstream.api.deployment import Deployment
+from slipstream.api.deployment import Deployment, is_global_ns
 from slipstream.command.CommandBase import CommandBase
+
 
 def split_key(key):
     """`key` is [node[.id]:]name, i.e. one of
@@ -72,3 +73,9 @@ class DeploymentCommandBase(CommandBase):
         comp, _id, name = split_key(key)
         return self.deployment.get_deployment_parameter(comp, name, index=_id)
 
+    def set_deployment_parameter(self, key, value):
+        comp, _id, name = split_key(key)
+        if (not _id) and is_global_ns(comp):
+            self.deployment.set_deployment_parameter_global(name, value)
+        else:
+            self.deployment.set_deployment_parameter(comp, _id, name, value)

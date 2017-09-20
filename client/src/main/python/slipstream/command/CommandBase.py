@@ -152,7 +152,7 @@ class CommandBase(object):
     def parse(self):
         pass
 
-    def addIgnoreAbortOption(self):
+    def add_ignore_abort_option(self):
         self.parser.add_option('--ignore-abort', dest='ignoreAbort',
                                help='by default, if the run abort flag is set, any \
                                call will return with an error. With this option values \

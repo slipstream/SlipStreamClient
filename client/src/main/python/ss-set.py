@@ -20,12 +20,10 @@ from __future__ import print_function
 
 import sys
 
-from slipstream.command.DeploymentCommandBase import VMCommandBase
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
+from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
 
 
-class MainProgram(VMCommandBase):
+class MainProgram(DeploymentCommandBase):
     """A command-line program to set a value for an existing runtime parameter.
     """
 
@@ -47,7 +45,7 @@ Notice:
 
         self.parser.usage = usage
 
-        self.addIgnoreAbortOption()
+        self.add_ignore_abort_option()
 
         self.add_run_authn_opts_and_parse()
 
@@ -58,9 +56,7 @@ Notice:
         self.value = self.args[1]
 
     def do_work(self):
-        ch = ConfigHolder(self.options)
-        client = Client(ch)
-        client.setRuntimeParameter(self.key, self.value)
+        self.set_deployment_parameter(self.key, self.value)
 
 if __name__ == "__main__":
     try:

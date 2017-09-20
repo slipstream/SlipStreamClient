@@ -25,13 +25,12 @@ import traceback
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.Client import Client
 from slipstream.exceptions.Exceptions import AbortException, TimeoutException
 import slipstream.util as util
 from slipstream.api.reports import ReportsGetter
-from slipstream.api.deployment import (deployment_url_to_uuid,
-                                       deployment_states_after,
+from slipstream.api.deployment import (deployment_states_after,
                                        DEPLOYMENT_STATES, FINAL_STATES)
+from slipstream.api.application import Application
 
 RC_SUCCESS = 0
 RC_CRITICAL_DEFAULT = 1
@@ -153,7 +152,7 @@ class MainProgram(CommandBase):
 
         self._checkArgs()
 
-        self.resourceUrl = self.args[0]
+        self.module_url = self.args[0]
 
     @staticmethod
     def _comma_separ_to_list_callback(option, opt, value, parser):
@@ -181,34 +180,30 @@ class MainProgram(CommandBase):
         return parameters
 
     def do_work(self):
-        self._init_client()
-        run_url = self._launch_deployment()
+        dpl = self._launch_deployment()
         if self._need_to_wait():
             rc = self._get_critical_rc()
             try:
-                rc = self._wait_run_and_handle_failures(run_url)
+                rc = self._wait_deployment_and_handle_failures(dpl)
                 sys.exit(rc)
             finally:
-                self._cond_terminate_run(rc, run_url)
-                self._download_reports(run_url)
+                self._cond_terminate_deployment(rc, dpl)
+                self._download_reports(dpl)
         else:
-            print(run_url)
-
-    def _init_client(self):
-        configHolder = ConfigHolder(self.options, context={'empty': None},
-                                    config={'empty': None})
-        configHolder.set('serviceurl', self.options.endpoint)
-        self.client = Client(configHolder)
+            print(dpl.url)
 
     def _launch_deployment(self):
-        '''Return run URL on success.
+        '''Return deployment URL on success.
         On failure:
         - in case of Nagios check generate CRITICAL error
         - else, the caught exception is re-raised.
         '''
+        # FIXME: use the parameters
         params = self._assembleData()
+        module = 'module/' + self.module_url
         try:
-            return self.client.launchDeployment(params)
+            dpl = Application(self.cimi, module).deploy()
+            return dpl
         except Exception as ex:
             if self.options.nagios:
                 print("CRITICAL - Unhandled error: %s." % (str(ex).split('\n')[0]))
@@ -216,7 +211,7 @@ class MainProgram(CommandBase):
             else:
                 raise
 
-    def _wait_run_and_handle_failures(self, run_url):
+    def _wait_deployment_and_handle_failures(self, dpl):
         '''Wait for final state of the run. Handle failures and print
         respective messages. Return global exit code depending if this is
         Nagios check or not.
@@ -224,35 +219,35 @@ class MainProgram(CommandBase):
         rc = self._get_critical_rc()
 
         try:
-            reached_state = self._wait_run_in_states(run_url,
+            reached_state = self._wait_run_in_states(dpl,
                                                      self.options.wait,
                                                      self.options.final_states)
         except AbortException as ex:
             if self.options.nagios:
-                print('CRITICAL - %s. State: %s. Run: %s' % (
-                    str(ex).split('\n')[0], ex.state, run_url))
+                print('CRITICAL - %s. State: %s. Deployment: %s' % (
+                    str(ex).split('\n')[0], ex.state, dpl.url))
             else:
-                print('CRITICAL - %s\nState: %s. Run: %s' % (
-                    str(ex), ex.state, run_url))
+                print('CRITICAL - %s\nState: %s. Deployment: %s' % (
+                    str(ex), ex.state, dpl.url))
             ss_abort_msg = self.client.getGlobalAbortMessage()
             print('Abort reason:\n%s' % ss_abort_msg)
         except TimeoutException as ex:
-            print("CRITICAL - Timed out after %i min. State: %s. Run: %s" % (
-                self.options.wait, ex.state, run_url))
+            print("CRITICAL - Timed out after %i min. State: %s. Deployment: "
+                  "%s" % (self.options.wait, ex.state, dpl.url))
         except Exception as ex:
             if self.options.nagios:
                 print("CRITICAL - Unhandled error: %s. Run: %s" % (
-                    str(ex).split('\n')[0], run_url))
+                    str(ex).split('\n')[0], dpl.url))
                 traceback.print_exc()
             else:
                 raise
         else:
-            print('OK - State: %s. Run: %s' % (reached_state, run_url))
+            print('OK - State: %s. Deployment: %s' % (reached_state, dpl.url))
             rc = RC_SUCCESS
 
         return rc
 
-    def _cond_terminate_run(self, returncode, run_url):
+    def _cond_terminate_deployment(self, returncode, dpl):
         """Run gets conditionally terminated
         - when we are acting as Nagios check
         - when there was a failure and we were asked to kill the VMs on error.
@@ -265,28 +260,25 @@ class MainProgram(CommandBase):
         # to advance the run through all the states up to Aborted.
         # This ensures that reports get uploaded by the components.
         if returncode != RC_SUCCESS:
-            self._wait_reports_sent_if_run_aborted(run_url)
+            self._wait_reports_sent_if_run_aborted(dpl)
 
         if self.options.nagios or \
                 (returncode != RC_SUCCESS and self.options.kill_vms_on_error):
-            self._terminate_run()
+            self._terminate_deployment()
 
-    def _wait_reports_sent_if_run_aborted(self, run_url):
-        if self._is_run_aborted(run_url):
+    def _wait_reports_sent_if_run_aborted(self, dpl):
+        if dpl.is_aborted():
             print_step("Abort flag was raised. Waiting for reports to be uploaded from components.")
             try:
-                self._wait_run_in_states(run_url, 2, deployment_states_after('SendingReports'),
+                self._wait_run_in_states(dpl, 2, deployment_states_after('SendingReports'),
                                          ignore_abort=True)
             except TimeoutException:
                 pass
 
-    def _is_run_aborted(self, run_url):
-        return self.client.is_run_aborted(deployment_url_to_uuid(run_url))
-
-    def _terminate_run(self):
-        print_step('Terminating run.')
+    def _terminate_deployment(self, dpl):
+        print_step('Terminating deployment.')
         try:
-            self.client.terminateRun()
+            dpl.terminate()
         except:
             pass
 
@@ -299,7 +291,7 @@ class MainProgram(CommandBase):
                                          filter_out=self.RUN_LAUNCH_NOT_NODE_PARAMS)
 
     def _add_not_node_params(self):
-        self.parameters[self.REF_QNAME] = 'module/' + self.resourceUrl
+        self.parameters[self.REF_QNAME] = 'module/' + self.module_url
 
         if self.options.build_image:
             self.parameters[self.RUN_TYPE] = 'Machine'
@@ -330,7 +322,7 @@ class MainProgram(CommandBase):
         return ['%s=%s' % (self._decorate_node_param_key(k, filter_out), v)
                 for k, v in params.items()]
 
-    def _wait_run_in_states(self, run_url, waitmin, final_states, ignore_abort=False):
+    def _wait_run_in_states(self, dpl, waitmin, final_states, ignore_abort=False):
         '''Return on reaching one of the requested state.
         On timeout raise TimeoutException with the last state attribute set.
         On aborted Run by default raise AbortException with the last state attribute set.
@@ -347,18 +339,17 @@ class MainProgram(CommandBase):
         _sleep.ncycle = 1
 
         if not self.options.nagios:
-            print_step('Waiting %s min for Run %s to reach %s' % \
-                       (waitmin, run_url, ','.join(final_states)))
+            print_step('Waiting %s min for Deployment %s to reach %s' % \
+                       (waitmin, dpl.url, ','.join(final_states)))
 
-        run_uuid = deployment_url_to_uuid(run_url)
         time_end = time.time() + waitmin * 60
         state = self.INITIAL_STATE
         while time.time() <= time_end:
             _sleep()
             try:
-                state = self.client.getRunState(run_uuid, ignoreAbort=ignore_abort)
+                state = dpl.state()  # ignoreAbort=ignore_abort
             except AbortException as ex:
-                ex.state = self.client.getRunState(run_uuid, ignoreAbort=True)
+                ex.state = dpl.state()  # ignoreAbort=ignore_abort
                 raise
             if state in final_states:
                 return state
@@ -372,7 +363,7 @@ class MainProgram(CommandBase):
     def _need_to_wait(self):
         return self.options.wait > self.DEAFULT_WAIT
 
-    def _download_reports(self, run_url):
+    def _download_reports(self, dpl):
         if not (self.options.reports_components or self.options.get_reports_all):
             return
 
@@ -382,7 +373,7 @@ class MainProgram(CommandBase):
         ch = ConfigHolder(options=self.options, context={'ignore': None})
         ch.context = {}
         rg = ReportsGetter(ch)
-        rg.get_reports(deployment_url_to_uuid(run_url), components=components)
+        rg.get_reports(dpl.url, components=components)
 
 
 if __name__ == "__main__":

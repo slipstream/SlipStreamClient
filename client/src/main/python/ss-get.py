@@ -52,7 +52,7 @@ class MainProgram(DeploymentCommandBase):
                                metavar='SECONDS',
                                default=60, type='int')
 
-        self.addIgnoreAbortOption()
+        self.add_ignore_abort_option()
 
         self.parser.add_option('--noblock', dest='no_block',
                                help='return immediately even if the parameter '

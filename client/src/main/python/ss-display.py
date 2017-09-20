@@ -21,8 +21,6 @@ from __future__ import print_function
 import sys
 
 from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(DeploymentCommandBase):
@@ -45,7 +43,7 @@ Notice:
 
         self.parser.usage = usage
 
-        self.addIgnoreAbortOption()
+        self.add_ignore_abort_option()
 
         self.add_run_authn_opts_and_parse()
 
