@@ -22,7 +22,7 @@ import traceback
 
 from slipstream import util
 from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
-from slipstream.NodeDecorator import NodeDecorator
+from slipstream.api.deployment import NodeDecorator
 from slipstream.exceptions import Exceptions
 from slipstream.Client import Client
 from slipstream.NodeInstance import NodeInstance
@@ -164,7 +164,7 @@ class BaseWrapper(object):
         self._fail(key, message)
 
     def fail_global(self, message):
-        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
+        key = NodeDecorator.GLOBAL_NS_PREFIX + NodeDecorator.ABORT_KEY
         self._fail(key, message)
 
     def _fail(self, key, message):
@@ -174,15 +174,15 @@ class BaseWrapper(object):
         self._ss_client.setRuntimeParameter(key, value)
 
     def getState(self):
-        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
+        key = NodeDecorator.GLOBAL_NS_PREFIX + NodeDecorator.STATE_KEY
         return self._get_runtime_parameter(key)
 
     def get_recovery_mode(self):
-        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.RECOVERY_MODE_KEY
+        key = NodeDecorator.GLOBAL_NS_PREFIX + NodeDecorator.RECOVERY_MODE_KEY
         return util.str2bool(self._get_runtime_parameter(key))
 
     def isAbort(self):
-        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
+        key = NodeDecorator.GLOBAL_NS_PREFIX + NodeDecorator.ABORT_KEY
         try:
             value = self._get_runtime_parameter(key, True)
         except Exceptions.NotYetSetException:

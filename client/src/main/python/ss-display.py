@@ -44,8 +44,8 @@ Notice:
         self.parser.usage = usage
 
         self.add_ignore_abort_option()
-
-        self.add_run_authn_opts_and_parse()
+        self.add_component_instance_option()
+        self.add_deployment_authn_opts_and_parse()
 
         if len(self.args) != 1:
                 self.usageExit('Error, one argument must be specified')
@@ -53,9 +53,9 @@ Notice:
         self.value = self.args[0]
 
     def do_work(self):
-        ch = ConfigHolder(self.options)
-        client = Client(ch)
-        client.setRuntimeParameter('statecustom', self.value)
+        param = '{}:statecustom'.format(self._get_comp_instance())
+        self.set_deployment_parameter(param, self.value)
+
 
 if __name__ == "__main__":
     try:

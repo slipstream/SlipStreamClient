@@ -18,8 +18,8 @@
 """
 from __future__ import print_function
 
-from slipstream.NodeDecorator import NodeDecorator
-from slipstream.SlipStreamHttpClient import DomExtractor
+from slipstream.api.deployment import NodeDecorator
+from slipstream.DomExtractor import DomExtractor
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.HttpClient import HttpClient
@@ -144,7 +144,7 @@ class VerticalScaleCommandBase(CommandBase):
             self.usageExit(err_msg + " Run is not scalable.")
 
     def _get_ss_state(self, client):
-        ss_state_url = self.run_url + "/" + NodeDecorator.globalNamespacePrefix + 'state'
+        ss_state_url = self.run_url + "/" + NodeDecorator.GLOBAL_NS + 'state'
         _, ss_state = client.get(ss_state_url)
         return ss_state
 

@@ -22,8 +22,7 @@ import traceback
 from slipstream import util
 
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
-from slipstream.NodeDecorator import NodeDecorator
+from slipstream.api.deployment import NodeDecorator
 
 
 class Machine(object):
@@ -81,5 +80,6 @@ class AbortExceptionPublisher(object):
 
     def _publish_abort(self, message):
         self.ss_client.ignoreAbort = True
-        abort = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
+        abort = NodeDecorator.GLOBAL_NS + \
+                NodeDecorator.NODE_PROPERTY_SEPARATOR + NodeDecorator.ABORT_KEY
         self.ss_client.setRuntimeParameter(abort, message)

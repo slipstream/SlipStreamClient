@@ -63,7 +63,7 @@ class MainProgram(DeploymentCommandBase):
                                'with 1 if parameter not equal to the value on '
                                'any of the components', metavar='VALUE')
 
-        self.add_run_authn_opts_and_parse()
+        self.add_deployment_authn_opts_and_parse()
 
         self._check_args()
         self.compname = self.args[0]

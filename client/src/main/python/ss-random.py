@@ -24,8 +24,6 @@ import string
 from six.moves import range
 
 from slipstream.command.DeploymentCommandBase import DeploymentCommandBase
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(DeploymentCommandBase):
@@ -49,7 +47,7 @@ class MainProgram(DeploymentCommandBase):
                                help='Number of characters for the random ' +
                                'string (default: 12)', default=12)
 
-        self.add_run_authn_opts_and_parse()
+        self.add_deployment_authn_opts_and_parse()
 
         self._check_args()
 
@@ -71,11 +69,10 @@ class MainProgram(DeploymentCommandBase):
                           for _ in range(self.size)])
 
         if self.key is not None:
-            ch = ConfigHolder(self.options)
-            client = Client(ch)
-            client.setRuntimeParameter(self.key, rvalue)
+            self.set_deployment_parameter(self.key, rvalue)
 
         print(rvalue)
+
 
 if __name__ == "__main__":
     try:

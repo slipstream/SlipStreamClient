@@ -24,6 +24,7 @@ from optparse import OptionParser
 
 from slipstream import __version__
 import slipstream.util as util
+from slipstream.ConfigHolder import ConfigHolder
 from slipstream.api.cimi import CIMI
 from slipstream.api.http import SessionStore
 from slipstream.exceptions.Exceptions import NotYetSetException
@@ -86,6 +87,7 @@ class CommandBase(object):
     def __init__(self):
         self._user_pass_requested = False
         self._cimi = None
+        self.config = None
         self.verboseLevel = 0
         self.options = None
         self.args = None
@@ -136,7 +138,7 @@ class CommandBase(object):
                                default=default_cookie)
 
     def add_insecure_option(self):
-        self.parser.add_option('--insecure', dest='insecure',
+        self.parser.add_option('-i', '--insecure', dest='insecure',
                                help='When set, client will skip the '
                                     'validation of server certificate.',
                                default=False, action='store_true')
@@ -144,10 +146,10 @@ class CommandBase(object):
     def add_endpoint_option(self):
         default = 'https://nuv.la'
         effective_default = os.environ.get('SLIPSTREAM_ENDPOINT', default)
-        self.parser.add_option('--endpoint', dest='endpoint', metavar='URL',
+        self.parser.add_option('-e', '--endpoint', dest='endpoint',
+                               metavar='URL', default=effective_default,
                                help='SlipStream server endpoint. Default: '
-                                    '$SLIPSTREAM_ENDPOINT or %s' % default,
-                               default=effective_default)
+                                    '$SLIPSTREAM_ENDPOINT or %s' % default)
 
     def parse(self):
         pass
@@ -272,15 +274,62 @@ class CommandBase(object):
         if not os.path.isfile(file):
             self.usageExit("Input is not a file: " + file)
 
+    def _get_context(self):
+        if not self.config:
+            self._load_config()
+        return self.config.context
+
+    def _load_config(self):
+        self.config = ConfigHolder()
+
+    def _get_endpoint(self):
+        return self._get_context().get('endpoint') or self.options.endpoint
+
+    def _get_insecure(self):
+        if self._get_context().get('insecure') is not None:
+            return self._get_context().get('insecure')
+        else:
+            return self.options.insecure
+
+    def _get_authn(self):
+        """
+        :return: Authentication tuple
+        :rtype: (str, (str, str)) - (method, <creds tuple>)
+        """
+        if self._user_pass_requested and (self.options.username and
+                                          self.options.password):
+            return 'internal', (self.options.username, self.options.password)
+        else:
+            context = self._get_context()
+            method = context['method']
+            if method == 'internal':
+                username = context['username']
+                password = context['password']
+                return 'internal', (username, password)
+            elif method == 'api-key':
+                key = context['key']
+                secret = context['secret']
+                return 'apikey', (key, secret)
+            else:
+                return None, ()
+
     @property
     def cimi(self):
         if not self._cimi:
+            context = self._get_context()
+            # TODO: add ConfigHolder.  `verbose_level` should be in
+            # the context file as well.
+            # If context file is found - ignore CLI parameters completely.
             http = SessionStore(cookie_file=self.options.cookie_filename,
-                                insecure=self.options.insecure,
+                                insecure=self._get_insecure(),
                                 log_http_detail=(self.options.verboseLevel >= 3))
-            cimi = CIMI(http, endpoint=self.options.endpoint)
-            if self._user_pass_requested:
-                cimi.login_internal(self.options.username,
-                                    self.options.password)
+            cimi = CIMI(http, endpoint=self._get_endpoint())
+            if not cimi.is_authenticated():
+                print('No active session. Attempting to authenticate.')
+                method, creds = self._get_authn()
+                if not (method and creds):
+                    raise Exception('No authn method and/or credentials '
+                                    'provided.')
+                getattr(cimi, 'login_{}'.format(method))(*creds)
             self._cimi = cimi
         return self._cimi

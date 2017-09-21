@@ -20,7 +20,7 @@ from __future__ import print_function
 from collections import defaultdict
 
 import slipstream.util as util
-from slipstream.NodeDecorator import NodeDecorator
+from slipstream.api.deployment import NodeDecorator
 
 etree = util.importETree()
 

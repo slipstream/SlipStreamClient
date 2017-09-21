@@ -26,9 +26,8 @@ import re
 import urlparse
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.SlipStreamHttpClient import DomExtractor
-from slipstream.Client import Client
-from slipstream.ConfigHolder import ConfigHolder
+from slipstream.DomExtractor import DomExtractor
+from slipstream.api.configuration import Configuration
 from slipstream.api.configuration import SERVER_CONFIG_FILE_EXT
 from slipstream.api.configuration import SERVER_CONFIGURATION_DEFAULT_CATEGORIES
 from slipstream.api.configuration import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
@@ -56,7 +55,7 @@ Different sections (categories) of the configuration can be extracted with --cat
         self.parser.usage = usage
 
         self.add_authentication_options()
-        self._add_endpoint_option()
+        self.add_endpoint_option()
 
         self.parser.add_option('-o', '--output', dest='output', metavar='FILE',
                                help='File to output the configuration. By default, '
@@ -90,11 +89,11 @@ Different sections (categories) of the configuration can be extracted with --cat
         self._check_options()
 
     def _check_options(self):
-        if not (self.options.input or self.options.serviceurl) or (self.options.input and self.options.serviceurl):
+        if not (self.options.input or self.options.endpoint) or (self.options.input and self.options.endpoint):
             self.usageExit('Either -e or -i should be provided.')
 
         credentials_provided = (self.options.username and self.options.password)
-        if self.options.serviceurl and not credentials_provided:
+        if self.options.endpoint and not credentials_provided:
             self.usageExit('Provide credentials with -u and -p when using -e/--endpoint option.')
 
         if self.options.categories and self.options.connectors_only:
@@ -109,12 +108,6 @@ Different sections (categories) of the configuration can be extracted with --cat
         if self.options.mask_hostname:
             pattern = '^http[s]?://(%s)' % self.options.mask_hostname.replace(',', '|')
             self._mask_hostname_re = re.compile(pattern)
-
-    def _add_endpoint_option(self):
-        default_endpoint = os.environ.get('SLIPSTREAM_ENDPOINT', None)
-        self.parser.add_option('-e', '--endpoint', dest='serviceurl', metavar='URL',
-                               help='SlipStream server endpoint',
-                               default=default_endpoint)
 
     def _get_config(self):
         """Returns dict representation of the configuration.
@@ -139,10 +132,7 @@ Different sections (categories) of the configuration can be extracted with --cat
             return fp.read()
 
     def _get_config_from_server(self):
-        ch = ConfigHolder(options=self.options, context={'foo': 'bar'},
-                          config={'verboseLevel': self.verboseLevel})
-        client = Client(ch)
-        return client.get_server_configuration()
+        return Configuration(self.cimi).get_xml()
 
     def _output_config(self, config):
         """

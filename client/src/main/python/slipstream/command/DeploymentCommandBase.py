@@ -18,7 +18,7 @@
 """
 from __future__ import print_function
 
-from slipstream.api.deployment import Deployment, is_global_ns
+from slipstream.api.deployment import Deployment
 from slipstream.command.CommandBase import CommandBase
 
 
@@ -35,16 +35,16 @@ def split_key(key):
     :rtype: (str, str, str)
     """
     name = key
-    _id = None
+    index = None
     if ':' in key:
         comp_id, name = key.split(':')
     else:
         return None, None, name
     if '.' in comp_id:
-        comp, _id = comp_id.split('.')
+        comp, index = comp_id.split('.')
     else:
         comp = comp_id
-    return comp, _id, name
+    return comp, name, index
 
 
 class DeploymentCommandBase(CommandBase):
@@ -53,8 +53,9 @@ class DeploymentCommandBase(CommandBase):
         self._dpl = None
         super(DeploymentCommandBase, self).__init__()
 
-    def add_run_authn_opts_and_parse(self):
-        self.parser.add_option('--run', dest='diid', help='Run UUID.',
+    def add_deployment_authn_opts_and_parse(self):
+        self.parser.add_option('-d', '--deployment', dest='diid',
+                               help='Deployment UUID.',
                                metavar='UUID', default='')
         self.add_endpoint_option()
         self.add_authentication_options()
@@ -63,19 +64,39 @@ class DeploymentCommandBase(CommandBase):
 
         self.options.serviceurl = self.options.endpoint
 
+    def add_component_instance_option(self):
+        self.parser.add_option('--comp-instance', dest='comp_instance',
+                               help='Component instance as <comp>.<id>',
+                               metavar='COMP', default='')
+
     @property
     def deployment(self):
         if not self._dpl:
-            self._dpl = Deployment(self.cimi, self.options.diid)
+            self._dpl = Deployment(self.cimi, self._get_diid())
         return self._dpl
 
     def get_deployment_parameter(self, key):
-        comp, _id, name = split_key(key)
-        return self.deployment.get_deployment_parameter(comp, name, index=_id)
+        key = self._key_fqn(key)
+        return self.deployment.get_deployment_parameter(*(split_key(key)))
 
     def set_deployment_parameter(self, key, value):
-        comp, _id, name = split_key(key)
-        if (not _id) and is_global_ns(comp):
-            self.deployment.set_deployment_parameter_global(name, value)
+        key = self._key_fqn(key)
+        self.deployment.set_deployment_parameter(*(split_key(key)), value=value)
+
+    def _get_diid(self):
+        return self.options.diid or self._get_context().get('diid')
+
+    def _get_comp_instance(self):
+        if hasattr(self.options, 'comp_instance'):
+            return self.options.comp_instance or self._get_context().\
+                get('node_instance_name')
         else:
-            self.deployment.set_deployment_parameter(comp, _id, name, value)
+            return self._get_context().get('node_instance_name')
+
+    def _key_fqn(self, key):
+        if ':' not in key:
+            comp_name = self._get_comp_instance()
+            if not comp_name:
+                raise Exception('Enable to determine parameter name.')
+            key = ':'.join([comp_name, key])
+        return key

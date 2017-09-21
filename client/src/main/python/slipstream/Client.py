@@ -174,43 +174,12 @@ class Client(object):
 
     def cancel_abort(self):
         # Global abort
-        self.httpClient.unset_runtime_parameter(NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY,
+        self.httpClient.unset_runtime_parameter(
+            NodeDecorator.GLOBAL_NS_PREFIX + NodeDecorator.ABORT_KEY,
                                                 ignore_abort=True)
 
         _key = self._qualifyKey(NodeDecorator.ABORT_KEY)
         self.httpClient.unset_runtime_parameter(_key, ignore_abort=True)
-
-    def executScript(self, script):
-        return self._systemCall(script, retry=False)
-
-    def _systemCall(self, cmd, retry=True):
-        """
-        Execute system call and return stdout.
-        Raise an exception if the command fails
-        """
-        self._printStep('Executing command: %s' % cmd)
-        p = subprocess.Popen(cmd, shell=True, stdin=subprocess.PIPE,
-                             stdout=subprocess.PIPE, close_fds=True)
-        (child_stdin, child_stdout) = (p.stdin, p.stdout)
-        child_stdin = child_stdin
-        stdout = []
-        while True:
-            out = child_stdout.readlines(1)
-            if not out:
-                break
-            stdout.extend(out)
-            sys.stdout.writelines(out)
-        returnCode = p.wait()
-        if returnCode:
-            if retry:
-                return self._systemCall(cmd, False)
-            else:
-                raise ClientError("Error executing command '%s', with error "
-                                  "code: %s" % (cmd, returnCode))
-        return stdout
-
-    def _printStep(self, message):
-        util.printStep(message)
 
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, self.verboseThreshold)
@@ -231,9 +200,6 @@ class Client(object):
 
     def getGlobalAbortMessage(self):
         return self.httpClient.getGlobalAbortMessage()
-
-    def get_server_configuration(self):
-        return self.httpClient.get_server_configuration()
 
     def _get_params_list(self, compname, key):
         ids_param = '%s:ids' % compname
