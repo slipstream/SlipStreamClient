@@ -21,7 +21,7 @@ import time
 from slipstream.wrappers.BaseWrapper import BaseWrapper
 from slipstream.cloudconnectors.CloudConnectorFactory import CloudConnectorFactory
 from slipstream import util
-from slipstream.NodeDecorator import NodeDecorator
+from slipstream.api.deployment import NodeDecorator
 from slipstream.exceptions.Exceptions import ExecutionException
 
 

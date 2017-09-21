@@ -69,8 +69,11 @@ class LocalContextualizer(object):
                 util.printDetail('Using local contextualization file: %s' % fn,
                                  self.verboseLevel)
                 return fn
-        raise Exceptions.ConfigurationError(
-            'Failed to find local contextualization file.')
+        msg = 'Did not find local contextualization file {} in {}.'.\
+            format(self.LOCAL_CONTEXTUALIZATION_FILENAME,
+                   ', '.join(self.LOCAL_CONTEXTUALIZATION_LOCATIONS))
+        print('DEBUG: {}'.format(msg))
+        raise Exceptions.ConfigurationError(msg)
 
     def __getattr__(self, key):
         return self._get(key)
@@ -92,6 +95,9 @@ class LocalContextualizer(object):
         self.__setattr__(key, value)
 
         return value
+
+    def get(self, key, default=None):
+        return self._get(key) or default
 
     def set(self, key, value):
         self.parser.set(LocalContextualizer.SECTION, key, value)

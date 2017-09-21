@@ -73,7 +73,7 @@ def createResultsTarball(rootdirs, archive_name, prefix):
     return archiveResultsAsTarball(archive_name, results)
 
 
-def createResultsZipArchive(rootdir, archive_name, prefix):
+def createResultsZipArchive(rootdirs, archive_name, prefix):
     results = []
     for rootdir in rootdirs:
         results = collectResultInfo(rootdir, prefix, [], results)

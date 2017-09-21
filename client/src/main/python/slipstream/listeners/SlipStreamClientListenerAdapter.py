@@ -17,7 +17,7 @@
 """
 
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
-from slipstream.NodeDecorator import NodeDecorator
+from slipstream.api.deployment import NodeDecorator
 
 
 class SlipStreamClientListenerAdapter(SimplePrintListener):

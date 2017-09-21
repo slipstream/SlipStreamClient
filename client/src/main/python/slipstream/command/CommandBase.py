@@ -74,6 +74,27 @@ except KeyboardInterrupt:
     sys.exit(-1)
 
 
+def get_authn_from_context(context):
+    if context:
+        method = context['method']
+        if not method:
+            print('DEBUG: Authn from context: No authn method defined.')
+        if method == 'internal':
+            username = context['username']
+            password = context['password']
+            return 'internal', (username, password)
+        elif method == 'api-key':
+            key = context['key']
+            secret = context['secret']
+            return 'apikey', (key, secret)
+        else:
+            print('DEBUG: Authn from context: Unknown authn method: {}'.
+                  format(method))
+    else:
+        print('DEBUG: Authn from context: No context provided.')
+    return None, ()
+
+
 class CommandBase(object):
 
     exc_to_exit_code = {NotYetSetException: 1,
@@ -93,6 +114,7 @@ class CommandBase(object):
         self.args = None
         self.parser = None
         self._setParserAndParse()
+        self._load_config()
 
         self.userProperties = {}
         self.userEnv = {}
@@ -276,11 +298,11 @@ class CommandBase(object):
 
     def _get_context(self):
         if not self.config:
-            self._load_config()
+            self.config = self._load_config()
         return self.config.context
 
     def _load_config(self):
-        self.config = ConfigHolder()
+        return ConfigHolder(options=self.options)
 
     def _get_endpoint(self):
         return self._get_context().get('endpoint') or self.options.endpoint
@@ -291,32 +313,29 @@ class CommandBase(object):
         else:
             return self.options.insecure
 
+    def _get_authn_from_context(self):
+        context = self._get_context()
+        return get_authn_from_context(context)
+
     def _get_authn(self):
         """
         :return: Authentication tuple
         :rtype: (str, (str, str)) - (method, <creds tuple>)
         """
-        if self._user_pass_requested and (self.options.username and
-                                          self.options.password):
+        method, creds = self._get_authn_from_context()
+        if method:
+            return method, creds
+        elif self._user_pass_requested and (self.options.username and
+                                            self.options.password):
             return 'internal', (self.options.username, self.options.password)
         else:
-            context = self._get_context()
-            method = context['method']
-            if method == 'internal':
-                username = context['username']
-                password = context['password']
-                return 'internal', (username, password)
-            elif method == 'api-key':
-                key = context['key']
-                secret = context['secret']
-                return 'apikey', (key, secret)
-            else:
-                return None, ()
+            return None, ()
 
     @property
     def cimi(self):
         if not self._cimi:
             context = self._get_context()
+            print('DEBUG: Using configuration: {}'.format(self.config))
             # TODO: add ConfigHolder.  `verbose_level` should be in
             # the context file as well.
             # If context file is found - ignore CLI parameters completely.
@@ -325,11 +344,15 @@ class CommandBase(object):
                                 log_http_detail=(self.options.verboseLevel >= 3))
             cimi = CIMI(http, endpoint=self._get_endpoint())
             if not cimi.is_authenticated():
-                print('No active session. Attempting to authenticate.')
+                print('No active session for {}. Attempting to '
+                      'authenticate.'.format(cimi.endpoint))
                 method, creds = self._get_authn()
                 if not (method and creds):
                     raise Exception('No authn method and/or credentials '
                                     'provided.')
                 getattr(cimi, 'login_{}'.format(method))(*creds)
+            else:
+                print('DEBUG: Reusing existing session for {} : {}'.format(
+                    cimi.endpoint, cimi.session.get_cookies(domain=cimi.endpoint)))
             self._cimi = cimi
         return self._cimi

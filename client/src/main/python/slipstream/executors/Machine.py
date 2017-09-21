@@ -24,6 +24,10 @@ from slipstream import util
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.api.deployment import NodeDecorator
 
+from slipstream.api.http import SessionStore
+from slipstream.api.cimi import CIMI
+from slipstream.api.deployment import Deployment
+
 
 class Machine(object):
     def __init__(self, executorFactory, configHolder=ConfigHolder()):
@@ -67,7 +71,11 @@ class AbortExceptionPublisher(object):
         """
         config_holder: ConfigHolder object
         """
-        self.ss_client = SlipStreamHttpClient(config_holder)
+        context = config_holder.context
+        session = SessionStore(cookie_file='', insecure='', log_http_detail='')
+        cimi = CIMI(session, endpoint=context['endpoint'])
+
+        self.deployment = Deployment(cimi, context['diid'])
         self.verbosity_level = self._get_verbosity_level(config_holder)
 
     def publish(self, message, exc_info):
@@ -79,7 +87,7 @@ class AbortExceptionPublisher(object):
         self._publish_abort(msg)
 
     def _publish_abort(self, message):
-        self.ss_client.ignoreAbort = True
+        self.deployment.ignoreAbort = True
         abort = NodeDecorator.GLOBAL_NS + \
                 NodeDecorator.NODE_PROPERTY_SEPARATOR + NodeDecorator.ABORT_KEY
-        self.ss_client.setRuntimeParameter(abort, message)
+        self.deployment.setRuntimeParameter(abort, message)

@@ -121,12 +121,16 @@ class ConfigHolder(object):
                                 copy.deepcopy(self.context))
         return deepCopy
 
+    def _hide_secrets(self, kv):
+        k, v = kv
+        return (k, '...') if k in ['password', 'secret'] else (k, v)
+
     def __str__(self):
         output = '* %s:\n' % self.__class__.__name__
         for p in ['options', 'config', 'context']:
-            if getattr(self, p):
-                output += '** %s:\n' % p.upper()
-                output += '  %s\n' % str(getattr(self, p))
+            output += '** %s:\n' % p.upper()
+            data = dict(map(self._hide_secrets, getattr(self, p).items()))
+            output += '  %s\n' % str(data)
         return output
 
     def __getattr__(self, key):
