@@ -89,7 +89,7 @@ class SlipStreamHttpClient(object):
     def _getUserElement(self):
         content = self._getUserContent()
 
-        return etree.fromstring(content)
+        return etree.fromstring(content.encode('utf-8'))
 
     def _getUserContent(self):
         url = self.userEndpoint
@@ -97,7 +97,7 @@ class SlipStreamHttpClient(object):
         return content
 
     def _extractModuleResourceUri(self, run):
-        rootElement = etree.fromstring(run)
+        rootElement = etree.fromstring(run.encode('utf-8'))
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
     def get_nodes_instances(self, cloud_service_name=None):
@@ -160,7 +160,7 @@ class SlipStreamHttpClient(object):
         if self.run_dom is None:
             url = self.run_url
             _, run = self._retrieve(url)
-            self.run_dom = etree.fromstring(run)
+            self.run_dom = etree.fromstring(run.encode('utf-8'))
 
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')
