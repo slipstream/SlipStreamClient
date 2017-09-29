@@ -134,6 +134,7 @@
             <require>python-httplib2</require>
             <require>python-paramiko</require>
             <require>python-requests</require>
+            <require>python-crypto</require>
             <require>slipstream-useradd</require>
           </requires>
           <defineStatements>
