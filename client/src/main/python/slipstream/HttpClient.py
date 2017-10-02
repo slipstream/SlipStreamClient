@@ -31,6 +31,11 @@ from requests import Request
 from requests.cookies import MockResponse, MockRequest, RequestsCookieJar
 from six.moves.http_cookiejar import MozillaCookieJar
 
+try:
+    from requests.packages.urllib3.exceptions import HTTPError
+except:
+    from urllib3.exceptions import HTTPError
+
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
 
@@ -289,7 +294,7 @@ class HttpClient(object):
                     abs(float(self.too_many_requests_count) / 10.0 * 290 + 10),
                     300)
 
-            except (httplib.HTTPException, socket.error,
+            except (httplib.HTTPException, socket.error, HTTPError,
                     Exceptions.NetworkError, Exceptions.ServerError) as ex:
                 timed_out = (time.time() - first_request_time) >= retry_until
                 if retry is False or timed_out:
