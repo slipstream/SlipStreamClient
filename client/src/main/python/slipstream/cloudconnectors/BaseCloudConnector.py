@@ -24,6 +24,8 @@ import tempfile
 from threading import local
 from threading import Lock
 
+from collections import defaultdict
+
 import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream import util
@@ -314,6 +316,8 @@ class BaseCloudConnector(object):
 
         self.__capabilities = []
 
+        self.__already_published = defaultdict(set)
+
     def __init_threading_related(self):
         self.__tasks_runnner = None
 
@@ -474,12 +478,18 @@ class BaseCloudConnector(object):
         instance_name = node_instance.get_name()
         vm_id = self._vm_get_id(vm)
         vm_ip = self._vm_get_ip(vm)
-        if vm_id:
-            self._publish_vm_id(instance_name, vm_id)
-        if vm_ip:
-            self._publish_vm_ip(instance_name, vm_ip)
-        if node_instance and vm_ip:
-            self._publish_url_ssh(vm, node_instance)
+
+        with lock:
+            already_published = self.__already_published[instance_name]
+            if vm_id and 'id' not in already_published:
+                self._publish_vm_id(instance_name, vm_id)
+                already_published.add('id')
+            if vm_ip and 'ip' not in already_published:
+                self._publish_vm_ip(instance_name, vm_ip)
+                already_published.add('ip')
+            if node_instance and vm_ip and 'ssh' not in already_published:
+                self._publish_url_ssh(vm, node_instance)
+                already_published.add('ssh')
 
     def _publish_vm_id(self, instance_name, vm_id):
         # Needed for thread safety
