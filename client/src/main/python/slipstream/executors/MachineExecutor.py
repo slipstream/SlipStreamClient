@@ -43,7 +43,7 @@ class MachineExecutor(object):
     EMPTY_STATE_RETRIES_NUM = 4
 
     # Wait interval (seconds) between server calls when executing a target script.
-    TARGET_POLL_INTERVAL = 10
+    TARGET_POLL_INTERVAL = 30
     SCRIPT_EXIT_SUCCESS = 0
 
     def __init__(self, wrapper, config_holder=ConfigHolder()):
