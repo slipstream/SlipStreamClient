@@ -43,7 +43,8 @@ setup(
     platforms='Any',
     url='http://sixsq.com',
     install_requires=[
-        'httplib2'],
+        'requests',
+        'six'],
     scripts=[
         'bin/ss-abort',
         'bin/ss-cancel-abort',
@@ -65,6 +66,8 @@ setup(
         'bin/ss-scale-resize',
         'bin/ss-scale-disk',
         'bin/ss-config-dump',
+        'bin/ss-login',
+        'bin/ss-logout',
     ],
     packages=[
         'slipstream',
