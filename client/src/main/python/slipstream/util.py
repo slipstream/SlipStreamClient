@@ -70,7 +70,7 @@ RUN_PARAM_TAGS = 'tags'
 
 CONFIGPARAM_CONNECTOR_MODULE_NAME = 'cloudconnector'
 
-SUPPORTED_PLATFORMS_BY_DISTRO = {'debian_based': ('ubuntu',),
+SUPPORTED_PLATFORMS_BY_DISTRO = {'debian_based': ('ubuntu', 'debian'),
                                  'suse_based': ('opensuse', 'sles'),
                                  'redhat_based': ('fedora', 'redhat', 'centos')}
 SUPPORTED_PLATFORMS = [y for x in SUPPORTED_PLATFORMS_BY_DISTRO.values() for y in x]
