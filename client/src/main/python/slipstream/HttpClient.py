@@ -28,6 +28,7 @@ from threading import Lock
 from urlparse import urlparse
 from cookielib import CookieJar
 from requests import Request
+from requests.exceptions import RequestException
 from requests.cookies import MockResponse, MockRequest, RequestsCookieJar
 from six.moves.http_cookiejar import MozillaCookieJar
 
@@ -294,7 +295,7 @@ class HttpClient(object):
                     abs(float(self.too_many_requests_count) / 10.0 * 290 + 10),
                     300)
 
-            except (httplib.HTTPException, socket.error, HTTPError,
+            except (httplib.HTTPException, socket.error, HTTPError, RequestException,
                     Exceptions.NetworkError, Exceptions.ServerError) as ex:
                 timed_out = (time.time() - first_request_time) >= retry_until
                 if retry is False or timed_out:
