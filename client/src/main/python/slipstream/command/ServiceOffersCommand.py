@@ -137,7 +137,7 @@ class ServiceOffersCommand(CloudClientCommand):
         """
         return 'Unknown'
 
-    def _get_billing_period(self, vm_size):
+    def _get_billing_unit(self, vm_size):
         """
         Return the billing period
         :param vm_size: A vm_size object as returned by the method _list_vm_sizes() of the connector
@@ -222,7 +222,7 @@ class ServiceOffersCommand(CloudClientCommand):
 
     @staticmethod
     def _generate_service_offer(connector_instance_name, cpu, ram, root_disk, root_disk_type, os, price,
-                                instance_type=None, base_currency='EUR', billing_period='MIN', country=None,
+                                instance_type=None, base_currency='EUR', billing_unit='MIN', country=None,
                                 platform=None, prefix=None, extra_attributes=None):
         resource_type = 'VM'
         resource_class = 'standard'
@@ -245,12 +245,12 @@ class ServiceOffersCommand(CloudClientCommand):
             "resource:platform": platform,
             "resource:operatingSystem": os,
             "resource:instanceType": instance_type,
-            "price:unitCost": price,
-            "price:unitCode": "C62",
+            "price:unitCost": price, # price  price:currency/price:unitcode
+            "price:unitCode": "HUR",
             "price:freeUnits": 0,
             "price:currency": base_currency,
-            "price:billingUnitCode": "HUR",
-            "price:billingPeriodCode": billing_period,
+            "price:billingUnitCode": billing_unit, # Minimum time quantum for a resource
+            "price:billingPeriodCode": "MON", # A bill is sent every billingPeriodCode
             "connector": {"href": connector_instance_name},
             "acl" : {
                 "owner" : {
@@ -284,7 +284,7 @@ class ServiceOffersCommand(CloudClientCommand):
             ram = int(self._get_ram(vm_size))
             root_disk_type = self._get_root_disk_type(vm_size)
             instance_type = self._get_instance_type(vm_size)
-            billing_period = self._get_billing_period(vm_size)
+            billing_unit = self._get_billing_unit(vm_size)
             platform = self._get_platform(vm_size)
             country = self._get_country()
             prefix = self._get_prefix()
@@ -302,7 +302,7 @@ class ServiceOffersCommand(CloudClientCommand):
 
                     service_offers.append(self._generate_service_offer(connector_instance_name, cpu, ram, root_disk,
                                                                        root_disk_type, os, price, instance_type,
-                                                                       self.base_currency, billing_period, country,
+                                                                       self.base_currency, billing_unit, country,
                                                                        platform, prefix, extra_attributes))
         return service_offers
 
