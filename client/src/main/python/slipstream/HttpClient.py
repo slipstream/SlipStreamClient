@@ -114,7 +114,20 @@ def http_debug():
     requests_log.propagate = True
 
 
+
+def disable_urllib3_warnings():
+    try:
+        requests.packages.urllib3.disable_warnings(
+            requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    except:
+        try:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        except:
+            pass
+
 class HttpClient(object):
+
     def __init__(self, username=None, password=None, cookie=None,
                  configHolder=None):
         self.cookie = cookie
@@ -133,7 +146,7 @@ class HttpClient(object):
         if self.verboseLevel >= 3:
             http_debug()
         else:
-            requests.packages.urllib3.disable_warnings()
+            disable_urllib3_warnings()
 
         self.session = None
 
