@@ -18,6 +18,7 @@
 
 import re
 import os
+import ssl
 import time
 import tempfile
 
@@ -317,6 +318,13 @@ class BaseCloudConnector(object):
         self.__capabilities = []
 
         self.__already_published = defaultdict(set)
+
+        # Ensure that httplib use the "old" default for certificates validation
+        # since libcloud doesn't work with the new default.
+        try:
+            ssl._https_verify_certificates(False)
+        except:
+            pass
 
     def __init_threading_related(self):
         self.__tasks_runnner = None
