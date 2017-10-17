@@ -68,6 +68,7 @@ setup(
         'bin/ss-config-dump',
         'bin/ss-login',
         'bin/ss-logout',
+        'bin/ss-terminate',
     ],
     packages=[
         'slipstream',
