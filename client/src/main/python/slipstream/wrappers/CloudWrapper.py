@@ -274,7 +274,7 @@ class CloudWrapper(BaseWrapper):
         vms = self._cloud_client.list_instances()
         failed_instances = {}
         for vm in vms:
-            vm_id = self._cloud_client._vm_get_id(vm)
+            vm_id = self._cloud_client._vm_get_id_from_list_instances(vm)
             if (vm_id in vm_ids) and self._cloud_client._has_vm_failed(vm):
                 instance = vm_id_to_instance[vm_id]
                 failed_instances.setdefault(instance.get_node_name(), []).append(instance)

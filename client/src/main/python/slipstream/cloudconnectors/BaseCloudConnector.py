@@ -126,6 +126,11 @@ class BaseCloudConnector(object):
         Returns: one IP - Public or Private."""
         pass
 
+    def _vm_get_id_from_list_instances(self, vm_instance):
+        """Retrieve an ID from the vm_instance object returned by list_instances().
+        Returns: one ID."""
+        pass
+
     def _vm_get_cpu(self, vm_instance):
         """Retrieve the number of CPU of the VM from the vm_instance object returned by list_instances().
         Returns: the number of CPU of VM"""
