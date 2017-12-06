@@ -327,7 +327,7 @@ class ServiceOffersCommand(CloudClientCommand):
 
         self.ssapi = Api(endpoint=ss_endpoint, cookie_file=None, insecure=True)
         if not dry_run:
-            self.ssapi.login(ss_username, ss_password)
+            self.ssapi.login_internal(ss_username, ss_password)
 
         self._initialize()
 
