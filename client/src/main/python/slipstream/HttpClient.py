@@ -42,6 +42,35 @@ import slipstream.util as util
 
 etree = util.importETree()
 
+LOGIN_URI = 'auth/login'
+DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
+MACHINE_COOKIE_KEY = 'com.sixsq.isMachine'
+
+
+def get_cookie(cookie_jar, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
+    """Returns requested cookie from the provided cookie_jar."""
+    jar = RequestsCookieJar()
+    jar.update(cookie_jar)
+    cookie = None
+    if path is None:
+        cookies = jar.get_dict(domain=domain)
+        cookie = cookies.get(name)
+    elif path == '/':
+        cookies = jar.get_dict(domain=domain, path=path)
+        cookie = cookies.get(name)
+    else:
+        url_path = path.split('/')
+        for n in range(len(url_path), 0, -1):
+            path = '/'.join(url_path[0:n]) or '/'
+            cookies = jar.get_dict(domain=domain, path=path)
+            if name in cookies:
+                cookie = cookies.get(name)
+                break
+    if cookie is None:
+        return cookie
+    else:
+        return '%s=%s' % (name, cookie)
+
 
 class SessionStore(requests.Session):
     """Session with extended MozillaCookieJar file-based store.
@@ -85,10 +114,9 @@ class SessionStore(requests.Session):
         for c in cookies:
             self.cookies.set_cookie(c)
 
+    def get_cookie(self, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
+        return get_cookie(self.cookies, domain, path, name)
 
-LOGIN_URI = 'auth/login'
-DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
-MACHINE_COOKIE_KEY = 'com.sixsq.isMachine'
 
 # Client Error
 NOT_FOUND_ERROR = 404
@@ -114,7 +142,6 @@ def http_debug():
     requests_log.propagate = True
 
 
-
 def disable_urllib3_warnings():
     try:
         requests.packages.urllib3.disable_warnings(
@@ -126,10 +153,10 @@ def disable_urllib3_warnings():
         except:
             pass
 
+
 class HttpClient(object):
 
-    def __init__(self, username=None, password=None, cookie=None,
-                 configHolder=None):
+    def __init__(self, username=None, password=None, cookie=None, configHolder=None):
         self.cookie = cookie
         self.username = username
         self.password = password
@@ -402,3 +429,6 @@ class HttpClient(object):
             msg = '%s\n                         %s' % (
                 msg[:max_characters], '::::: Content truncated :::::')
         self._log_debug(msg)
+
+    def get_session(self):
+        return self.session

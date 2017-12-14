@@ -380,6 +380,7 @@ class MainProgram(CommandBase):
             components = self.options.reports_components
         ch = ConfigHolder(options=self.options, context={'ignore': None})
         ch.context = {}
+        ch.set("session", self.client.get_session())
         rg = ReportsGetter(ch)
         rg.get_reports(run_url_to_uuid(run_url), components=components)
 

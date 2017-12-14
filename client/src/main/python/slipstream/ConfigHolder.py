@@ -45,8 +45,14 @@ class ConfigHolder(object):
     def assignAttributes(obj, dictionary):
         util.assignAttributes(obj, dictionary)
 
-    def __init__(self, options={}, config={}, context={}, configFile=''):
+    def __init__(self, options=None, config=None, context=None, configFile=''):
         # command line options
+        if options is None:
+            options = {}
+        if context is None:
+            context = {}
+        if config is None:
+            config = {}
         self.options = self._extractDict(options)
         self.options['ssLogDir'] = util.get_platform_reports_dir()
         # classes to instantiate via Factories
