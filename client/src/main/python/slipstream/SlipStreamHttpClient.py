@@ -294,6 +294,9 @@ class SlipStreamHttpClient(object):
     def logout(self):
         self.httpClient.delete_local_cookie(self.serviceurl + '/')
 
+    def get_session(self):
+        return self.httpClient.get_session()
+
 
 class DomExtractor(object):
     EXTRADISK_PREFIX = 'extra.disk'

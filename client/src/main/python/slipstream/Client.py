@@ -270,3 +270,6 @@ class Client(object):
         pool.close()
         pool.join()
         return zip(params, results)
+
+    def get_session(self):
+        return self.httpClient.get_session()

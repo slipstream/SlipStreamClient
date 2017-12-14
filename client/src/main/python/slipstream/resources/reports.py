@@ -21,14 +21,16 @@ import os
 import errno
 import json
 from datetime import datetime
+from urlparse import urlparse
 import pprint
 
-from slipstream.HttpClient import HttpClient
 import slipstream.util as util
 from slipstream.NodeDecorator import NodeDecorator
-
+from slipstream.HttpClient import get_cookie, DEFAULT_SS_COOKIE_NAME
 
 TIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
+NO_SESSION_PROVIDED_MSG = "Session should have been provided along with " \
+                          "config holder."
 
 
 def is_newer(d1, d2, tf=TIME_FORMAT):
@@ -36,13 +38,21 @@ def is_newer(d1, d2, tf=TIME_FORMAT):
 
 
 class ReportsGetter(object):
+
     def __init__(self, ch):
+        """Expects an authenticated session provided with 'ch' config holder.
+        The class uses url `domain`/`path` and the name of cookie to get it
+        from the session and use in the downloading of the requested reports.
+        """
         self.output_dir = os.getcwd()
         self.verboseLevel = 0
         self.endpoint = 'https://nuv.la'
+        self.session = None
 
-        self.h = HttpClient(configHolder=ch)
         ch.assign(self)
+
+        if self.session is None:
+            raise Exception(NO_SESSION_PROVIDED_MSG)
 
     @staticmethod
     def latest_only(reports):
@@ -72,8 +82,9 @@ class ReportsGetter(object):
 
         for r in reports:
             name = r['node']
-            if name.rsplit(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0] in comps or \
-                            name in comps:
+            if name.rsplit(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[
+                0] in comps or \
+                    name in comps:
                 reports_only.append(r)
 
         return reports_only
@@ -97,14 +108,16 @@ class ReportsGetter(object):
         return self.endpoint + util.REPORTS_RESOURCE_PATH + "/" + run_uuid + "/"
 
     def list_reports(self, run_uuid):
-        _, res = self.h.get(self.run_reports_url(run_uuid), accept='application/json')
-
-        reports = json.loads(res)['files']
+        res = self.session.get(self.run_reports_url(run_uuid),
+                               headers={'accept': 'application/json'})
+        reports = json.loads(res.text)['files']
         self.debug("::: List of all reports. :::", reports)
 
         return reports
 
-    def get_reports(self, run_uuid, components=[], no_orch=False):
+    def get_reports(self, run_uuid, components=None, no_orch=False):
+        if components is None:
+            components = []
         reports_list_orig = self.list_reports(run_uuid)
         if not reports_list_orig:
             self.info("::: WARNING: No reports available on %s :::" % run_uuid)
@@ -121,27 +134,33 @@ class ReportsGetter(object):
 
         if not reports_list:
             self.info("::: No components or instances selected with your filter.")
-            self.info("::: Options are: %s" % ', '.join(self._get_names(reports_list_orig)))
+            self.info("::: Options are: %s" % ', '.join(
+                self._get_names(reports_list_orig)))
             return
         self._download_reports(reports_list, self.reports_path(run_uuid))
 
-    def _get_creds(self):
-        if self.h.cookie:
-            return {'cookie': self.h.cookie}
-        elif self.h.username and self.h.password:
-            return {'username': self.h.username,
-                    'password': self.h.password}
-        else:
-            return {}
+    def _get_cookie(self, url_str, name):
+        url = urlparse(url_str)
+        domain = url.netloc
+        path = url.path
+        return get_cookie(self.session.cookies, domain=domain, path=path,
+                          name=name)
 
     def _download_reports(self, reports_list, reports_path):
         self.mkdir(reports_path)
         self.info("\n::: Downloading reports to '%s'" % reports_path)
 
         for f in reports_list:
-            self.info("... %s" % f['uri'])
-            util.download_file(f['uri'], os.path.join(reports_path, f['name']),
-                               creds=self._get_creds())
+            furl = f['uri']
+            cookie = self._get_cookie(furl, DEFAULT_SS_COOKIE_NAME)
+            if not cookie:
+                self.warn("Skipping. Cookie not found for '%s' with name '%s'" %
+                          (furl, DEFAULT_SS_COOKIE_NAME))
+                continue
+            self.info("... %s" % furl)
+            self.debug("... cookie %s" % cookie)
+            util.download_file(furl, os.path.join(reports_path, f['name']),
+                               cookie)
 
     def _get_names(self, reports):
         return set(map(lambda x: x['node'], reports))
@@ -154,3 +173,8 @@ class ReportsGetter(object):
     def debug(self, msg, data=None):
         if self.verboseLevel > 1:
             self.info(msg, data)
+
+    def warn(self, msg, data=None):
+        print("WARNING: %s" % msg)
+        if data:
+            pprint.pprint(data)
