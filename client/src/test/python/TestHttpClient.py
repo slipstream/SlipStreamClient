@@ -100,8 +100,8 @@ class HttpClientTestCase(unittest.TestCase):
     def test_get_cookie(self):
         self.assertIsNone(get_cookie(RequestsCookieJar(), None))
 
-        name = 'cookie.name'
-        value = 'this is a cookie'
+        cookie_str = 'cookie.name=this is a cookie'
+        name, value = cookie_str.split('=')
         domain = 'example.com'
         path = '/some'
 
@@ -114,26 +114,26 @@ class HttpClientTestCase(unittest.TestCase):
         self.assertIsNone(get_cookie(jar, domain))
         c_str = get_cookie(jar, domain, name=name)
         self.assertIsNotNone(c_str)
-        self.assertEquals(value, c_str)
+        self.assertEquals(cookie_str, c_str)
 
         # w/ path
         self.assertIsNone(get_cookie(jar, domain, path='/', name=name))
 
         c_str = get_cookie(jar, domain, path='/some', name=name)
-        self.assertEquals(value, c_str)
+        self.assertEquals(cookie_str, c_str)
 
         c_str = get_cookie(jar, domain, path='/some/path', name=name)
-        self.assertEquals(value, c_str)
+        self.assertEquals(cookie_str, c_str)
 
         # root path cookie
         jar = RequestsCookieJar()
         cookie = create_cookie(name, value, **{'domain': domain, 'path': '/'})
         jar.set_cookie(cookie)
         c_str = get_cookie(jar, domain, path='/', name=name)
-        self.assertEquals(c_str, value)
+        self.assertEquals(cookie_str, c_str)
 
         c_str = get_cookie(jar, domain, path='/random', name=name)
-        self.assertEquals(c_str, value)
+        self.assertEquals(cookie_str, c_str)
 
 
 if __name__ == '__main__':
