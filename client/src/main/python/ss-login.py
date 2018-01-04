@@ -59,7 +59,8 @@ class MainProgram(CommandBase):
             self.usageExitTooManyArguments()
 
     def doWork(self):
-        ch = ConfigHolder(self.options)
+        ch = ConfigHolder(self.options, context={'empty': None}, config={'empty': None})
+        ch.set('serviceurl', self.options.endpoint)
         client = Client(ch)
         client.login(self.username, self.password)
 
