@@ -1,13 +1,8 @@
 . slipstream.setenv
 
-STRATUSLAB_CONTEXT=/mnt/stratuslab/context.sh
-if [ -f $STRATUSLAB_CONTEXT ]; then
-    CONTEXT_FILE=$STRATUSLAB_CONTEXT
-else
-    # Amazon context
-    CONTEXT_FILE=/tmp/context.sh
-    curl -o $CONTEXT_FILE http://169.254.169.254/1.0/user-data
-fi
+# Amazon context
+CONTEXT_FILE=/tmp/context.sh
+curl -o $CONTEXT_FILE http://169.254.169.254/1.0/user-data
 
 . $CONTEXT_FILE
 
