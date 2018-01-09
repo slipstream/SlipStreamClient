@@ -191,11 +191,11 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('StratusLab')
+        userInfo = client.get_user_info('SomeCloud')
 
         assert 'test@sixsq.com' == userInfo.get_user('email')
 
-        assert 'cloud.lal.stratuslab.eu' == userInfo.get_cloud('endpoint')
+        assert 'cloud.lal.somecloud.eu' == userInfo.get_cloud('endpoint')
         assert 'public' == userInfo.get_cloud('ip.type')
         assert 'ssh-rsa abc' == userInfo.get_general('ssh.public.key')
 
@@ -206,7 +206,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USER_XML)
-        user_info = client.get_user_info('StratusLab')
+        user_info = client.get_user_info('SomeCloud')
 
         param = 'domain.name'
 
@@ -215,7 +215,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert '' == user_info.get_cloud(param, 'default')
 
         # Re-set value to None.
-        user_info['StratusLab.' + param] = None
+        user_info['SomeCloud.' + param] = None
         assert None == user_info.get_cloud(param)
         assert None == user_info.get_cloud(param, 'default')
 
@@ -223,7 +223,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USER_XML)
-        user_info = client.get_user_info('StratusLab')
+        user_info = client.get_user_info('SomeCloud')
         param = 'doesnotexist'
         assert None == user_info.get_cloud(param)
         assert 'default' == user_info.get_cloud(param, 'default')
@@ -232,7 +232,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
                                                    context=self.context))
         client._getUserContent = Mock(return_value=USER_XML)
-        user_info = client.get_user_info('StratusLab')
+        user_info = client.get_user_info('SomeCloud')
 
         param = 'no.value'
 
