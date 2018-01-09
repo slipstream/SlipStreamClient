@@ -7,9 +7,9 @@
          </parameter>
       </entry>
       <entry>
-         <string><![CDATA[StratusLab.endpoint]]></string>
-         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.endpoint" description="" category="StratusLab" mandatory="true" type="String" readonly="false">
-            <value><![CDATA[cloud.lal.stratuslab.eu]]></value>
+         <string><![CDATA[SomeCloud.endpoint]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="SomeCloud.endpoint" description="" category="SomeCloud" mandatory="true" type="String" readonly="false">
+            <value><![CDATA[cloud.lal.somecloud.eu]]></value>
          </parameter>
       </entry>
       <entry>
@@ -27,15 +27,15 @@
       <entry>
          <string><![CDATA[General.default_cloud_service]]></string>
          <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="General.default_cloud_service" description="Select which cloud you want to use." category="General" mandatory="true" type="Enum" readonly="false">
-            <value><![CDATA[StratusLab]]></value>
+            <value><![CDATA[SomeCloud]]></value>
             <enumValues length="1">
-               <string>StratusLab</string>
+               <string>SomeCloud</string>
             </enumValues>
          </parameter>
       </entry>
       <entry>
-         <string><![CDATA[StratusLab.ip.type]]></string>
-         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.ip.type" description="IP type: public, local, private" category="StratusLab" mandatory="true" type="Enum" readonly="false">
+         <string><![CDATA[SomeCloud.ip.type]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="SomeCloud.ip.type" description="IP type: public, local, private" category="SomeCloud" mandatory="true" type="Enum" readonly="false">
             <value><![CDATA[public]]></value>
             <enumValues length="3">
                <string>public</string>
@@ -57,33 +57,33 @@
          </parameter>
       </entry>
       <entry>
-         <string><![CDATA[StratusLab.password]]></string>
-         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.password" description="StratusLab account password" category="StratusLab" mandatory="true" type="Password" readonly="false">
+         <string><![CDATA[SomeCloud.password]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="SomeCloud.password" description="SomeCloud account password" category="SomeCloud" mandatory="true" type="Password" readonly="false">
             <value><![CDATA[UZgsxOjJSxA2]]></value>
          </parameter>
       </entry>
       <entry>
-         <string><![CDATA[StratusLab.username]]></string>
-         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.username" description="StratusLab account username" category="StratusLab" mandatory="true" type="RestrictedString" readonly="false">
+         <string><![CDATA[SomeCloud.username]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="SomeCloud.username" description="SomeCloud account username" category="SomeCloud" mandatory="true" type="RestrictedString" readonly="false">
             <value><![CDATA[sixsqdev]]></value>
          </parameter>
       </entry>
       <entry>
-         <string>StratusLab.domain.name</string>
-         <parameter name="StratusLab.domain.name" description="Domain" category="StratusLab" mandatory="true" type="RestrictedString" readonly="false" order_="40" order="40">
+         <string>SomeCloud.domain.name</string>
+         <parameter name="SomeCloud.domain.name" description="Domain" category="SomeCloud" mandatory="true" type="RestrictedString" readonly="false" order_="40" order="40">
             <instructions><![CDATA[ Only useful if Identity API v3 ]]></instructions>
             <value><![CDATA[]]></value>
          </parameter>
       </entry>
       <entry>
-         <string>StratusLab.no.value</string>
-         <parameter name="StratusLab.no.value" description="No value" category="StratusLab" mandatory="true" type="RestrictedString" readonly="false" order_="40" order="40">
+         <string>SomeCloud.no.value</string>
+         <parameter name="SomeCloud.no.value" description="No value" category="SomeCloud" mandatory="true" type="RestrictedString" readonly="false" order_="40" order="40">
          </parameter>
       </entry>
       <entry>
-         <string><![CDATA[StratusLab.marketplace.endpoint]]></string>
-         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="StratusLab.marketplace.endpoint" description="Default marketplace endpoint" category="StratusLab" mandatory="true" type="String" readonly="false">
-            <value><![CDATA[http://marketplace.stratuslab.eu]]></value>
+         <string><![CDATA[SomeCloud.marketplace.endpoint]]></string>
+         <parameter class="com.sixsq.slipstream.persistence.UserParameter" name="SomeCloud.marketplace.endpoint" description="Default marketplace endpoint" category="SomeCloud" mandatory="true" type="String" readonly="false">
+            <value><![CDATA[http://marketplace.somecloud.eu]]></value>
          </parameter>
       </entry>
       <entry>

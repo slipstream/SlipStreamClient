@@ -391,8 +391,8 @@ cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         </parameter>
                      </entry>
                      <entry>
-                        <string>stratuslab.disks.bus.type</string>
-                        <parameter name="stratuslab.disks.bus.type" description="VM disks bus type" category="stratuslab" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
+                        <string>somecloud.disks.bus.type</string>
+                        <parameter name="somecloud.disks.bus.type" description="VM disks bus type" category="somecloud" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
                            <enumValues length="2">
                               <string>virtio</string>
                               <string>scsi</string>
@@ -402,8 +402,8 @@ cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         </parameter>
                      </entry>
                      <entry>
-                        <string>stratuslab.ram</string>
-                        <parameter name="stratuslab.ram" description="Requested RAM (in GB)" category="stratuslab" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
+                        <string>somecloud.ram</string>
+                        <parameter name="somecloud.ram" description="Requested RAM (in GB)" category="somecloud" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
                         <string>CC-IN2P3.security.groups</string>
@@ -417,8 +417,8 @@ cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         <parameter name="myCloud.cpu" description="Number of CPUs (i.e. virtual cores)" category="myCloud" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
-                        <string>stratuslab.cpu</string>
-                        <parameter name="stratuslab.cpu" description="Requested CPUs" category="stratuslab" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
+                        <string>somecloud.cpu</string>
+                        <parameter name="somecloud.cpu" description="Requested CPUs" category="somecloud" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
                         <string>myCloud.disks.bus.type</string>
@@ -479,8 +479,8 @@ cp /var/log/apache2/error.log $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         <parameter name="ready" description="Server ready to recieve connections" category="Output" mandatory="false" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
-                        <string>stratuslab.instance.type</string>
-                        <parameter name="stratuslab.instance.type" description="Cloud instance type" category="stratuslab" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
+                        <string>somecloud.instance.type</string>
+                        <parameter name="somecloud.instance.type" description="Cloud instance type" category="somecloud" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
                            <enumValues length="7">
                               <string>m1.small</string>
                               <string>c1.medium</string>
@@ -630,8 +630,8 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         </parameter>
                      </entry>
                      <entry>
-                        <string>stratuslab.disks.bus.type</string>
-                        <parameter name="stratuslab.disks.bus.type" description="VM disks bus type" category="stratuslab" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
+                        <string>somecloud.disks.bus.type</string>
+                        <parameter name="somecloud.disks.bus.type" description="VM disks bus type" category="somecloud" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
                            <enumValues length="2">
                               <string>virtio</string>
                               <string>scsi</string>
@@ -641,8 +641,8 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         </parameter>
                      </entry>
                      <entry>
-                        <string>stratuslab.ram</string>
-                        <parameter name="stratuslab.ram" description="Requested RAM (in GB)" category="stratuslab" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
+                        <string>somecloud.ram</string>
+                        <parameter name="somecloud.ram" description="Requested RAM (in GB)" category="somecloud" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
                         <string>CC-IN2P3.security.groups</string>
@@ -660,8 +660,8 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         <parameter name="webserver.ready" description="Server ready to recieve connections" category="Input" mandatory="false" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
-                        <string>stratuslab.cpu</string>
-                        <parameter name="stratuslab.cpu" description="Requested CPUs" category="stratuslab" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
+                        <string>somecloud.cpu</string>
+                        <parameter name="somecloud.cpu" description="Requested CPUs" category="somecloud" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
                         <string>myCloud.disks.bus.type</string>
@@ -722,8 +722,8 @@ cp /tmp/data.txt $SLIPSTREAM_REPORT_DIR]]></subTarget>
                         <parameter name="LLR.cpu" description="Requested CPUs" category="LLR" mandatory="true" type="String" readonly="false" order_="0" isSet="false" order="0"/>
                      </entry>
                      <entry>
-                        <string>stratuslab.instance.type</string>
-                        <parameter name="stratuslab.instance.type" description="Cloud instance type" category="stratuslab" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
+                        <string>somecloud.instance.type</string>
+                        <parameter name="somecloud.instance.type" description="Cloud instance type" category="somecloud" mandatory="true" type="Enum" readonly="false" order_="0" isSet="true" order="0">
                            <enumValues length="7">
                               <string>m1.small</string>
                               <string>c1.medium</string>
