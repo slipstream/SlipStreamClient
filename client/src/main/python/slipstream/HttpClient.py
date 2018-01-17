@@ -92,7 +92,8 @@ class SessionStore(requests.Session):
         response = super(SessionStore, self).request(*args, **kwargs)
         if not self.verify and response.cookies:
             self._unsecure_cookie(args[1], response)
-        self.cookies.save(ignore_discard=True)
+        if 'Set-Cookie' in response.headers:
+            self.cookies.save(ignore_discard=True)
         return response
 
     def _unsecure_cookie(self, url_str, response):

@@ -18,3 +18,5 @@ pom.xml.releaseBackup
 pom.xml.tag
 release.properties
 .ropeproject
+
+.DS_Store
