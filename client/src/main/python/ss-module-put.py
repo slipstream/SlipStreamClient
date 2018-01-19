@@ -31,9 +31,6 @@ class MainProgram(CommandBase):
 
     def __init__(self, argv=None):
         self.module = ''
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -46,7 +43,6 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.add_authentication_options()
         self.addEndpointOption()        
 
         self.parser.add_option('-i', '--ifile', dest='ifile', metavar='FILE',
@@ -69,7 +65,7 @@ class MainProgram(CommandBase):
         self.module = self.read_input_file(file)
 
     def doWork(self):
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         dom = self.read_xml_and_exit_on_error(self.module)

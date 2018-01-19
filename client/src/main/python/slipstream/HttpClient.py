@@ -42,7 +42,6 @@ import slipstream.util as util
 
 etree = util.importETree()
 
-LOGIN_URI = 'auth/login'
 DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
 MACHINE_COOKIE_KEY = 'com.sixsq.isMachine'
 
@@ -157,10 +156,8 @@ def disable_urllib3_warnings():
 
 class HttpClient(object):
 
-    def __init__(self, username=None, password=None, cookie=None, configHolder=None):
+    def __init__(self, cookie=None, configHolder=None):
         self.cookie = cookie
-        self.username = username
-        self.password = password
         self.host_cert_verify = False
         self.verboseLevel = util.VERBOSE_LEVEL_NORMAL
         self.cookie_filename = util.DEFAULT_COOKIE_FILE
@@ -257,34 +254,10 @@ class HttpClient(object):
 
         def _request(headers):
             try:
-                auth = ()
-                cookie_used = False
-                if self.session_cookie_exists(self.session, url,
-                                              no_path_check=True):
-                    cookie_used = True
-                elif self.username and self.password:
-                    self._log_debug("No session cookie found. Using Basic "
-                                    "authentication.")
-                    auth = (self.username, self.password)
-                else:
-                    self._log_debug("No session cookie or "
-                                    "username/password found. "
-                                    "No authentication will be performed.")
-                resp = self.session.request(method, url,
-                                            auth=auth,
+                return self.session.request(method, url,
                                             data=body,
                                             headers=headers,
                                             verify=self.host_cert_verify)
-                if resp.status_code == 401 and cookie_used and (
-                            self.username and self.password):
-                    resp = self.session.request(method, url,
-                                                auth=(
-                                                    self.username,
-                                                    self.password),
-                                                data=body,
-                                                headers=headers,
-                                                verify=self.host_cert_verify)
-                return resp
             except requests.exceptions.InvalidSchema as ex:
                 raise Exceptions.ClientError("Malformed URL: %s" % ex)
             except httplib.BadStatusLine:
@@ -388,7 +361,7 @@ class HttpClient(object):
         return jar.make_cookies(resp, req)
 
     def _set_oldstyle_cookie_on_session(self, url):
-        if self.cookie and not (self.password and self.username):
+        if self.cookie:
             cookies = self._cookie_from_str(url, self.cookie)
             self.session.set_cookies(cookies)
             self.cookie = None
@@ -398,23 +371,6 @@ class HttpClient(object):
             self.session = SessionStore(cookie_file=self.cookie_filename)
             # TODO: remove when old cookie from ConfigHolder is gone.
             self._set_oldstyle_cookie_on_session(url)
-
-    @staticmethod
-    def session_cookie_exists(session, url, no_path_check=False,
-                              cookie_name=DEFAULT_SS_COOKIE_NAME):
-        _url = urlparse(url)
-        jar = RequestsCookieJar()
-        jar.update(session.cookies)
-        if no_path_check:
-            return len(jar.get_dict(domain=_url.netloc)) > 0
-        else:
-            url_path = _url.path.split('/')
-            for n in range(len(url_path), 0, -1):
-                path = '/'.join(url_path[0:n]) or '/'
-                cookies = jar.get_dict(domain=_url.netloc, path=path)
-                if cookie_name in cookies:
-                    return True
-            return False
 
     def _log_normal(self, message):
         util.printDetail(message, self.verboseLevel,

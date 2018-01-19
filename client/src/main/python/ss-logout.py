@@ -41,7 +41,6 @@ Deletes cookie for / of <URL> from local cookie jar <FILE>."""
         self.parser.usage = usage
 
         self.addEndpointOption()
-        self.add_cookie_option()
 
         self.options, self.args = self.parser.parse_args()
 

@@ -34,9 +34,6 @@ class MainProgram(CommandBase):
 
     def __init__(self, argv=None):
         self.module = ''
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         self.force = False
         super(MainProgram, self).__init__(argv)
@@ -45,7 +42,6 @@ class MainProgram(CommandBase):
         usage = '''usage: %prog [options] <file> ...'''
 
         self.parser.usage = usage
-        self.add_authentication_options()
         self.addEndpointOption()        
 
         self.parser.add_option('-f', '--force', dest='force',
@@ -85,7 +81,7 @@ class MainProgram(CommandBase):
                     raise
 
     def doWork(self):
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         # read all files once to determine the upload URL for each file

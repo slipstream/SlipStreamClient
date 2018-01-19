@@ -39,7 +39,6 @@ class MainProgram(VMCommandBase):
         self.parser.usage = usage
 
         self.addEndpointOption()
-        self.add_authentication_options()
 
         self.options, self.args = self.parser.parse_args()
 

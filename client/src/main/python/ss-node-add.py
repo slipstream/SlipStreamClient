@@ -37,9 +37,6 @@ class MainProgram(CommandBase):
         self.numberToTolerate = 0
         self.runtimeParameters = []
 
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -55,7 +52,6 @@ class MainProgram(CommandBase):
              By default, 0. The value should be less than <number>.'''
 
         self.parser.usage = usage
-        self.add_authentication_options()
         self.addEndpointOption()
         self.parser.add_option('--runtime-parameter',
                                dest='runtimeParameters',
@@ -90,7 +86,7 @@ class MainProgram(CommandBase):
 
     def doWork(self):
 
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         baseUri = util.RUN_RESOURCE_PATH + "/" + self.runId

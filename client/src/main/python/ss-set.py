@@ -49,7 +49,7 @@ Notice:
 
         self.addIgnoreAbortOption()
 
-        self.add_run_authn_opts_and_parse()
+        self.add_run_opts_and_parse()
 
         if len(self.args) != 2:
             self.usageExit('Error, two argument must be specified')

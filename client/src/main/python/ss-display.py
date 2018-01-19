@@ -47,7 +47,7 @@ Notice:
 
         self.addIgnoreAbortOption()
 
-        self.add_run_authn_opts_and_parse()
+        self.add_run_opts_and_parse()
 
         if len(self.args) != 1:
                 self.usageExit('Error, one argument must be specified')

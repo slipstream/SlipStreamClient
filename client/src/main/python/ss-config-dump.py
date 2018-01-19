@@ -57,7 +57,6 @@ Different sections (categories) of the configuration can be extracted with --cat
 
         self.parser.usage = usage
 
-        self.add_authentication_options()
         self._add_endpoint_option()
 
         self.parser.add_option('-o', '--output', dest='output', metavar='FILE',
@@ -85,7 +84,6 @@ Different sections (categories) of the configuration can be extracted with --cat
         self.parser.add_option('--mask-hostname', dest='mask_hostname', metavar='MASK_HOSTNAME',
                                help='Substitute provided hostnames/IPs in URLs with %s' % self.HOSTNAME_MASK,
                                default='')
-        self.parser.remove_option('--cookie')
 
         self.options, _ = self.parser.parse_args()
 
@@ -94,10 +92,6 @@ Different sections (categories) of the configuration can be extracted with --cat
     def _check_options(self):
         if not (self.options.input or self.options.serviceurl) or (self.options.input and self.options.serviceurl):
             self.usageExit('Either -e or -i should be provided.')
-
-        credentials_provided = (self.options.username and self.options.password)
-        if self.options.serviceurl and not credentials_provided:
-            self.usageExit('Provide credentials with -u and -p when using -e/--endpoint option.')
 
         if self.options.categories and self.options.connectors_only:
             self.usageExit('Either --categories or --connectors-only can be provided.')

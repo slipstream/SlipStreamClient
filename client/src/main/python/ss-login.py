@@ -19,6 +19,7 @@
 from __future__ import print_function
 
 import sys
+import os
 
 from slipstream.command.CommandBase import CommandBase
 from slipstream.Client import Client
@@ -35,6 +36,16 @@ class MainProgram(CommandBase):
         self.username = None
         self.password = None
         super(MainProgram, self).__init__(argv)
+
+    def add_authentication_options(self):
+        self.parser.add_option('-u', '--username', dest='username',
+                               help='SlipStream username or $SLIPSTREAM_USERNAME',
+                               metavar='USERNAME',
+                               default=os.environ.get('SLIPSTREAM_USERNAME'))
+        self.parser.add_option('-p', '--password', dest='password',
+                               help='SlipStream password or $SLIPSTREAM_PASSWORD',
+                               metavar='PASSWORD',
+                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
 
     def parse(self):
         usage = """usage: %prog [options]"""

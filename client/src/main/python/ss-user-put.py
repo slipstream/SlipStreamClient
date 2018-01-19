@@ -31,9 +31,6 @@ class MainProgram(CommandBase):
 
     def __init__(self, argv=None):
         self.user = None
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -44,7 +41,6 @@ class MainProgram(CommandBase):
           For an example look at the ss-user-get output.'''
 
         self.parser.usage = usage
-        self.add_authentication_options()
         self.addEndpointOption()        
 
         self.options, self.args = self.parser.parse_args()
@@ -59,7 +55,7 @@ class MainProgram(CommandBase):
             self.usageExitWrongNumberOfArguments()
 
     def doWork(self):
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         dom = self.read_xml_and_exit_on_error(self.user)

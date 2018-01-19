@@ -57,7 +57,7 @@ class SlipStreamHttpClient(object):
         self.runEndpoint = self.serviceurl + util.RUN_RESOURCE_PATH
         self.run_url = self.runEndpoint + '/' + self.diid
 
-        self.authnServiceUrl = self.serviceurl + '/'
+        self.authnServiceUrl = self.serviceurl + '/api/session'
 
         self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
                                                     self.diid)
@@ -286,7 +286,8 @@ class SlipStreamHttpClient(object):
         return config
 
     def login(self, username, password):
-        self._httpPost(self.serviceurl + '/auth/login', body={
+        self._httpPost(self.authnServiceUrl, body={
+            'href': 'session-template/internal',
             'username': username,
             'password': password
         }, contentType='application/x-www-form-urlencoded')

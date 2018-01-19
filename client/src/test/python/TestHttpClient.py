@@ -35,23 +35,6 @@ class HttpClientTestCase(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_get_with_username_password(self):
-        client = HttpClient('username', 'password')
-        client.verboseLevel = 0
-        client.session = Mock()
-        client.session.cookies = []
-        resp = Mock(spec_set=requests.Response())
-        resp.request = Mock()
-        resp.request.headers = {}
-        resp.status_code = 200
-        client.session.request = Mock(return_value=resp)
-
-        client.get('http://foo.bar', retry=False)
-
-        args, kwargs = client.session.request.call_args
-        self.assertEqual(('GET', 'http://foo.bar'), args)
-        self.assertTrue(kwargs['auth'], ('username', 'password'))
-
     def test_get_with_oldstyle_cookie_string(self):
         client = HttpClient()
         client.verboseLevel = 0
@@ -67,7 +50,7 @@ class HttpClientTestCase(unittest.TestCase):
         self.assertEqual(cookies['acookie'], 'foo=bar')
 
     def test_unknown_http_return_code(self):
-        client = HttpClient('username', 'password')
+        client = HttpClient()
         client.verboseLevel = 0
         client.session = Mock()
         client.session.cookies = []
@@ -81,7 +64,7 @@ class HttpClientTestCase(unittest.TestCase):
                           retry=False)
 
     def test_post_with_data(self):
-        client = HttpClient('username', 'password')
+        client = HttpClient()
         client.verboseLevel = 0
         resp = requests.Response()
         resp.status_code = 200

@@ -34,9 +34,6 @@ class MainProgram(CommandBase):
         self.nodeName = None
         self.instancesToRemove = []
 
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -48,7 +45,6 @@ class MainProgram(CommandBase):
 <ids>        Ids of the node instances to to remove from a scalable deployment run.'''
 
         self.parser.usage = usage
-        self.add_authentication_options()
         self.addEndpointOption()
 
         self.options, self.args = self.parser.parse_args()
@@ -69,7 +65,7 @@ class MainProgram(CommandBase):
 
     def doWork(self):
 
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         uri = util.RUN_RESOURCE_PATH + "/" + self.runId + "/" + self.nodeName

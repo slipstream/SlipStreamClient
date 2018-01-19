@@ -98,24 +98,6 @@ class CommandBase(object):
         self.parse()
         self.verboseLevel = self.options.verboseLevel
 
-    def add_authentication_options(self):
-        self.parser.add_option('-u', '--username', dest='username',
-                               help='SlipStream username or $SLIPSTREAM_USERNAME',
-                               metavar='USERNAME',
-                               default=os.environ.get('SLIPSTREAM_USERNAME'))
-        self.parser.add_option('-p', '--password', dest='password',
-                               help='SlipStream password or $SLIPSTREAM_PASSWORD',
-                               metavar='PASSWORD',
-                               default=os.environ.get('SLIPSTREAM_PASSWORD'))
-        self.add_cookie_option()
-
-    def add_cookie_option(self):
-        default_cookie = util.DEFAULT_COOKIE_FILE
-        self.parser.add_option('--cookie', dest='cookie_filename',
-                               help='SlipStream cookie. Default: %s' %
-                                    default_cookie, metavar='FILE',
-                               default=default_cookie)
-
     def addEndpointOption(self):
         default = 'https://nuv.la'
         effective_default = os.environ.get('SLIPSTREAM_ENDPOINT', default)

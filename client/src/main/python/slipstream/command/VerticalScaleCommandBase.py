@@ -47,9 +47,6 @@ class VerticalScaleCommandBase(CommandBase):
         self.options = None
         self.args = None
 
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(VerticalScaleCommandBase, self).__init__(argv)
 
@@ -67,7 +64,6 @@ class VerticalScaleCommandBase(CommandBase):
                                                        'usage_options': self._usage_options}
 
         self.parser.usage = usage
-        self.add_authentication_options()
         self.addEndpointOption()
         self.add_scale_options()
 
@@ -90,7 +86,7 @@ class VerticalScaleCommandBase(CommandBase):
 
     def doWork(self):
 
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         self._retrieve_and_set_run(client)

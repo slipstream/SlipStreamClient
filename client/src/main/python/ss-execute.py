@@ -61,9 +61,6 @@ class MainProgram(CommandBase):
 
     def __init__(self, argv=None):
         self.moduleUri = None
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         self.parameters = {}
         super(MainProgram, self).__init__(argv)
@@ -76,7 +73,6 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.add_authentication_options()
         self.addEndpointOption()
 
         self.parser.add_option('--parameters', dest='parameters',

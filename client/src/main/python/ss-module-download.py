@@ -33,9 +33,6 @@ class MainProgram(CommandBase):
 
     def __init__(self, argv=None):
         self.module = ''
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -46,7 +43,6 @@ class MainProgram(CommandBase):
 
         self.parser.usage = usage
 
-        self.add_authentication_options()
         self.addEndpointOption()
 
         self.parser.add_option('--remove-cloud-specific', dest='remove_clouds',
@@ -202,7 +198,7 @@ class MainProgram(CommandBase):
             print('Error: The use of "--remove-cloud-specific" require Python >= 2.7', file=sys.stderr)
             sys.exit(1)
 
-        client = HttpClient(self.options.username, self.options.password)
+        client = HttpClient()
         client.verboseLevel = self.verboseLevel
 
         queue = [self.module]

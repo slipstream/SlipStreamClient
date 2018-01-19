@@ -35,9 +35,6 @@ class MainProgram(VMCommandBase):
     def __init__(self, argv=None):
         self.key = None
         self.size = None
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -52,7 +49,7 @@ class MainProgram(VMCommandBase):
                                help='Number of characters for the random ' +
                                'string (default: 12)', default=12)
 
-        self.add_run_authn_opts_and_parse()
+        self.add_run_opts_and_parse()
 
         self._check_args()
 

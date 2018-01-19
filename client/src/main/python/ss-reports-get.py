@@ -31,9 +31,6 @@ class MainProgram(CommandBase):
 
     def __init__(self, argv=None):
         self.module = ''
-        self.username = None
-        self.password = None
-        self.cookie = None
         self.endpoint = None
         super(MainProgram, self).__init__(argv)
 
@@ -43,7 +40,6 @@ class MainProgram(CommandBase):
 <run-uuid>    UUID of the run to get reports from.'''
 
         self.parser.usage = usage
-        self.add_authentication_options()
         self.addEndpointOption()
 
         self.parser.add_option('-c', '--components', dest='components',
