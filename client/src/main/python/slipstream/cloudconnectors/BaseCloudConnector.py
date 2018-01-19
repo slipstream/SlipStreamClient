@@ -22,8 +22,7 @@ import ssl
 import time
 import tempfile
 
-from threading import local
-from threading import Lock
+from threading import local, Lock
 
 from collections import defaultdict
 
@@ -330,6 +329,18 @@ class BaseCloudConnector(object):
             ssl._https_verify_certificates(False)
         except:
             pass
+
+        self._user_info = None
+
+    @property
+    def user_info(self):
+        if self._user_info is None:
+            raise ValueError('Object not initialized. Please call _initialization first.')
+        return self._user_info
+
+    @user_info.setter
+    def user_info(self, value):
+        self._user_info = value
 
     def __init_threading_related(self):
         self.__tasks_runnner = None
