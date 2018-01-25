@@ -27,6 +27,7 @@ import urllib2
 import tempfile
 import warnings
 import contextlib
+import stat
 import subprocess
 import uuid as uuidModule
 
@@ -712,12 +713,15 @@ def append_ssh_pubkey_to_authorized_keys(pubkey, user=''):
     dot_ssh_path = os.path.expanduser('~' + user) + '/.ssh'
     try:
         os.mkdir(dot_ssh_path)
+        os.chmod(dot_ssh_path, stat.S_IRWXU)
     except:
         pass
 
     file_content = '\n# Keys added by SlipStream\n%s\n# End of keys added by SlipStream\n' % pubkey
 
-    fileAppendContent(dot_ssh_path + '/authorized_keys', file_content)
+    authorized_keys_path = dot_ssh_path + '/authorized_keys'
+    fileAppendContent(authorized_keys_path, file_content)
+    os.chmod(authorized_keys_path, stat.S_IRUSR|stat.S_IWUSR)
 
     execute('chown -R %(user)s:$(id -g %(user)s) %(ssh_path)s' % {'user': user, 'ssh_path': dot_ssh_path},
             noWait=True, shell=True, withStderr=True, withOutput=True)
