@@ -28,6 +28,17 @@
 			<fileMode>0755</fileMode>
 		</fileSet>
 		<fileSet>
+			<directory>target/dependencies/slipstream-api/src/</directory>
+			<outputDirectory>lib</outputDirectory>
+			<includes>
+				<include>slipstream/**/*.py</include>
+			</includes>
+			<excludes>
+				<exclude>slipstream/__init__.py</exclude>
+			</excludes>
+			<fileMode>0755</fileMode>
+		</fileSet>
+		<fileSet>
 			<directory>target/main/scripts</directory>
 			<outputDirectory>sbin</outputDirectory>
 			<includes>
