@@ -18,7 +18,6 @@
 from __future__ import print_function
 
 import os
-import json
 from collections import defaultdict
 
 import slipstream.util as util
@@ -59,8 +58,6 @@ class SlipStreamHttpClient(object):
         self.run_url = self.runEndpoint + '/' + self.diid
 
         self.authnServiceUrl = self.serviceurl + '/api/session'
-
-        self.externalObjectUrl = self.serviceurl + '/api/external-object'
 
         self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
                                                     self.diid)
@@ -186,20 +183,7 @@ class SlipStreamHttpClient(object):
             NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
-        resource_id = self._createExternalObjectReport()
-        self._generateUploadUrlExternalObjectReport(uuid)
-        # self._createReport(self.runReportEndpoint)
-        # self._getUploadURL(self.runReportEndpoint)
         self._uploadReport(self.runReportEndpoint, report)
-
-    def _createExternalObjectReport(self):
-        resp, body = self._httpPost(self.externalObjectUrl,
-                              body=json.dumps({'externalObjectTemplate': {'href': 'external-object-template/report'}}),
-                              contentType='application/json')
-        return resp.headers.get('Location')
-
-    def _generateUploadUrlExternalObjectReport(self, uuid):
-        return self._httpPost(self.externalObjectUrl + '/' + uuid + '/upload')
 
     def _uploadReport(self, url, report):
         print('Uploading report to: %s' % url)
