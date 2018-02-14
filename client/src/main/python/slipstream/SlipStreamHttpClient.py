@@ -206,7 +206,6 @@ class SlipStreamHttpClient(object):
         print('Uploading report to: %s' % url)
 
         body = open(report, 'rb').read()
-        url += '/' + os.path.basename(report)
 
         self._httpPut(url, body, '', accept="*/*")
 
