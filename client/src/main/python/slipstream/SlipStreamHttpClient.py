@@ -59,6 +59,8 @@ class SlipStreamHttpClient(object):
 
         self.authnServiceUrl = self.serviceurl + '/api/session'
 
+        self.externalObjectUrl = self.serviceurl + '/api/external-object'
+
         self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
                                                     self.diid)
 
@@ -183,7 +185,22 @@ class SlipStreamHttpClient(object):
             NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
-        self._uploadReport(self.runReportEndpoint, report)
+        resource_id = self._createExternalObjectReport()
+        upload_url = self._generateUploadUrlExternalObjectReport(resource_id)
+        self._uploadReport(upload_url, report)
+
+    def _createExternalObjectReport(self):
+        # FIXME !!!! ss is the python api client
+        resp = ss.cimi_add('externalObjects',
+                           {'externalObjectTemplate': {'href': 'external-object-template/report',
+                                                       'runUUID': self.diid,
+                                                       'component': self.node_instance_name}})
+        return resp.json['resource-id']
+
+    def _generateUploadUrlExternalObjectReport(self, resource_id):
+        # FIXME !!!! ss is the python api client
+        resp = ss.cimi_operation(resource_id, "http://sixsq.com/slipstream/1/action/upload", {'ttl': 5})
+        return resp.json['uri']
 
     def _uploadReport(self, url, report):
         print('Uploading report to: %s' % url)
