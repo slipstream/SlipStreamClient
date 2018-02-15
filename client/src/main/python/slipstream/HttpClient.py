@@ -284,13 +284,13 @@ class HttpClient(object):
         if self.session is None:
             url_parts = urlparse(url)
             endpoint = '%s://%s' % url_parts[:2]
-            api = Api(endpoint=endpoint, cookie_file=self.cookie_filename, reauthenticate=True)
+            login_creds = {}
             if hasattr(self, 'username') and hasattr(self, 'password'):
-                api.login_internal(self.username, self.password)
+                login_creds = {'username': self.username, 'password': self.password}
             elif hasattr(self, 'api_key') and hasattr(self, 'api_secret'):
-                api.login_apikey(self.api_key, self.api_secret)
-            else:
-                raise Exception('Unable to login to %s. No credentials defined.' % endpoint)
+                login_creds = {'key': self.api_key, 'secret': self.api_secret}
+            api = Api(endpoint=endpoint, cookie_file=self.cookie_filename, reauthenticate=True,
+                      login_creds=login_creds)
             self.session = api.session
 
     def _log_normal(self, message):
