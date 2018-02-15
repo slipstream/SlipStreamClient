@@ -20,6 +20,7 @@
       <classifier>bundle</classifier>
       <version>${project.version}</version>
     </dependency>
+    <!--
     <dependency>
       <groupId>com.sixsq.slipstream</groupId>
       <artifactId>Libcloud-SixSq-zip</artifactId>
@@ -27,6 +28,7 @@
       <classifier>bundle</classifier>
       <version>${project.version}</version>
     </dependency>
+    -->
   </dependencies>
 
   <profiles>
@@ -53,7 +55,7 @@
                 <configuration>
                   <executable>nosetests</executable>
                   <environmentVariables>
-                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./src/main/scripts/:./target/dependencies</PYTHONPATH>
+                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/:./src/main/scripts/:./target/dependencies:./target/dependencies/slipstream-api/src</PYTHONPATH>
                   </environmentVariables>
                   <arguments>
                     <argument>-v</argument>
