@@ -280,17 +280,25 @@ class HttpClient(object):
             self.init_session(url)
         self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
 
+    def _get_login_creds(self):
+        if hasattr(self, 'username') and hasattr(self, 'password'):
+            return {'username': self.username, 'password': self.password}
+        elif hasattr(self, 'api_key') and hasattr(self, 'api_secret'):
+            return {'key': self.api_key, 'secret': self.api_secret}
+        else:
+            return {}
+
     def init_session(self, url):
         if self.session is None:
             url_parts = urlparse(url)
             endpoint = '%s://%s' % url_parts[:2]
-            login_creds = {}
-            if hasattr(self, 'username') and hasattr(self, 'password'):
-                login_creds = {'username': self.username, 'password': self.password}
-            elif hasattr(self, 'api_key') and hasattr(self, 'api_secret'):
-                login_creds = {'key': self.api_key, 'secret': self.api_secret}
-            api = Api(endpoint=endpoint, cookie_file=self.cookie_filename, reauthenticate=True,
-                      login_creds=login_creds)
+            login_creds = self._get_login_creds()
+            if not login_creds:
+                self._log_normal('WARNING: No login credentials provided. '
+                                 'Assuming cookies from a persisted cookie-jar %s will be used.'
+                                 % self.cookie_filename)
+            api = Api(endpoint=endpoint, cookie_file=self.cookie_filename,
+                      reauthenticate=True, login_creds=login_creds)
             self.session = api.session
 
     def _log_normal(self, message):

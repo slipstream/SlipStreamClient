@@ -20,8 +20,9 @@
 import requests
 import unittest
 
-from mock import Mock, call
+from mock import Mock
 from requests.cookies import RequestsCookieJar, create_cookie
+from requests import Response
 
 from slipstream.HttpClient import HttpClient, get_cookie
 from slipstream.exceptions.Exceptions import NetworkError
@@ -42,16 +43,28 @@ class HttpClientTestCase(unittest.TestCase):
 
     def test_init_session_fail_no_creds(self):
         ch = ConfigHolder()
+        ch.context = {}
         ch.set('verboseLevel', 0)
         ch.set('cookie_filename', '/dev/null')
 
         client = HttpClient(ch)
+        client.init_session('http://foo.bar')
+        assert client.session is not None
+        assert client.session.login_params == {}
+        resp = Mock(spec=Response)
+        resp.status_code = 403
+        resp.headers = {}
+        client.session._request = Mock(return_value=resp)
+        client.session.cimi_login = Mock()
+        try:
+            client.get('http://foo.bar', retry=False)
+        except Exception as ex:
+            assert ex.code == 403
+        assert client.session.cimi_login.called is True
 
-        self.assertRaisesRegexp(Exception, '^Unable to login',
-                                client.init_session, ('http://foo.bar'))
-
-    def test_init_session_success_login_internal(self):
+    def test_init_session_login_internal(self):
         ch = ConfigHolder()
+        ch.context = {}
         ch.set('verboseLevel', 0)
         ch.set('cookie_filename', '/dev/null')
         ch.set('username', 'foo')
@@ -60,11 +73,13 @@ class HttpClientTestCase(unittest.TestCase):
         client = HttpClient(ch)
         client.init_session('http://foo.bar')
         assert client.session is not None
-        assert Api.login_internal.called is True
-        assert Api.login_internal.call_args == call('foo', 'bar')
+        assert client.session.login_params
+        assert 'username' in client.session.login_params
+        assert 'password' in client.session.login_params
 
-    def test_init_session_success_login_apikey(self):
+    def test_init_session_login_apikey(self):
         ch = ConfigHolder()
+        ch.context = {}
         ch.set('verboseLevel', 0)
         ch.set('cookie_filename', '/dev/null')
         ch.set('api_key', 'key')
@@ -73,8 +88,9 @@ class HttpClientTestCase(unittest.TestCase):
         client = HttpClient(ch)
         client.init_session('http://foo.bar')
         assert client.session is not None
-        assert Api.login_apikey.called is True
-        assert Api.login_apikey.call_args == call('key', 'secret')
+        assert client.session.login_params
+        assert 'key' in client.session.login_params
+        assert 'secret' in client.session.login_params
 
     def test_unknown_http_return_code(self):
         client = HttpClient()
@@ -92,6 +108,7 @@ class HttpClientTestCase(unittest.TestCase):
 
     def test_post_with_data(self):
         ch = ConfigHolder()
+        ch.context = {}
         ch.set('verboseLevel', 0)
         ch.set('cookie_filename', '/dev/null')
         ch.set('api_key', 'key')
@@ -105,9 +122,6 @@ class HttpClientTestCase(unittest.TestCase):
         requests.sessions.Session.send = Mock(return_value=resp)
 
         client.post('http://example.com', 'a=b\nc=d')
-
-        assert Api.login_apikey.called is True
-        assert Api.login_apikey.call_args == call('key', 'secret')
 
         args, kwargs = requests.sessions.Session.send.call_args
         self.assertEqual(len(args), 1)
