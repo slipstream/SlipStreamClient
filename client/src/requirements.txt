@@ -9,5 +9,4 @@ pyOpenSSL>=16.2.0
 pycrypto==2.6.1
 requests>=2.18.1
 scpclient==0.5
-slipstream-api>=3.46
 xmlwitch==0.2.1

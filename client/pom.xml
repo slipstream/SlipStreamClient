@@ -20,15 +20,6 @@
       <classifier>bundle</classifier>
       <version>${project.version}</version>
     </dependency>
-    <!--
-    <dependency>
-      <groupId>com.sixsq.slipstream</groupId>
-      <artifactId>Libcloud-SixSq-zip</artifactId>
-      <type>tar.gz</type>
-      <classifier>bundle</classifier>
-      <version>${project.version}</version>
-    </dependency>
-    -->
   </dependencies>
 
   <profiles>
@@ -53,49 +44,15 @@
                 </goals>
                 <phase>test</phase>
                 <configuration>
-                  <executable>nosetests</executable>
-                  <environmentVariables>
-                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/:./src/main/scripts/:./target/dependencies:./target/dependencies/slipstream-api/src</PYTHONPATH>
-                  </environmentVariables>
+                  <workingDirectory>${basedir}/src</workingDirectory>
+                  <executable>tox</executable>
                   <arguments>
-                    <argument>-v</argument>
-                    <argument>--where=target/test/python</argument>
-                    <argument>--ignore-files=.*Live.py</argument>
-                    <argument>--with-xunit</argument>
-                    <argument>--xunit-file=${project.build.directory}/nosetests.xml</argument>
-                    <argument>--with-coverage</argument>
-                    <argument>--cover-xml</argument>
-                    <argument>--cover-xml-file=${project.build.directory}/coverage.xml</argument>
-                    <argument>--cover-package=slipstream</argument>
+                    <argument>-c</argument>
+                    <argument>tox.ini</argument>
+                    <argument>${project.build.directory}/SlipStreamPythonAPI-tarball-${project.version}-bundle.tar.gz</argument>
                   </arguments>
                 </configuration>
               </execution>
-              
-              <execution>
-                <id>pylint</id>
-                <goals>
-                  <goal>exec</goal>
-                </goals>
-                <phase>test</phase>
-                <configuration>
-                  <workingDirectory>${project.build.directory}/main/python</workingDirectory>
-                  <outputFile>${project.build.directory}/pylint.out</outputFile>
-                  <successCodes>
-                    <successCode>0</successCode>
-                    <successCode>30</successCode>
-                    <successCode>31</successCode>
-                  </successCodes>
-                  <executable>pylint</executable>
-                  <arguments>
-                    <argument>-f</argument>
-                    <argument>parseable</argument>
-                    <argument>--rcfile</argument>
-                    <argument>${basedir}/pylint.config</argument>
-                    <argument>slipstream</argument>
-                  </arguments>
-                </configuration>
-              </execution>
-              
             </executions>
           </plugin>
         </plugins>
@@ -112,32 +69,14 @@
 
         <executions>
           <execution>
-            <id>get-libcloud</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>com.sixsq.slipstream</groupId>
-                  <artifactId>Libcloud-SixSq-zip</artifactId>
-                  <type>tar.gz</type>
-                  <classifier>bundle</classifier>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-
-          <execution>
             <id>get-ss-python-api</id>
             <phase>generate-test-sources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <outputDirectory>${project.build.directory}/</outputDirectory>
+
               <artifactItems>
                 <artifactItem>
                   <groupId>com.sixsq.slipstream</groupId>
@@ -149,24 +88,6 @@
             </configuration>
           </execution>
 
-          <execution>
-            <id>unpack-python-api</id>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/dependencies/slipstream-api/</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>com.sixsq.slipstream</groupId>
-                  <artifactId>SlipStreamPythonAPI-tarball</artifactId>
-                  <version>${project.version}</version>
-                  <classifier>bundle</classifier>
-                  <type>tar.gz</type>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
         </executions>
 
       </plugin>
