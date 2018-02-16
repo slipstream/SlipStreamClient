@@ -12,6 +12,25 @@
     <version>3.46-SNAPSHOT</version>
   </parent>
 
+  <dependencies>
+    <dependency>
+      <groupId>com.sixsq.slipstream</groupId>
+      <artifactId>SlipStreamPythonAPI-tarball</artifactId>
+      <type>tar.gz</type>
+      <classifier>bundle</classifier>
+      <version>${project.version}</version>
+    </dependency>
+    <!--
+    <dependency>
+      <groupId>com.sixsq.slipstream</groupId>
+      <artifactId>Libcloud-SixSq-zip</artifactId>
+      <type>tar.gz</type>
+      <classifier>bundle</classifier>
+      <version>${project.version}</version>
+    </dependency>
+    -->
+  </dependencies>
+
   <profiles>
     <profile>
       <id>unit-testing</id>
@@ -36,7 +55,7 @@
                 <configuration>
                   <executable>nosetests</executable>
                   <environmentVariables>
-                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/mock/:./src/external/:./src/main/scripts/:./target/dependencies</PYTHONPATH>
+                    <PYTHONPATH>./target/test/python/:./target/main/python/:./src/external/:./src/main/scripts/:./target/dependencies:./target/dependencies/slipstream-api/src</PYTHONPATH>
                   </environmentVariables>
                   <arguments>
                     <argument>-v</argument>
@@ -86,6 +105,71 @@
 
   <build>
     <plugins>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+
+        <executions>
+          <execution>
+            <id>get-libcloud</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.sixsq.slipstream</groupId>
+                  <artifactId>Libcloud-SixSq-zip</artifactId>
+                  <type>tar.gz</type>
+                  <classifier>bundle</classifier>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>get-ss-python-api</id>
+            <phase>generate-test-sources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.sixsq.slipstream</groupId>
+                  <artifactId>SlipStreamPythonAPI-tarball</artifactId>
+                  <type>tar.gz</type>
+                  <classifier>bundle</classifier>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>unpack-python-api</id>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies/slipstream-api/</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.sixsq.slipstream</groupId>
+                  <artifactId>SlipStreamPythonAPI-tarball</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>bundle</classifier>
+                  <type>tar.gz</type>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+
+      </plugin>
 
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
@@ -152,33 +236,6 @@
           </execution>
 
         </executions>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-dependency-plugin</artifactId>
-
-        <executions>
-          <execution>
-            <id>get-libcloud</id>
-            <phase>generate-test-sources</phase>
-            <goals>
-              <goal>unpack</goal>
-            </goals>
-            <configuration>
-              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
-              <artifactItems>
-                <artifactItem>
-                  <groupId>com.sixsq.slipstream</groupId>
-                  <artifactId>Libcloud-SixSq-zip</artifactId>
-                  <type>tar.gz</type>
-                  <classifier>bundle</classifier>
-                </artifactItem>
-              </artifactItems>
-            </configuration>
-          </execution>
-        </executions>
-
       </plugin>
 
     </plugins>

@@ -4,6 +4,7 @@ which python  >/dev/null 2>&1 && exec python  "$0" "$@"
 which python3 >/dev/null 2>&1 && exec python3 "$0" "$@"
 exec echo "Python not found" # '''
 from __future__ import print_function
+
 """
  SlipStream Client
  =====
@@ -24,6 +25,7 @@ from __future__ import print_function
 
 import getpass
 import hashlib
+import json
 import os
 import platform
 import re
@@ -53,7 +55,6 @@ except ImportError:
     import urllib.parse as urlparse
 
 from functools import wraps
-
 
 SLIPSTREAM_HOME = os.path.join(os.sep, 'opt', 'slipstream')
 SLIPSTREAM_CLIENT_HOME = os.path.join(SLIPSTREAM_HOME, 'client')
@@ -113,18 +114,22 @@ SYSTEMD_BASED_DISTROS = dict([('CentOS', SYSTEMD_RedHat_ver_min_incl_max_excl),
 if tuple(sys.version_info[0:2]) < (2, 7):
     from subprocess import Popen, PIPE
 
+
     class CalledProcessError(Exception):
         """This exception is raised when a process run by check_call() or
         check_output() returns a non-zero exit status.
         The exit status will be stored in the returncode attribute;
         check_output() will also store the output in the output attribute.
         """
+
         def __init__(self, returncode, cmd, output=None):
             self.returncode = returncode
             self.cmd = cmd
             self.output = output
+
         def __str__(self):
             return "Command '%s' returned non-zero exit status %d" % (self.cmd, self.returncode)
+
 
     def check_output(*popenargs, **kwargs):
         if 'stdout' in kwargs:
@@ -138,6 +143,7 @@ if tuple(sys.version_info[0:2]) < (2, 7):
                 cmd = popenargs[0]
             raise CalledProcessError(retcode, cmd, output=output)
         return output
+
 
     subprocess.CalledProcessError = CalledProcessError
     subprocess.check_output = check_output
@@ -166,6 +172,7 @@ def retry(ExceptionToCheck, tries=5, delay=1, backoff=2, logger=None):
     :param logger: logger to use. If None, print
     :type logger: logging.Logger instance
     """
+
     def deco_retry(f):
 
         @wraps(f)
@@ -315,12 +322,14 @@ def _persist_ss_context():
     slipstream_context = """[contextualization]
 diid = %s
 username = %s
-cookie = %s
+api_key = %s
+api_secret = %s
 serviceurl = %s
 node_instance_name = %s
 """ % (os.environ['SLIPSTREAM_DIID'],
        os.environ['SLIPSTREAM_USERNAME'],
-       os.environ['SLIPSTREAM_COOKIE'].strip('"'),
+       os.environ['SLIPSTREAM_API_KEY'].strip('"'),
+       os.environ['SLIPSTREAM_API_SECRET'].strip('"'),
        os.environ['SLIPSTREAM_SERVICEURL'],
        os.environ['SLIPSTREAM_NODE_INSTANCE_NAME'])
     _write_to_ss_client_bin('slipstream.context', slipstream_context)
@@ -407,7 +416,7 @@ def _download(src_url, dst_file):
 
     try:
         while True:
-            data = src_fh.read(2**16)
+            data = src_fh.read(2 ** 16)
             if not data:
                 break
             dst_fh.write(data)
@@ -431,7 +440,7 @@ def _download_and_extract_tarball(tarball_url, target_dir):
             if local_sha1 == remote_sha1.strip():
                 info('Tarball is up to date:', dst_file)
                 return
-        except Exception as e :
+        except Exception as e:
             info(e)
             pass
 
@@ -489,8 +498,10 @@ def _add_sudo_if_needed(cmd):
         cmd.insert(0, 'sudo')
     return cmd
 
+
 def _check_call_no_retry(cmd):
     subprocess.check_call(_add_sudo_if_needed(cmd), stdout=subprocess.PIPE)
+
 
 @retry(Exception, tries=5, delay=4)
 def _check_call(cmd):
@@ -571,6 +582,7 @@ def _with_pip(fn):
 def _pip_install(package):
     _pip_run_cmd(['install', '-I', package])
 
+
 def install_python2():
     # Ubuntu 16.04 doesn't have python 2 preinstalled
     if sys.version_info[0] > 2:
@@ -579,6 +591,7 @@ def install_python2():
         _check_call(INSTALL_CMD + ['python'])
         return True
     return False
+
 
 def _install_pycrypto_dependencies():
     deps = ['gcc',
@@ -973,6 +986,7 @@ def main():
 
 
 class AbortPublisher(object):
+
     def __init__(self):
         self._setup_connection()
 
@@ -982,6 +996,37 @@ class AbortPublisher(object):
             self.c = httplib.HTTPSConnection(hostname, port)
         else:
             self.c = httplib.HTTPConnection(hostname, port)
+        self._session_uri = '/api/session'
+        self._cookie = self._authenticate()
+
+    @retry(Exception, tries=5, delay=5)
+    def _authn_do(self):
+        login_params = {'href': 'session-template/api-key',
+                        'key': os.environ['SLIPSTREAM_API_KEY'].strip('"'),
+                        'secret': os.environ['SLIPSTREAM_API_SECRET'].strip('"')}
+        try:
+            self.c.request('POST', self._session_uri,
+                           body=json.dumps({'sessionTemplate': login_params}),
+                           headers={'Content-Type': 'application/json',
+                                    'Accept': 'application/json'})
+            return self.c.getresponse()
+        finally:
+            self.c.close()
+
+    def _authenticate(self):
+        """Returns cookie on success otherwise, raises."""
+        resp = self._authn_do()
+        if resp.status >= 400:
+            url = '%s://%s:%s%s' % (self._get_service_url_in_parts()[0],
+                                    self.c.host, str(self.c.port),
+                                    self._session_uri)
+            msg = 'Failed to authenticate to %s when publishing abort message.' % url
+            error(msg)
+            error(resp.status, resp.reason)
+            error(resp.read())
+            raise Exception(msg)
+        else:
+            return resp.getheader('set-cookie')
 
     def _get_service_url_in_parts(self):
         url_split = urlparse.urlsplit(os.environ['SLIPSTREAM_SERVICEURL'])
@@ -1006,14 +1051,14 @@ class AbortPublisher(object):
         return {'user-agent': 'slipstream-bootstrap',
                 'accept': 'application/xml',
                 'content-type': 'text/plain',
-                'cookie': os.environ['SLIPSTREAM_COOKIE'].strip('"')}
+                'cookie': self._cookie}
 
     def _process_response(self, response):
-        uri = '%s://%s:%s%s' % (self._get_service_url_in_parts()[0],
+        url = '%s://%s:%s%s' % (self._get_service_url_in_parts()[0],
                                 self.c.host, str(self.c.port),
                                 self._get_request_url())
         if response.status != 200:
-            error('Failed to publish abort message to', uri)
+            error('Failed to publish abort message to', url)
             error(response.status, response.reason)
             error(response.read())
         else:
@@ -1028,5 +1073,3 @@ if __name__ == "__main__":
         with open(fullFilePath, 'w') as f:
             f.write(str(e))
         raise
-
-

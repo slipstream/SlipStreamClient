@@ -42,6 +42,7 @@ setup(
     license='Apache License, Version 2.0',
     platforms='Any',
     url='http://sixsq.com',
+    namespace_packages=['slipstream'],
     install_requires=[
         'requests',
         'six'],

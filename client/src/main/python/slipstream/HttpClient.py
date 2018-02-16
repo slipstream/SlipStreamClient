@@ -16,21 +16,17 @@
  limitations under the License.
 """
 
-import os
+from __future__ import print_function
+
 import time
 import httplib
 import requests
-import re
 import socket
-import stat
 from random import random
 from threading import Lock
 from urlparse import urlparse
-from cookielib import CookieJar
-from requests import Request
 from requests.exceptions import RequestException
-from requests.cookies import MockResponse, MockRequest, RequestsCookieJar
-from six.moves.http_cookiejar import MozillaCookieJar
+from requests.cookies import RequestsCookieJar
 
 try:
     from requests.packages.urllib3.exceptions import HTTPError
@@ -39,11 +35,11 @@ except:
 
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
+from slipstream.api.api import Api
 
 etree = util.importETree()
 
 DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
-MACHINE_COOKIE_KEY = 'com.sixsq.isMachine'
 
 
 def get_cookie(cookie_jar, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
@@ -69,53 +65,6 @@ def get_cookie(cookie_jar, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
         return cookie
     else:
         return '%s=%s' % (name, cookie)
-
-
-class SessionStore(requests.Session):
-    """Session with extended MozillaCookieJar file-based store.
-    """
-
-    def __init__(self, cookie_file=None):
-        super(SessionStore, self).__init__()
-        if cookie_file is None:
-            cookie_file = util.DEFAULT_COOKIE_FILE
-        cookie_dir = os.path.dirname(cookie_file)
-        self.cookies = MozillaCookieJar(cookie_file)
-        if not os.path.isdir(cookie_dir):
-            os.mkdir(cookie_dir, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
-        if os.path.isfile(cookie_file):
-            self.cookies.load(ignore_discard=True)
-            self.cookies.clear_expired_cookies()
-
-    def request(self, *args, **kwargs):
-        response = super(SessionStore, self).request(*args, **kwargs)
-        if not self.verify and response.cookies:
-            self._unsecure_cookie(args[1], response)
-        if 'Set-Cookie' in response.headers:
-            self.cookies.save(ignore_discard=True)
-        return response
-
-    def _unsecure_cookie(self, url_str, response):
-        url = urlparse(url_str)
-        if url.scheme.lower() == 'http':
-            for cookie in response.cookies:
-                cookie.secure = False
-                self.cookies.set_cookie_if_ok(cookie,
-                                              MockRequest(response.request))
-
-    def clear(self, domain, path=None, name=None):
-        try:
-            self.cookies.clear(domain, path, name)
-            self.cookies.save()
-        except KeyError as ex:
-            util.printError("Failed to clear local cookie: %s" % ex)
-
-    def set_cookies(self, cookies=[]):
-        for c in cookies:
-            self.cookies.set_cookie(c)
-
-    def get_cookie(self, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
-        return get_cookie(self.cookies, domain, path, name)
 
 
 # Client Error
@@ -156,8 +105,7 @@ def disable_urllib3_warnings():
 
 class HttpClient(object):
 
-    def __init__(self, cookie=None, configHolder=None):
-        self.cookie = cookie
+    def __init__(self, configHolder=None):
         self.host_cert_verify = False
         self.verboseLevel = util.VERBOSE_LEVEL_NORMAL
         self.cookie_filename = util.DEFAULT_COOKIE_FILE
@@ -218,7 +166,7 @@ class HttpClient(object):
             else:
                 detail = _extract_detail(resp.text)
                 detail = detail and detail or (
-                    "%s (%d)" % (resp.reason, resp.status_code))
+                        "%s (%d)" % (resp.reason, resp.status_code))
                 msg = "Failed calling method %s on url %s, with reason: %s" % (
                     method, url, detail)
                 clientEx = Exceptions.ClientError(msg)
@@ -332,45 +280,26 @@ class HttpClient(object):
             self.init_session(url)
         self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
 
-    @staticmethod
-    def _is_machine_cookie(cookie_str):
-        """Expected structure of the cookie string:
-        com.sixsq.slipstream.cookie=k1=val1&k2=val2; Path=<URI>
-        """
-        if re.search('%s=true' % MACHINE_COOKIE_KEY, cookie_str):
-            return True
-        return False
-
-    def _url_for_cookie(self, cookie_str, url):
-        """Machine cookie allows access to /.
-        """
-        if self._is_machine_cookie(cookie_str):
-            _url = urlparse(url)
-            return '%s://%s/' % (_url.scheme, _url.netloc)
+    def _get_login_creds(self):
+        if hasattr(self, 'username') and hasattr(self, 'password'):
+            return {'username': self.username, 'password': self.password}
+        elif hasattr(self, 'api_key') and hasattr(self, 'api_secret'):
+            return {'key': self.api_key, 'secret': self.api_secret}
         else:
-            return url
-
-    def _cookie_from_str(self, url, cookie_str):
-        from StringIO import StringIO
-        data = "Set-Cookie: %s" % cookie_str
-        headers = httplib.HTTPMessage(StringIO(data))
-        resp = MockResponse(headers)
-        req = MockRequest(Request(method='GET',
-                                  url=self._url_for_cookie(cookie_str, url)))
-        jar = CookieJar()
-        return jar.make_cookies(resp, req)
-
-    def _set_oldstyle_cookie_on_session(self, url):
-        if self.cookie:
-            cookies = self._cookie_from_str(url, self.cookie)
-            self.session.set_cookies(cookies)
-            self.cookie = None
+            return {}
 
     def init_session(self, url):
         if self.session is None:
-            self.session = SessionStore(cookie_file=self.cookie_filename)
-            # TODO: remove when old cookie from ConfigHolder is gone.
-            self._set_oldstyle_cookie_on_session(url)
+            url_parts = urlparse(url)
+            endpoint = '%s://%s' % url_parts[:2]
+            login_creds = self._get_login_creds()
+            if not login_creds:
+                self._log_normal('WARNING: No login credentials provided. '
+                                 'Assuming cookies from a persisted cookie-jar %s will be used.'
+                                 % self.cookie_filename)
+            api = Api(endpoint=endpoint, cookie_file=self.cookie_filename,
+                      reauthenticate=True, login_creds=login_creds)
+            self.session = api.session
 
     def _log_normal(self, message):
         util.printDetail(message, self.verboseLevel,

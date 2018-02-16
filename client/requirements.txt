@@ -14,3 +14,4 @@ pyOpenSSL>=16.2.0
 requests>=2.18.1
 openpyxl>=2.4.8
 lxml>=3.8.0
+slipstream-api>=3.46
