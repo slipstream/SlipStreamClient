@@ -78,5 +78,6 @@ setup(
     classifiers=CLASSIFIERS,
     packages=packages,
     package_dir={'slipstream': 'lib/slipstream'},
-    requires=['httplib2']
+    requires=['httplib2'],
+    namespace_packages=['slipstream']
 )
