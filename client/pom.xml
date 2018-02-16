@@ -76,6 +76,7 @@
             </goals>
             <configuration>
               <outputDirectory>${project.build.directory}/</outputDirectory>
+
               <artifactItems>
                 <artifactItem>
                   <groupId>com.sixsq.slipstream</groupId>
@@ -86,6 +87,7 @@
               </artifactItems>
             </configuration>
           </execution>
+
         </executions>
 
       </plugin>
