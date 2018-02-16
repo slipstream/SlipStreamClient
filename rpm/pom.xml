@@ -136,6 +136,7 @@
             <require>python-requests</require>
             <require>python-crypto</require>
             <require>slipstream-useradd</require>
+            <require>slipstream-api</require>
           </requires>
           <defineStatements>
             <defineStatement>__os_install_post %{nil}</defineStatement>
