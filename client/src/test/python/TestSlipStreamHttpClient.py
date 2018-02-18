@@ -21,11 +21,17 @@ import os
 import unittest
 from mock import Mock
 
-from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from requests.cookies import RequestsCookieJar, create_cookie
+import requests
+
+from slipstream.exceptions.Exceptions import NetworkError
+
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient, get_cookie
 from slipstream.SlipStreamHttpClient import DomExtractor
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream import util
 from slipstream.NodeDecorator import NodeDecorator
+from slipstream.api import Api
 
 etree = util.importETree()
 
@@ -33,10 +39,14 @@ etree = util.importETree()
 renderings.
 '''
 
+Api.login_internal = Mock()
+Api.login_apikey = Mock()
+
 
 def _get_resources_path():
     level_up = os.path.split(os.path.dirname(__file__))[0]
     return os.path.join(level_up, 'resources')
+
 
 with open(os.path.join(_get_resources_path(), 'run.xml')) as fd:
     RUN_XML = fd.read()
@@ -55,7 +65,6 @@ CLOUD_NAME = 'myCloud'
 
 
 class SlipStreamHttpClientTestCase(unittest.TestCase):
-
     def setUp(self):
         self.context = {}
         self.context['diid'] = '1234'
@@ -66,6 +75,132 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def tearDown(self):
         pass
+
+    def test_init_session_fail_no_creds(self):
+        ch = ConfigHolder()
+        ch.context = {}
+        ch.set('verboseLevel', 0)
+        ch.set('cookie_filename', '/dev/null')
+
+        client = SlipStreamHttpClient(ch)
+        client.init_session('http://foo.bar')
+        assert client.session is not None
+        assert client.session.login_params == {}
+        resp = Mock(spec=requests.Response)
+        resp.status_code = 403
+        resp.headers = {}
+        client.session._request = Mock(return_value=resp)
+        client.session.cimi_login = Mock()
+        try:
+            client.get('http://foo.bar', retry=False)
+        except Exception as ex:
+            assert ex.code == 403
+        assert client.session.cimi_login.called is True
+
+    def test_init_session_login_internal(self):
+        ch = ConfigHolder()
+        ch.context = {}
+        ch.set('verboseLevel', 0)
+        ch.set('cookie_filename', '/dev/null')
+        ch.set('username', 'foo')
+        ch.set('password', 'bar')
+
+        client = SlipStreamHttpClient(ch)
+        client.init_session('http://foo.bar')
+        assert client.session is not None
+        assert client.session.login_params
+        assert 'username' in client.session.login_params
+        assert 'password' in client.session.login_params
+
+    def test_init_session_login_apikey(self):
+        ch = ConfigHolder()
+        ch.context = {}
+        ch.set('verboseLevel', 0)
+        ch.set('cookie_filename', '/dev/null')
+        ch.set('api_key', 'key')
+        ch.set('api_secret', 'secret')
+
+        client = SlipStreamHttpClient(ch)
+        client.init_session('http://foo.bar')
+        assert client.session is not None
+        assert client.session.login_params
+        assert 'key' in client.session.login_params
+        assert 'secret' in client.session.login_params
+
+    def test_unknown_http_return_code(self):
+        ch = ConfigHolder()
+        client = SlipStreamHttpClient(ch)
+        client.verboseLevel = 0
+        client.session = Mock()
+        client.session.cookies = []
+        resp = Mock(spec_set=requests.Response())
+        resp.request = Mock()
+        resp.request.headers = {}
+        resp.status_code = 999
+        client.session.request = Mock(return_value=resp)
+
+        self.assertRaises(NetworkError, client.get, 'http://foo.bar',
+                          retry=False)
+
+    def test_post_with_data(self):
+        ch = ConfigHolder()
+        ch.context = {}
+        ch.set('verboseLevel', 0)
+        ch.set('cookie_filename', '/dev/null')
+        ch.set('api_key', 'key')
+        ch.set('api_secret', 'secret')
+        client = SlipStreamHttpClient(ch)
+        resp = requests.Response()
+        resp.status_code = 200
+        resp.get = Mock(return_value=None)
+        resp.request = Mock()
+        resp.request.headers = {}
+        requests.sessions.Session.send = Mock(return_value=resp)
+
+        client.post('http://example.com', 'a=b\nc=d')
+
+        args, kwargs = requests.sessions.Session.send.call_args
+        self.assertEqual(len(args), 1)
+        req = args[0]
+        self.assertEqual(req.body, 'a=b\nc=d')
+
+    def test_get_cookie(self):
+        self.assertIsNone(get_cookie(RequestsCookieJar(), None))
+
+        cookie_str = 'cookie.name=this is a cookie'
+        name, value = cookie_str.split('=')
+        domain = 'example.com'
+        path = '/some'
+
+        jar = RequestsCookieJar()
+        cookie = create_cookie(name, value, **{'domain': domain, 'path': path})
+        jar.set_cookie(cookie)
+
+        # w/o path
+        self.assertIsNone(get_cookie(jar, None))
+        self.assertIsNone(get_cookie(jar, domain))
+        c_str = get_cookie(jar, domain, name=name)
+        self.assertIsNotNone(c_str)
+        self.assertEquals(cookie_str, c_str)
+
+        # w/ path
+        self.assertIsNone(get_cookie(jar, domain, path='/', name=name))
+
+        c_str = get_cookie(jar, domain, path='/some', name=name)
+        self.assertEquals(cookie_str, c_str)
+
+        c_str = get_cookie(jar, domain, path='/some/path', name=name)
+        self.assertEquals(cookie_str, c_str)
+
+        # root path cookie
+        jar = RequestsCookieJar()
+        cookie = create_cookie(name, value, **{'domain': domain, 'path': '/'})
+        jar.set_cookie(cookie)
+        c_str = get_cookie(jar, domain, path='/', name=name)
+        self.assertEquals(cookie_str, c_str)
+
+        c_str = get_cookie(jar, domain, path='/random', name=name)
+        self.assertEquals(cookie_str, c_str)
 
     def test_get_run_category(self):
 
@@ -80,10 +215,12 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def test_get_deployment_targets(self):
         targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'apache')
-        self.assertEquals(True, targets['execute'][-1].get('script','').startswith('#!/bin/sh -xe\napt-get update -y\n'))
+        self.assertEquals(True,
+                          targets['execute'][-1].get('script', '').startswith('#!/bin/sh -xe\napt-get update -y\n'))
 
         targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'testclient')
-        self.assertEquals(targets['execute'][-1].get('script','').startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
+        self.assertEquals(targets['execute'][-1].get('script', '').startswith(
+            '#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
                           True)
 
     def test_extract_node_instances_from_run(self):
@@ -132,7 +269,8 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         targets = DomExtractor.get_targets_from_module(dom)
 
         failMsg = "Failure getting '%s' build target."
-        assert targets.get(NodeDecorator.NODE_PRERECIPE)[-1].get('script') == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
+        assert targets.get(NodeDecorator.NODE_PRERECIPE)[-1].get(
+            'script') == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
         assert targets.get(NodeDecorator.NODE_RECIPE)[-1].get('script') == recipe, failMsg % NodeDecorator.NODE_RECIPE
         assert isinstance(targets[NodeDecorator.NODE_PACKAGES], list), failMsg % NodeDecorator.NODE_PACKAGES
         assert package1 in targets[NodeDecorator.NODE_PACKAGES], failMsg % NodeDecorator.NODE_PACKAGES
@@ -245,17 +383,19 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert isinstance(conf, dict)
 
     def test_server_config_dom_into_dict_value_updater(self):
-        base_url_param ='slipstream.base.url'
+        base_url_param = 'slipstream.base.url'
         base_url_value_orig = ''
         base_url_value_new = 'UPDATED'
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
         for k, v in conf['SlipStream_Basics']:
             if k == base_url_param:
                 base_url_value_orig = v
+
         def _updater(value):
             return value == base_url_value_orig and base_url_value_new or value
+
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE,
-                value_updater=_updater)
+                                                        value_updater=_updater)
         for k, v in conf['SlipStream_Basics']:
             if k == base_url_param:
                 assert v == base_url_value_new

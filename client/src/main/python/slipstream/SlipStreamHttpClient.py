@@ -118,8 +118,6 @@ class SlipStreamHttpClient(object):
         self.category = None
         self.run_dom = None
         self.ignoreAbort = False
-        self.username = ''
-        self.password = ''
         self.diid = ''
         self.node_instance_name = ''
         self.serviceurl = ''
@@ -165,8 +163,10 @@ class SlipStreamHttpClient(object):
         self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
                                                     self.diid)
 
+        user = self.username if hasattr(self, 'username') else ''
+
         self.userEndpoint = '%s/user/%s' % (self.serviceurl,
-                                            self.username)
+                                            user)
 
         self.configuration_endpoint = '%s%s' % (self.serviceurl,
                                                 util.CONFIGURATION_RESOURCE_PATH)

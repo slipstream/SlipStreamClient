@@ -48,7 +48,7 @@ class TestCloudWrapper(TestCloudConnectorsBase):
             {
                 'username': base64.b64encode('user'),
                 'password': base64.b64encode('pass'),
-                'cookie_filename': 'cookies',
+                'cookie_filename': '/var/tmp/cookies',
                 'serviceurl': self.serviceurl,
                 'node_instance_name': 'instance-name'
             },
@@ -81,10 +81,10 @@ class TestCloudWrapper(TestCloudConnectorsBase):
         cw = CloudWrapper(self.config_holder)
         cw.initCloudConnector()
 
-        cw._ss_client.httpClient._call = Mock(return_value=Mock())
+        cw._ss_client._call = Mock(return_value=Mock())
 
         cw._update_slipstream_image(NodeInstance({'image.resourceUri': 'module/Name'}), 'ABC')
-        cw._ss_client.httpClient._call.assert_called_with(
+        cw._ss_client._call.assert_called_with(
             '%s/module/Name/Test' % self.serviceurl,
             'PUT', 'ABC', 'application/xml',
             'application/xml', retry=True)

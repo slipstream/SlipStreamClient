@@ -26,7 +26,7 @@ import pprint
 
 import slipstream.util as util
 from slipstream.NodeDecorator import NodeDecorator
-from slipstream.HttpClient import get_cookie, DEFAULT_SS_COOKIE_NAME
+from slipstream.SlipStreamHttpClient import get_cookie, DEFAULT_SS_COOKIE_NAME
 
 TIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
 NO_SESSION_PROVIDED_MSG = "Session should have been provided along with " \

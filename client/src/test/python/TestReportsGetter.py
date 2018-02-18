@@ -22,7 +22,7 @@ import unittest
 
 from requests.cookies import RequestsCookieJar, create_cookie
 
-from slipstream.HttpClient import DEFAULT_SS_COOKIE_NAME
+from slipstream.SlipStreamHttpClient import DEFAULT_SS_COOKIE_NAME
 from slipstream.resources.reports import ReportsGetter, NO_SESSION_PROVIDED_MSG
 from slipstream.ConfigHolder import ConfigHolder
 
