@@ -18,16 +18,15 @@
 """
 from __future__ import print_function
 
-import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
-import slipstream.util as util
-import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from slipstream.ConfigHolder import ConfigHolder
+from slipstream.DomExtractor import DomExtractor
 
 class MainProgram(CommandBase):
-    '''A command-line program to show/list module definition(s).'''
+    """A command-line program to show/list module definition(s)."""
 
     def __init__(self, argv=None):
         self.module = ''
@@ -65,11 +64,13 @@ class MainProgram(CommandBase):
         self.module = self.read_input_file(file)
 
     def doWork(self):
-        client = HttpClient()
-        client.verboseLevel = self.verboseLevel
+        conf = ConfigHolder(options={'serviceurl': self.options.endpoint,
+                                     'verboseLevel': self.verboseLevel,
+                                     'retry': False})
+        client = SlipStreamHttpClient(conf)
 
         dom = self.read_xml_and_exit_on_error(self.module)
-        attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
+        attrs = DomExtractor.get_attributes(dom)
 
         root_node_name = dom.tag
         if root_node_name == 'list':
@@ -85,6 +86,7 @@ class MainProgram(CommandBase):
         url = self.options.endpoint + uri
 
         client.put(url, self.module)
+
 
 if __name__ == "__main__":
     try:

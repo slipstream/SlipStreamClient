@@ -18,17 +18,18 @@
 """
 from __future__ import print_function
 
-import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from slipstream.ConfigHolder import ConfigHolder
 import slipstream.util as util
 import slipstream.commands.NodeInstanceRuntimeParameter as NodeInstanceRuntimeParameter
 from slipstream.NodeDecorator import NodeDecorator
 
+
 class MainProgram(CommandBase):
-    '''A command-line program to add node instance(s) to a scalable deployment.'''
+    """A command-line program to add node instance(s) to a scalable deployment."""
 
     def __init__(self, argv=None):
         self.runId = None
@@ -85,9 +86,10 @@ class MainProgram(CommandBase):
             NodeInstanceRuntimeParameter.validate(rp)
 
     def doWork(self):
-
-        client = HttpClient()
-        client.verboseLevel = self.verboseLevel
+        conf = ConfigHolder(options={'serviceurl': self.options.endpoint,
+                                     'verboseLevel': self.verboseLevel,
+                                     'retry': False})
+        client = SlipStreamHttpClient(conf)
 
         baseUri = util.RUN_RESOURCE_PATH + "/" + self.runId
         nodeUri = baseUri + "/" + self.nodeName

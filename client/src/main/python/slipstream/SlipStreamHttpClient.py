@@ -18,17 +18,97 @@
 from __future__ import print_function
 
 import os
-from collections import defaultdict
-
-import slipstream.util as util
-import slipstream.exceptions.Exceptions as Exceptions
 
 from slipstream.UserInfo import UserInfo
-from slipstream.HttpClient import HttpClient
 from slipstream.NodeInstance import NodeInstance
 from slipstream.NodeDecorator import NodeDecorator
+from slipstream.DomExtractor import DomExtractor
+
+import time
+import httplib
+import requests
+import socket
+from random import random
+from threading import Lock
+from urlparse import urlparse
+from requests.exceptions import RequestException
+from requests.cookies import RequestsCookieJar
+
+try:
+    from requests.packages.urllib3.exceptions import HTTPError
+except:
+    from urllib3.exceptions import HTTPError
+
+import slipstream.exceptions.Exceptions as Exceptions
+import slipstream.util as util
+
+from slipstream.api import Api
 
 etree = util.importETree()
+
+
+DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
+
+
+def get_cookie(cookie_jar, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
+    """Returns requested cookie from the provided cookie_jar."""
+    jar = RequestsCookieJar()
+    jar.update(cookie_jar)
+    cookie = None
+    if path is None:
+        cookies = jar.get_dict(domain=domain)
+        cookie = cookies.get(name)
+    elif path == '/':
+        cookies = jar.get_dict(domain=domain, path=path)
+        cookie = cookies.get(name)
+    else:
+        url_path = path.split('/')
+        for n in range(len(url_path), 0, -1):
+            path = '/'.join(url_path[0:n]) or '/'
+            cookies = jar.get_dict(domain=domain, path=path)
+            if name in cookies:
+                cookie = cookies.get(name)
+                break
+    if cookie is None:
+        return cookie
+    else:
+        return '%s=%s' % (name, cookie)
+
+
+# Client Error
+NOT_FOUND_ERROR = 404
+CONFLICT_ERROR = 409
+PRECONDITION_FAILED_ERROR = 412
+EXPECTATION_FAILED_ERROR = 417
+TOO_MANY_REQUESTS_ERROR = 429
+# Server Error
+SERVICE_UNAVAILABLE_ERROR = 503
+
+
+def http_debug():
+    import logging
+    from httplib import HTTPConnection
+
+    HTTPConnection.debuglevel = 3
+
+    logging.basicConfig()
+    logging.getLogger().setLevel(logging.DEBUG)
+
+    requests_log = logging.getLogger("requests.packages.urllib3")
+    requests_log.setLevel(logging.DEBUG)
+    requests_log.propagate = True
+
+
+def disable_urllib3_warnings():
+    try:
+        requests.packages.urllib3.disable_warnings(
+            requests.packages.urllib3.exceptions.InsecureRequestWarning)
+    except:
+        try:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        except:
+            pass
 
 
 class SlipStreamHttpClient(object):
@@ -43,12 +123,35 @@ class SlipStreamHttpClient(object):
         self.diid = ''
         self.node_instance_name = ''
         self.serviceurl = ''
-        self.verboseLevel = None
+        self.verboseLevel = util.VERBOSE_LEVEL_NORMAL
+        self.cookie_filename = util.DEFAULT_COOKIE_FILE
         self.retry = True
+        self.host_cert_verify = False
 
         configHolder.assign(self)
         self._assemble_endpoints()
-        self.httpClient = HttpClient(configHolder=configHolder)
+
+        login_creds = self._get_login_creds()
+        if not login_creds:
+            self._log_normal('WARNING: No login credentials provided. '
+                             'Assuming cookies from a persisted cookie-jar %s will be used.'
+                             % self.cookie_filename)
+
+        self.api = Api(endpoint=self.serviceurl, cookie_file=self.cookie_filename,
+                       reauthenticate=True, login_creds=login_creds)
+
+        self.lock = Lock()
+        self.too_many_requests_count = 0
+
+        if configHolder:
+            configHolder.assign(self)
+
+        if self.verboseLevel >= 3:
+            http_debug()
+        else:
+            disable_urllib3_warnings()
+
+        self.session = None
 
     def set_retry(self, retry):
         self.retry = retry
@@ -101,8 +204,7 @@ class SlipStreamHttpClient(object):
         return rootElement.attrib[NodeDecorator.MODULE_RESOURCE_URI]
 
     def get_nodes_instances(self, cloud_service_name=None):
-        '''Return dict {<node_instance_name>: NodeInstance, }
-        '''
+        """Return dict {<node_instance_name>: NodeInstance, }"""
         nodes_instances = {}
 
         self._retrieveAndSetRun()
@@ -137,7 +239,7 @@ class SlipStreamHttpClient(object):
         return nodes_instances
 
     def _get_nodename(self):
-        'Node name derived from the node instance name.'
+        """Node name derived from the node instance name."""
         return self.node_instance_name.split(
             NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[0]
 
@@ -239,16 +341,203 @@ class SlipStreamHttpClient(object):
         self._httpDelete(url)
 
     def _httpGet(self, url, accept='application/xml'):
-        return self.httpClient.get(url, accept, retry=self.retry)
+        return self.get(url, accept, retry=self.retry)
 
     def _httpPut(self, url, body=None, contentType='application/xml', accept='application/xml'):
-        return self.httpClient.put(url, body, contentType, accept, retry=self.retry)
+        return self.put(url, body, contentType, accept, retry=self.retry)
 
     def _httpPost(self, url, body=None, contentType='application/xml'):
-        return self.httpClient.post(url, body, contentType, retry=self.retry)
+        return self.post(url, body, contentType, retry=self.retry)
 
     def _httpDelete(self, url, body=None):
-        return self.httpClient.delete(url, body=body, retry=self.retry)
+        return self.delete(url, body=body, retry=self.retry)
+
+    def get(self, url, accept='application/xml', retry=True):
+        resp = self._call(url, 'GET', accept=accept, retry=retry)
+        return resp, resp.text
+
+    def put(self, url, body=None, contentType='application/xml',
+            accept='application/xml', retry=True):
+        resp = self._call(url, 'PUT', body, contentType, accept, retry=retry)
+        return resp, resp.text
+
+    def post(self, url, body=None, contentType='application/xml', retry=True):
+        resp = self._call(url, 'POST', body, contentType, retry=retry)
+        return resp, resp.text
+
+    def delete(self, url, body=None, retry=True):
+        resp = self._call(url, 'DELETE', body, retry=retry)
+        return resp, resp.text
+
+    def _call(self, url, method,
+              body=None,
+              contentType='application/xml',
+              accept='application/xml',
+              retry=True):
+
+        def _handle3xx(resp):
+            raise Exception("Redirect should have been handled by HTTP library."
+                            "%s: %s" % (resp.status_code, resp.reason))
+
+        def _handle4xx(resp):
+            if resp.status_code == CONFLICT_ERROR:
+                raise Exceptions.AbortException(_extract_detail(resp.text))
+            if resp.status_code == PRECONDITION_FAILED_ERROR:
+                raise Exceptions.NotYetSetException(_extract_detail(resp.text))
+            if resp.status_code == EXPECTATION_FAILED_ERROR:
+                raise Exceptions.TerminalStateException(_extract_detail(
+                    resp.text))
+            if resp.status_code == TOO_MANY_REQUESTS_ERROR:
+                raise Exceptions.TooManyRequestsError("Too Many Requests")
+
+            if resp.status_code == NOT_FOUND_ERROR:
+                clientEx = Exceptions.NotFoundError(resp.reason)
+            else:
+                detail = _extract_detail(resp.text)
+                detail = detail and detail or (
+                    "%s (%d)" % (resp.reason, resp.status_code))
+                msg = "Failed calling method %s on url %s, with reason: %s" % (
+                    method, url, detail)
+                clientEx = Exceptions.ClientError(msg)
+
+            clientEx.code = resp.status_code
+            raise clientEx
+
+        def _handle5xx(resp):
+            if resp.status_code == SERVICE_UNAVAILABLE_ERROR:
+                raise Exceptions.ServiceUnavailableError(
+                    "SlipStream is in maintenance.")
+            else:
+                raise Exceptions.ServerError(
+                    "Failed calling method %s on url %s, with reason: %d: %s"
+                    % (method, url, resp.status_code, resp.reason))
+
+        def _extract_detail(content):
+            if not content:
+                return content
+            try:
+                return etree.fromstring(content).text
+            except Exception:
+                return content
+
+        def _build_headers():
+            headers = {}
+            if contentType:
+                headers['Content-Type'] = contentType
+            if accept:
+                headers['Accept'] = accept
+
+            return headers
+
+        def _request(headers):
+            try:
+                return self.session.request(method, url,
+                                            data=body,
+                                            headers=headers,
+                                            verify=self.host_cert_verify)
+            except requests.exceptions.InvalidSchema as ex:
+                raise Exceptions.ClientError("Malformed URL: %s" % ex)
+            except httplib.BadStatusLine:
+                raise Exceptions.NetworkError(
+                    "Error: BadStatusLine contacting: %s" % url)
+
+        def _handle_response(resp):
+            self._log_response(resp)
+
+            if 100 <= resp.status_code < 300:
+                return resp
+
+            if 300 <= resp.status_code < 400:
+                return _handle3xx(resp)
+
+            if 400 <= resp.status_code < 500:
+                return _handle4xx(resp)
+
+            if 500 <= resp.status_code < 600:
+                return _handle5xx(resp)
+
+            raise Exceptions.NetworkError('Unknown HTTP return code: %s' %
+                                          resp.status_code)
+
+        self.init_session(url)
+
+        self._log_normal(
+            'Contacting the server with %s, at: %s' % (method, url))
+
+        retry_until = 60 * 60 * 24 * 7  # 7 days in seconds
+        max_wait_time = 60 * 15  # 15 minutes in seconds
+        retry_count = 0
+
+        first_request_time = time.time()
+
+        while True:
+            try:
+                headers = _build_headers()
+                resp = _request(headers)
+                resp = _handle_response(resp)
+                with self.lock:
+                    if self.too_many_requests_count > 0:
+                        self.too_many_requests_count -= 1
+                return resp
+
+            except (Exceptions.TooManyRequestsError,
+                    Exceptions.ServiceUnavailableError) as ex:
+                sleep = min(
+                    abs(float(self.too_many_requests_count) / 10.0 * 290 + 10),
+                    300)
+
+            except (httplib.HTTPException, socket.error, HTTPError, RequestException,
+                    Exceptions.NetworkError, Exceptions.ServerError) as ex:
+                timed_out = (time.time() - first_request_time) >= retry_until
+                if retry is False or timed_out:
+                    self._log_normal('HTTP call error: %s' % ex)
+                    raise
+                sleep = min(float(retry_count) * 10.0, float(max_wait_time))
+                retry_count += 1
+
+            sleep += (random() * sleep * 0.2) - (sleep * 0.1)
+            with self.lock:
+                if self.too_many_requests_count < 11:
+                    self.too_many_requests_count += 1
+            self._log_normal('Error: %s. Retrying in %s seconds.' % (ex, sleep))
+            time.sleep(sleep)
+            self._log_normal('Retrying...')
+
+    def _get_login_creds(self):
+        if hasattr(self, 'username') and hasattr(self, 'password'):
+            return {'username': self.username, 'password': self.password}
+        elif hasattr(self, 'api_key') and hasattr(self, 'api_secret'):
+            return {'key': self.api_key, 'secret': self.api_secret}
+        else:
+            return {}
+
+    def init_session(self, url):
+        if self.session is None:
+            url_parts = urlparse(url)
+            endpoint = '%s://%s' % url_parts[:2]
+            login_creds = self._get_login_creds()
+            if not login_creds:
+                self._log_normal('WARNING: No login credentials provided. '
+                                 'Assuming cookies from a persisted cookie-jar %s will be used.'
+                                 % self.cookie_filename)
+            api = Api(endpoint=endpoint, cookie_file=self.cookie_filename,
+                      reauthenticate=True, login_creds=login_creds)
+            self.session = api.session
+
+    def _log_normal(self, message):
+        util.printDetail(message, self.verboseLevel,
+                         util.VERBOSE_LEVEL_NORMAL)
+
+    def _log_debug(self, message):
+        util.printDetail(message, self.verboseLevel,
+                         util.VERBOSE_LEVEL_DETAILED)
+
+    def _log_response(self, resp, max_characters=1000):
+        msg = 'Received response: %s\nWith content: %s' % (resp, resp.text)
+        if len(msg) > max_characters:
+            msg = '%s\n                         %s' % (
+                msg[:max_characters], '::::: Content truncated :::::')
+        self._log_debug(msg)
 
     def _printDetail(self, message):
         util.printDetail(message, self.verboseLevel, util.VERBOSE_LEVEL_DETAILED)
@@ -273,8 +562,7 @@ class SlipStreamHttpClient(object):
         return self.getRuntimeParameter(state_key, ignoreAbort=ignoreAbort)
 
     def remove_instances_from_run(self, node_name, ids, detele_ids_only=True):
-        """ids : []
-        """
+        """ids : []"""
         url = '%s/%s' % (self.run_url, node_name)
         body = "ids=%s" % ','.join(map(str, ids))
         if detele_ids_only:
@@ -286,267 +574,7 @@ class SlipStreamHttpClient(object):
         return config
 
     def login(self, username, password):
-        self._httpPost(self.authnServiceUrl, body={
-            'href': 'session-template/internal',
-            'username': username,
-            'password': password
-        }, contentType='application/x-www-form-urlencoded')
+        self.api.login_internal(username=username, password=password)
 
     def logout(self):
-        self.httpClient.delete_local_cookie(self.serviceurl + '/')
-
-    def get_session(self):
-        return self.httpClient.get_session()
-
-
-class DomExtractor(object):
-    EXTRADISK_PREFIX = 'extra.disk'
-    EXTRADISK_VOLATILE_KEY = EXTRADISK_PREFIX + '.volatile'
-
-    PATH_TO_NODE_ON_RUN = 'module/nodes/entry/node'
-    PATH_TO_PARAMETER = 'parameters/entry/parameter'
-
-    @staticmethod
-    def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
-        '''Return dict {<node_instance_name>: {<runtimeparamname>: <value>, }, }
-        '''
-        nodes_instances = {}
-        for node_instance_name in run_dom.attrib['nodeNames'].split(','):
-            node_instance_name = node_instance_name.strip()
-
-            node_instance = {}
-            node_instance[NodeDecorator.NODE_INSTANCE_NAME_KEY] = node_instance_name
-
-            # Unfortunately, this doesn't work on Python < 2.7
-            # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
-            query = "runtimeParameters/entry/runtimeParameter"
-            for rtp in run_dom.findall(query):
-                if rtp.get('group') == node_instance_name:
-                    key = DomExtractor._get_key_from_runtimeparameter(rtp)
-                    node_instance[key] = rtp.text
-            nodes_instances[node_instance_name] = node_instance
-
-        if cloud_service_name is not None:
-            for node_instance_name in nodes_instances.keys():
-                if cloud_service_name != nodes_instances[node_instance_name][NodeDecorator.CLOUDSERVICE_KEY]:
-                    del nodes_instances[node_instance_name]
-
-        return nodes_instances
-
-    @staticmethod
-    def extract_nodes_runtime_parameters(run_dom):
-        '''Return dict {<node_name>: {<runtimeparamname>: <value>, }, }
-        '''
-        nodes = {}
-        node_names = DomExtractor._get_node_names(run_dom)
-
-        for node_name in node_names:
-            node = {}
-            node[NodeDecorator.NODE_NAME_KEY] = node_name
-
-            # Unfortunately, this doesn't work on Python < 2.7
-            # query = "runtimeParameters/entry/runtimeParameter[@group='%s']" % node_instance_name
-            query = "runtimeParameters/entry/runtimeParameter"
-            for rtp in run_dom.findall(query):
-                if rtp.get('group') == node_name:
-                    key = DomExtractor._get_key_from_runtimeparameter(rtp)
-                    node[key] = rtp.text
-            nodes[node_name] = node
-
-        return nodes
-
-    @staticmethod
-    def _get_node_names(run_dom):
-        """Return list of node names in the run.
-        """
-        node_names = []
-        for group in run_dom.attrib['groups'].split(','):
-            node_name = ""
-            try:
-                node_name = group.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)[1]
-            except IndexError:
-                pass
-            else:
-                node_names.append(node_name.strip())
-        return node_names
-
-    @staticmethod
-    def _get_key_from_runtimeparameter(rtp):
-        return rtp.attrib['key'].split(NodeDecorator.NODE_PROPERTY_SEPARATOR, 1)[-1]
-
-    @staticmethod
-    def extract_node_image_attributes(run_dom, nodename):
-        ''' Return image attributes of all nodes.
-        '''
-        image = DomExtractor.extract_node_image(run_dom, nodename)
-        attributes = {}
-
-        if image is not None:
-            attributes = DomExtractor.get_attributes(image)
-
-        return attributes
-
-    @staticmethod
-    def extract_node_image(run_dom, nodename):
-        ''' Return image attributes of all nodes.
-        '''
-        image = None
-
-        if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
-            image = run_dom.find('module')
-        else:
-            for node in run_dom.findall(DomExtractor.PATH_TO_NODE_ON_RUN):
-                if node.get('name') == nodename:
-                    image = node.find('image')
-
-        return image
-
-    @staticmethod
-    def extract_deployment(run_dom, nodename):
-        ''' Return the deployment module of a run.
-        '''
-        return run_dom.find('module')
-
-    @staticmethod
-    def extract_node_image_targets(run_dom, node_name):
-
-        if NodeDecorator.is_orchestrator_name(node_name):
-            module_dom = DomExtractor.extract_deployment(run_dom, node_name)
-        else:
-            module_dom = DomExtractor.extract_node_image(run_dom, node_name)
-
-        return DomExtractor.get_targets_from_module(module_dom)
-
-    @staticmethod
-    def extract_node_image_build_state(run_dom, node_name):
-
-        if NodeDecorator.is_orchestrator_name(node_name):
-            return {}
-
-        image_dom = DomExtractor.extract_node_image(run_dom, node_name)
-        return DomExtractor.get_build_state_from_image(image_dom)
-
-    @staticmethod
-    def get_build_state_from_image(image_dom):
-        build_state = {}
-
-        for st in image_dom.findall('buildStates/buildState'):
-            module_uri = st.get('moduleUri')
-            built_on = st.get('builtOn', '').split(',')
-            build_state[module_uri] = dict(module_uri=module_uri, built_on=built_on)
-
-        return build_state
-
-    @staticmethod
-    def get_module_category(run_dom):
-        module = run_dom.find('module')
-        return module.get('category', None) if module is not None else None
-
-    @staticmethod
-    def get_extra_disks_from_image(image_dom):
-        extra_disks = {}
-
-        for entry in image_dom.findall('parameters/entry'):
-            param_name = entry.find('parameter').get('name')
-            if param_name.startswith(DomExtractor.EXTRADISK_PREFIX):
-                try:
-                    extra_disks[param_name] = entry.find('parameter/value').text or ''
-                except AttributeError:
-                    pass
-
-        return extra_disks
-
-    @staticmethod
-    def get_element_value_from_element_tree(element_tree, element_name):
-        element = element_tree.find(element_name)
-        value = getattr(element, 'text', '')
-        if value is None:
-            value = ''
-        return value
-
-    @staticmethod
-    def get_attributes(dom):
-        return dom.attrib
-
-    @staticmethod
-    def get_packages(module_dom):
-        packages = []
-
-        for package in module_dom.findall('packagesExpanded/packageExpanded'):
-            name = package.get('name')
-            if name:
-                packages.append(name)
-
-        return packages
-
-    @staticmethod
-    def extractCategoryFromRun(run_dom):
-        return run_dom.attrib['category']
-
-    @staticmethod
-    def extractTypeFromRun(run_dom):
-        return run_dom.attrib['type']
-
-    @staticmethod
-    def extract_mutable_from_run(run_dom):
-        return run_dom.attrib[util.RUN_PARAM_MUTABLE]
-
-    @staticmethod
-    def extractDefaultCloudServiceNameFromRun(run_dom):
-        return run_dom.attrib['cloudServiceName']
-
-    @staticmethod
-    def extract_run_parameters_from_run(run_dom):
-        parameters = {}
-        for node in run_dom.findall(DomExtractor.PATH_TO_PARAMETER):
-            value = node.find('value')
-            parameters[node.get('name')] = value.text if value is not None else None
-        return parameters
-
-    @staticmethod
-    def get_targets_from_module(module_dom):
-        '''Return deployment targets of the given image.
-        '''
-        targets = {}
-        for st in module_dom.findall('targetsExpanded/targetExpanded/subTarget'):
-            name = st.get('name')
-            subtarget = dict(name=name,
-                             order=int(st.get('order')),
-                             module_uri=st.get('moduleUri'),
-                             module=st.get('moduleShortName'),
-                             script=st.text)
-
-            targets.setdefault(name, [])
-            targets[name].append(subtarget)
-
-        for target in targets.itervalues():
-            target.sort(key=lambda t: t.get('order'))
-
-        if module_dom.tag == "imageModule" or module_dom.tag == "image" \
-                or module_dom.get('category') == NodeDecorator.IMAGE:
-            targets[NodeDecorator.NODE_PACKAGES] = DomExtractor.get_packages(module_dom)
-
-        return targets
-
-    @staticmethod
-    def server_config_dom_into_dict(config_dom, categories=[], value_updater=None):
-        '''
-        :param config_dom: Element Tree representation of the server's configuration.
-        :param categories: categories to extract; if empty, extracts all categories.
-        :return: dictionary {'category': [('param', 'value'),],}
-        '''
-        config = defaultdict(list)
-        for param in config_dom.findall('parameters/entry'):
-            category = param.find('parameter').get('category')
-            if categories and (category not in categories):
-                continue
-            name = param.find('parameter').get('name')
-            value = param.find('parameter/value').text
-            if value is None:
-                value = ''
-            if '\n' in value:
-                value = value.replace('\n', '')
-            if hasattr(value_updater, '__call__'):
-                value = value_updater(value)
-            config[category].append((name, value))
-        return config
+        self.api.logout()

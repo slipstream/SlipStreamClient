@@ -23,14 +23,16 @@ import os
 import sys
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from slipstream.ConfigHolder import ConfigHolder
+from slipstream.DomExtractor import DomExtractor
 import slipstream.util as util
-import slipstream.SlipStreamHttpClient as SlipStreamHttpClient
 
 etree = util.importETree()
 
+
 class MainProgram(CommandBase):
-    '''Uploads a collection of modules (in XML format) to the server.'''
+    """Uploads a collection of modules (in XML format) to the server."""
 
     def __init__(self, argv=None):
         self.module = ''
@@ -81,8 +83,10 @@ class MainProgram(CommandBase):
                     raise
 
     def doWork(self):
-        client = HttpClient()
-        client.verboseLevel = self.verboseLevel
+        conf = ConfigHolder(options={'serviceurl': self.options.endpoint,
+                                     'verboseLevel': self.verboseLevel,
+                                     'retry': False})
+        client = SlipStreamHttpClient(conf)
 
         # read all files once to determine the upload URL for each file
         # the URL is used to sort the files into an order that puts
@@ -98,7 +102,7 @@ class MainProgram(CommandBase):
                 contents = f.read()
 
                 dom = self._read_module_as_xml(contents)
-                attrs = SlipStreamHttpClient.DomExtractor.get_attributes(dom)
+                attrs = DomExtractor.get_attributes(dom)
 
                 root_node_name = dom.tag
                 if root_node_name == 'list':
@@ -138,6 +142,7 @@ class MainProgram(CommandBase):
             file = deployments[url]
             print('Uploading deployment: %s' % file)
             self._put(url, file, client)
+
 
 if __name__ == "__main__":
     try:

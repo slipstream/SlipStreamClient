@@ -22,7 +22,8 @@ from slipstream.NodeDecorator import NodeDecorator
 from slipstream.SlipStreamHttpClient import DomExtractor
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from slipstream.ConfigHolder import ConfigHolder
 import slipstream.util as util
 
 etree = util.importETree()
@@ -85,9 +86,10 @@ class VerticalScaleCommandBase(CommandBase):
             self.usageExit("Invalid ids, they must be integers")
 
     def doWork(self):
-
-        client = HttpClient()
-        client.verboseLevel = self.verboseLevel
+        conf = ConfigHolder(options={'serviceurl': self.options.endpoint,
+                                     'verboseLevel': self.verboseLevel,
+                                     'retry': False})
+        client = SlipStreamHttpClient(conf)
 
         self._retrieve_and_set_run(client)
 

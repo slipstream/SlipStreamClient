@@ -25,8 +25,10 @@ import sys
 import xml.etree.ElementTree as ET
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from slipstream.ConfigHolder import ConfigHolder
 import slipstream.util as util
+
 
 class MainProgram(CommandBase):
     '''Recursively download SlipStream modules as XML from server.'''
@@ -198,8 +200,10 @@ class MainProgram(CommandBase):
             print('Error: The use of "--remove-cloud-specific" require Python >= 2.7', file=sys.stderr)
             sys.exit(1)
 
-        client = HttpClient()
-        client.verboseLevel = self.verboseLevel
+        conf = ConfigHolder(options={'serviceurl': self.options.endpoint,
+                                     'verboseLevel': self.verboseLevel,
+                                     'retry': False})
+        client = SlipStreamHttpClient(conf)
 
         queue = [self.module]
         while len(queue) > 0:

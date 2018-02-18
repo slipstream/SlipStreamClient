@@ -26,8 +26,7 @@ from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(VMCommandBase):
-    """A command-line program to set a value for an existing runtime parameter.
-    """
+    """A command-line program to set a value for an existing runtime parameter."""
 
     def __init__(self, argv=None):
         self.key = None
@@ -61,6 +60,7 @@ Notice:
         ch = ConfigHolder(self.options)
         client = Client(ch)
         client.setRuntimeParameter(self.key, self.value)
+
 
 if __name__ == "__main__":
     try:

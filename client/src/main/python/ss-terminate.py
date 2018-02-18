@@ -26,7 +26,7 @@ from slipstream.ConfigHolder import ConfigHolder
 
 
 class MainProgram(VMCommandBase):
-    '''A command-line program to terminate deployment.'''
+    """A command-line program to terminate deployment."""
 
     def __init__(self, argv=None):
         self.reason = None

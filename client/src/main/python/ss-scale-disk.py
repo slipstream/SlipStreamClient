@@ -25,7 +25,6 @@ from slipstream.wrappers.BaseWrapper import BaseWrapper
 
 class MainProgram(VerticalScaleCommandBase):
 
-
     def __init__(self, argv=None):
         self._usage_options = "[options] [--attach <GB> | --detach <device>] <run> <node-name> <ids> [<ids> ...]"
         super(MainProgram, self).__init__(argv)
@@ -55,6 +54,7 @@ class MainProgram(VerticalScaleCommandBase):
         super(MainProgram, self).doWork()
         action = self.options.attach_gb and 'attach' or 'detach'
         print('Requested %sment of extra disk on %s' % (action, self.node_name))
+
 
 if __name__ == "__main__":
     try:

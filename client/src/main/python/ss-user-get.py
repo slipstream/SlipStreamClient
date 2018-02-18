@@ -19,14 +19,15 @@
 from __future__ import print_function
 
 import sys
-import os
 
 from slipstream.command.CommandBase import CommandBase
-from slipstream.HttpClient import HttpClient
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
+from slipstream.ConfigHolder import ConfigHolder
 import slipstream.util as util
 
+
 class MainProgram(CommandBase):
-    '''A command-line program to show/list user definition(s).'''
+    """A command-line program to show/list user definition(s)."""
 
     def __init__(self, argv=None):
         self.user = ''
@@ -53,8 +54,10 @@ class MainProgram(CommandBase):
             self.usageExitTooManyArguments()
 
     def doWork(self):
-        client = HttpClient()
-        client.verboseLevel = self.verboseLevel
+        conf = ConfigHolder(options={'serviceurl': self.options.endpoint,
+                                     'verboseLevel': self.verboseLevel,
+                                     'retry': False})
+        client = SlipStreamHttpClient(conf)
 
         uri = util.USER_RESOURCE_PATH
         if self.user:
@@ -64,6 +67,7 @@ class MainProgram(CommandBase):
 
         _, content = client.get(url)
         print(content)
+
 
 if __name__ == "__main__":
     try:
