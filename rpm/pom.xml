@@ -23,18 +23,9 @@
               <goal>exec</goal>
             </goals>
             <configuration>
-              <executable>tar</executable>
+              <executable>${project.basedir}/generate-tarball.sh</executable>
               <arguments>
-                <argument>-zcf</argument>
-                <argument>${project.build.directory}/slipstreamclient.tgz</argument>
-                <argument>-C</argument>
-                <argument>${project.build.directory}/client</argument>
-                <argument>bin</argument>
-                <argument>lib</argument>
-                <argument>sbin</argument>
-                <argument>etc</argument>
-                <argument>setup.cfg</argument>
-                <argument>setup.py</argument>
+                <argument>${project.build.directory}</argument>
               </arguments>
             </configuration>
           </execution>
@@ -102,6 +93,42 @@
                   <version>${project.version}</version>
                   <classifier>bundle</classifier>
                   <type>tar.gz</type>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+          <execution>
+            <id>copy-python-api</id>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.sixsq.slipstream</groupId>
+                  <artifactId>SlipStreamPythonAPI-tarball</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>bundle</classifier>
+                  <type>tar.gz</type>
+                </artifactItem>
+              </artifactItems>
+              <stripVersion>true</stripVersion>
+            </configuration>
+          </execution>
+          <execution>
+            <id>unpack-python-api</id>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>com.sixsq.slipstream</groupId>
+                  <artifactId>SlipStreamPythonAPI-tarball</artifactId>
+                  <version>${project.version}</version>
+                  <classifier>bundle</classifier>
+                  <type>tar.gz</type>
+                  <outputDirectory>${project.build.directory}/slipstream-api</outputDirectory>
                 </artifactItem>
               </artifactItems>
             </configuration>
@@ -234,7 +261,6 @@ mv $RPM_BUILD_ROOT/%%py_sitedir/* $RPM_BUILD_ROOT/%{py_sitedir}
           <postinstallScriptlet>
             <!-- install slipstream-api and fix a bug in client -->
             <script>
-pip install -Iv slipstream-api
 pip install -Iv openpyxl
 pip install -Iv lxml
 
