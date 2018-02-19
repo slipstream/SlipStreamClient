@@ -17,6 +17,7 @@
 """
 from __future__ import print_function
 
+import json
 import os
 from collections import defaultdict
 
@@ -68,23 +69,58 @@ class SlipStreamHttpClient(object):
         self.configuration_endpoint = '%s%s' % (self.serviceurl,
                                                 util.CONFIGURATION_RESOURCE_PATH)
 
+    @staticmethod
+    def _strip_unwanted_attrs(resource):
+        unwanted = ('id', 'resourceURI', 'acl', 'operations',
+                    'created', 'updated', 'name', 'description', 'properties')
+        for k in resource.keys():
+            if k in unwanted:
+                del resource[k]
+        return resource
+
+    def _get_user(self):
+        _, jresp = self.httpClient.get(self.serviceurl + '/api/user/%s' % self.username,
+                                       accept='application/json')
+        return self._strip_unwanted_attrs(json.loads(jresp))
+
+    def _get_user_params(self):
+        _, jresp = self.httpClient.get(self.serviceurl + '/api/user-param',
+                                       accept='application/json')
+        user_params = json.loads(jresp)
+        if user_params.get('count', 0) < 1:
+            raise Exception('No user params found for %s.' % self.username)
+        return self._strip_unwanted_attrs(user_params.get('userParam')[0])
+
+    def _get_cloud_cred(self, cloud_qualifier):
+        _filter = "$filter=type^='cloud-cred' and connector/href='connector/%s'" % \
+                  cloud_qualifier
+        _, jresp = self.httpClient.put(self.serviceurl + '/api/credential?%s' % _filter,
+                                       accept='application/json')
+        creds = json.loads(jresp)
+        if creds.get('count', 0) < 1:
+            raise Exception('No cloud creds found for %s with %s.' % (self.username, _filter))
+        return self._strip_unwanted_attrs(creds.get('credentials')[0])
+
+    def _get_connector_conf(self, cloud_qualifier):
+        _, jresp = self.httpClient.get(self.serviceurl + '/api/connector/%s' % cloud_qualifier,
+                                       accept='application/json')
+        return self._strip_unwanted_attrs(json.loads(jresp))
+
     def get_user_info(self, cloud_qualifier):
 
-        dom = self._getUserElement()
+        user_info = UserInfo(cloud_qualifier)
 
-        userInfo = UserInfo(cloud_qualifier)
+        user = self._get_user()
+        del user['password']
+        user_info.set_user_params(user)
 
-        userInfo['User.firstName'] = dom.attrib['firstName']
-        userInfo['User.lastName'] = dom.attrib['lastName']
-        userInfo['User.email'] = dom.attrib['email']
+        user_info.set_general_params(self._get_user_params())
 
-        parameters = dom.findall('parameters/entry/parameter')
-        for param in parameters:
-            if param.attrib['category'] in ['General', cloud_qualifier]:
-                name = param.attrib['name']
-                userInfo[name] = param.findtext('value', '')
+        connector_conf = self._get_connector_conf(cloud_qualifier)
+        connector_conf.update(self._get_cloud_cred(cloud_qualifier))
+        user_info.set_cloud_params(connector_conf)
 
-        return userInfo
+        return user_info
 
     def _getUserElement(self):
         content = self._getUserContent()
