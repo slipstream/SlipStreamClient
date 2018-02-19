@@ -52,7 +52,7 @@ class UserInfo(dict):
         return self.get_user('lastName')
 
     def get_email(self):
-        return self.get_user('email')
+        return self.get_user('emailAddress')
 
     def get_cloud_username(self):
         return self.get_cloud(self.CLOUD_USERNAME_KEY)

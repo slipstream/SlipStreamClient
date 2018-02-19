@@ -111,7 +111,8 @@ class SlipStreamHttpClient(object):
         user_info = UserInfo(cloud_qualifier)
 
         user = self._get_user()
-        del user['password']
+        if 'password' in user:
+            del user['password']
         user_info.set_user_params(user)
 
         user_info.set_general_params(self._get_user_params())
@@ -121,16 +122,6 @@ class SlipStreamHttpClient(object):
         user_info.set_cloud_params(connector_conf)
 
         return user_info
-
-    def _getUserElement(self):
-        content = self._getUserContent()
-
-        return etree.fromstring(content.encode('utf-8'))
-
-    def _getUserContent(self):
-        url = self.userEndpoint
-        _, content = self._httpGet(url, 'application/xml')
-        return content
 
     def _extractModuleResourceUri(self, run):
         rootElement = etree.fromstring(run.encode('utf-8'))
