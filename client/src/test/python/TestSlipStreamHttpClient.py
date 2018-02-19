@@ -184,6 +184,8 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
     cloud_endpoint = 'https://api.exoscale.ch/compute'
     connector_zone = 'CH-GVA-2'
     cloud_name = 'exoscale-ch-gva'
+    cloud_key = 'foo'
+    cloud_secret = 'bar'
 
     resource_user = {
         "activeSince": "2018-01-15T10:39:56.655Z",
@@ -316,13 +318,13 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
             "connector": {
                 "href": "connector/%s" % cloud_name
             },
-            "key": "XXX",
+            "key": cloud_key,
             "method": "store-cloud-cred-exoscale",
             "updated": "2018-02-17T23:19:25.534Z",
             "name": cloud_name,
             "type": "cloud-cred-exoscale",
             "created": "2017-12-19T10:07:00.713Z",
-            "secret": "YYY",
+            "secret": cloud_secret,
             "quota": 50,
             "domain-name": "",
             "id": "credential/2a545b22-1f8c-4094-8c2f-28c96f3fea21",
@@ -398,8 +400,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client._get_user = Mock(return_value=client._strip_unwanted_attrs(self.resource_user))
         client._get_user_params = Mock(return_value=client._strip_unwanted_attrs(
             self.resource_user_param.get('userParam')[0]))
-        client._get_cloud_cred = Mock(return_value=client._strip_unwanted_attrs(
-            self.resource_cloud_cred.get('credentials')[0]))
+        client._get_cloud_creds = Mock(return_value=client._strip_unwanted_attrs(self.resource_cloud_cred))
         client._get_connector_conf = Mock(return_value=client._strip_unwanted_attrs(self.resource_connector))
 
         return client.get_user_info(self.cloud_name)
@@ -412,6 +413,10 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert self.connector_zone == user_info.get_cloud('zone')
         assert self.user_param_sshkey == user_info.get_public_keys()
         assert self.user_param_timeout == user_info.get_general('timeout')
+        assert self.cloud_key == user_info.get_cloud('key')
+        assert self.cloud_key == user_info.get_cloud('username')
+        assert self.cloud_secret == user_info.get_cloud('secret')
+        assert self.cloud_secret == user_info.get_cloud('password')
 
     def test_getUserInfo_empty_param(self):
         user_info = self.get_user_info()

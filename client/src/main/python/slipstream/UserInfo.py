@@ -20,8 +20,8 @@
 class UserInfo(dict):
 
     SEPARATOR = '.'
-    CLOUD_USERNAME_KEY = 'key'
-    CLOUD_PASSWORD_KEY = 'secret'
+    CLOUD_USERNAME_KEY = 'username'
+    CLOUD_PASSWORD_KEY = 'password'
 
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})

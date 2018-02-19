@@ -92,6 +92,13 @@ class SlipStreamHttpClient(object):
         return self._strip_unwanted_attrs(user_params.get('userParam')[0])
 
     def _get_cloud_cred(self, cloud_qualifier):
+        creds = self._get_cloud_creds(cloud_qualifier)
+        cred = self._strip_unwanted_attrs(creds.get('credentials')[0])
+        cred[UserInfo.CLOUD_USERNAME_KEY] = cred.get('key', '')
+        cred[UserInfo.CLOUD_PASSWORD_KEY] = cred.get('secret', '')
+        return cred
+
+    def _get_cloud_creds(self, cloud_qualifier):
         _filter = "$filter=type^='cloud-cred' and connector/href='connector/%s'" % \
                   cloud_qualifier
         _, jresp = self.httpClient.put(self.serviceurl + '/api/credential?%s' % _filter,
@@ -99,7 +106,7 @@ class SlipStreamHttpClient(object):
         creds = json.loads(jresp)
         if creds.get('count', 0) < 1:
             raise Exception('No cloud creds found for %s with %s.' % (self.username, _filter))
-        return self._strip_unwanted_attrs(creds.get('credentials')[0])
+        return creds
 
     def _get_connector_conf(self, cloud_qualifier):
         _, jresp = self.httpClient.get(self.serviceurl + '/api/connector/%s' % cloud_qualifier,
