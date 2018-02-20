@@ -393,7 +393,7 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         "orchestratorSSHPassword": ""
     }
 
-    def get_user_info(self):
+    def get_ss_client_for_user_info(self):
         ch = ConfigHolder(config={'foo': 'bar'}, context={})
         ch.context = {}
         client = SlipStreamHttpClient(ch)
@@ -403,10 +403,11 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         client._get_cloud_creds = Mock(return_value=client._strip_unwanted_attrs(self.resource_cloud_cred))
         client._get_connector_conf = Mock(return_value=client._strip_unwanted_attrs(self.resource_connector))
 
-        return client.get_user_info(self.cloud_name)
+        return client
 
     def test_getUserInfo(self):
-        user_info = self.get_user_info()
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info(self.cloud_name)
         assert user_info.get_general('password') is None
         assert self.user_email == user_info.get_user('emailAddress')
         assert self.cloud_endpoint == user_info.get_cloud('endpoint')
@@ -419,7 +420,8 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert self.cloud_secret == user_info.get_cloud('password')
 
     def test_getUserInfo_empty_param(self):
-        user_info = self.get_user_info()
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info(self.cloud_name)
 
         param = 'orchestratorSSHPassword'
 
@@ -433,10 +435,20 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert None is user_info.get_cloud(param, 'default')
 
     def test_getUserInfo_nonexistent_param(self):
-        user_info = self.get_user_info()
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info(self.cloud_name)
         param = 'doesnotexist'
         assert None is user_info.get_cloud(param)
         assert 'default' == user_info.get_cloud(param, 'default')
+
+    def test_getUserInfo_no_cloud_name(self):
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info('')
+        assert not client._get_cloud_creds.called
+        assert not client._get_connector_conf.called
+        assert not user_info.cloud
+        self.assertRaises(ValueError, user_info.get_cloud, ('foo'))
+        self.assertRaises(ValueError, user_info.set_cloud_params, ({'foo': 'bar'}))
 
     def test_server_config_dom_into_dict(self):
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)

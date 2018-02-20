@@ -25,12 +25,17 @@ class UserInfo(dict):
 
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})
-        self.cloud = cloud_qualifier + self.SEPARATOR
+        if not cloud_qualifier:
+            self.cloud = ''
+        else:
+            self.cloud = cloud_qualifier + self.SEPARATOR
         self.user = 'User' + self.SEPARATOR
         self.general = 'General' + self.SEPARATOR
-        self.qualifires = (self.cloud, self.user, self.general)
+        self.qualifires = filter(lambda x: x, (self.cloud, self.user, self.general))
 
     def get_cloud(self, key, default_value=None):
+        if not self.cloud:
+            raise ValueError('Unable to get cloud param %s. Cloud name is not defined' % key)
         return self.get(self.cloud + key, default_value)
 
     def get_general(self, key, default_value=None):
@@ -78,15 +83,20 @@ class UserInfo(dict):
     def get_private_network_name(self):
         return self.get_cloud('networkPrivate', '').strip()
 
+    def _set_cloud_param(self, key, value):
+        if not self.cloud:
+            raise ValueError('Unable to set cloud param %s. Cloud name is not defined.' % key)
+        self[self.cloud + key] = value
+
     def set_private_key(self, private_key):
-        self[self.cloud + 'private.key'] = private_key
+        self._set_cloud_param('private.key', private_key)
 
     def set_keypair_name(self, keypair_name):
-        self[self.cloud + 'keypair.name'] = keypair_name
+        self._set_cloud_param('keypair.name', keypair_name)
 
     def set_cloud_params(self, params):
         for k,v in params.iteritems():
-            self[self.cloud + k] = v
+            self._set_cloud_param(k, v)
 
     def set_general_params(self, params):
         for k,v in params.iteritems():
