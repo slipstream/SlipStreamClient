@@ -22,6 +22,7 @@ class UserInfo(dict):
     SEPARATOR = '.'
     CLOUD_USERNAME_KEY = 'username'
     CLOUD_PASSWORD_KEY = 'password'
+    SSH_PUBKEY_KEY = 'sshPublicKey'
 
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})
@@ -69,7 +70,7 @@ class UserInfo(dict):
         return self.get_cloud('endpoint')
 
     def get_public_keys(self):
-        return self.get_general('sshPublicKey')
+        return self.get_general(self.SSH_PUBKEY_KEY)
 
     def get_private_key(self):
         return self.get_cloud('private.key')
