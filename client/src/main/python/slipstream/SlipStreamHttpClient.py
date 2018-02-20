@@ -18,7 +18,6 @@
 from __future__ import print_function
 
 import json
-import os
 from collections import defaultdict
 
 import slipstream.util as util
@@ -50,6 +49,8 @@ class SlipStreamHttpClient(object):
         configHolder.assign(self)
         self._assemble_endpoints()
         self.httpClient = HttpClient(configHolder=configHolder)
+        self.httpClient.init_session(self.serviceurl)
+        self.api = self.httpClient.get_ss_api()
 
     def set_retry(self, retry):
         self.retry = retry
@@ -218,14 +219,24 @@ class SlipStreamHttpClient(object):
             NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
-        self._uploadReport(self.runReportEndpoint, report)
+        resource_id = self._create_external_object_report()
+        upload_url = self._generate_upload_url_external_object_report(resource_id)
+        self._upload_report(upload_url, report)
 
-    def _uploadReport(self, url, report):
+    def _create_external_object_report(self):
+        resp = self.api.cimi_add('externalObjects',
+                                 {'externalObjectTemplate': {'href': 'external-object-template/report',
+                                                             'runUUID': self.diid,
+                                                             'component': self.node_instance_name}})
+        return resp.json['resource-id']
+
+    def _generate_upload_url_external_object_report(self, resource_id):
+        resp = self.api.cimi_operation(resource_id, "http://sixsq.com/slipstream/1/action/upload")
+        return resp.json['uri']
+
+    def _upload_report(self, url, report):
         print('Uploading report to: %s' % url)
-
         body = open(report, 'rb').read()
-        url += '/' + os.path.basename(report)
-
         self._httpPut(url, body, '', accept="*/*")
 
     def isAbort(self):
