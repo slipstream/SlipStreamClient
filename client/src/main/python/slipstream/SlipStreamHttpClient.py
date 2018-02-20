@@ -124,9 +124,10 @@ class SlipStreamHttpClient(object):
 
         user_info.set_general_params(self._get_user_params())
 
-        connector_conf = self._get_connector_conf(cloud_qualifier)
-        connector_conf.update(self._get_cloud_cred(cloud_qualifier))
-        user_info.set_cloud_params(connector_conf)
+        if cloud_qualifier:
+            connector_conf = self._get_connector_conf(cloud_qualifier)
+            connector_conf.update(self._get_cloud_cred(cloud_qualifier))
+            user_info.set_cloud_params(connector_conf)
 
         return user_info
 
