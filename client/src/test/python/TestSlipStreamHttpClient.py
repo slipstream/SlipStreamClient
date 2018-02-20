@@ -38,12 +38,10 @@ def _get_resources_path():
     level_up = os.path.split(os.path.dirname(__file__))[0]
     return os.path.join(level_up, 'resources')
 
+
 with open(os.path.join(_get_resources_path(), 'run.xml')) as fd:
     RUN_XML = fd.read()
 RUN_ETREE = etree.fromstring(RUN_XML)
-
-with open(os.path.join(_get_resources_path(), 'user.xml')) as fd:
-    USER_XML = fd.read()
 
 with open(os.path.join(_get_resources_path(), 'configuration.xml')) as fd:
     CONFIGURATION_XML = fd.read()
@@ -80,11 +78,13 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
 
     def test_get_deployment_targets(self):
         targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'apache')
-        self.assertEquals(True, targets['execute'][-1].get('script','').startswith('#!/bin/sh -xe\napt-get update -y\n'))
+        self.assertEquals(True,
+                          targets['execute'][-1].get('script', '').startswith('#!/bin/sh -xe\napt-get update -y\n'))
 
         targets = DomExtractor.extract_node_image_targets(RUN_ETREE, 'testclient')
-        self.assertEquals(targets['execute'][-1].get('script','').startswith('#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
-                          True)
+        self.assertEquals(targets['execute'][-1].get('script', '').startswith(
+            '#!/bin/sh -xe\n# Wait for the metadata to be resolved\n'),
+            True)
 
     def test_extract_node_instances_from_run(self):
         nodes = DomExtractor.extract_nodes_instances_runtime_parameters(
@@ -132,7 +132,8 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         targets = DomExtractor.get_targets_from_module(dom)
 
         failMsg = "Failure getting '%s' build target."
-        assert targets.get(NodeDecorator.NODE_PRERECIPE)[-1].get('script') == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
+        assert targets.get(NodeDecorator.NODE_PRERECIPE)[-1].get(
+            'script') == prerecipe, failMsg % NodeDecorator.NODE_PRERECIPE
         assert targets.get(NodeDecorator.NODE_RECIPE)[-1].get('script') == recipe, failMsg % NodeDecorator.NODE_RECIPE
         assert isinstance(targets[NodeDecorator.NODE_PACKAGES], list), failMsg % NodeDecorator.NODE_PACKAGES
         assert package1 in targets[NodeDecorator.NODE_PACKAGES], failMsg % NodeDecorator.NODE_PACKAGES
@@ -177,67 +178,277 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
                     self.assertTrue(key in nodes_instances[nodes_instance],
                                     'No element %s' % key)
 
-    def test_getUserInfoUser(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('')
-        assert 'Test' == userInfo.get_user('firstName')
-        assert 'User' == userInfo.get_user('lastName')
-        assert 'test@sixsq.com' == userInfo.get_user('email')
-        assert '30' == userInfo.get_general('Timeout')
+    user_email = 'test@sixsq.com'
+    user_param_sshkey = 'ssh-rsa abc'
+    user_param_timeout = 60
+    cloud_endpoint = 'https://api.exoscale.ch/compute'
+    connector_zone = 'CH-GVA-2'
+    cloud_name = 'exoscale-ch-gva'
+    cloud_key = 'foo'
+    cloud_secret = 'bar'
+
+    resource_user = {
+        "activeSince": "2018-01-15T10:39:56.655Z",
+        "lastExecute": "2018-01-18T09:03:40.454Z",
+        "deleted": False,
+        "password": "xxx",
+        "method": "auto",
+        "updated": "2018-02-17T23:19:27.449Z",
+        "emailAddress": user_email,
+        "roles": "",
+        "username": "konstan",
+        "firstName": "Konstantin",
+        "created": "2013-12-18T16:21:23.823Z",
+        "state": "ACTIVE",
+        "organization": "SixSq",
+        "lastOnline": "2018-01-12T09:04:09.445Z",
+        "id": "user/konstan",
+        "lastName": "Skaburskas",
+        "acl": {
+            "owner": {
+                "principal": "ADMIN",
+                "type": "ROLE"
+            },
+            "rules": [
+                {
+                    "principal": "ADMIN",
+                    "right": "ALL",
+                    "type": "ROLE"
+                },
+                {
+                    "principal": "konstan",
+                    "right": "MODIFY",
+                    "type": "USER"
+                }
+            ]
+        },
+        "operations": [
+            {
+                "rel": "edit",
+                "href": "user/konstan"
+            },
+            {
+                "rel": "delete",
+                "href": "user/konstan"
+            }
+        ],
+        "resourceURI": "http://sixsq.com/slipstream/1/User",
+        "isSuperUser": False,
+        "githublogin": "konstan"
+    }
+    resource_user_param = {
+        "count": 1,
+        "acl": {
+            "owner": {
+                "principal": "ADMIN",
+                "type": "ROLE"
+            },
+            "rules": [{
+                "principal": "USER",
+                "type": "ROLE",
+                "right": "MODIFY"
+            }]
+        },
+        "resourceURI": "http://sixsq.com/slipstream/1/UserParamsCollection",
+        "id": "user-param",
+        "operations": [{
+            "rel": "add",
+            "href": "user-param"
+        }],
+        "userParam": [{
+            "updated": "2018-02-17T23:19:23.876Z",
+            "created": "2018-01-15T10:39:56.793Z",
+            "defaultCloudService": cloud_name,
+            "id": "user-param/f8bcc895-bc06-46be-971b-fa39de97ab0d",
+            "acl": {
+                "owner": {
+                    "principal": "konstan",
+                    "type": "USER"
+                },
+                "rules": [{
+                    "principal": "ADMIN",
+                    "right": "ALL",
+                    "type": "ROLE"
+                }, {
+                    "principal": "konstan",
+                    "right": "MODIFY",
+                    "type": "USER"
+                }]
+            },
+            "operations": [{
+                "rel": "edit",
+                "href": "user-param/f8bcc895-bc06-46be-971b-fa39de97ab0d"
+            }, {
+                "rel": "delete",
+                "href": "user-param/f8bcc895-bc06-46be-971b-fa39de97ab0d"
+            }],
+            "resourceURI": "http://sixsq.com/slipstream/1/UserParam",
+            "timeout": user_param_timeout,
+            "sshPublicKey": user_param_sshkey,
+            "verbosityLevel": 3,
+            "keepRunning": "never",
+            "mailUsage": "daily",
+            "paramsType": "execution"
+        }]
+    }
+    resource_cloud_cred = {
+        "count": 1,
+        "acl": {
+            "owner": {
+                "principal": "ADMIN",
+                "type": "ROLE"
+            },
+            "rules": [{
+                "principal": "ADMIN",
+                "type": "ROLE",
+                "right": "MODIFY"
+            }, {
+                "principal": "USER",
+                "type": "ROLE",
+                "right": "MODIFY"
+            }]
+        },
+        "resourceURI": "http://sixsq.com/slipstream/1/CredentialCollection",
+        "id": "credential",
+        "operations": [{
+            "rel": "add",
+            "href": "credential"
+        }],
+        "credentials": [{
+            "connector": {
+                "href": "connector/%s" % cloud_name
+            },
+            "key": cloud_key,
+            "method": "store-cloud-cred-exoscale",
+            "updated": "2018-02-17T23:19:25.534Z",
+            "name": cloud_name,
+            "type": "cloud-cred-exoscale",
+            "created": "2017-12-19T10:07:00.713Z",
+            "secret": cloud_secret,
+            "quota": 50,
+            "domain-name": "",
+            "id": "credential/2a545b22-1f8c-4094-8c2f-28c96f3fea21",
+            "acl": {
+                "owner": {
+                    "principal": "konstan",
+                    "type": "USER"
+                },
+                "rules": [{
+                    "principal": "ADMIN",
+                    "right": "ALL",
+                    "type": "ROLE"
+                }, {
+                    "principal": "konstan",
+                    "right": "MODIFY",
+                    "type": "USER"
+                }]
+            },
+            "operations": [{
+                "rel": "edit",
+                "href": "credential/2a545b22-1f8c-4094-8c2f-28c96f3fea21"
+            }, {
+                "rel": "delete",
+                "href": "credential/2a545b22-1f8c-4094-8c2f-28c96f3fea21"
+            }],
+            "resourceURI": "http://sixsq.com/slipstream/1/Credential"
+        }]
+    }
+    resource_connector = {
+        "securityGroups": "slipstream_managed",
+        "cloudServiceType": "exoscale",
+        "orchestratorInstanceType": "Micro",
+        "instanceName": cloud_name,
+        "zone": connector_zone,
+        "updated": "2018-02-18T21:25:39.402Z",
+        "updateClientURL": "https://185.19.28.68/downloads/exoscaleclient.tgz",
+        "created": "2016-10-25T07:22:05.339Z",
+        "quotaVm": "",
+        "nativeContextualization": "linux-only",
+        "id": "connector/%s" % cloud_name,
+        "acl": {
+            "owner": {
+                "principal": "ADMIN",
+                "type": "ROLE"
+            },
+            "rules": [{
+                "principal": "USER",
+                "right": "VIEW",
+                "type": "ROLE"
+            }, {
+                "principal": "ADMIN",
+                "right": "ALL",
+                "type": "ROLE"
+            }, {
+                "principal": "ADMIN",
+                "right": "VIEW",
+                "type": "ROLE"
+            }]
+        },
+        "resourceURI": "http://sixsq.com/slipstream/1/Connector",
+        "orchestratorSSHUsername": "",
+        "maxIaasWorkers": 20,
+        "orchestratorDisk": "10G",
+        "orchestratorImageid": "Linux Ubuntu 14.04 LTS 64-bit",
+        "endpoint": cloud_endpoint,
+        "orchestratorSSHPassword": ""
+    }
+
+    def get_ss_client_for_user_info(self):
+        ch = ConfigHolder(config={'foo': 'bar'}, context={})
+        ch.context = {}
+        client = SlipStreamHttpClient(ch)
+        client._get_user = Mock(return_value=client._strip_unwanted_attrs(self.resource_user))
+        client._get_user_params = Mock(return_value=client._strip_unwanted_attrs(
+            self.resource_user_param.get('userParam')[0]))
+        client._get_cloud_creds = Mock(return_value=client._strip_unwanted_attrs(self.resource_cloud_cred))
+        client._get_connector_conf = Mock(return_value=client._strip_unwanted_attrs(self.resource_connector))
+
+        return client
 
     def test_getUserInfo(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        userInfo = client.get_user_info('SomeCloud')
-
-        assert 'test@sixsq.com' == userInfo.get_user('email')
-
-        assert 'cloud.lal.somecloud.eu' == userInfo.get_cloud('endpoint')
-        assert 'public' == userInfo.get_cloud('ip.type')
-        assert 'ssh-rsa abc' == userInfo.get_general('ssh.public.key')
-
-        assert 'on' == userInfo.get_general('On Error Run Forever')
-        assert '3' == userInfo.get_general('Verbosity Level')
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info(self.cloud_name)
+        assert user_info.get_general('password') is None
+        assert self.user_email == user_info.get_user('emailAddress')
+        assert self.cloud_endpoint == user_info.get_cloud('endpoint')
+        assert self.connector_zone == user_info.get_cloud('zone')
+        assert self.user_param_sshkey == user_info.get_public_keys()
+        assert self.user_param_timeout == user_info.get_general('timeout')
+        assert self.cloud_key == user_info.get_cloud('key')
+        assert self.cloud_key == user_info.get_cloud('username')
+        assert self.cloud_secret == user_info.get_cloud('secret')
+        assert self.cloud_secret == user_info.get_cloud('password')
 
     def test_getUserInfo_empty_param(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        user_info = client.get_user_info('SomeCloud')
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info(self.cloud_name)
 
-        param = 'domain.name'
+        param = 'orchestratorSSHPassword'
 
         # Check when the value of the parameter is emply.
         assert '' == user_info.get_cloud(param)
         assert '' == user_info.get_cloud(param, 'default')
 
         # Re-set value to None.
-        user_info['SomeCloud.' + param] = None
-        assert None == user_info.get_cloud(param)
-        assert None == user_info.get_cloud(param, 'default')
+        user_info['%s.%s' % (self.cloud_name, param)] = None
+        assert None is user_info.get_cloud(param)
+        assert None is user_info.get_cloud(param, 'default')
 
     def test_getUserInfo_nonexistent_param(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        user_info = client.get_user_info('SomeCloud')
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info(self.cloud_name)
         param = 'doesnotexist'
-        assert None == user_info.get_cloud(param)
+        assert None is user_info.get_cloud(param)
         assert 'default' == user_info.get_cloud(param, 'default')
 
-    def test_getUserInfo_param_wthout_value_tag(self):
-        client = SlipStreamHttpClient(ConfigHolder(config={'foo': 'bar'},
-                                                   context=self.context))
-        client._getUserContent = Mock(return_value=USER_XML)
-        user_info = client.get_user_info('SomeCloud')
-
-        param = 'no.value'
-
-        assert '' == user_info.get_cloud(param)
-        assert '' == user_info.get_cloud(param, 'default')
+    def test_getUserInfo_no_cloud_name(self):
+        client = self.get_ss_client_for_user_info()
+        user_info = client.get_user_info('')
+        assert not client._get_cloud_creds.called
+        assert not client._get_connector_conf.called
+        assert not user_info.cloud
+        self.assertRaises(ValueError, user_info.get_cloud, ('foo'))
+        self.assertRaises(ValueError, user_info.set_cloud_params, ({'foo': 'bar'}))
 
     def test_server_config_dom_into_dict(self):
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
@@ -245,17 +456,19 @@ class SlipStreamHttpClientTestCase(unittest.TestCase):
         assert isinstance(conf, dict)
 
     def test_server_config_dom_into_dict_value_updater(self):
-        base_url_param ='slipstream.base.url'
+        base_url_param = 'slipstream.base.url'
         base_url_value_orig = ''
         base_url_value_new = 'UPDATED'
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE)
         for k, v in conf['SlipStream_Basics']:
             if k == base_url_param:
                 base_url_value_orig = v
+
         def _updater(value):
             return value == base_url_value_orig and base_url_value_new or value
+
         conf = DomExtractor.server_config_dom_into_dict(CONFIGURATION_ETREE,
-                value_updater=_updater)
+                                                        value_updater=_updater)
         for k, v in conf['SlipStream_Basics']:
             if k == base_url_param:
                 assert v == base_url_value_new

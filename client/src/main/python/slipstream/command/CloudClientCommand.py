@@ -119,7 +119,7 @@ class CloudClientCommand(object):
 
     def _init_user_info(self):
         self.user_info = UserInfo(self._cloud_instance_name)
-        self.user_info['General.ssh.public.key'] = os.environ.get(ENV_SLIPSTREAM_SSH_PUB_KEY, '')
+        self.user_info['General.%s' % UserInfo.SSH_PUBKEY_KEY] = os.environ.get(ENV_SLIPSTREAM_SSH_PUB_KEY, '')
 
         self.user_info.set_cloud_params(self._get_common_user_cloud_params())
         self.user_info.set_cloud_params(self._get_command_specific_user_cloud_params())

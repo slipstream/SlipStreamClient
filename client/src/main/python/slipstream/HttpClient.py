@@ -122,6 +122,7 @@ class HttpClient(object):
             disable_urllib3_warnings()
 
         self.session = None
+        self._ss_api = None
 
     def get(self, url, accept='application/xml', retry=True):
         resp = self._call(url, 'GET', accept=accept, retry=retry)
@@ -299,6 +300,7 @@ class HttpClient(object):
                                  % self.cookie_filename)
             api = Api(endpoint=endpoint, cookie_file=self.cookie_filename,
                       reauthenticate=True, login_creds=login_creds)
+            self._ss_api = api
             self.session = api.session
 
     def _log_normal(self, message):
@@ -318,3 +320,6 @@ class HttpClient(object):
 
     def get_session(self):
         return self.session
+
+    def get_ss_api(self):
+        return self._ss_api
