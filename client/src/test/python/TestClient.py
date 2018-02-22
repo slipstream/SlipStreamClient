@@ -34,6 +34,7 @@ def get_rtp_all(side_effect, no_block=False):
     ch.set('noBlock', no_block)
     ch.set('timeout', 1)
     ch.set('verboseLevel', 3)
+    ch.set('endpoint', 'https://foo.bar')
     Client._getRuntimeParameter = Mock(side_effect=side_effect)
     client = Client(ch)
     client.httpClient.getRuntimeParameter = Mock(side_effect=side_effect)
@@ -51,11 +52,11 @@ class TestClient(unittest.TestCase):
     def test_do_not_qualify_parameter(self):
         orch_node_name = NodeDecorator.orchestratorName + '-cloudX'
         orch_param = orch_node_name + \
-            NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-            'foo'
+                     NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+                     'foo'
 
         context = {NodeDecorator.NODE_INSTANCE_NAME_KEY: orch_node_name}
-        ch = ConfigHolder(context=context, config={'bar': 'baz'})
+        ch = ConfigHolder(context=context, config={'bar': 'baz', 'endpoint': 'https://foo.bar'})
         c = Client(ch)
         assert orch_param == c._qualifyKey(orch_param)
 
