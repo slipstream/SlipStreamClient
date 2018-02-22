@@ -53,7 +53,7 @@ class MainProgram(CommandBase):
                                   util.RUN_PARAM_MUTABLE,
                                   util.RUN_PARAM_KEEP_RUNNING,
                                   util.RUN_PARAM_TAGS)
-    DEAFULT_WAIT = 0  # minutes
+    DEFAULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = RUN_STATES[0]
@@ -88,7 +88,7 @@ class MainProgram(CommandBase):
         self.parser.add_option('-w', '--wait', dest='wait',
                                help='Wait MINUTES for the deployment to finish.',
                                type='int', metavar='MINUTES',
-                               default=self.DEAFULT_WAIT)
+                               default=self.DEFAULT_WAIT)
 
         self.parser.add_option('--nagios', dest='nagios',
                                help='Behave like Nagios check.',
@@ -365,7 +365,7 @@ class MainProgram(CommandBase):
         raise time_exc
 
     def _need_to_wait(self):
-        return self.options.wait > self.DEAFULT_WAIT
+        return self.options.wait > self.DEFAULT_WAIT
 
     def _download_reports(self, api, run_url):
         if not (self.options.reports_components or self.options.get_reports_all):
