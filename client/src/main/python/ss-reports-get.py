@@ -24,6 +24,7 @@ import sys
 from slipstream.command.CommandBase import CommandBase
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.resources.reports import ReportsGetter
+from slipstream.SlipStreamHttpClient import SlipStreamHttpClient
 
 
 class MainProgram(CommandBase):
@@ -32,6 +33,8 @@ class MainProgram(CommandBase):
     def __init__(self, argv=None):
         self.module = ''
         self.endpoint = None
+        self.ss_client = None
+        self.configHolder = None
         super(MainProgram, self).__init__(argv)
 
     def parse(self):
@@ -71,10 +74,14 @@ class MainProgram(CommandBase):
         if len(self.args) > 1:
             self.usageExitTooManyArguments()
 
+    def _init_client(self):
+        self.configHolder = ConfigHolder(self.options)
+        self.configHolder.set('serviceurl', self.options.endpoint)
+        self.ss_client = SlipStreamHttpClient(self.configHolder)
+
     def doWork(self):
-        ch = ConfigHolder(options=self.options, context={})
-        ch.context = {}
-        rg = ReportsGetter(ch)
+        self._init_client()
+        rg = ReportsGetter(self.ss_client.get_api(), self.configHolder)
         rg.get_reports(self.run_uuid, components=self.options.components,
                        no_orch=self.options.no_orch)
 

@@ -21,7 +21,6 @@ import os
 import errno
 import json
 from datetime import datetime
-from urlparse import urlparse
 import pprint
 
 import slipstream.util as util
@@ -29,42 +28,43 @@ from slipstream.NodeDecorator import NodeDecorator
 from slipstream.HttpClient import get_cookie, DEFAULT_SS_COOKIE_NAME
 
 TIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
-NO_SESSION_PROVIDED_MSG = "Session should have been provided along with " \
-                          "config holder."
 
 
 def is_newer(d1, d2, tf=TIME_FORMAT):
+    # FIXME
     return datetime.strptime(d1, tf) < datetime.strptime(d2, tf)
 
 
 class ReportsGetter(object):
 
-    def __init__(self, ch):
+    def __init__(self, api, configHolder):
         """Expects an authenticated session provided with 'ch' config holder.
         The class uses url `domain`/`path` and the name of cookie to get it
         from the session and use in the downloading of the requested reports.
         """
-        self.output_dir = os.getcwd()
         self.verboseLevel = 0
-        self.endpoint = 'https://nuv.la'
-        self.session = None
-
-        ch.assign(self)
-
-        if self.session is None:
-            raise Exception(NO_SESSION_PROVIDED_MSG)
+        self.output_dir = os.getcwd()
+        self.components = ''
+        self.no_orch = False
+        configHolder.assign(self)
+        self.api = api
 
     @staticmethod
     def latest_only(reports):
         reports_filtered = {}
-        for r in reports:
-            not_yet_added = r['node'] not in reports_filtered
+        for report in reports:
+            r = report.json
+            node = r['component']
+            del r['operations']
+            del r['acl']
+            del r['resourceURI']
+            not_yet_added = node not in reports_filtered
             if not_yet_added:
-                reports_filtered[r['node']] = r
+                reports_filtered[node] = r
             else:
                 # replace if newer
-                if is_newer(reports_filtered[r['node']]['date'], r['date']):
-                    reports_filtered[r['node']] = r
+                if is_newer(reports_filtered[node]['created'], r['created']):
+                    reports_filtered[r['component']] = r
 
         return reports_filtered.values()
 
@@ -72,7 +72,7 @@ class ReportsGetter(object):
     def remove_orch(reports):
         reports_no_orch = []
         for r in reports:
-            if not NodeDecorator.is_orchestrator_name(r['node']):
+            if not NodeDecorator.is_orchestrator_name(r['component']):
                 reports_no_orch.append(r)
         return reports_no_orch
 
@@ -81,7 +81,7 @@ class ReportsGetter(object):
         reports_only = []
 
         for r in reports:
-            name = r['node']
+            name = r['component']
             if name.rsplit(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)[
                 0] in comps or \
                     name in comps:
@@ -104,22 +104,14 @@ class ReportsGetter(object):
                 raise ex
         return _dir
 
-    def run_reports_url(self, run_uuid):
-        return self.endpoint + util.REPORTS_RESOURCE_PATH + "/" + run_uuid + "/"
-
-    def list_reports(self, run_uuid):
-        res = self.session.get(self.run_reports_url(run_uuid),
-                               headers={'accept': 'application/json'})
-        reports = json.loads(res.text)['files']
-        self.debug("::: List of all reports. :::", reports)
-
-        return reports
-
     def get_reports(self, run_uuid, components=None, no_orch=False):
         if components is None:
             components = []
-        reports_list_orig = self.list_reports(run_uuid)
-        if not reports_list_orig:
+        reports_list_orig = self.api.cimi_search('externalObjects',
+                                                 select='id, component, created',
+                                                 filter='runUUID="{}" and state="ready"'
+                                                 .format(run_uuid)).resources_list
+        if len(reports_list_orig) == 0:
             self.info("::: WARNING: No reports available on %s :::" % run_uuid)
             return
 
@@ -139,31 +131,19 @@ class ReportsGetter(object):
             return
         self._download_reports(reports_list, self.reports_path(run_uuid))
 
-    def _get_cookie(self, url_str, name):
-        url = urlparse(url_str)
-        domain = url.netloc
-        path = url.path
-        return get_cookie(self.session.cookies, domain=domain, path=path,
-                          name=name)
-
     def _download_reports(self, reports_list, reports_path):
         self.mkdir(reports_path)
         self.info("\n::: Downloading reports to '%s'" % reports_path)
 
-        for f in reports_list:
-            furl = f['uri']
-            cookie = self._get_cookie(furl, DEFAULT_SS_COOKIE_NAME)
-            if not cookie:
-                self.warn("Skipping. Cookie not found for '%s' with name '%s'" %
-                          (furl, DEFAULT_SS_COOKIE_NAME))
-                continue
-            self.info("... %s" % furl)
-            self.debug("... cookie %s" % cookie)
-            util.download_file(furl, os.path.join(reports_path, f['name']),
-                               cookie)
+        for r in reports_list:
+            resp = self.api.cimi_operation(r['id'], 'http://sixsq.com/slipstream/1/action/download')
+            furl = resp.json['uri']
+            self.info('... {}: {}'.format(r['component'], furl))
+            util.download_file(furl, os.path.join(reports_path, r['component'] + '.tgz'))
 
-    def _get_names(self, reports):
-        return set(map(lambda x: x['node'], reports))
+    @staticmethod
+    def _get_names(reports):
+        return set(map(lambda x: x.json['component'], reports))
 
     def info(self, msg, data=None):
         print(msg)

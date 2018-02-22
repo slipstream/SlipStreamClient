@@ -859,9 +859,8 @@ def truncate_middle(max_len, message, truncate_message='...'):
     return message
 
 
-def download_file(src_url, dst_file, cookie):
+def download_file(src_url, dst_file):
     request = urllib2.Request(src_url)
-    request.add_header('cookie', cookie)
     src_fh = urllib2.urlopen(request)
 
     dst_fh = open(dst_file, 'wb')
