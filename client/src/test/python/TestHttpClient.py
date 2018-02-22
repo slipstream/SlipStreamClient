@@ -26,7 +26,7 @@ from requests import Response
 from slipstream.HttpClient import HttpClient
 from slipstream.exceptions.Exceptions import NetworkError
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.api.api import Api
+from slipstream.api import Api
 
 Api.login_internal = Mock()
 Api.login_apikey = Mock()
