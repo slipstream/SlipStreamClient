@@ -26,7 +26,6 @@ from random import random
 from threading import Lock
 from urlparse import urlparse
 from requests.exceptions import RequestException
-from requests.cookies import RequestsCookieJar
 
 try:
     from requests.packages.urllib3.exceptions import HTTPError
@@ -38,34 +37,6 @@ import slipstream.util as util
 from slipstream.api import Api
 
 etree = util.importETree()
-
-DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
-
-
-def get_cookie(cookie_jar, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
-    """Returns requested cookie from the provided cookie_jar."""
-    jar = RequestsCookieJar()
-    jar.update(cookie_jar)
-    cookie = None
-    if path is None:
-        cookies = jar.get_dict(domain=domain)
-        cookie = cookies.get(name)
-    elif path == '/':
-        cookies = jar.get_dict(domain=domain, path=path)
-        cookie = cookies.get(name)
-    else:
-        url_path = path.split('/')
-        for n in range(len(url_path), 0, -1):
-            path = '/'.join(url_path[0:n]) or '/'
-            cookies = jar.get_dict(domain=domain, path=path)
-            if name in cookies:
-                cookie = cookies.get(name)
-                break
-    if cookie is None:
-        return cookie
-    else:
-        return '%s=%s' % (name, cookie)
-
 
 # Client Error
 NOT_FOUND_ERROR = 404

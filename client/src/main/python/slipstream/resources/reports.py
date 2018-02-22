@@ -19,19 +19,16 @@ from __future__ import print_function
 
 import os
 import errno
-import json
 from datetime import datetime
 import pprint
 
 import slipstream.util as util
 from slipstream.NodeDecorator import NodeDecorator
-from slipstream.HttpClient import get_cookie, DEFAULT_SS_COOKIE_NAME
 
-TIME_FORMAT = '%Y-%m-%dT%H%M%SZ'
+TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 def is_newer(d1, d2, tf=TIME_FORMAT):
-    # FIXME
     return datetime.strptime(d1, tf) < datetime.strptime(d2, tf)
 
 

@@ -52,7 +52,7 @@ class MainProgram(CommandBase):
                                     'Default: all instances of all components.', default='')
 
         self.parser.add_option('-o', '--output-dir', dest='output_dir',
-                               help='Path to the directory to store the reports. Default: <working directory>/<run-uuid>.',
+                               help='Path to the folder to store the reports. Default: <working directory>/<run-uuid>.',
                                default=os.getcwd())
 
         self.parser.add_option('--no-orch', dest='no_orch',
