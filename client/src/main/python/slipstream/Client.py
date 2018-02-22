@@ -48,6 +48,7 @@ class Client(object):
         self.timeout = 30
         self.verboseLevel = 1
         self.verboseThreshold = 1
+        configHolder.set('serviceurl', configHolder.endpoint)
         self.ch = configHolder
         configHolder.assignConfigAndOptions(self)
         self.context = configHolder.context

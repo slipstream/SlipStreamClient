@@ -31,7 +31,6 @@ from slipstream.Client import Client
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.util import SERVER_CONFIG_FILE_EXT
 from slipstream.util import SERVER_CONFIGURATION_DEFAULT_CATEGORIES
-from slipstream.util import SERVER_CONFIGURATION_BASICS_CATEGORY
 from slipstream.util import SERVER_CONFIGURATION_CONNECTOR_CLASSES_KEY
 
 from slipstream.resources.configuration import get_cloud_connector_classes
