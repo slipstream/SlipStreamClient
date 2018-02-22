@@ -588,7 +588,7 @@ def install_python2():
     if sys.version_info[0] > 2:
         info('Installing python 2')
         _set_install_command_and_distro()
-        _check_call(INSTALL_CMD + ['python'])
+        _check_call(INSTALL_CMD + ['python', 'python-pkg-resources'])
         return True
     return False
 
