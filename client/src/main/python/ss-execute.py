@@ -42,7 +42,7 @@ def print_step(msg):
 
 
 class MainProgram(CommandBase):
-    '''A command-line program to execute a run of creating a new machine.'''
+    """A command-line program to execute a run of creating a new machine."""
 
     RUN_TYPE = 'type'
     BYPASS_SSH_CHECK = 'bypass-ssh-check'
@@ -53,7 +53,7 @@ class MainProgram(CommandBase):
                                   util.RUN_PARAM_MUTABLE,
                                   util.RUN_PARAM_KEEP_RUNNING,
                                   util.RUN_PARAM_TAGS)
-    DEAFULT_WAIT = 0  # minutes
+    DEFAULT_WAIT = 0  # minutes
     DEFAULT_SLEEP = 30  # seconds
     INITIAL_SLEEP = 10  # seconds
     INITIAL_STATE = RUN_STATES[0]
@@ -88,7 +88,7 @@ class MainProgram(CommandBase):
         self.parser.add_option('-w', '--wait', dest='wait',
                                help='Wait MINUTES for the deployment to finish.',
                                type='int', metavar='MINUTES',
-                               default=self.DEAFULT_WAIT)
+                               default=self.DEFAULT_WAIT)
 
         self.parser.add_option('--nagios', dest='nagios',
                                help='Behave like Nagios check.',
@@ -185,7 +185,7 @@ class MainProgram(CommandBase):
                 sys.exit(rc)
             finally:
                 self._cond_terminate_run(rc, run_url)
-                self._download_reports(run_url)
+                self._download_reports(self.client.get_api(), run_url)
         else:
             print(run_url)
 
@@ -196,11 +196,11 @@ class MainProgram(CommandBase):
         self.client = Client(configHolder)
 
     def _launch_deployment(self):
-        '''Return run URL on success.
+        """Return run URL on success.
         On failure:
         - in case of Nagios check generate CRITICAL error
         - else, the caught exception is re-raised.
-        '''
+        """
         params = self._assembleData()
         try:
             return self.client.launchDeployment(params)
@@ -212,10 +212,10 @@ class MainProgram(CommandBase):
                 raise
 
     def _wait_run_and_handle_failures(self, run_url):
-        '''Wait for final state of the run. Handle failures and print
+        """Wait for final state of the run. Handle failures and print
         respective messages. Return global exit code depending if this is
         Nagios check or not.
-        '''
+        """
         rc = self._get_critical_rc()
 
         try:
@@ -326,10 +326,10 @@ class MainProgram(CommandBase):
                 for k, v in params.items()]
 
     def _wait_run_in_states(self, run_url, waitmin, final_states, ignore_abort=False):
-        '''Return on reaching one of the requested state.
+        """Return on reaching one of the requested state.
         On timeout raise TimeoutException with the last state attribute set.
         On aborted Run by default raise AbortException with the last state attribute set.
-        '''
+        """
         def _sleep():
             time_sleep = self.DEFAULT_SLEEP
             if _sleep.ncycle <= 2:
@@ -365,19 +365,17 @@ class MainProgram(CommandBase):
         raise time_exc
 
     def _need_to_wait(self):
-        return self.options.wait > self.DEAFULT_WAIT
+        return self.options.wait > self.DEFAULT_WAIT
 
-    def _download_reports(self, run_url):
+    def _download_reports(self, api, run_url):
         if not (self.options.reports_components or self.options.get_reports_all):
             return
 
         components = []
         if self.options.reports_components:
             components = self.options.reports_components
-        ch = ConfigHolder(options=self.options, context={'ignore': None})
-        ch.context = {}
-        ch.set("session", self.client.get_session())
-        rg = ReportsGetter(ch)
+        ch = ConfigHolder(options=self.options)
+        rg = ReportsGetter(api, ch)
         rg.get_reports(run_url_to_uuid(run_url), components=components)
 
 

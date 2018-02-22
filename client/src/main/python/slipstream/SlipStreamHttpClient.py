@@ -18,7 +18,6 @@
 from __future__ import print_function
 
 import json
-import os
 from collections import defaultdict
 
 import slipstream.util as util
@@ -50,6 +49,8 @@ class SlipStreamHttpClient(object):
         configHolder.assign(self)
         self._assemble_endpoints()
         self.httpClient = HttpClient(configHolder=configHolder)
+        self.httpClient.init_session(self.serviceurl)
+        self.api = self.httpClient.get_ss_api()
 
     def set_retry(self, retry):
         self.retry = retry
@@ -57,11 +58,6 @@ class SlipStreamHttpClient(object):
     def _assemble_endpoints(self):
         self.runEndpoint = self.serviceurl + util.RUN_RESOURCE_PATH
         self.run_url = self.runEndpoint + '/' + self.diid
-
-        self.authnServiceUrl = self.serviceurl + '/api/session'
-
-        self.runReportEndpoint = '%s/reports/%s' % (self.serviceurl,
-                                                    self.diid)
 
         self.userEndpoint = '%s/user/%s' % (self.serviceurl,
                                             self.username)
@@ -218,14 +214,24 @@ class SlipStreamHttpClient(object):
             NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
-        self._uploadReport(self.runReportEndpoint, report)
+        resource_id = self._create_external_object_report()
+        upload_url = self._generate_upload_url_external_object_report(resource_id)
+        self._upload_report(upload_url, report)
 
-    def _uploadReport(self, url, report):
+    def _create_external_object_report(self):
+        resp = self.api.cimi_add('externalObjects',
+                                 {'externalObjectTemplate': {'href': 'external-object-template/report',
+                                                             'runUUID': self.diid,
+                                                             'component': self.node_instance_name}})
+        return resp.json['resource-id']
+
+    def _generate_upload_url_external_object_report(self, resource_id):
+        resp = self.api.cimi_operation(resource_id, "http://sixsq.com/slipstream/1/action/upload")
+        return resp.json['uri']
+
+    def _upload_report(self, url, report):
         print('Uploading report to: %s' % url)
-
         body = open(report, 'rb').read()
-        url += '/' + os.path.basename(report)
-
         self._httpPut(url, body, '', accept="*/*")
 
     def isAbort(self):
@@ -250,7 +256,7 @@ class SlipStreamHttpClient(object):
             url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         try:
             _, content = self._httpGet(url, accept='text/plain')
-        except Exceptions.NotFoundError, ex:
+        except Exceptions.NotFoundError as ex:
             raise Exceptions.NotFoundError('"%s" for %s' % (str(ex), key))
 
         return content.strip().strip('"').strip("'")
@@ -321,17 +327,16 @@ class SlipStreamHttpClient(object):
         return config
 
     def login(self, username, password):
-        self._httpPost(self.authnServiceUrl, body={
-            'href': 'session-template/internal',
-            'username': username,
-            'password': password
-        }, contentType='application/x-www-form-urlencoded')
+        self.api.login_internal(username=username, password=password)
 
     def logout(self):
-        self.httpClient.delete_local_cookie(self.serviceurl + '/')
+        self.api.logout()
 
     def get_session(self):
         return self.httpClient.get_session()
+
+    def get_api(self):
+        return self.api
 
 
 class DomExtractor(object):
@@ -343,8 +348,8 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_nodes_instances_runtime_parameters(run_dom, cloud_service_name=None):
-        '''Return dict {<node_instance_name>: {<runtimeparamname>: <value>, }, }
-        '''
+        """Return dict {<node_instance_name>: {<runtimeparamname>: <value>, }, }
+        """
         nodes_instances = {}
         for node_instance_name in run_dom.attrib['nodeNames'].split(','):
             node_instance_name = node_instance_name.strip()
@@ -370,8 +375,8 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_nodes_runtime_parameters(run_dom):
-        '''Return dict {<node_name>: {<runtimeparamname>: <value>, }, }
-        '''
+        """Return dict {<node_name>: {<runtimeparamname>: <value>, }, }
+        """
         nodes = {}
         node_names = DomExtractor._get_node_names(run_dom)
 
@@ -411,8 +416,8 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_node_image_attributes(run_dom, nodename):
-        ''' Return image attributes of all nodes.
-        '''
+        """ Return image attributes of all nodes.
+        """
         image = DomExtractor.extract_node_image(run_dom, nodename)
         attributes = {}
 
@@ -423,8 +428,8 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_node_image(run_dom, nodename):
-        ''' Return image attributes of all nodes.
-        '''
+        """ Return image attributes of all nodes.
+        """
         image = None
 
         if DomExtractor.get_module_category(run_dom) == NodeDecorator.IMAGE:
@@ -438,8 +443,8 @@ class DomExtractor(object):
 
     @staticmethod
     def extract_deployment(run_dom, nodename):
-        ''' Return the deployment module of a run.
-        '''
+        """ Return the deployment module of a run.
+        """
         return run_dom.find('module')
 
     @staticmethod
@@ -540,8 +545,8 @@ class DomExtractor(object):
 
     @staticmethod
     def get_targets_from_module(module_dom):
-        '''Return deployment targets of the given image.
-        '''
+        """Return deployment targets of the given image.
+        """
         targets = {}
         for st in module_dom.findall('targetsExpanded/targetExpanded/subTarget'):
             name = st.get('name')
@@ -565,11 +570,11 @@ class DomExtractor(object):
 
     @staticmethod
     def server_config_dom_into_dict(config_dom, categories=[], value_updater=None):
-        '''
+        """
         :param config_dom: Element Tree representation of the server's configuration.
         :param categories: categories to extract; if empty, extracts all categories.
         :return: dictionary {'category': [('param', 'value'),],}
-        '''
+        """
         config = defaultdict(list)
         for param in config_dom.findall('parameters/entry'):
             category = param.find('parameter').get('category')

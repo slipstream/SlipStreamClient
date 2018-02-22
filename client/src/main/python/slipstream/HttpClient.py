@@ -26,7 +26,6 @@ from random import random
 from threading import Lock
 from urlparse import urlparse
 from requests.exceptions import RequestException
-from requests.cookies import RequestsCookieJar
 
 try:
     from requests.packages.urllib3.exceptions import HTTPError
@@ -35,37 +34,9 @@ except:
 
 import slipstream.exceptions.Exceptions as Exceptions
 import slipstream.util as util
-from slipstream.api.api import Api
+from slipstream.api import Api
 
 etree = util.importETree()
-
-DEFAULT_SS_COOKIE_NAME = 'com.sixsq.slipstream.cookie'
-
-
-def get_cookie(cookie_jar, domain, path=None, name=DEFAULT_SS_COOKIE_NAME):
-    """Returns requested cookie from the provided cookie_jar."""
-    jar = RequestsCookieJar()
-    jar.update(cookie_jar)
-    cookie = None
-    if path is None:
-        cookies = jar.get_dict(domain=domain)
-        cookie = cookies.get(name)
-    elif path == '/':
-        cookies = jar.get_dict(domain=domain, path=path)
-        cookie = cookies.get(name)
-    else:
-        url_path = path.split('/')
-        for n in range(len(url_path), 0, -1):
-            path = '/'.join(url_path[0:n]) or '/'
-            cookies = jar.get_dict(domain=domain, path=path)
-            if name in cookies:
-                cookie = cookies.get(name)
-                break
-    if cookie is None:
-        return cookie
-    else:
-        return '%s=%s' % (name, cookie)
-
 
 # Client Error
 NOT_FOUND_ERROR = 404
@@ -91,18 +62,6 @@ def http_debug():
     requests_log.propagate = True
 
 
-def disable_urllib3_warnings():
-    try:
-        requests.packages.urllib3.disable_warnings(
-            requests.packages.urllib3.exceptions.InsecureRequestWarning)
-    except:
-        try:
-            import urllib3
-            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-        except:
-            pass
-
-
 class HttpClient(object):
 
     def __init__(self, configHolder=None):
@@ -118,8 +77,6 @@ class HttpClient(object):
 
         if self.verboseLevel >= 3:
             http_debug()
-        else:
-            disable_urllib3_warnings()
 
         self.session = None
         self._ss_api = None
@@ -275,12 +232,6 @@ class HttpClient(object):
             time.sleep(sleep)
             self._log_normal('Retrying...')
 
-    def delete_local_cookie(self, url):
-        _url = urlparse(url)
-        if self.session is None:
-            self.init_session(url)
-        self.session.clear(_url.netloc, _url.path, DEFAULT_SS_COOKIE_NAME)
-
     def _get_login_creds(self):
         if hasattr(self, 'username') and hasattr(self, 'password'):
             return {'username': self.username, 'password': self.password}
@@ -299,7 +250,7 @@ class HttpClient(object):
                                  'Assuming cookies from a persisted cookie-jar %s will be used.'
                                  % self.cookie_filename)
             api = Api(endpoint=endpoint, cookie_file=self.cookie_filename,
-                      reauthenticate=True, login_creds=login_creds)
+                      reauthenticate=True, login_creds=login_creds, insecure=True)
             self._ss_api = api
             self.session = api.session
 

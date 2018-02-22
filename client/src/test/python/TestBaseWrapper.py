@@ -41,7 +41,7 @@ class TestBaseWrapper(TestCloudConnectorsBase):
             {
                 'username': base64.b64encode('user'),
                 'password': base64.b64encode('pass'),
-                'cookie_filename': 'cookies',
+                'cookie_filename': '/var/tmp/cookies',
                 'serviceurl': self.serviceurl,
                 'node_instance_name': 'instance-name'
             },

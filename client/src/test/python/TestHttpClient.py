@@ -21,13 +21,12 @@ import requests
 import unittest
 
 from mock import Mock
-from requests.cookies import RequestsCookieJar, create_cookie
 from requests import Response
 
-from slipstream.HttpClient import HttpClient, get_cookie
+from slipstream.HttpClient import HttpClient
 from slipstream.exceptions.Exceptions import NetworkError
 from slipstream.ConfigHolder import ConfigHolder
-from slipstream.api.api import Api
+from slipstream.api import Api
 
 Api.login_internal = Mock()
 Api.login_apikey = Mock()
@@ -53,9 +52,10 @@ class HttpClientTestCase(unittest.TestCase):
         assert client.session.login_params == {}
         resp = Mock(spec=Response)
         resp.status_code = 403
+        resp.cookies = None
         resp.headers = {}
         client.session._request = Mock(return_value=resp)
-        client.session.cimi_login = Mock()
+        client.session.cimi_login = Mock(return_value=resp)
         try:
             client.get('http://foo.bar', retry=False)
         except Exception as ex:
@@ -127,44 +127,6 @@ class HttpClientTestCase(unittest.TestCase):
         self.assertEqual(len(args), 1)
         req = args[0]
         self.assertEqual(req.body, 'a=b\nc=d')
-
-    def test_get_cookie(self):
-        self.assertIsNone(get_cookie(RequestsCookieJar(), None))
-
-        cookie_str = 'cookie.name=this is a cookie'
-        name, value = cookie_str.split('=')
-        domain = 'example.com'
-        path = '/some'
-
-        jar = RequestsCookieJar()
-        cookie = create_cookie(name, value, **{'domain': domain, 'path': path})
-        jar.set_cookie(cookie)
-
-        # w/o path
-        self.assertIsNone(get_cookie(jar, None))
-        self.assertIsNone(get_cookie(jar, domain))
-        c_str = get_cookie(jar, domain, name=name)
-        self.assertIsNotNone(c_str)
-        self.assertEquals(cookie_str, c_str)
-
-        # w/ path
-        self.assertIsNone(get_cookie(jar, domain, path='/', name=name))
-
-        c_str = get_cookie(jar, domain, path='/some', name=name)
-        self.assertEquals(cookie_str, c_str)
-
-        c_str = get_cookie(jar, domain, path='/some/path', name=name)
-        self.assertEquals(cookie_str, c_str)
-
-        # root path cookie
-        jar = RequestsCookieJar()
-        cookie = create_cookie(name, value, **{'domain': domain, 'path': '/'})
-        jar.set_cookie(cookie)
-        c_str = get_cookie(jar, domain, path='/', name=name)
-        self.assertEquals(cookie_str, c_str)
-
-        c_str = get_cookie(jar, domain, path='/random', name=name)
-        self.assertEquals(cookie_str, c_str)
 
 
 if __name__ == '__main__':

@@ -274,3 +274,6 @@ class Client(object):
 
     def get_session(self):
         return self.httpClient.get_session()
+
+    def get_api(self):
+        return self.httpClient.get_api()
