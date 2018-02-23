@@ -72,6 +72,8 @@ class HttpClient(object):
         self.lock = Lock()
         self.too_many_requests_count = 0
 
+        self.ss_cache_key = ''
+
         if configHolder:
             configHolder.assign(self)
 
@@ -155,7 +157,7 @@ class HttpClient(object):
                 headers['Content-Type'] = contentType
             if accept:
                 headers['Accept'] = accept
-
+            headers['ss-cache-key'] = self.ss_cache_key
             return headers
 
         def _request(headers):

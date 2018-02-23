@@ -326,12 +326,14 @@ api_key = %s
 api_secret = %s
 serviceurl = %s
 node_instance_name = %s
+ss_cache_key = %s
 """ % (os.environ['SLIPSTREAM_DIID'],
        os.environ['SLIPSTREAM_USERNAME'],
        os.environ['SLIPSTREAM_API_KEY'].strip('"'),
        os.environ['SLIPSTREAM_API_SECRET'].strip('"'),
        os.environ['SLIPSTREAM_SERVICEURL'],
-       os.environ['SLIPSTREAM_NODE_INSTANCE_NAME'])
+       os.environ['SLIPSTREAM_NODE_INSTANCE_NAME'],
+       os.environ['SLIPSTREAM_SS_CACHE_KEY'])
     _write_to_ss_client_bin('slipstream.context', slipstream_context)
 
 
