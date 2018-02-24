@@ -23,6 +23,8 @@ class UserInfo(dict):
     CLOUD_USERNAME_KEY = 'username'
     CLOUD_PASSWORD_KEY = 'password'
     SSH_PUBKEY_KEY = 'sshPublicKey'
+    NETWORK_PUBLIC_KEY = 'networkPublic'
+    NETWORK_PRIVATE_KEY = 'networkPrivate'
 
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})
@@ -79,10 +81,10 @@ class UserInfo(dict):
         return self.get_cloud('keypair.name')
 
     def get_public_network_name(self):
-        return self.get_cloud('networkPublic', '').strip()
+        return self.get_cloud(self.NETWORK_PUBLIC_KEY, '').strip()
 
     def get_private_network_name(self):
-        return self.get_cloud('networkPrivate', '').strip()
+        return self.get_cloud(self.NETWORK_PRIVATE_KEY, '').strip()
 
     def _set_cloud_param(self, key, value):
         if not self.cloud:
