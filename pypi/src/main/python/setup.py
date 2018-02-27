@@ -45,13 +45,16 @@ setup(
     namespace_packages=['slipstream'],
     install_requires=[
         'requests',
-        'six'],
+        'six',
+        'slipstream-api'
+    ],
     scripts=[
         'bin/ss-abort',
         'bin/ss-cancel-abort',
         'bin/ss-display',
         'bin/ss-execute',
         'bin/ss-get',
+        'bin/ss-get-all',
         'bin/ss-set',
         'bin/ss-module-delete',
         'bin/ss-module-download',
@@ -61,6 +64,7 @@ setup(
         'bin/ss-node-add',
         'bin/ss-node-remove',
         'bin/ss-random',
+        'bin/ss-reports-get',
         'bin/ss-run-get',
         'bin/ss-user-get',
         'bin/ss-user-put',
