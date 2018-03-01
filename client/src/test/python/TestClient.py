@@ -123,6 +123,25 @@ class TestClient(unittest.TestCase):
             else:
                 assert '' == v
 
+    def test_constructor(self):
+        ch = ConfigHolder()
+        ch.context = {}
+        ch.options = {}
+        ch.config = {}
+        Client(ch)
+
+        ch.context = {}
+        ch.options = {}
+        ch.config = {'endpoint': 'foo/bar'}
+        c = Client(ch)
+        assert c.ch.endpoint == c.ch.serviceurl == 'foo/bar'
+
+        ch.context = {}
+        ch.options = {}
+        ch.config = {'serviceurl': 'bar/baz'}
+        c = Client(ch)
+        assert c.ch.serviceurl == 'bar/baz'
+        assert not hasattr(c.ch, 'endpoint')
 
 if __name__ == '__main__':
     unittest.main()
