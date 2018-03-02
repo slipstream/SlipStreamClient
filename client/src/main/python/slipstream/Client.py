@@ -42,17 +42,18 @@ class Client(object):
 
     VALUE_LENGTH_LIMIT = 4096  # from RuntimeParameter class on server
 
-    def __init__(self, configHolder):
+    def __init__(self, ch):
         self.no_block = True
         self.ignoreAbort = False
         self.timeout = 30
         self.verboseLevel = 1
         self.verboseThreshold = 1
-        configHolder.set('serviceurl', configHolder.endpoint)
-        self.ch = configHolder
-        configHolder.assignConfigAndOptions(self)
-        self.context = configHolder.context
-        self.httpClient = SlipStreamHttpClient(configHolder)
+        if not hasattr(ch, 'serviceurl') and hasattr(ch, 'endpoint'):
+            ch.set('serviceurl', ch.endpoint)
+        self.ch = ch
+        ch.assignConfigAndOptions(self)
+        self.context = ch.context
+        self.httpClient = SlipStreamHttpClient(ch)
 
     def login(self, username, password):
         self.httpClient.login(username, password)
