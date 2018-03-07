@@ -52,6 +52,7 @@ setup(
         'bin/ss-execute',
         'bin/ss-get',
         'bin/ss-set',
+        'bin/ss-migrate-modules',
         'bin/ss-module-delete',
         'bin/ss-module-download',
         'bin/ss-module-get',

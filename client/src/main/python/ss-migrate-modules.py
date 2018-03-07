@@ -2,7 +2,7 @@
 """
  SlipStream Client
  =====
- Copyright (C) 2014 SixSq Sarl (sixsq.com)
+ Copyright (C) 2018 SixSq Sarl (sixsq.com)
  =====
  Licensed under the Apache License, Version 2.0 (the "License");
  you may not use this file except in compliance with the License.
@@ -226,10 +226,10 @@ def category_to_type(category):
 
 def get_cimi_acl(module):
     owner = module.get('authz', {}).get('owner')
-    
+
     type = 'USER' if owner else 'ROLE'
     principal = owner if owner else 'ADMIN'
-    
+
     return {'owner': {
                 'type': type,
                 'principal': principal},
@@ -277,7 +277,7 @@ def get_cimi_module(module, versions_hrefs):
 
 def get_cloud_image_ids(version):
     ids = _get_list(_get_dict(version.get('cloudImageIdentifiers', {})).get('cloudImageIdentifier', []))
-    
+
     if ids:
         return {i['cloudImageIdentifier']: i['cloudServiceName'] for i in ids}
     return {}
@@ -299,7 +299,7 @@ def split_parameters(version):
             
             if category == 'Cloud':
                 resources_requirements[name] = value
-                
+
             elif category in ['Input', 'Output']:
                 parameters.setdefault(category.lower(), []).append({
                     'name': name,
@@ -335,7 +335,7 @@ def get_cimi_version_for_component(version):
     res_req, cloud_params, params = split_parameters(version)
     targets = get_targets_by_name(version)
     packages = get_packages(version)
-    
+
     return {
         'native': version.get('isBase'),
         'parent_component': version.get('parentUri'),
@@ -364,32 +364,32 @@ def get_cimi_version_for_component(version):
             'prescale': targets.get('prescale'),
             'postscale': targets.get('postscale')
         }
-        
+
     }
 
 
 def get_mappings(node):
     cimi_mappings = []
     mappings = _get_list(_get_dict(node.get('parameterMappings', {})).get('entry', []))
-    
+
     for mapping in mappings:
         parameter = mapping['parameter']
         is_map = parameter['isMappedValue']
         value = _to_str(parameter['value'])
-        
+
         cimi_mappings.append({
             'parameter_name': parameter['name'],
             'map': value if is_map else None,
             'value': value.strip('"'"'") if not is_map else None
         })
-        
+
     return cimi_mappings
 
 
 def get_cimi_version_for_application(version):
     cimi_nodes = []
     nodes = _get_list(_get_dict(version.get('nodes', {})).get('entry', []))
-    
+
     for n in nodes:
         node = n['node']
         cimi_nodes.append({
@@ -398,9 +398,9 @@ def get_cimi_version_for_application(version):
             'cloud': {'href': node.get('cloudService')},
             'multiplicity': _to_int(node.get('multiplicity')),
             'max_provisioning_failures': _to_int(node.get('maxProvisioningFailures')),
-            'mappings': get_mappings(node) 
+            'mappings': get_mappings(node)
         })
-    
+
     return {
         'nodes': cimi_nodes
     }
@@ -423,11 +423,11 @@ def get_cimi_version(version):
             'author': commit.get('author'),
             'message': commit.get('comment')
         }}
-        
+
     )
 
     cimi_version.update(get_cimi_version_for_type(cimi_version['type'], version))
-    
+
     return cimi_version
 
 
@@ -457,8 +457,8 @@ def upload_module(api, module):
 
 def convert_and_upload_modules(config, modules):
     api = get_api(config)
-    
-    for module in modules: 
+
+    for module in modules:
         print('{} with {} versions'.format(get_module_path(module), len(module.get('versions', []))))
         module = convert_module(module)
         upload_module(api, module)
