@@ -47,6 +47,9 @@ def parse_arguments():
                         help='Cloud password', metavar='PASSWORD',
                         default=os.environ.get('__SLIPSTREAM_PASSWORD', ''))
 
+    parser.add_argument('--ss-insecure', dest='insecure', action='store_true', default=False,
+                        help='Do not check server certificate')
+
     parser.add_argument('--recurse', dest='recurse', action='store_true', default=False,
                         help='Recurse into sub-modules (only with source slipstream)')
 
@@ -95,7 +98,7 @@ def patch_api():
 def get_api(config):
     patch_api()
 
-    api = Api(endpoint=config.endpoint)
+    api = Api(endpoint=config.endpoint, insecure=config.insecure)
     api.login_internal(config.username, config.password)
 
     return api
@@ -243,14 +246,20 @@ def get_cimi_acl(module):
             }
 
 
+def get_path(module):
+    name = module.get('shortName')
+    parent = module.get('parentUri','')[7:]
+    return parent + '/' + name if parent else name
+
+
 def get_cimi_module_common_attributes(module):
     name = module['shortName']
     parent = module['parentUri'][7:]
 
     return {'name': name,
-            'path': parent + '/' + name if parent else name,
+            'path': get_path(module),
             'parent': parent,
-            'description': module['description'],
+            'description': module.get('description', ''),
             'logo': module.get('logoLink'),
             'type': category_to_type(module['category']),
             'created': convert_date(module['creation']),
@@ -285,8 +294,8 @@ def split_parameters(version):
             param = p['parameter']
             name = param['name']
             value = param.get('value')
-            category = param['category']
-            description = param['description']
+            category = param.get('category')
+            description = param.get('description')
             
             if category == 'Cloud':
                 resources_requirements[name] = value
@@ -297,7 +306,10 @@ def split_parameters(version):
                     'description': description,
                     'value': _to_str(value)
                 })
-                
+
+            elif not category:
+                print('warning: parameter category null or empty for "{}": {}. Skipping this parameter'.format(get_path(version), param))
+
             else:
                 cloud_parameters.setdefault(category, []).append({
                     'name': name,
@@ -419,22 +431,28 @@ def get_cimi_version(version):
     return cimi_version
 
 
-def cimi_add(api, resource_type, data):
+def cimi_add(api, resource_type, element):
     try:
-        return api.cimi_add(resource_type, data)
+        return api.cimi_add(resource_type, element)
     except Exception as e:
-        print('Failed to upload to {}: {}'.format(resource_type, e))
-        import code; code.interact(local=locals())
+        print('Failed to upload "{}" to CIMI resource "{}": {}'.format(element.get('name'), resource_type, e))
+        return None
+        #import code; code.interact(local=locals())
 
 def upload_module(api, module):
     versions_hrefs = []
+    
 
     for version in module['versions']:
         cimi_resp = cimi_add(api, 'versions', get_cimi_version(version))
-        version_href = {'href': cimi_resp.json['resource-id']}
-        versions_hrefs.append(version_href)
+        if cimi_resp is not None:
+            version_href = {'href': cimi_resp.json['resource-id']}
+            versions_hrefs.append(version_href)
 
-    cimi_add(api, 'modules', get_cimi_module(module, versions_hrefs))
+    if versions_hrefs:
+        cimi_add(api, 'modules', get_cimi_module(module, versions_hrefs))
+    else:
+        print('No version for module "{}". Skipping'.format(get_path(module)))
 
 
 def convert_and_upload_modules(config, modules):
