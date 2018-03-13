@@ -85,6 +85,11 @@
 	</fileSets>
 
 	<files>
+		<file>
+			<source>src/requirements.txt</source>
+			<outputDirectory>./</outputDirectory>
+			<fileMode>0644</fileMode>
+		</file>
 	  <file>
 	    <source>src/setup.py</source>
 	    <outputDirectory>./</outputDirectory>
