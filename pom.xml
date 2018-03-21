@@ -31,6 +31,17 @@
         <module>rpm</module>
       </modules>
     </profile>
+    <profile>
+      <id>build-client-rpm-local</id>
+      <activation>
+        <file>
+          <exists>/usr/local/bin/rpm</exists>
+        </file>
+      </activation>
+      <modules>
+        <module>rpm</module>
+      </modules>
+    </profile>
   </profiles>
 
   <build>

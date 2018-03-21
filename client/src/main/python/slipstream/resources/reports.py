@@ -106,7 +106,7 @@ class ReportsGetter(object):
             components = []
         reports_list_orig = self.api.cimi_search('externalObjects',
                                                  select='id, component, created',
-                                                 filter='runUUID="{}" and state="ready"'
+                                                 filter='runUUID="{0}" and state="ready"'
                                                  .format(run_uuid)).resources_list
         if len(reports_list_orig) == 0:
             self.info("::: WARNING: No reports available on %s :::" % run_uuid)
@@ -135,7 +135,7 @@ class ReportsGetter(object):
         for r in reports_list:
             resp = self.api.cimi_operation(r['id'], 'http://sixsq.com/slipstream/1/action/download')
             furl = resp.json['uri']
-            self.info('... {}: {}'.format(r['component'], furl))
+            self.info('... {0}: {1}'.format(r['component'], furl))
             util.download_file(furl, os.path.join(reports_path, r['component'] + '.tgz'))
 
     @staticmethod

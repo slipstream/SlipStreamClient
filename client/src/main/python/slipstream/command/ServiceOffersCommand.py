@@ -25,7 +25,6 @@ from slipstream.command.CloudClientCommand import CloudClientCommand
 
 
 class ServiceOffersCommand(CloudClientCommand):
-
     DEFAULT_TIMEOUT = 600
     EXCHANGE_RATES_SERVICE_URL = 'https://api.fixer.io/latest'
 
@@ -172,7 +171,7 @@ class ServiceOffersCommand(CloudClientCommand):
         return 1.0 / self._exchange_rates.get(dst_currency, {}).get(src_currency)
 
     def convert_currency(self, src_currency, dst_currency, amount):
-        return amount * self.get_exchange_rate (src_currency, dst_currency) if src_currency != dst_currency else amount
+        return amount * self.get_exchange_rate(src_currency, dst_currency) if src_currency != dst_currency else amount
 
     @staticmethod
     def _generate_service_attribute_namespace(prefix, description=None, acl=None):
@@ -211,13 +210,13 @@ class ServiceOffersCommand(CloudClientCommand):
         verbose = self.get_option('verbose')
 
         cimi_resp = self.ssapi.cimi_search(self.RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES,
-                                           filter='prefix="{}"'.format(prefix))
+                                           filter='prefix="{0}"'.format(prefix))
 
         if cimi_resp.count == 0:
             service_attribute_namespace = self._generate_service_attribute_namespace(prefix, description, acl)
             if verbose:
-                print('\nAddinging the following service attribute namespace {} ...\n{}'.format(prefix,
-                                                                                                service_attribute_namespace))
+                print('\nAddinging the following service attribute namespace {0} ...\n{1}'
+                      .format(prefix, service_attribute_namespace))
             self.ssapi.cimi_add(self.RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES, service_attribute_namespace)
 
     @staticmethod
@@ -228,12 +227,12 @@ class ServiceOffersCommand(CloudClientCommand):
         resource_class = 'standard'
 
         instance_type = instance_type or ''
-        instance_type_in_name = ' {}'.format(instance_type) if instance_type else ''
-        instance_type_in_description = ' ({})'.format(instance_type) if instance_type else ''
+        instance_type_in_name = ' {0}'.format(instance_type) if instance_type else ''
+        instance_type_in_description = ' ({0})'.format(instance_type) if instance_type else ''
 
         service_offer = {
-            "name": "({:d}/{:d}/{:d}{} {}) [{}]".format(cpu, ram, root_disk, instance_type_in_name, os, country),
-            "description": "{} ({}) with {:d} vCPU, {:d} MiB RAM, {:d} GiB root disk, {} [{}]{}"
+            "name": "({0:d}/{1:d}/{2:d}{3} {4}) [{5}]".format(cpu, ram, root_disk, instance_type_in_name, os, country),
+            "description": "{0} ({1}) with {2:d} vCPU, {3:d} MiB RAM, {4:d} GiB root disk, {5} [{6}]{7}"
                 .format(resource_type, resource_class, cpu, ram, root_disk, os, country, instance_type_in_description),
             "resource:vcpu": cpu,
             "resource:ram": ram,
@@ -245,34 +244,34 @@ class ServiceOffersCommand(CloudClientCommand):
             "resource:platform": platform,
             "resource:operatingSystem": os,
             "resource:instanceType": instance_type,
-            "price:unitCost": price, # price  price:currency/price:unitcode
+            "price:unitCost": price,  # price  price:currency/price:unitcode
             "price:unitCode": "HUR",
             "price:freeUnits": 0,
             "price:currency": base_currency,
-            "price:billingUnitCode": billing_unit, # Minimum time quantum for a resource
-            "price:billingPeriodCode": "MON", # A bill is sent every billingPeriodCode
+            "price:billingUnitCode": billing_unit,  # Minimum time quantum for a resource
+            "price:billingPeriodCode": "MON",  # A bill is sent every billingPeriodCode
             "connector": {"href": connector_instance_name},
-            "acl" : {
-                "owner" : {
-                    "type" : "ROLE",
-                    "principal" : "ADMIN"
+            "acl": {
+                "owner": {
+                    "type": "ROLE",
+                    "principal": "ADMIN"
                 },
-                "rules" : [ {
-                    "principal" : "USER",
-                    "right" : "VIEW",
-                    "type" : "ROLE"
+                "rules": [{
+                    "principal": "USER",
+                    "right": "VIEW",
+                    "type": "ROLE"
                 }, {
-                    "principal" : "ADMIN",
-                    "right" : "ALL",
-                    "type" : "ROLE"
-                } ]
+                    "principal": "ADMIN",
+                    "right": "ALL",
+                    "type": "ROLE"
+                }]
             },
         }
         if extra_attributes:
             if not prefix:
                 raise ValueError('A prefix has to be defined with _get_prefix() to specify extra_attributes')
             for k, v in extra_attributes.items():
-                service_offer['{}:{}'.format(prefix, k)] = v
+                service_offer['{0}:{1}'.format(prefix, k)] = v
 
         return service_offer
 
@@ -323,7 +322,7 @@ class ServiceOffersCommand(CloudClientCommand):
         ss_password = self.get_option(self.SS_PASSWORD_KEY)
         connector_instance_name = self.get_option(self.CONNECTOR_NAME_KEY)
 
-        filter_connector_vm = 'connector/href="{}" and resource:type="{}"'.format(connector_instance_name, "VM")
+        filter_connector_vm = 'connector/href="{0}" and resource:type="VM"'.format(connector_instance_name)
 
         self.ssapi = Api(endpoint=ss_endpoint, cookie_file=None, insecure=True)
         if not dry_run:
@@ -347,30 +346,32 @@ class ServiceOffersCommand(CloudClientCommand):
 
         for service_offer in service_offers:
             if dry_run:
-                print('\nService offer {}:\n{}'.format(service_offer['name'], service_offer))
+                print('\nService offer {0}:\n{1}'.format(service_offer['name'], service_offer))
             else:
-                cimi_filter = '{} and description="{}"'.format(filter_connector_vm, service_offer['description'])
+                cimi_filter = '{0} and description="{1}"'.format(filter_connector_vm, service_offer['description'])
                 search_result = self.ssapi.cimi_search('serviceOffers', filter=cimi_filter)
                 result_list = search_result.resources_list
                 result_count = len(result_list)
 
                 if result_count == 0:
                     if verbose:
-                        print('\nAddinging the following service offer {} to {}...\n{}'.format(service_offer['name'],
-                                                                                               ss_endpoint, service_offer))
+                        print('\nAddinging the following service offer {0} to {1}...\n{2}'.format(service_offer['name'],
+                                                                                                  ss_endpoint,
+                                                                                                  service_offer))
 
                     response = self.ssapi.cimi_add('serviceOffers', service_offer)
                     service_offers_ids.add(response.json['resource-id'])
                 elif result_count == 1:
                     if verbose:
-                        print('\nUpdating the following service offer {} to {}...\n{}'.format(service_offer['name'],
-                                                                                              ss_endpoint, service_offer))
+                        print('\nUpdating the following service offer {0} to {1}...\n{2}'.format(service_offer['name'],
+                                                                                                 ss_endpoint,
+                                                                                                 service_offer))
 
                     response = self.ssapi.cimi_edit(result_list[0].id, service_offer)
                     service_offers_ids.add(response.id)
                 else:
-                    print('\n!!! Warning duplicates found of following service offer on {} !!!\n{}'.format(ss_endpoint,
-                                                                                                           service_offer['name']))
+                    print('\n!!! Warning duplicates found of following service offer on {0} !!!\n{1}'
+                          .format(ss_endpoint, service_offer['name']))
                     for result in result_list:
                         service_offers_ids.add(result.id)
 
@@ -382,7 +383,7 @@ class ServiceOffersCommand(CloudClientCommand):
             for id in service_offers_ids_to_delete:
                 if verbose:
                     offer = self.ssapi.cimi_get(id)
-                    print('\nDeleting the following service offer with id {}...\n{}'.format(id, offer.json))
+                    print('\nDeleting the following service offer with id {0}...\n{1}'.format(id, offer.json))
 
                 self.ssapi.cimi_delete(id)
 
@@ -400,7 +401,8 @@ class ServiceOffersCommand(CloudClientCommand):
                           default=None, metavar='CONNECTOR_NAME')
 
         parser.add_option('--' + self.SS_ENDPOINT_KEY, dest=self.SS_ENDPOINT_KEY,
-                          help='SlipStream endpoint used where the service offers are pushed to. (default: https://nuv.la)',
+                          help='SlipStream endpoint used where the service offers are pushed to. ' +
+                               '(default: https://nuv.la)',
                           default='https://nuv.la', metavar='URL')
 
         parser.add_option('--' + self.SS_USERNAME_KEY, dest=self.SS_USERNAME_KEY,
@@ -417,4 +419,3 @@ class ServiceOffersCommand(CloudClientCommand):
 
     def _get_command_mandatory_options(self):
         return [self.CONNECTOR_NAME_KEY]
-
