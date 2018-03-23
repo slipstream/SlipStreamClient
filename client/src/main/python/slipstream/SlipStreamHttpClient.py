@@ -17,6 +17,7 @@
 """
 from __future__ import print_function
 
+import os
 import json
 from collections import defaultdict
 
@@ -214,15 +215,17 @@ class SlipStreamHttpClient(object):
             NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY, message)
 
     def sendReport(self, report):
-        resource_id = self._create_external_object_report()
+        resource_id = self._create_external_object_report(report)
         upload_url = self._generate_upload_url_external_object_report(resource_id)
         self._upload_report(upload_url, report)
 
-    def _create_external_object_report(self):
+    def _create_external_object_report(self, report_path):
         resp = self.api.cimi_add('externalObjects',
                                  {'externalObjectTemplate': {'href': 'external-object-template/report',
                                                              'runUUID': self.diid,
-                                                             'component': self.node_instance_name}})
+                                                             'component': self.node_instance_name,
+                                                             'filename': os.path.basename(report_path),
+                                                             'contentType': 'application/tar+gzip'}})
         return resp.json['resource-id']
 
     def _generate_upload_url_external_object_report(self, resource_id):
@@ -232,7 +235,7 @@ class SlipStreamHttpClient(object):
     def _upload_report(self, url, report):
         print('Uploading report to: %s' % url)
         body = open(report, 'rb').read()
-        self._httpPut(url, body, '', accept="*/*")
+        self._httpPut(url, body, 'application/tar+gzip', accept="*/*")
 
     def isAbort(self):
         return self.getGlobalAbortMessage() != ''
