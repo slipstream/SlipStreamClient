@@ -213,12 +213,19 @@ class HttpClient(object):
 
             except (Exceptions.TooManyRequestsError,
                     Exceptions.ServiceUnavailableError) as ex:
+                if method == 'POST':
+                    self._log_normal('Not retrying on POST. Error: %s' % ex)
+                    raise ex
                 sleep = min(
                     abs(float(self.too_many_requests_count) / 10.0 * 290 + 10),
                     300)
 
             except (httplib.HTTPException, socket.error, HTTPError, RequestException,
                     Exceptions.NetworkError, Exceptions.ServerError) as ex:
+                if method == 'POST':
+                    self._log_normal('Not retrying on POST. Error: %s' % ex)
+                    raise ex
+
                 timed_out = (time.time() - first_request_time) >= retry_until
                 if retry is False or timed_out:
                     self._log_normal('HTTP call error: %s' % ex)
