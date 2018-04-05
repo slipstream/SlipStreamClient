@@ -564,8 +564,7 @@ def _install_pip():
     global PIP_INSTALLED
     if not PIP_INSTALLED:
         _set_install_command_and_distro()
-        _check_call(INSTALL_CMD + ['python-setuptools'])
-        _check_call(_add_sudo_if_needed(['easy_install', 'pip']))
+        _check_call(INSTALL_CMD + ['python-pip'])
         __path_prepend('/usr/local/sbin')
         __path_prepend('/usr/local/bin')
         PIP_INSTALLED = True
