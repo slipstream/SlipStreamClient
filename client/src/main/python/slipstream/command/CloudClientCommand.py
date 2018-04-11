@@ -48,7 +48,8 @@ def main(command):
         exc_info = e.traceback
         raise exc_info[0], exc_info[1], exc_info[2]
     except Exception as e:
-        print >> sys.stderr, e
+        import traceback
+        print >> sys.stderr, unicode(traceback.format_exc(e), 'utf-8', 'replace')
         exit(2)
 
 
