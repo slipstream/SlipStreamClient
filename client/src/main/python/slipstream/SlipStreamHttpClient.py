@@ -218,6 +218,7 @@ class SlipStreamHttpClient(object):
         resource_id = self._create_external_object_report(report)
         upload_url = self._generate_upload_url_external_object_report(resource_id)
         self._upload_report(upload_url, report)
+        self._set_report_ready(resource_id)
 
     def _create_external_object_report(self, report_path):
         resp = self.api.cimi_add('externalObjects',
@@ -233,9 +234,12 @@ class SlipStreamHttpClient(object):
         return resp.json['uri']
 
     def _upload_report(self, url, report):
-        print('Uploading report to: %s' % url)
+        self._printDetail('Uploading report to: %s' % url)
         body = open(report, 'rb').read()
         self._httpPut(url, body, 'application/tar+gzip', accept="*/*")
+
+    def _set_report_ready(self, resource_id):
+        self.api.cimi_operation(resource_id, "http://sixsq.com/slipstream/1/action/ready")
 
     def isAbort(self):
         return self.getGlobalAbortMessage() != ''
