@@ -20,3 +20,6 @@ release.properties
 .ropeproject
 
 .DS_Store
+
+.tox
+MANIFEST
