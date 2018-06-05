@@ -1,4 +1,4 @@
-#!/Users/loomis/.pyenv/versions/2.7.13/bin/python2.7
+#!/usr/bin/env python
 """
  SlipStream Client
  =====
