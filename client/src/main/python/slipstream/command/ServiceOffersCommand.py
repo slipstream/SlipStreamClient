@@ -18,7 +18,7 @@
 
 import requests
 
-from slipstream.api import Api, SlipStreamError
+from slipstream.api import Api
 from slipstream.ConfigHolder import ConfigHolder
 from slipstream.NodeDecorator import KEY_RUN_CATEGORY
 from slipstream.command.CloudClientCommand import CloudClientCommand
@@ -114,7 +114,7 @@ class ServiceOffersCommand(CloudClientCommand):
         :param root_disk_size: The size of the root disk in GB
         :return: A tuple containing the price per hour and the currency. eg:(0.24, 'USD') )
         """
-        return (None, None)
+        return None, None
 
     def _get_root_disk_sizes(self, vm_size, os):
         """
@@ -322,7 +322,8 @@ class ServiceOffersCommand(CloudClientCommand):
         ss_password = self.get_option(self.SS_PASSWORD_KEY)
         connector_instance_name = self.get_option(self.CONNECTOR_NAME_KEY)
 
-        filter_connector_vm = 'connector/href="{0}" and resource:type="VM"'.format(connector_instance_name)
+        filter_connector_vm = ' and '.join(['connector/href="{0}"'.format(connector_instance_name),
+                                            'resource:type="VM"'])
 
         self.ssapi = Api(endpoint=ss_endpoint, cookie_file=None, insecure=True)
         if not dry_run:
@@ -348,7 +349,16 @@ class ServiceOffersCommand(CloudClientCommand):
             if dry_run:
                 print('\nService offer {0}:\n{1}'.format(service_offer['name'], service_offer))
             else:
-                cimi_filter = '{0} and description="{1}"'.format(filter_connector_vm, service_offer['description'])
+                cimi_filter = \
+                    ' and '.join([filter_connector_vm,
+                                  'resource:class="{0}"'.format(service_offer['resource:class']),
+                                  'resource:vcpu={0}'.format(service_offer['resource:vcpu']),
+                                  'resource:ram={0}'.format(service_offer['resource:ram']),
+                                  'resource:disk={0}'.format(service_offer['resource:disk']),
+                                  'resource:operatingSystem="{0}"'.format(service_offer['resource:operatingSystem']),
+                                  'resource:country="{0}"'.format(service_offer['resource:country']),
+                                  'resource:instanceType="{0}"'.format(service_offer['resource:instanceType'])])
+
                 search_result = self.ssapi.cimi_search('serviceOffers', filter=cimi_filter)
                 result_list = search_result.resources_list
                 result_count = len(result_list)
