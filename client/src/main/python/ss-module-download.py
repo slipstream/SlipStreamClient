@@ -69,6 +69,10 @@ class MainProgram(CommandBase):
                                help='Download without creating subdirectories',
                                default=False, action='store_true')
 
+        self.parser.add_option('--continue-on-error', dest='continue_on_error',
+                               help='Continue processing when an error occurs',
+                               default=False, action='store_true')
+
         self.options, self.args = self.parser.parse_args()
 
         self._checkArgs()
@@ -145,7 +149,9 @@ class MainProgram(CommandBase):
 
         url = self.options.endpoint + uri
 
-        _, xml = client.get(url)
+        # IMPORTANT: pass BINARY content to ET. It will deduce the correct encoding.
+        resp, _ = client.get(url)
+        xml = resp.content
 
         return ET.fromstring(xml)
 
@@ -206,21 +212,27 @@ class MainProgram(CommandBase):
             module = queue.pop(0)
             print('Processing: %s' % module)
 
-            root = self._retrieveModuleAsXml(client, module)
-            self._remove_transient_elements(root)
-            if self._is_image(root) and self.options.dump_image_ids:
-                self._dump_image_ids(root)
-            if self.options.remove_clouds:
-                self._remove_clouds(root)
-            if self.options.remove_group_members:
-                self._remove_group_members(root)
-            if self.options.reset_commit_message:
-                self._reset_commit_message(root)
-            self._writeModuleAsXml(root, module)
+            try:
+                
+                root = self._retrieveModuleAsXml(client, module)
+                self._remove_transient_elements(root)
+                if self._is_image(root) and self.options.dump_image_ids:
+                    self._dump_image_ids(root)
+                if self.options.remove_clouds:
+                    self._remove_clouds(root)
+                if self.options.remove_group_members:
+                    self._remove_group_members(root)
+                if self.options.reset_commit_message:
+                    self._reset_commit_message(root)
+                self._writeModuleAsXml(root, module)
 
-            for child in self._getModuleChildren(module, root):
-                queue.append(child)
-
+                for child in self._getModuleChildren(module, root):
+                    queue.append(child)
+                    
+            except Exception as e:
+                print(e)
+                if not self.options.continue_on_error:
+                    sys.exit(1)
 
 if __name__ == "__main__":
     try:
