@@ -158,5 +158,12 @@ class RunInstancesCommand(CloudClientCommand):
                           config={'foo': 'bar'})
 
         cc = cloud_connector_class(ch)
+        from pprint import pprint
+        print('user_info: ')
+        pprint(self.user_info)
+        print('nodes instance map: ')
+        pprint({nodename: node_instance})
+        print('get_initialization_extra_kwargs: ')
+        pprint(self.get_initialization_extra_kwargs())
         cc.start_nodes_and_clients(self.user_info, {nodename: node_instance},
                                    self.get_initialization_extra_kwargs())

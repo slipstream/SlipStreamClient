@@ -312,7 +312,7 @@ class BaseCloudConnector(object):
 
         self.__vms = {}
 
-        self.__cloud = os.environ[util.ENV_CONNECTOR_INSTANCE]
+        #self.__cloud = os.environ[util.ENV_CONNECTOR_INSTANCE]
 
         self.__init_threading_related()
 
@@ -506,13 +506,20 @@ class BaseCloudConnector(object):
         with lock:
             already_published = self.__already_published[instance_name]
             if vm_id and 'id' not in already_published:
-                self._publish_vm_id(instance_name, vm_id)
+                # self._publish_vm_id(instance_name, vm_id)
+                node_instance.set_cloud_node_id(vm_id)
                 already_published.add('id')
             if vm_ip and 'ip' not in already_published:
-                self._publish_vm_ip(instance_name, vm_ip)
+                # self._publish_vm_ip(instance_name, vm_ip)
+                node_instance.set_cloud_node_ip(vm_ip)
                 already_published.add('ip')
             if node_instance and vm_ip and 'ssh' not in already_published:
-                self._publish_url_ssh(vm, node_instance)
+                # self._publish_url_ssh(vm, node_instance)
+
+                if node_instance:
+                    vm_ip = self._vm_get_ip(vm) or ''
+                    ssh_username, _ = self.__get_vm_username_password(node_instance)
+                    node_instance.set_parameter('url.ssh', 'ssh://%s@%s' % (ssh_username.strip(), vm_ip.strip()))
                 already_published.add('ssh')
 
     def _publish_vm_id(self, instance_name, vm_id):
@@ -819,32 +826,26 @@ class BaseCloudConnector(object):
         """This method can be redefined by connectors if they need a specific bootstrap script
         with the SSH contextualization."""
         script = ''
-        addEnvironmentVariableCommand = ''
+        add_deployment_context_variable_command = ''
         node_instance_name = node_instance.get_name()
 
         if node_instance.is_windows():
-            addEnvironmentVariableCommand = 'set'
+            add_deployment_context_variable_command = 'set'
             script += 'rem cmd\n'
         else:
-            addEnvironmentVariableCommand = 'export'
+            add_deployment_context_variable_command = 'export'
             script += '#!/bin/sh -ex\n'
-
-        regex = 'SLIPSTREAM_'
-        if self.is_start_orchestrator():
-            regex += '|CLOUDCONNECTOR_'
-        env_matcher = re.compile(regex)
 
         if pre_export:
             script += '%s\n' % pre_export
 
-        for var, val in os.environ.items():
-            if env_matcher.match(var) and var != util.ENV_NODE_INSTANCE_NAME:
-                if re.search(' ', val):
-                    val = '"%s"' % val
-                script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var,
-                                          val)
+        deployment_context = node_instance.get_deployment_context()
+        for var, val in deployment_context.items():
+            if re.search(' ', val):
+                val = '"%s"' % val
+            script += '%s %s=%s\n' % (add_deployment_context_variable_command, var, val)
 
-        script += '%s %s=%s\n' % (addEnvironmentVariableCommand,
+        script += '%s %s=%s\n' % (add_deployment_context_variable_command,
                                   util.ENV_NODE_INSTANCE_NAME,
                                   node_instance_name)
 
@@ -861,13 +862,14 @@ class BaseCloudConnector(object):
 
     def _build_slipstream_bootstrap_command(self, node_instance, username=None):
         instance_name = node_instance.get_name()
+        bootstrap_url = node_instance.get_deployment_context()['SLIPSTREAM_BOOTSTRAP_BIN']
 
         if node_instance.is_windows():
-            return self.__build_slipstream_bootstrap_command_for_windows(instance_name)
+            return self.__build_slipstream_bootstrap_command_for_windows(instance_name, bootstrap_url)
         else:
-            return self.__build_slipstream_bootstrap_command_for_linux(instance_name)
+            return self.__build_slipstream_bootstrap_command_for_linux(instance_name, bootstrap_url)
 
-    def __build_slipstream_bootstrap_command_for_windows(self, instance_name):
+    def __build_slipstream_bootstrap_command_for_windows(self, instance_name, bootstrap_url):
 
         command = 'If Not Exist %(reports)s mkdir %(reports)s\n'
         command += 'If Not Exist %(ss_home)s mkdir %(ss_home)s\n'
@@ -883,32 +885,32 @@ class BaseCloudConnector(object):
 
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
-        return command % self._get_bootstrap_command_replacements_for_windows(instance_name)
+        return command % self._get_bootstrap_command_replacements_for_windows(instance_name, bootstrap_url)
 
-    def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
+    def __build_slipstream_bootstrap_command_for_linux(self, instance_name, bootstrap_url):
 
         command = 'mkdir -p %(reports)s %(ss_home)s; '
         command += '(wget --timeout=60 --retry-connrefused --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl --retry 20 -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
-        return command % self._get_bootstrap_command_replacements_for_linux(instance_name)
+        return command % self._get_bootstrap_command_replacements_for_linux(instance_name, bootstrap_url)
 
-    def _get_bootstrap_command_replacements_for_linux(self, instance_name):
+    def _get_bootstrap_command_replacements_for_linux(self, instance_name, bootstrap_url):
         return {
             'reports': util.REPORTSDIR,
             'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
-            'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
+            'bootstrapUrl': bootstrap_url,
             'ss_home': util.SLIPSTREAM_HOME,
             'nodename': instance_name,
             'machine_executor': self._get_machine_executor_type()
         }
 
-    def _get_bootstrap_command_replacements_for_windows(self, instance_name):
+    def _get_bootstrap_command_replacements_for_windows(self, instance_name, bootstrap_url):
         return {
             'reports': util.WINDOWS_REPORTSDIR,
             'bootstrap': '\\'.join([util.WINDOWS_SLIPSTREAM_HOME, 'slipstream.bootstrap']),
-            'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
+            'bootstrapUrl': bootstrap_url,
             'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
             'nodename': instance_name,
             'machine_executor': self._get_machine_executor_type()

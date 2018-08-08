@@ -133,6 +133,8 @@ class BaseWrapper(object):
 
         self.my_node_instance_name = self._get_my_node_instance_name(config_holder)
 
+        self.user_ssh_pub_keys = self._get_my_node_instance_name(config_holder)
+
         self._config_holder = config_holder
 
         self._user_info = None
@@ -147,6 +149,13 @@ class BaseWrapper(object):
             return config_holder.node_instance_name
         except Exception:
             raise Exceptions.ExecutionException('Failed to get the node instance name of the the current VM')
+
+    @staticmethod
+    def _get_user_ssh_pub_keys(config_holder):
+        try:
+            return config_holder.user_ssh_pub_keys
+        except Exception:
+            raise Exceptions.ExecutionException('Failed to get the user ssh public keys')
 
     def get_my_node_instance_name(self):
         return self.my_node_instance_name
