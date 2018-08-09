@@ -228,10 +228,23 @@ class NodeInstance(object):
     def get_cloud_node_ip(self):
         return self.__get(NodeDecorator.CLOUD_NODE_IP_KEY)
 
-    def set_cloud_node_password(self, password):
-        self.__set(NodeDecorator.CLOUD_NODE_PASSWORD_KEY, password)
+    def set_cloud_node_ssh_url(self, url):
+        self.__set(NodeDecorator.CLOUD_NODE_SSH_URL_KEY, url)
 
-    def get_cloud_node_password(self):
-        return self.__get(NodeDecorator.CLOUD_NODE_PASSWORD_KEY)
+    def get_cloud_node_ssh_url(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_SSH_URL_KEY)
+
+    def set_cloud_node_ssh_password(self, password):
+        self.__set(NodeDecorator.CLOUD_NODE_SSH_PASSWORD_KEY, password)
+
+    def get_cloud_node_ssh_password(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_SSH_PASSWORD_KEY)
+
+    def set_cloud_node_ssh_keypair_name(self, password):
+        self.__set(NodeDecorator.CLOUD_NODE_SSH_KEYPAIR_NAME_KEY, password)
+
+    def get_cloud_node_ssh_keypair_name(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_SSH_KEYPAIR_NAME_KEY)
+
 
 

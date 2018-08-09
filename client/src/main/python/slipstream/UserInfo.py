@@ -75,6 +75,9 @@ class UserInfo(dict):
     def get_public_keys(self):
         return self.get_general(self.SSH_PUBKEY_KEY)
 
+    def set_public_keys(self, ssh_pub_keys):
+        self[self.general + self.SSH_PUBKEY_KEY]= ssh_pub_keys
+
     def get_private_key(self):
         return self.get_cloud('private.key')
 
