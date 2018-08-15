@@ -57,7 +57,8 @@ Notice:
     def doWork(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
-        client.setRuntimeParameter('statecustom', self.value)
+        client.kb_setRuntimeParameter('statecustom', self.value)
+
 
 if __name__ == "__main__":
     try:

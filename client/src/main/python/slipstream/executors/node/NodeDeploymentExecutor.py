@@ -70,30 +70,37 @@ class NodeDeploymentExecutor(MachineExecutor):
     def onExecuting(self):
         util.printAction('Executing')
 
-        self._get_recovery_mode()
-        if self._is_recovery_mode():
-            util.printDetail("Recovery mode enabled, recipes will not be executed.",
-                             verboseThreshold=util.VERBOSE_LEVEL_QUIET)
-            return
+        #self._get_recovery_mode()
+        #if self._is_recovery_mode():
+        #    util.printDetail("Recovery mode enabled, recipes will not be executed.",
+        #                     verboseThreshold=util.VERBOSE_LEVEL_QUIET)
+        #    return
 
-        if self._skip_execute_due_to_vertical_scaling:
-            util.printDetail("Vertical scaling: skipping execution of execute targets.",
-                             verboseThreshold=util.VERBOSE_LEVEL_QUIET)
-            self._skip_execute_due_to_vertical_scaling = False
-            return
+        #if self._skip_execute_due_to_vertical_scaling:
+        #    util.printDetail("Vertical scaling: skipping execution of execute targets.",
+        #                     verboseThreshold=util.VERBOSE_LEVEL_QUIET)
+        #    self._skip_execute_due_to_vertical_scaling = False
+        #    return
 
-        if not self.wrapper.is_scale_state_operational():
-            self._execute_build_recipes()
-            self._execute_execute_target()
-        else:
-            self._execute_scale_action_target()
+        #if not self.wrapper.is_scale_state_operational():
+        self._kb_execute_build_recipes()
+        self._kb_execute_execute_target()
+        #else:
+        #    self._execute_scale_action_target()
 
     def _execute_build_recipes(self):
         util.printDetail('Executing build recipes')
 
-        self._execute_target(NodeDecorator.NODE_PRERECIPE, abort_on_err=True)
+        self._execute_target('preinstall', abort_on_err=True)
         self._install_user_packages()
         self._execute_target(NodeDecorator.NODE_RECIPE, abort_on_err=True)
+
+    def _kb_execute_build_recipes(self):
+        util.printDetail('Executing build recipes')
+
+        self._kb_execute_target('preinstall', abort_on_err=True)
+        self._kb_install_user_packages()
+        self._kb_execute_target('postinstall', abort_on_err=True)
 
     def _install_user_packages(self):
         util.printAndFlush('Installing packages')
@@ -113,22 +120,52 @@ class NodeDeploymentExecutor(MachineExecutor):
         else:
             util.printAndFlush('No packages to install')
 
+    def _kb_install_user_packages(self):
+        util.printAndFlush('Installing packages')
+
+        # if self.is_image_built():
+        #     util.printAndFlush('Component already built. No packages to install')
+        #     return
+
+        packages = self._kb_get_target('packages')
+        if packages:
+            message = 'Installing packages: %s' % ', '.join(packages)
+            fail_msg = "Failed installing packages on '%s'" % self._get_node_instance_name()
+            util.printStep(message)
+            #self.wrapper.set_statecustom(message)
+            cmd = util.get_packages_install_command('ubuntu', packages)
+            self._launch_script('#!/bin/sh -xe\n%s' % cmd, fail_msg=fail_msg, name='Install packages')
+        else:
+            util.printAndFlush('No packages to install')
+
     @override
     def onSendingReports(self):
         util.printAction('Sending report')
 
         if self._need_to_send_reports():
-            self._execute_report_target_and_send_reports()
+            self._kb_execute_report_target_and_send_reports()
             self._unset_need_to_send_reports()
         else:
             util.printDetail('INFO: Conditionally skipped sending reports.',
                              verboseThreshold=util.VERBOSE_LEVEL_QUIET)
-        self.wrapper.set_scale_state_operational()
+        # self.wrapper.set_scale_state_operational()
 
     def _execute_report_target_and_send_reports(self):
         exports = {'SLIPSTREAM_REPORT_DIR': util.get_platform_reports_dir()}
         try:
             self._execute_target('report', exports=exports, ssdisplay=False, ignore_abort=True)
+        except ExecutionException as ex:
+            util.printDetail("Failed executing 'report' with: \n%s" % str(ex),
+                             verboseLevel=self.verboseLevel,
+                             verboseThreshold=util.VERBOSE_LEVEL_NORMAL)
+            raise
+        finally:
+            super(NodeDeploymentExecutor, self).onSendingReports()
+
+    def _kb_execute_report_target_and_send_reports(self):
+        exports = {'SLIPSTREAM_REPORT_DIR': util.get_platform_reports_dir()}
+        try:
+            self._kb_execute_target('reporting', exports=exports, ssdisplay=False, ignore_abort=True)
         except ExecutionException as ex:
             util.printDetail("Failed executing 'report' with: \n%s" % str(ex),
                              verboseLevel=self.verboseLevel,

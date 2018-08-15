@@ -75,7 +75,7 @@ class MachineExecutor(object):
         state = self._get_state()
         while True:
             self._execute_state(state)
-            self._complete_state(state)
+            self._kb_complete_state(state)
             state = self._wait_for_next_state(state)
 
     def _get_state(self):
@@ -129,7 +129,11 @@ class MachineExecutor(object):
 
     def _complete_state(self, state):
         if self._need_to_complete(state):
-            self.wrapper.complete_state()
+            self.wrapper.kb_complete_state()
+
+    def _kb_complete_state(self, state):
+        if self._need_to_complete(state):
+            self.wrapper.kb_complete_state()
 
     @staticmethod
     def _failure_msg_from_exception(exception):
@@ -177,7 +181,7 @@ class MachineExecutor(object):
         return self.WAIT_NEXT_STATE_SHORT
 
     def _retrieve_my_node_instance(self):
-        node_instance = self.wrapper.get_my_node_instance()
+        node_instance = self.wrapper.kb_get_my_node_instance()
         if node_instance is None:
             raise ExecutionException("Couldn't get the node instance for the current VM.")
         return node_instance
@@ -199,6 +203,10 @@ class MachineExecutor(object):
 
     def _execute_execute_target(self):
         self._execute_target('execute', abort_on_err=True)
+        self._set_need_to_send_reports()
+
+    def _kb_execute_execute_target(self):
+        self._kb_execute_target('deployment', abort_on_err=True)
         self._set_need_to_send_reports()
 
     def _execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
@@ -236,6 +244,23 @@ class MachineExecutor(object):
                 self._launch_script(script, exports, abort_on_err, ignore_abort, fail_msg, full_target_name)
             else:
                 util.printAndFlush('Nothing to do for script: %s' % full_target_name)
+
+    def _kb_get_target(self, target_name):
+        return self.node_instance['content'].get('targets', {}).get(target_name)
+
+    def _kb_execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
+        target = self._kb_get_target(target_name)
+
+        if target is None:
+            util.printAndFlush('Nothing to do for script: %s' % target_name)
+            return
+
+        full_target_name = '%s:%s' % (self.node_instance['name'], target_name)
+        message = "Executing script '%s'" % full_target_name
+        util.printStep(message)
+
+        fail_msg = "Failed running '%s' script on '%s'" % (target_name, self._get_node_instance_name())
+        self._launch_script(target, exports, abort_on_err, ignore_abort, fail_msg, target_name)
 
     def _need_to_execute_build_step(self, target, subtarget):
         return MachineExecutor.need_to_execute_build_step(self._get_node_instance(), target, subtarget)

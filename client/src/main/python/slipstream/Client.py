@@ -90,6 +90,31 @@ class Client(object):
 
         return value
 
+    def kb_getRuntimeParameter(self, key):
+        value = None
+        parts = self._getNodeName().split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
+        nodename = parts[0]
+        if self.no_block:
+            value = self.httpClient.kb_get_deployment_parameter(key, nodename)
+        else:
+            timer = 0
+            while True:
+                value = self.httpClient.kb_get_deployment_parameter(key, nodename)
+
+                if value is not None:
+                    break
+                if self.timeout != 0 and timer >= self.timeout:
+                    raise TimeoutException(
+                        "Exceeded timeout limit of %s waiting for key '%s' "
+                        "to be set" % (self.timeout, _key))
+                print >> sys.stderr, "Waiting for %s" % _key
+                sys.stdout.flush()
+                sleepTime = 5
+                time.sleep(sleepTime)
+                timer += sleepTime
+
+        return value
+
     def launchDeployment(self, params):
         """
         @return: Run location
@@ -175,6 +200,14 @@ class Client(object):
         if stripped_value and len(stripped_value) > self.VALUE_LENGTH_LIMIT:
             raise ClientError("value exceeds maximum length of %d characters" % self.VALUE_LENGTH_LIMIT)
         self.httpClient.setRuntimeParameter(_key, stripped_value)
+
+    def kb_setRuntimeParameter(self, key, value):
+        if NodeDecorator.NODE_PROPERTY_SEPARATOR in key:
+            nodename = None
+        else:
+            parts = self._getNodeName().split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
+            nodename = parts[0]
+        self.httpClient.kb_set_deployment_parameter(key, util.removeASCIIEscape(value), nodename)
 
     def cancel_abort(self):
         # Global abort

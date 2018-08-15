@@ -18,6 +18,7 @@
 from __future__ import print_function
 
 import os
+import uuid
 import json
 from collections import defaultdict
 
@@ -38,6 +39,7 @@ class SlipStreamHttpClient(object):
     def __init__(self, configHolder):
         self.category = None
         self.run_dom = None
+        self.kb_deployment = None
         self.ignoreAbort = False
         self.username = ''
         self.password = ''
@@ -137,7 +139,7 @@ class SlipStreamHttpClient(object):
         '''
         nodes_instances = {}
 
-        self._retrieveAndSetRun()
+        self._kb_retrieveAndSetRun()
 
         nodes_instances_runtime_parameters = \
             DomExtractor.extract_nodes_instances_runtime_parameters(self.run_dom, cloud_service_name)
@@ -168,6 +170,15 @@ class SlipStreamHttpClient(object):
 
         return nodes_instances
 
+    def kb_get_node_instance(self, node_name):
+        type = self.kb_get_run_type()
+        if type in ('COMPONENT', 'IMAGE'):
+            return self.kb_deployment['module']
+        elif type == 'APPLICATION':  # FIXME more than the module returned
+            nodes = self.kb_deployment['module']['content']['nodes']
+            return filter(lambda d: d['node'] == node_name, nodes)[0]
+
+
     def _get_nodename(self):
         'Node name derived from the node instance name.'
         return self.node_instance_name.split(
@@ -194,6 +205,27 @@ class SlipStreamHttpClient(object):
             _, run = self._retrieve(url)
             self.run_dom = etree.fromstring(run.encode('utf-8'))
 
+    @staticmethod
+    def lookup_recursively_module(module, keys):  # FIXME: support for array of maps
+        temp = module
+        for k in keys[:-1]:
+            temp = temp.get(k, {})
+        value = temp.get(keys[-1])
+        if value:
+            return value
+        module_parent = module.get('content', {}).get('parent')
+        if module_parent:
+            return SlipStreamHttpClient.lookup_recursively_module(module_parent, keys)
+
+    def kb_get_run_type(self):
+        self._kb_retrieveAndSetRun()
+        return self.kb_deployment['module']['type']
+
+    def _kb_retrieveAndSetRun(self):
+        if self.kb_deployment is None:
+            self.kb_deployment = self.api.cimi_get(self.diid).json
+            return self.kb_deployment
+
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')
 
@@ -206,6 +238,10 @@ class SlipStreamHttpClient(object):
                             NodeDecorator.COMPLETE_KEY)
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
+
+    def kb_complete_state(self, node_instance_name):
+        return self.kb_set_deployment_parameter(
+            NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY, 'SendingReports')
 
     def terminate_run(self):
         return self._httpDelete(self.run_url)
@@ -267,6 +303,24 @@ class SlipStreamHttpClient(object):
             raise Exceptions.NotFoundError('"%s" for %s' % (str(ex), key))
 
         return content.strip().strip('"').strip("'")
+
+    @staticmethod
+    def kb_from_data_uuid(text):
+        class NullNameSpace:
+            bytes = b''
+
+        return str(uuid.uuid3(NullNameSpace, text))
+
+    def kb_get_deployment_parameter(self, param_name, node_id=None):
+        param_id = ':'.join(item or '' for item in [self.diid, node_id, param_name])
+        deployment_parameter_href = 'deployment-parameter/' + self.kb_from_data_uuid(param_id)
+        return self.api.cimi_get(deployment_parameter_href).json.get('value')
+
+    def kb_set_deployment_parameter(self, param_name, value, node_id=None):
+        param_id = ':'.join(item or '' for item in [self.diid, node_id, param_name])
+        print('debug kb_set_deployment_parameter param_id={}'.format(param_id))
+        deployment_parameter_href = 'deployment-parameter/' + self.kb_from_data_uuid(param_id)
+        return self.api.cimi_edit(deployment_parameter_href, {'value': value})
 
     def setRuntimeParameter(self, key, value, ignoreAbort=False):
         url = self.run_url + '/' + key

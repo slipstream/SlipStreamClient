@@ -60,7 +60,8 @@ Notice:
     def doWork(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
-        client.setRuntimeParameter(self.key, self.value)
+        client.kb_setRuntimeParameter(self.key, self.value)
+
 
 if __name__ == "__main__":
     try:

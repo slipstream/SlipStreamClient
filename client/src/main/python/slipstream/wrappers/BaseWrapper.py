@@ -168,9 +168,13 @@ class BaseWrapper(object):
             node_instance_name = self.get_my_node_instance_name()
         self._ss_client.complete_state(node_instance_name)
 
+    def kb_complete_state(self, node_instance_name=None):
+        if not node_instance_name:
+            node_instance_name = self.get_my_node_instance_name()
+        self._ss_client.kb_complete_state(node_instance_name)
+
     def fail(self, message):
-        key = self._qualifyKey(NodeDecorator.ABORT_KEY)
-        self._fail(key, message)
+        self._ss_client.kb_set_deployment_parameter(NodeDecorator.ABORT_KEY, message, self.get_my_node_instance_name())
 
     def fail_global(self, message):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
@@ -180,23 +184,20 @@ class BaseWrapper(object):
         util.printError('Failing... %s' % message)
         traceback.print_exc()
         value = util.truncate_middle(Client.VALUE_LENGTH_LIMIT, message, '\n(truncated)\n')
-        self._ss_client.setRuntimeParameter(key, value)
+        self._ss_client.kb_set_deployment_parameter(key, value)
 
     def getState(self):
-        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY
-        return self._get_runtime_parameter(key)
+        return self._ss_client.kb_get_deployment_parameter(
+            NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY)
 
     def get_recovery_mode(self):
         key = NodeDecorator.globalNamespacePrefix + NodeDecorator.RECOVERY_MODE_KEY
         return util.str2bool(self._get_runtime_parameter(key))
 
     def isAbort(self):
-        key = NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY
-        try:
-            value = self._get_runtime_parameter(key, True)
-        except Exceptions.NotYetSetException:
-            value = ''
-        return (value and True) or False
+        value = self._ss_client.kb_get_deployment_parameter(
+            NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY)
+        return value is not None
 
     def get_max_iaas_workers(self):
         """Available only on orchestrator.
@@ -557,10 +558,10 @@ class BaseWrapper(object):
         timeout_at = 0 # no timeout
         self._log('Waiting for Orchestrator to finish scaling this node instance (no timeout).')
 
-        node_instances = [self.get_my_node_instance()]
-
-        self._wait_rtp_equals(node_instances, NodeDecorator.SCALE_IAAS_DONE_SUCCESS,
-                              self.get_scale_iaas_done, timeout_at)
+        # node_instances = [self.get_my_node_instance()]
+        #
+        # self._wait_rtp_equals(node_instances, NodeDecorator.SCALE_IAAS_DONE_SUCCESS,
+        #                       self.get_scale_iaas_done, timeout_at)
 
         self._log('All node instances finished pre-scaling.')
 
@@ -599,6 +600,10 @@ class BaseWrapper(object):
     def get_my_node_instance(self):
         node_name = self.get_my_node_instance_name()
         return self._get_nodes_instances_with_orchestrators().get(node_name)
+
+    def kb_get_my_node_instance(self):
+        node_name = self.get_my_node_instance_name()
+        return self._ss_client.kb_get_node_instance(node_name)
 
     def discard_run_locally(self):
         self._ss_client.discard_run()

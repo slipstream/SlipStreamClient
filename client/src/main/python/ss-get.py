@@ -68,8 +68,9 @@ class MainProgram(VMCommandBase):
     def doWork(self):
         ch = ConfigHolder(self.options)
         client = Client(ch)
-        value = client.getRuntimeParameter(self.key)
+        value = client.kb_getRuntimeParameter(self.key)
         print(value if value is not None else '')
+
 
 if __name__ == "__main__":
     try:

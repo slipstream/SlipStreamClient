@@ -69,7 +69,8 @@ Notice:
         else:
             value = truncate_middle(Client.VALUE_LENGTH_LIMIT, self.reason,
                                     '\n(truncated)\n')
-            client.setRuntimeParameter(NodeDecorator.ABORT_KEY, value)
+            client.kb_setRuntimeParameter(NodeDecorator.ABORT_KEY, value)
+
 
 if __name__ == "__main__":
     try:
