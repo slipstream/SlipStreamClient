@@ -850,7 +850,7 @@ class BaseCloudConnector(object):
 
         if pre_export:
             script += '%s\n' % pre_export
-        
+ 
         if self.cimi_deployment_prototype:
             for var, val in node_instance.get_deployment_context().items():
                 if re.search(' ', val):
@@ -943,8 +943,7 @@ class BaseCloudConnector(object):
             'bootstrapUrl': self.__get_bootstrap_url(),
             'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
             'nodename': instance_name,
-            'machine_executor': 'node' if self.
-         _prototype else self._get_machine_executor_type()
+            'machine_executor': 'node' if self.cimi_deployment_prototype else self._get_machine_executor_type()
         }
 
     def _get_machine_executor_type(self):
