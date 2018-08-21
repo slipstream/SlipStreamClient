@@ -25,6 +25,7 @@ class UserInfo(dict):
     SSH_PUBKEY_KEY = 'sshPublicKey'
     NETWORK_PUBLIC_KEY = 'networkPublic'
     NETWORK_PRIVATE_KEY = 'networkPrivate'
+    CLOUD_ENDPOINT_KEY = 'endpoint'
 
     def __init__(self, cloud_qualifier):
         super(UserInfo, self).__init__({})
@@ -69,10 +70,13 @@ class UserInfo(dict):
         return self.get_cloud(self.CLOUD_PASSWORD_KEY)
 
     def get_cloud_endpoint(self):
-        return self.get_cloud('endpoint')
+        return self.get_cloud(self.CLOUD_ENDPOINT_KEY)
 
     def get_public_keys(self):
         return self.get_general(self.SSH_PUBKEY_KEY)
+
+    def set_public_keys(self, ssh_pub_keys):
+        self[self.general + self.SSH_PUBKEY_KEY]= ssh_pub_keys
 
     def get_private_key(self):
         return self.get_cloud('private.key')
