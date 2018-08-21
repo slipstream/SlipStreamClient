@@ -83,6 +83,7 @@ class NodeDecorator(object):
     SCALE_DISK_ATTACHED_DEVICE = 'disk.attached.device'
     SCALE_DISK_DETACH_DEVICE = 'disk.detach.device'
     INSTANCEID_KEY = 'instanceid'
+    CLOUD_NODE_IP_KEY = 'cloud.node.ip'
     CLOUD_NODE_SSH_URL_KEY = 'cloud.node.ssh.url'
     CLOUD_NODE_SSH_PASSWORD_KEY = 'cloud.node.ssh.password'
     CLOUD_NODE_SSH_KEYPAIR_NAME_KEY = 'cloud.node.ssh.keypair.name'
