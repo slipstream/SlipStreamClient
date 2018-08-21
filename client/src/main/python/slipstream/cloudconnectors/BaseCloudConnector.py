@@ -432,7 +432,7 @@ class BaseCloudConnector(object):
         self._initialization(user_info, **init_extra_kwargs)
         self.__set_contextualization_capabilities(user_info)
         self.__create_allow_all_security_group_if_needed(nodes_instances)
-        self.cimi_deployment_prototype = nodes_instances.values()[0].get_deployment_context() is not None
+        self.cimi_deployment_prototype = bool(nodes_instances.values()[0].get_deployment_context())
         try:
             self.__start_nodes_instantiation_tasks_wait_finished(user_info,
                                                                  nodes_instances)
@@ -860,6 +860,10 @@ class BaseCloudConnector(object):
             if self.is_start_orchestrator():
                 regex += '|CLOUDCONNECTOR_'
             env_matcher = re.compile(regex)
+
+            if pre_export:
+                script += '%s\n' % pre_export
+
             for var, val in os.environ.items():
                 if env_matcher.match(var) and var != util.ENV_NODE_INSTANCE_NAME:
                     if re.search(' ', val):
