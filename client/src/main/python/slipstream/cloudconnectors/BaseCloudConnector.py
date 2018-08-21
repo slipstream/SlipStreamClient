@@ -33,7 +33,7 @@ from slipstream.NodeDecorator import NodeDecorator, KEY_RUN_CATEGORY
 from slipstream.listeners.SimplePrintListener import SimplePrintListener
 from slipstream.listeners.SlipStreamClientListenerAdapter import SlipStreamClientListenerAdapter
 from slipstream.utils.ssh import remoteRunScriptNohup, waitUntilSshCanConnectOrTimeout, remoteRunScript, \
-                                 generate_keypair, remoteRunCommand
+    generate_keypair, remoteRunCommand
 from slipstream.utils.tasksrunner import TasksRunner
 from slipstream.cloudconnectors.VmScaler import VmScaler
 from slipstream.wrappers.BaseWrapper import NodeInfoPublisher
@@ -46,7 +46,7 @@ lock = Lock()
 
 class BaseCloudConnector(object):
 
-#   ----- METHODS THAT CAN/SHOULD BE IMPLEMENTED IN CONNECTORS -----
+    #   ----- METHODS THAT CAN/SHOULD BE IMPLEMENTED IN CONNECTORS -----
 
     def _initialization(self, user_info):
         """This method is called once before calling any others methods of the connector.
@@ -219,15 +219,15 @@ class BaseCloudConnector(object):
         # Example code
 
         # Cloud VM id.
-        #vm_id = node_instance.get_instance_id()
+        # vm_id = node_instance.get_instance_id()
 
         # RAM in GB.
-        #ram = node_instance.get_ram()
+        # ram = node_instance.get_ram()
         # Number of CPUs.
-        #cpu = node_instance.get_cpu()
+        # cpu = node_instance.get_cpu()
 
         # In case cloud uses T-short sizes.
-        #instance_type = node_instance.get_instance_type()
+        # instance_type = node_instance.get_instance_type()
 
         # IaaS calls go here.
 
@@ -243,17 +243,17 @@ class BaseCloudConnector(object):
 
         # Example code
 
-        #device_name = ''
+        # device_name = ''
 
         # Cloud VM id.
-        #vm_id = node_instance.get_instance_id()
+        # vm_id = node_instance.get_instance_id()
 
         # Size of the disk to attach (in GB).
-        #disk_size_GB = node_instance.get_disk_attach_size()
+        # disk_size_GB = node_instance.get_disk_attach_size()
 
         # IaaS calls go here.
 
-        #return device_name
+        # return device_name
 
         raise NotImplementedError()
 
@@ -266,16 +266,16 @@ class BaseCloudConnector(object):
         # Example code
 
         # Cloud VM id.
-        #vm_id = node_instance.get_instance_id()
+        # vm_id = node_instance.get_instance_id()
 
         # Name of the block device to detach (/dev/XYZ).
-        #device = node_instance.get_disk_detach_device()
+        # device = node_instance.get_disk_detach_device()
 
         # IaaS calls go here.
 
         raise NotImplementedError()
 
-#   ----------------------------------------------------------------
+    #   ----------------------------------------------------------------
 
     TIMEOUT_CONNECT = 10 * 60
 
@@ -331,7 +331,7 @@ class BaseCloudConnector(object):
             pass
 
         self._user_info = None
-        
+
         self.cimi_deployment_prototype = False
 
     @property
@@ -598,7 +598,6 @@ class BaseCloudConnector(object):
                 message = 'Nothing to do for target "%s" on node "%s""\n' % (full_target_name, node_instance.get_name())
                 util.printAndFlush(message)
 
-
     def _build_image_increment(self, user_info, node_instance, host):
         prerecipe = node_instance.get_prerecipe()
         recipe = node_instance.get_recipe()
@@ -613,8 +612,8 @@ class BaseCloudConnector(object):
                 ssh_private_key_file, publicKey = self._get_temp_private_key_file_name_and_public_key()
 
             self._wait_can_connect_with_ssh_or_abort(host, username=username,
-                                               password=password,
-                                               sshKey=ssh_private_key_file)
+                                                     password=password,
+                                                     sshKey=ssh_private_key_file)
 
             if prerecipe:
                 self._print_step('Running Pre-recipe', machine_name)
@@ -701,10 +700,10 @@ class BaseCloudConnector(object):
         self._wait_can_connect_with_ssh_or_abort(ip, username, password)
         script = self.__get_obfuscation_script(publicKey, username, user_info)
         self._print_detail("Securing SSH access to %s with:\n%s\n" % (ip,
-                                                                     script))
+                                                                      script))
         _, output = self._run_script(ip, username, script, password=password)
         self._print_detail("Secured SSH access to %s. Output:\n%s\n" % (ip,
-                                                                       output))
+                                                                        output))
 
     def _revert_ssh_security(self, ip, username, privateKey, orchestratorPublicKey):
         self._wait_can_connect_with_ssh_or_abort(ip, username, sshKey=privateKey)
@@ -726,11 +725,11 @@ class BaseCloudConnector(object):
         self._wait_can_connect_with_ssh_or_abort(ip, username, sshKey=privateKey)
         script = self._get_bootstrap_script(node_instance)
         self._print_detail("Launching bootstrap script on %s:\n%s\n" % (ip,
-                                                                       script))
+                                                                        script))
         _, output = self._run_script_on_backgroud(ip, username, script,
-                                               sshKey=privateKey)
+                                                  sshKey=privateKey)
         self._print_detail("Launched bootstrap script on %s:\n%s\n" % (ip,
-                                                                      output))
+                                                                       output))
 
     def __launch_windows_bootstrap_script(self, node_instance, ip):
         username, password = self.__get_vm_username_password(node_instance, 'administrator')
@@ -739,12 +738,12 @@ class BaseCloudConnector(object):
         winrm = self._getWinrm(ip, username, password)
         self._waitCanConnectWithWinrmOrAbort(winrm)
         self._print_detail("Launching bootstrap script on %s:\n%s\n" % (ip,
-                                                                       script))
+                                                                        script))
         util.printAndFlush(script)
         winrm.timeout = winrm.set_timeout(600)
         output = self._runScriptWithWinrm(winrm, script)
         self._print_detail("Launched bootstrap script on %s:\n%s\n" % (ip,
-                                                                      output))
+                                                                       output))
 
     def _getWinrm(self, ip, username, password):
         return WinRMWebService(endpoint='http://%s:5985/wsman' % ip,
@@ -850,7 +849,7 @@ class BaseCloudConnector(object):
 
         if pre_export:
             script += '%s\n' % pre_export
- 
+
         if self.cimi_deployment_prototype:
             for var, val in node_instance.get_deployment_context().items():
                 if re.search(' ', val):
@@ -872,7 +871,6 @@ class BaseCloudConnector(object):
                                   util.ENV_NODE_INSTANCE_NAME,
                                   node_instance_name)
 
-
         if pre_bootstrap:
             script += '%s\n' % pre_bootstrap
 
@@ -886,13 +884,17 @@ class BaseCloudConnector(object):
 
     def _build_slipstream_bootstrap_command(self, node_instance, username=None):
         instance_name = node_instance.get_name()
+        if self.cimi_deployment_prototype:
+            bootstrap_url = node_instance.get_deployment_context().get('SLIPSTREAM_BOOTSTRAP_BIN')
+        else:
+            bootstrap_url = util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN')
 
         if node_instance.is_windows():
-            return self.__build_slipstream_bootstrap_command_for_windows(instance_name)
+            return self.__build_slipstream_bootstrap_command_for_windows(instance_name, bootstrap_url)
         else:
-            return self.__build_slipstream_bootstrap_command_for_linux(instance_name)
+            return self.__build_slipstream_bootstrap_command_for_linux(instance_name, bootstrap_url)
 
-    def __build_slipstream_bootstrap_command_for_windows(self, instance_name):
+    def __build_slipstream_bootstrap_command_for_windows(self, instance_name, bootstrap_url):
 
         command = 'If Not Exist %(reports)s mkdir %(reports)s\n'
         command += 'If Not Exist %(ss_home)s mkdir %(ss_home)s\n'
@@ -908,39 +910,32 @@ class BaseCloudConnector(object):
 
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
-        return command % self._get_bootstrap_command_replacements_for_windows(instance_name)
+        return command % self._get_bootstrap_command_replacements_for_windows(instance_name, bootstrap_url)
 
-    def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
+    def __build_slipstream_bootstrap_command_for_linux(self, instance_name, bootstrap_url):
 
         command = 'mkdir -p %(reports)s %(ss_home)s; '
         command += '(wget --timeout=60 --retry-connrefused --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl --retry 20 -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
-        return command % self._get_bootstrap_command_replacements_for_linux(instance_name)
+        return command % self._get_bootstrap_command_replacements_for_linux(instance_name, bootstrap_url)
 
-       
-    def __get_bootstrap_url(self):
-        if self.cimi_deployment_prototype:
-            return node_instance.get_deployment_context().get('SLIPSTREAM_BOOTSTRAP_BIN')
-        else:
-            return util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN')
- 
-    def _get_bootstrap_command_replacements_for_linux(self, instance_name):
+    def _get_bootstrap_command_replacements_for_linux(self, instance_name, bootstrap_url):
         return {
             'reports': util.REPORTSDIR,
             'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
-            'bootstrapUrl': self.__get_bootstrap_url(),
+            'bootstrapUrl': bootstrap_url,
             'ss_home': util.SLIPSTREAM_HOME,
             'nodename': instance_name,
             'machine_executor': 'node' if self.cimi_deployment_prototype else self._get_machine_executor_type()
         }
 
-    def _get_bootstrap_command_replacements_for_windows(self, instance_name):
+    def _get_bootstrap_command_replacements_for_windows(self, instance_name, bootstrap_url):
         return {
             'reports': util.WINDOWS_REPORTSDIR,
             'bootstrap': '\\'.join([util.WINDOWS_SLIPSTREAM_HOME, 'slipstream.bootstrap']),
-            'bootstrapUrl': self.__get_bootstrap_url(),
+            'bootstrapUrl': bootstrap_url,
             'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
             'nodename': instance_name,
             'machine_executor': 'node' if self.cimi_deployment_prototype else self._get_machine_executor_type()
@@ -1013,7 +1008,8 @@ class BaseCloudConnector(object):
     def _attach_disk_and_report(self, node_instance, reporter):
         attached_disk = self._attach_disk(node_instance)
         if not attached_disk:
-            raise Exceptions.ExecutionException('Attached disk name not provided by connector after disk attach operation.')
+            raise Exceptions.ExecutionException(
+                'Attached disk name not provided by connector after disk attach operation.')
         if hasattr(reporter, '__call__'):
             reporter(node_instance, attached_disk)
 
@@ -1037,4 +1033,3 @@ class BaseCloudConnector(object):
         scaler = VmScaler(scale_action, self.max_iaas_workers, self.verboseLevel)
         scaler.set_tasks_and_run(node_instances, done_reporter)
         scaler.wait_tasks_finished()
-
