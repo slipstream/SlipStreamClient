@@ -210,3 +210,29 @@ class NodeInstance(object):
     def get_disk_detach_device(self):
         return self.__get(NodeDecorator.SCALE_DISK_DETACH_DEVICE)
 
+    def set_deployment_context(self, context=None):
+        self.__set(NodeDecorator.DEPLOYMENT_CONTEXT_KEY, context)
+
+    def get_deployment_context(self):
+        return self.__get(NodeDecorator.DEPLOYMENT_CONTEXT_KEY, {})
+
+    def set_cloud_node_ssh_url(self, url):
+        self.__set(NodeDecorator.CLOUD_NODE_SSH_URL_KEY, url)
+
+    def get_cloud_node_ssh_url(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_SSH_URL_KEY)
+
+    def set_cloud_node_ssh_password(self, password):
+        self.__set(NodeDecorator.CLOUD_NODE_SSH_PASSWORD_KEY, password)
+
+    def get_cloud_node_ssh_password(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_SSH_PASSWORD_KEY)
+
+    def set_cloud_node_ssh_keypair_name(self, password):
+        self.__set(NodeDecorator.CLOUD_NODE_SSH_KEYPAIR_NAME_KEY, password)
+
+    def get_cloud_node_ssh_keypair_name(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_SSH_KEYPAIR_NAME_KEY)
+
+
+
