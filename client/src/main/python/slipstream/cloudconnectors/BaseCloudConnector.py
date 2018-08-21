@@ -312,7 +312,7 @@ class BaseCloudConnector(object):
 
         self.__vms = {}
 
-        self.__cloud = os.environ[util.ENV_CONNECTOR_INSTANCE]
+        self.__cloud = os.environ.get(util.ENV_CONNECTOR_INSTANCE)
 
         self.__init_threading_related()
 
@@ -455,7 +455,7 @@ class BaseCloudConnector(object):
         if self.__tasks_runnner != None:
             self.__tasks_runnner.wait_tasks_processed()
 
-    def __start_node_instance_and_client(self, user_info, node_instance):
+    def __start_node_instance_and_client(self, user_info, node_instance, cimi_deployment_prototype=False):
         node_instance_name = node_instance.get_name()
 
         self._print_detail("Starting instance: %s" % node_instance_name)
@@ -464,11 +464,11 @@ class BaseCloudConnector(object):
                                node_instance,
                                self._generate_vm_name(node_instance_name))
 
-        self.__add_vm(vm, node_instance)
+        self.__add_vm(vm, node_instance, cimi_deployment_prototype)
 
         if not self.has_capability(self.CAPABILITY_DIRECT_IP_ASSIGNMENT):
             vm = self._wait_and_get_instance_ip_address(vm)
-            self.__add_vm(vm, node_instance)
+            self.__add_vm(vm, node_instance, cimi_deployment_prototype)
 
         if not self.is_build_image():
             if not node_instance.is_windows() and not self.has_capability(self.CAPABILITY_CONTEXTUALIZATION):
@@ -486,11 +486,11 @@ class BaseCloudConnector(object):
         except KeyError:
             raise Exceptions.NotFoundError("VM '%s' not found." % name)
 
-    def __add_vm(self, vm, node_instance):
+    def __add_vm(self, vm, node_instance, cimi_deployment_prototype=False):
         name = node_instance.get_name()
         with lock:
             self.__vms[name] = vm
-        self._publish_vm_info(vm, node_instance)
+        self._publish_vm_info(vm, node_instance, cimi_deployment_prototype)
 
     def __del_vm(self, name):
         try:
@@ -498,22 +498,39 @@ class BaseCloudConnector(object):
         except KeyError:
             util.printDetail("Failed locally removing VM '%s'. Not found." % name)
 
-    def _publish_vm_info(self, vm, node_instance):
+    def _publish_vm_info(self, vm, node_instance, cimi_deployment_prototype=False):
         instance_name = node_instance.get_name()
         vm_id = self._vm_get_id(vm)
         vm_ip = self._vm_get_ip(vm)
 
         with lock:
             already_published = self.__already_published[instance_name]
-            if vm_id and 'id' not in already_published:
-                self._publish_vm_id(instance_name, vm_id)
-                already_published.add('id')
-            if vm_ip and 'ip' not in already_published:
-                self._publish_vm_ip(instance_name, vm_ip)
-                already_published.add('ip')
-            if node_instance and vm_ip and 'ssh' not in already_published:
-                self._publish_url_ssh(vm, node_instance)
-                already_published.add('ssh')
+            if cimi_deployment_prototype:
+                if vm_id and 'id' not in already_published:
+                    node_instance.set_cloud_node_id(vm_id)
+                    already_published.add('id')
+                if vm_ip and 'ip' not in already_published:
+                    node_instance.set_cloud_node_ip(vm_ip)
+                    already_published.add('ip')
+                if node_instance and vm_ip and 'ssh' not in already_published:
+                    if node_instance:
+                        vm_ip = self._vm_get_ip(vm) or ''
+                        ssh_username, ssh_password = self.__get_vm_username_password(node_instance)
+                        node_instance.set_cloud_node_ssh_url('ssh://%s@%s' % (ssh_username.strip(), vm_ip.strip()))
+                        node_instance.set_cloud_node_ssh_password(ssh_password)
+                
+                        if ssh_username and ssh_password:
+                            already_published.add('ssh')
+            else:
+                if vm_id and 'id' not in already_published:
+                    self._publish_vm_id(instance_name, vm_id)
+                    already_published.add('id')
+                if vm_ip and 'ip' not in already_published:
+                    self._publish_vm_ip(instance_name, vm_ip)
+                    already_published.add('ip')
+                if node_instance and vm_ip and 'ssh' not in already_published:
+                    self._publish_url_ssh(vm, node_instance)
+                    already_published.add('ssh')
 
     def _publish_vm_id(self, instance_name, vm_id):
         # Needed for thread safety
@@ -829,24 +846,32 @@ class BaseCloudConnector(object):
             addEnvironmentVariableCommand = 'export'
             script += '#!/bin/sh -ex\n'
 
-        regex = 'SLIPSTREAM_'
-        if self.is_start_orchestrator():
-            regex += '|CLOUDCONNECTOR_'
-        env_matcher = re.compile(regex)
-
         if pre_export:
             script += '%s\n' % pre_export
 
-        for var, val in os.environ.items():
-            if env_matcher.match(var) and var != util.ENV_NODE_INSTANCE_NAME:
+        deployment_context = node_instance.get_deployment_context()
+        if deployment_context:
+            # deployment prototype
+            for var, val in deployment_context.items():
                 if re.search(' ', val):
                     val = '"%s"' % val
-                script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var,
-                                          val)
+                script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var, val)
+        else:
+            regex = 'SLIPSTREAM_'
+            if self.is_start_orchestrator():
+                regex += '|CLOUDCONNECTOR_'
+            env_matcher = re.compile(regex)
+            for var, val in os.environ.items():
+                if env_matcher.match(var) and var != util.ENV_NODE_INSTANCE_NAME:
+                    if re.search(' ', val):
+                        val = '"%s"' % val
+                    script += '%s %s=%s\n' % (addEnvironmentVariableCommand, var,
+                                              val)
 
         script += '%s %s=%s\n' % (addEnvironmentVariableCommand,
                                   util.ENV_NODE_INSTANCE_NAME,
                                   node_instance_name)
+
 
         if pre_bootstrap:
             script += '%s\n' % pre_bootstrap
@@ -862,12 +887,19 @@ class BaseCloudConnector(object):
     def _build_slipstream_bootstrap_command(self, node_instance, username=None):
         instance_name = node_instance.get_name()
 
-        if node_instance.is_windows():
-            return self.__build_slipstream_bootstrap_command_for_windows(instance_name)
-        else:
-            return self.__build_slipstream_bootstrap_command_for_linux(instance_name)
+        cimi_deployment_prototype = True
+        bootstrap_url = node_instance.get_deployment_context().get('SLIPSTREAM_BOOTSTRAP_BIN')
 
-    def __build_slipstream_bootstrap_command_for_windows(self, instance_name):
+        if bootstrap_url is None:
+            bootstrap_url = util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN')
+            cimi_deployment_prototype = False
+
+        if node_instance.is_windows():
+            return self.__build_slipstream_bootstrap_command_for_windows(instance_name, bootstrap_url, cimi_deployment_prototype)
+        else:
+            return self.__build_slipstream_bootstrap_command_for_linux(instance_name, bootstrap_url, cimi_deployment_prototype)
+
+    def __build_slipstream_bootstrap_command_for_windows(self, instance_name, bootstrap_url, cimi_deployment_prototype):
 
         command = 'If Not Exist %(reports)s mkdir %(reports)s\n'
         command += 'If Not Exist %(ss_home)s mkdir %(ss_home)s\n'
@@ -883,35 +915,35 @@ class BaseCloudConnector(object):
 
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
-        return command % self._get_bootstrap_command_replacements_for_windows(instance_name)
+        return command % self._get_bootstrap_command_replacements_for_windows(instance_name, bootstrap_url, cimi_deployment_prototype)
 
-    def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
+    def __build_slipstream_bootstrap_command_for_linux(self, instance_name, bootstrap_url, cimi_deployment_prototype):
 
         command = 'mkdir -p %(reports)s %(ss_home)s; '
         command += '(wget --timeout=60 --retry-connrefused --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl --retry 20 -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
-        return command % self._get_bootstrap_command_replacements_for_linux(instance_name)
+        return command % self._get_bootstrap_command_replacements_for_linux(instance_name, bootstrap_url, cimi_deployment_prototype)
 
-    def _get_bootstrap_command_replacements_for_linux(self, instance_name):
+    def _get_bootstrap_command_replacements_for_linux(self, instance_name, bootstrap_url, cimi_deployment_prototype):
         return {
             'reports': util.REPORTSDIR,
             'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
-            'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
+            'bootstrapUrl': bootstrap_url,
             'ss_home': util.SLIPSTREAM_HOME,
             'nodename': instance_name,
-            'machine_executor': self._get_machine_executor_type()
+            'machine_executor': 'node' if cimi_deployment_prototype else self._get_machine_executor_type()
         }
 
-    def _get_bootstrap_command_replacements_for_windows(self, instance_name):
+    def _get_bootstrap_command_replacements_for_windows(self, instance_name, bootstrap_url, cimi_deployment_prototype):
         return {
             'reports': util.WINDOWS_REPORTSDIR,
             'bootstrap': '\\'.join([util.WINDOWS_SLIPSTREAM_HOME, 'slipstream.bootstrap']),
-            'bootstrapUrl': util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN'),
+            'bootstrapUrl': bootstrap_url,
             'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
             'nodename': instance_name,
-            'machine_executor': self._get_machine_executor_type()
+            'machine_executor': 'node' if cimi_deployment_prototype else self._get_machine_executor_type()
         }
 
     def _get_machine_executor_type(self):
