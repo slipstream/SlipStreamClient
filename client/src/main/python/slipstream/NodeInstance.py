@@ -216,6 +216,12 @@ class NodeInstance(object):
     def get_deployment_context(self):
         return self.__get(NodeDecorator.DEPLOYMENT_CONTEXT_KEY, {})
 
+    def set_cloud_node_ip(self, ip):
+        self.__set(NodeDecorator.CLOUD_NODE_IP_KEY, ip)
+
+    def get_cloud_node_ip(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_IP_KEY)
+
     def set_cloud_node_ssh_url(self, url):
         self.__set(NodeDecorator.CLOUD_NODE_SSH_URL_KEY, url)
 
