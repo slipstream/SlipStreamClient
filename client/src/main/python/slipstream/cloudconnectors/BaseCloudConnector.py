@@ -887,17 +887,12 @@ class BaseCloudConnector(object):
     def _build_slipstream_bootstrap_command(self, node_instance, username=None):
         instance_name = node_instance.get_name()
 
-        if node_instance.get_deployment_context():
-            bootstrap_url = node_instance.get_deployment_context().get('SLIPSTREAM_BOOTSTRAP_BIN')
-        else:
-            bootstrap_url = util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN')
-
         if node_instance.is_windows():
-            return self.__build_slipstream_bootstrap_command_for_windows(instance_name, bootstrap_url)
+            return self.__build_slipstream_bootstrap_command_for_windows(instance_name)
         else:
-            return self.__build_slipstream_bootstrap_command_for_linux(instance_name, bootstrap_url)
+            return self.__build_slipstream_bootstrap_command_for_linux(instance_name)
 
-    def __build_slipstream_bootstrap_command_for_windows(self, instance_name, bootstrap_url):
+    def __build_slipstream_bootstrap_command_for_windows(self, instance_name):
 
         command = 'If Not Exist %(reports)s mkdir %(reports)s\n'
         command += 'If Not Exist %(ss_home)s mkdir %(ss_home)s\n'
@@ -913,35 +908,43 @@ class BaseCloudConnector(object):
 
         command += 'start "test" "%%SystemRoot%%\System32\cmd.exe" /C "C:\\Python27\\python %(bootstrap)s %(machine_executor)s >> %(reports)s\\%(nodename)s.slipstream.log 2>&1"\n'
 
-        return command % self._get_bootstrap_command_replacements_for_windows(instance_name, bootstrap_url)
+        return command % self._get_bootstrap_command_replacements_for_windows(instance_name)
 
-    def __build_slipstream_bootstrap_command_for_linux(self, instance_name, bootstrap_url):
+    def __build_slipstream_bootstrap_command_for_linux(self, instance_name):
 
         command = 'mkdir -p %(reports)s %(ss_home)s; '
         command += '(wget --timeout=60 --retry-connrefused --no-check-certificate -O %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1 '
         command += '|| curl --retry 20 -k -f -o %(bootstrap)s %(bootstrapUrl)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1) '
         command += '&& chmod 0755 %(bootstrap)s; %(bootstrap)s %(machine_executor)s >> %(reports)s/%(nodename)s.slipstream.log 2>&1'
 
-        return command % self._get_bootstrap_command_replacements_for_linux(instance_name, bootstrap_url)
+        return command % self._get_bootstrap_command_replacements_for_linux(instance_name)
 
-    def _get_bootstrap_command_replacements_for_linux(self, instance_name, bootstrap_url):
+       
+    def __get_bootstrap_url(self):
+        if self.cimi_deployment_prototype:
+            return node_instance.get_deployment_context().get('SLIPSTREAM_BOOTSTRAP_BIN')
+        else:
+            return util.get_required_envvar('SLIPSTREAM_BOOTSTRAP_BIN')
+ 
+    def _get_bootstrap_command_replacements_for_linux(self, instance_name):
         return {
             'reports': util.REPORTSDIR,
             'bootstrap': os.path.join(util.SLIPSTREAM_HOME, 'slipstream.bootstrap'),
-            'bootstrapUrl': bootstrap_url,
+            'bootstrapUrl': self.__get_bootstrap_url(),
             'ss_home': util.SLIPSTREAM_HOME,
             'nodename': instance_name,
             'machine_executor': 'node' if self.cimi_deployment_prototype else self._get_machine_executor_type()
         }
 
-    def _get_bootstrap_command_replacements_for_windows(self, instance_name, bootstrap_url, cimi_deployment_prototype):
+    def _get_bootstrap_command_replacements_for_windows(self, instance_name):
         return {
             'reports': util.WINDOWS_REPORTSDIR,
             'bootstrap': '\\'.join([util.WINDOWS_SLIPSTREAM_HOME, 'slipstream.bootstrap']),
-            'bootstrapUrl': bootstrap_url,
+            'bootstrapUrl': self.__get_bootstrap_url(),
             'ss_home': util.WINDOWS_SLIPSTREAM_HOME,
             'nodename': instance_name,
-            'machine_executor': 'node' if self.cimi_deployment_prototype else self._get_machine_executor_type()
+            'machine_executor': 'node' if self.
+         _prototype else self._get_machine_executor_type()
         }
 
     def _get_machine_executor_type(self):
