@@ -119,6 +119,9 @@ class NodeInstance(object):
     def get_build_state(self):
         return self.__get(NodeDecorator.BUILD_STATE_KEY, {})
 
+    def get_instance_id(self):
+        return self.__get(NodeDecorator.INSTANCEID_KEY)
+
     def set_instance_id(self, id):
         return self.__set(NodeDecorator.INSTANCEID_KEY, id)
 
