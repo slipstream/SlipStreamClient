@@ -509,7 +509,7 @@ class BaseCloudConnector(object):
             already_published = self.__already_published[instance_name]
             if self.cimi_deployment_prototype:
                 if vm_id and 'id' not in already_published:
-                    node_instance.set_cloud_node_id(vm_id)
+                    node_instance.set_instance_id(vm_id)
                     already_published.add('id')
                 if vm_ip and 'ip' not in already_published:
                     node_instance.set_cloud_node_ip(vm_ip)
