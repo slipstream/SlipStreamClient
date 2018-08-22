@@ -122,6 +122,9 @@ class NodeInstance(object):
     def get_instance_id(self):
         return self.__get(NodeDecorator.INSTANCEID_KEY)
 
+    def set_instance_id(self, id):
+        return self.__set(NodeDecorator.INSTANCEID_KEY, id)
+
     def get_image_id(self):
         return self.get_image_attribute('id')
 
