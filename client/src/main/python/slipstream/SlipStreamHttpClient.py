@@ -239,9 +239,8 @@ class SlipStreamHttpClient(object):
         url += SlipStreamHttpClient.URL_IGNORE_ABORT_ATTRIBUTE_QUERY
         return self._httpPost(url, 'reset', 'text/plain')
 
-    def kb_complete_state(self, node_instance_name):
-        return self.kb_set_deployment_parameter(
-            NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY, 'SendingReports')
+    def kb_complete_state(self, state, node_instance_name):
+        return self.kb_set_deployment_parameter(NodeDecorator.COMPLETE_KEY, state, node_instance_name)
 
     def terminate_run(self):
         return self._httpDelete(self.run_url)
@@ -311,16 +310,21 @@ class SlipStreamHttpClient(object):
 
         return str(uuid.uuid3(NullNameSpace, text))
 
-    def kb_get_deployment_parameter(self, param_name, node_id=None):
+    def __contruct_deployment_param_href(self, node_id, param_name):
         param_id = ':'.join(item or '' for item in [self.diid, node_id, param_name])
-        deployment_parameter_href = 'deployment-parameter/' + self.kb_from_data_uuid(param_id)
+        return 'deployment-parameter/' + self.kb_from_data_uuid(param_id)
+
+    def kb_get_deployment_parameter(self, param_name, node_id=None):
+        deployment_parameter_href = self.__contruct_deployment_param_href(node_id, param_name)
         return self.api.cimi_get(deployment_parameter_href).json.get('value')
 
     def kb_set_deployment_parameter(self, param_name, value, node_id=None):
-        param_id = ':'.join(item or '' for item in [self.diid, node_id, param_name])
-        print('debug kb_set_deployment_parameter param_id={}'.format(param_id))
-        deployment_parameter_href = 'deployment-parameter/' + self.kb_from_data_uuid(param_id)
+        deployment_parameter_href = self.__contruct_deployment_param_href(node_id, param_name)
         return self.api.cimi_edit(deployment_parameter_href, {'value': value})
+
+    def kb_unset_deployment_parameter(self, param_name, node_id=None):
+        deployment_parameter_href = self.__contruct_deployment_param_href(node_id, param_name)
+        return self.api.cimi_edit(deployment_parameter_href, {}, select='value')
 
     def setRuntimeParameter(self, key, value, ignoreAbort=False):
         url = self.run_url + '/' + key

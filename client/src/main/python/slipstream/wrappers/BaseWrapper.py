@@ -168,10 +168,10 @@ class BaseWrapper(object):
             node_instance_name = self.get_my_node_instance_name()
         self._ss_client.complete_state(node_instance_name)
 
-    def kb_complete_state(self, node_instance_name=None):
+    def kb_complete_state(self, state, node_instance_name=None):
         if not node_instance_name:
             node_instance_name = self.get_my_node_instance_name()
-        self._ss_client.kb_complete_state(node_instance_name)
+        self._ss_client.kb_complete_state(state, node_instance_name)
 
     def fail(self, message):
         self._ss_client.kb_set_deployment_parameter(NodeDecorator.ABORT_KEY, message, self.get_my_node_instance_name())

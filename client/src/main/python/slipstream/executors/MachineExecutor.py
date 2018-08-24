@@ -129,11 +129,11 @@ class MachineExecutor(object):
 
     def _complete_state(self, state):
         if self._need_to_complete(state):
-            self.wrapper.kb_complete_state()
+            self.wrapper.complete_state()
 
     def _kb_complete_state(self, state):
         if self._need_to_complete(state):
-            self.wrapper.kb_complete_state()
+            self.wrapper.kb_complete_state(state)
 
     @staticmethod
     def _failure_msg_from_exception(exception):
@@ -471,21 +471,15 @@ class MachineExecutor(object):
     def onReady(self):
         util.printAction('Ready')
 
-    def onFinalizing(self):
-        util.printAction('Finalizing')
-
-        if self.wrapper.isAbort():
-            util.printError("Failed")
-        else:
-            util.printAction('Done!')
-
     def onDone(self):
+        util.printAction('Done!')
         self._abort_running_in_final_state()
 
     def onCancelled(self):
         self._abort_running_in_final_state()
 
     def onAborted(self):
+        util.printError("Failed")
         self._abort_running_in_final_state()
 
     def _abort_running_in_final_state(self):

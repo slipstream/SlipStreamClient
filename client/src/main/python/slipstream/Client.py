@@ -21,7 +21,6 @@ import time
 import subprocess
 from multiprocessing.dummy import Pool as ThreadPool
 
-
 from SlipStreamHttpClient import SlipStreamHttpClient
 
 from exceptions.Exceptions import NotYetSetException
@@ -90,24 +89,34 @@ class Client(object):
 
         return value
 
+    def kb_extract_param_name_node_name(self, key):
+        node_name = None
+        param_name = key
+        if NodeDecorator.NODE_PROPERTY_SEPARATOR in key:
+            if not key.startswith(NodeDecorator.globalNamespacePrefix):
+                param_split = key.split(NodeDecorator.NODE_PROPERTY_SEPARATOR)
+                node_name = param_split[0]
+                param_name = param_split[1]
+        else:
+            node_name = self._getNodeName()
+        return node_name, param_name
+
     def kb_getRuntimeParameter(self, key):
-        value = None
-        parts = self._getNodeName().split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
-        nodename = parts[0]
+        node_name, param_name = self.kb_extract_param_name_node_name(key)
         if self.no_block:
-            value = self.httpClient.kb_get_deployment_parameter(key, nodename)
+            value = self.httpClient.kb_get_deployment_parameter(param_name, node_name)
         else:
             timer = 0
             while True:
-                value = self.httpClient.kb_get_deployment_parameter(key, nodename)
+                value = self.httpClient.kb_get_deployment_parameter(key, node_name)
 
                 if value is not None:
                     break
                 if self.timeout != 0 and timer >= self.timeout:
                     raise TimeoutException(
                         "Exceeded timeout limit of %s waiting for key '%s' "
-                        "to be set" % (self.timeout, _key))
-                print >> sys.stderr, "Waiting for %s" % _key
+                        "to be set" % (self.timeout, key))
+                print >> sys.stderr, "Waiting for %s" % key
                 sys.stdout.flush()
                 sleepTime = 5
                 time.sleep(sleepTime)
@@ -164,10 +173,10 @@ class Client(object):
             # multiplicity parameter should NOT be qualified make an exception
             if len(parts) == 1 and propertyPart not in node_level_properties:
                 _key = nodename + \
-                    NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
-                    NodeDecorator.nodeMultiplicityStartIndex + \
-                    NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-                    propertyPart
+                       NodeDecorator.NODE_MULTIPLICITY_SEPARATOR + \
+                       NodeDecorator.nodeMultiplicityStartIndex + \
+                       NodeDecorator.NODE_PROPERTY_SEPARATOR + \
+                       propertyPart
             return _key
 
         if _key not in node_level_properties:
@@ -202,20 +211,17 @@ class Client(object):
         self.httpClient.setRuntimeParameter(_key, stripped_value)
 
     def kb_setRuntimeParameter(self, key, value):
-        if NodeDecorator.NODE_PROPERTY_SEPARATOR in key:
-            nodename = None
-        else:
-            parts = self._getNodeName().split(NodeDecorator.NODE_MULTIPLICITY_SEPARATOR)
-            nodename = parts[0]
-        self.httpClient.kb_set_deployment_parameter(key, util.removeASCIIEscape(value), nodename)
+        node_name, param_name = self.kb_extract_param_name_node_name(key)
+        self.httpClient.kb_set_deployment_parameter(param_name, util.removeASCIIEscape(value), node_name)
 
     def cancel_abort(self):
         # Global abort
-        self.httpClient.unset_runtime_parameter(NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY,
-                                                ignore_abort=True)
+        self.httpClient.kb_unset_deployment_parameter(NodeDecorator.globalNamespacePrefix + NodeDecorator.ABORT_KEY)
 
-        _key = self._qualifyKey(NodeDecorator.ABORT_KEY)
-        self.httpClient.unset_runtime_parameter(_key, ignore_abort=True)
+        self.httpClient.kb_unset_deployment_parameter(NodeDecorator.ABORT_KEY, self._getNodeName())
+
+        self.httpClient.kb_set_deployment_parameter(NodeDecorator.globalNamespacePrefix + NodeDecorator.STATE_KEY,
+                                                    "Ready")
 
     def executScript(self, script):
         return self._systemCall(script, retry=False)
@@ -298,7 +304,7 @@ class Client(object):
         nparams = len(params)
         pool_size = min(POOL_MAX, nparams)
         self._printDetail("Get %s RTP instances with pool size: %s" %
-                          (nparams,  pool_size))
+                          (nparams, pool_size))
         pool = ThreadPool(pool_size)
         results = pool.map(self._get_rtp, params)
         results = [v or '' for v in results]
