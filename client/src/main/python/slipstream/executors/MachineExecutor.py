@@ -193,7 +193,7 @@ class MachineExecutor(object):
         return self.recovery_mode == True
 
     def _is_mutable(self):
-        return self.wrapper.is_mutable()
+        return False  # self.wrapper.is_mutable()
 
     def _need_to_complete(self, state):
         return state not in ['Finalizing', 'Done', 'Cancelled', 'Aborted']

@@ -226,7 +226,7 @@ class NodeDeploymentExecutor(MachineExecutor):
         self._send_reports = False
 
     def _need_to_send_reports(self):
-        return self._send_reports or not self.wrapper.is_scale_state_operational()
+        return self._send_reports  # or not self.wrapper.is_scale_state_operational()
 
     def _get_scale_action(self):
         return self.wrapper.get_scale_action()
