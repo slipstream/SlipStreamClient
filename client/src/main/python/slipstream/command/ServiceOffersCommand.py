@@ -26,7 +26,7 @@ from slipstream.command.CloudClientCommand import CloudClientCommand
 
 class ServiceOffersCommand(CloudClientCommand):
     DEFAULT_TIMEOUT = 600
-    EXCHANGE_RATES_SERVICE_URL = 'https://api.fixer.io/latest'
+    EXCHANGE_RATES_SERVICE_URL = 'https://api.exchangeratesapi.io/latest'
 
     RESOURCE_SERVICE_ATTRIBUTE_NAMESPACES = 'serviceAttributeNamespaces'
 
