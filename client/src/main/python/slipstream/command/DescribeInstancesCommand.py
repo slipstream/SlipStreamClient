@@ -30,7 +30,7 @@ class DescribeInstancesCommand(CloudClientCommand):
     DEFAULT_TIMEOUT = 30
 
     def _vm_get_state(self, cc, vm):
-        raise NotImplementedError()
+        return cc._vm_get_state(vm)
 
     def _sanitize_for_output(self, text):
         if text is None:
