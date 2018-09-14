@@ -463,6 +463,8 @@ class BaseCloudConnector(object):
 
         self._print_detail("Starting instance: %s" % node_instance_name)
 
+        self.cimi_deployment_prototype = bool(node_instance.get_deployment_context())
+
         vm = self._start_image(user_info,
                                node_instance,
                                self._generate_vm_name(node_instance_name))
