@@ -218,13 +218,15 @@ class SlipStreamHttpClient(object):
             return SlipStreamHttpClient.lookup_recursively_module(module_parent, keys)
 
     def kb_get_run_type(self):
-        self._kb_retrieveAndSetRun()
-        return self.kb_deployment['module']['type']
+        return self._kb_retrieveAndSetRun()['module']['type']
+
+    def kb_get_userparam_ssh_pubkeys(self):
+        return self._kb_retrieveAndSetRun().get('sshPublicKeys')
 
     def _kb_retrieveAndSetRun(self):
         if self.kb_deployment is None:
             self.kb_deployment = self.api.cimi_get(self.diid).json
-            return self.kb_deployment
+        return self.kb_deployment
 
     def _retrieve(self, url):
         return self._httpGet(url, 'application/xml')

@@ -133,8 +133,6 @@ class BaseWrapper(object):
 
         self.my_node_instance_name = self._get_my_node_instance_name(config_holder)
 
-        self.user_ssh_pub_keys = self._get_my_node_instance_name(config_holder)
-
         self._config_holder = config_holder
 
         self._user_info = None
@@ -149,13 +147,6 @@ class BaseWrapper(object):
             return config_holder.node_instance_name
         except Exception:
             raise Exceptions.ExecutionException('Failed to get the node instance name of the the current VM')
-
-    @staticmethod
-    def _get_user_ssh_pub_keys(config_holder):
-        try:
-            return config_holder.user_ssh_pub_keys
-        except Exception:
-            raise Exceptions.ExecutionException('Failed to get the user ssh public keys')
 
     def get_my_node_instance_name(self):
         return self.my_node_instance_name
@@ -246,8 +237,10 @@ class BaseWrapper(object):
         return self._get_runtime_parameter(key)
 
     def get_user_ssh_pubkey(self):
-        userInfo = self._get_user_info('')
-        return userInfo.get_public_keys()
+        return self._ss_client.kb_get_userparam_ssh_pubkeys()
+
+    def get_user_login(self):
+        return self._ss_client.lookup_recursively_module(self.kb_get_my_node_instance(), ['content', 'loginUser'])
 
     def get_pre_scale_done(self, node_instance_or_name=None):
         """Get pre.scale.done RTP for the current node instance or for the requested one
