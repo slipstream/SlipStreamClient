@@ -243,5 +243,11 @@ class NodeInstance(object):
     def get_cloud_node_ssh_keypair_name(self):
         return self.__get(NodeDecorator.CLOUD_NODE_SSH_KEYPAIR_NAME_KEY)
 
+    def set_cloud_node_ports_mapping(self, ip):
+        self.__set(NodeDecorator.CLOUD_NODE_PORTS_MAPPING_KEY, ip)
+
+    def get_cloud_node_ports_mapping(self):
+        return self.__get(NodeDecorator.CLOUD_NODE_PORTS_MAPPING_KEY)
+
 
 
