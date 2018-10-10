@@ -251,7 +251,7 @@ class MachineExecutor(object):
     def _kb_execute_target(self, target_name, exports=None, abort_on_err=False, ssdisplay=True, ignore_abort=False):
         target = self._kb_get_target(target_name)
 
-        if target is None:
+        if not target:
             util.printAndFlush('Nothing to do for script: %s' % target_name)
             return
 
@@ -260,7 +260,8 @@ class MachineExecutor(object):
         util.printStep(message)
 
         fail_msg = "Failed running '%s' script on '%s'" % (target_name, self._get_node_instance_name())
-        self._launch_script(target, exports, abort_on_err, ignore_abort, fail_msg, target_name)
+        for i, sub_t in enumerate(target):
+            self._launch_script(sub_t, exports, abort_on_err, ignore_abort, fail_msg, '{}[{}]'.format(target_name, i))
 
     def _need_to_execute_build_step(self, target, subtarget):
         return MachineExecutor.need_to_execute_build_step(self._get_node_instance(), target, subtarget)
