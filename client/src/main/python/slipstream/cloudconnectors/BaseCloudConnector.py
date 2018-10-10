@@ -102,6 +102,11 @@ class BaseCloudConnector(object):
         Returns: one IP - Public or Private."""
         raise NotImplementedError()
 
+    def _vm_get_ports_mapping(self, vm_instance):
+        """Retrieve ports mapping from the vm_instance object returned by _start_image().
+        Returns: [<protocol>:<published_port>:<target_port> ...] e.g. tcp:8080:80 ."""
+        pass
+
     def _vm_get_password(self, vm_instance):
         """Retrieve the password of the VM from the vm_instance object returned by _start_image().
         Returns: the password needed to connect to the VM"""
@@ -463,6 +468,8 @@ class BaseCloudConnector(object):
 
         self._print_detail("Starting instance: %s" % node_instance_name)
 
+        self.cimi_deployment_prototype = bool(node_instance.get_deployment_context())
+
         vm = self._start_image(user_info,
                                node_instance,
                                self._generate_vm_name(node_instance_name))
@@ -505,6 +512,7 @@ class BaseCloudConnector(object):
         instance_name = node_instance.get_name()
         vm_id = self._vm_get_id(vm)
         vm_ip = self._vm_get_ip(vm)
+        vm_ports_mapping = self._vm_get_ports_mapping(vm)
         with lock:
             already_published = self.__already_published[instance_name]
             if self.cimi_deployment_prototype:
@@ -523,6 +531,9 @@ class BaseCloudConnector(object):
 
                         if ssh_username and ssh_password:
                             already_published.add('ssh')
+                if vm_ports_mapping and 'vm_ports_mapping' not in already_published:
+                    node_instance.set_cloud_node_ports_mapping(vm_ports_mapping)
+                    already_published.add('vm_ports_mapping')
             else:
                 if vm_id and 'id' not in already_published:
                     self._publish_vm_id(instance_name, vm_id)

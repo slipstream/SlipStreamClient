@@ -87,6 +87,7 @@ class NodeDecorator(object):
     CLOUD_NODE_SSH_URL_KEY = 'cloud.node.ssh.url'
     CLOUD_NODE_SSH_PASSWORD_KEY = 'cloud.node.ssh.password'
     CLOUD_NODE_SSH_KEYPAIR_NAME_KEY = 'cloud.node.ssh.keypair.name'
+    CLOUD_NODE_PORTS_MAPPING_KEY = 'cloud.node.ports.mapping'
     CLOUDSERVICE_KEY = 'cloudservice'
     SECURITY_GROUPS_KEY = 'security.groups'
     MAX_PROVISIONING_FAILURES_KEY = 'max-provisioning-failures'

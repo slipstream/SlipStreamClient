@@ -8,7 +8,7 @@
   <parent>
     <groupId>com.sixsq.slipstream</groupId>
     <artifactId>SlipStreamClient</artifactId>
-    <version>3.59-SNAPSHOT</version>
+    <version>3.61-SNAPSHOT</version>
   </parent>
   <build>
     <plugins>
