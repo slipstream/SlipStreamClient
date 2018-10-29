@@ -205,18 +205,6 @@ class SlipStreamHttpClient(object):
             _, run = self._retrieve(url)
             self.run_dom = etree.fromstring(run.encode('utf-8'))
 
-    @staticmethod
-    def lookup_recursively_module(module, keys):  # FIXME: support for array of maps
-        temp = module
-        for k in keys[:-1]:
-            temp = temp.get(k, {})
-        value = temp.get(keys[-1])
-        if value:
-            return value
-        module_parent = module.get('content', {}).get('parent')
-        if module_parent:
-            return SlipStreamHttpClient.lookup_recursively_module(module_parent, keys)
-
     def kb_get_run_type(self):
         return self._kb_retrieveAndSetRun()['module']['type']
 

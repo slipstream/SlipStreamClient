@@ -240,7 +240,7 @@ class BaseWrapper(object):
         return self._ss_client.kb_get_userparam_ssh_pubkeys()
 
     def get_user_login(self):
-        return self._ss_client.lookup_recursively_module(self.kb_get_my_node_instance(), ['content', 'loginUser'])
+        return self.kb_get_my_node_instance().get('content', {}).get('loginUser')
 
     def get_pre_scale_done(self, node_instance_or_name=None):
         """Get pre.scale.done RTP for the current node instance or for the requested one
