@@ -468,11 +468,17 @@ class BaseCloudConnector(object):
 
         self._print_detail("Starting instance: %s" % node_instance_name)
 
-        self.cimi_deployment_prototype = bool(node_instance.get_deployment_context())
+        node_context = node_instance.get_deployment_context()
+        self.cimi_deployment_prototype = bool(node_context)
+
+        if self.cimi_deployment_prototype:
+            vm_name = node_instance_name + '--' + node_context.get('SLIPSTREAM_DIID', '').replace('deployment/', '')
+        else:
+            vm_name = self._generate_vm_name(node_instance_name)
 
         vm = self._start_image(user_info,
                                node_instance,
-                               self._generate_vm_name(node_instance_name))
+                               vm_name)
 
         self.__add_vm(vm, node_instance)
 
