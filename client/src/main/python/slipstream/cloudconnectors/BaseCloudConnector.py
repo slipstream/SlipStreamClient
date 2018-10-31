@@ -476,6 +476,7 @@ class BaseCloudConnector(object):
                       node_context.get('SLIPSTREAM_DIID', '').replace('deployment/', '')
         else:
             vm_name = self._generate_vm_name(node_instance_name)
+
         vm = self._start_image(user_info,
                                node_instance,
                                vm_name)
