@@ -717,7 +717,8 @@ def append_ssh_pubkey_to_authorized_keys(pubkey, user=''):
     except:
         pass
 
-    file_content = '\n# Keys added by SlipStream\n%s\n# End of keys added by SlipStream\n' % pubkey
+    # pubkey is a collection of keys in cimi deployment
+    file_content = '\n# Keys added by SlipStream\n%s\n# End of keys added by SlipStream\n' % '\r\n\r\n'.join(pubkey)
 
     authorized_keys_path = dot_ssh_path + '/authorized_keys'
     fileAppendContent(authorized_keys_path, file_content)
