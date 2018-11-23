@@ -43,28 +43,30 @@ class NodeDeploymentExecutor(MachineExecutor):
 
     @override
     def onProvisioning(self):
-        super(NodeDeploymentExecutor, self).onProvisioning()
-
-        if self.wrapper.is_scale_state_creating():
-            self._add_ssh_pubkey(self.node_instance.get_username())
-            self.wrapper.set_scale_state_created()
-        elif self._is_vertical_scaling():
-            if not self._is_pre_scale_done():
-                self._execute_pre_scale_action_target()
-                self.wrapper.set_pre_scale_done()
-
-            # Orchestrator applies IaaS action on the node instance.
-
-            self.wrapper.wait_scale_iaas_done()
-            self.wrapper.unset_pre_scale_done()
-            self._execute_post_scale_action_target()
-            self.wrapper.set_scale_action_done()
-            self._skip_execute_due_to_vertical_scaling = True
-        elif self._is_horizontal_scale_down():
-            self._execute_pre_scale_action_target()
-            self._execute_report_target_and_send_reports()
-            self.wrapper.set_pre_scale_done()
-            # We are ready to be terminated.
+        util.printAction('Provisioning')
+        self._add_ssh_pubkey(self.wrapper.get_user_login())
+        # super(NodeDeploymentExecutor, self).onProvisioning()
+        #
+        # if self.wrapper.is_scale_state_creating():
+        #     self._add_ssh_pubkey(self.node_instance.get_username())
+        #     self.wrapper.set_scale_state_created()
+        # elif self._is_vertical_scaling():
+        #     if not self._is_pre_scale_done():
+        #         self._execute_pre_scale_action_target()
+        #         self.wrapper.set_pre_scale_done()
+        #
+        #     # Orchestrator applies IaaS action on the node instance.
+        #
+        #     self.wrapper.wait_scale_iaas_done()
+        #     self.wrapper.unset_pre_scale_done()
+        #     self._execute_post_scale_action_target()
+        #     self.wrapper.set_scale_action_done()
+        #     self._skip_execute_due_to_vertical_scaling = True
+        # elif self._is_horizontal_scale_down():
+        #     self._execute_pre_scale_action_target()
+        #     self._execute_report_target_and_send_reports()
+        #     self.wrapper.set_pre_scale_done()
+        #     # We are ready to be terminated.
 
     @override
     def onExecuting(self):
@@ -83,7 +85,6 @@ class NodeDeploymentExecutor(MachineExecutor):
         #    return
 
         #if not self.wrapper.is_scale_state_operational():
-        self._add_ssh_pubkey(self.wrapper.get_user_login())
         self._kb_execute_build_recipes()
         self._kb_execute_execute_target()
         #else:
