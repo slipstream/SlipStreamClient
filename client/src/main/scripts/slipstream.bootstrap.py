@@ -846,13 +846,12 @@ def _is_linux():
 
 
 def _get_machine_executor_direct_startup_command(executor_name):
-    custom_python_bin = os.path.join(os.sep, 'opt', 'python', 'bin')
-    info('Prepending %s to PATH.' % custom_python_bin)
-    os.putenv('PATH', '%s:%s' % (custom_python_bin, os.environ['PATH']))
     cmd = os.path.join(SLIPSTREAM_CLIENT_HOME, 'sbin', 'slipstream-%s' % executor_name)
     os.chdir(cmd.rsplit(os.sep, 1)[0])
     if sys.platform == 'win32':
         cmd = 'C:\\Python27\\python ' + cmd
+    else:
+        cmd = os.path.join(os.sep, 'usr', 'bin', 'python2') + ' ' + cmd
     return cmd + ' ' + _get_verbosity_arg()
 
 
@@ -1063,7 +1062,7 @@ class AbortPublisher(object):
             error(response.status, response.reason)
             error(response.read())
         else:
-            print('Published abort message to %s' % uri)
+            print('Published abort message to %s' % url)
 
 
 if __name__ == "__main__":
