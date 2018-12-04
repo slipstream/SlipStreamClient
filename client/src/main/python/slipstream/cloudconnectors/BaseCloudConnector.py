@@ -472,8 +472,7 @@ class BaseCloudConnector(object):
         self.cimi_deployment_prototype = bool(node_context)
 
         if self.cimi_deployment_prototype:
-            vm_name = node_instance_name + NodeDecorator.NODE_PROPERTY_SEPARATOR + \
-                      node_context.get('SLIPSTREAM_DIID', '').replace('deployment/', '')
+            vm_name = node_instance_name + '--' + node_context.get('SLIPSTREAM_DIID', '').replace('deployment/', '')
         else:
             vm_name = self._generate_vm_name(node_instance_name)
 
@@ -540,6 +539,12 @@ class BaseCloudConnector(object):
                             already_published.add('ssh')
                 if vm_ports_mapping and 'vm_ports_mapping' not in already_published:
                     node_instance.set_cloud_node_ports_mapping(vm_ports_mapping)
+                    ssh_found = re.search('tcp:(\d+):22', str(vm_ports_mapping))
+                    if ssh_found:
+                        ssh_username, ssh_password = self.__get_vm_username_password(node_instance)
+                        node_instance.set_cloud_node_ssh_url('ssh://{}@{}:{}'.format(ssh_username.strip(),
+                                                                                     vm_ip.strip(),
+                                                                                     ssh_found.group(1)))
                     already_published.add('vm_ports_mapping')
             else:
                 if vm_id and 'id' not in already_published:
