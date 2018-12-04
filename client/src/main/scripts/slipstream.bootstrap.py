@@ -850,8 +850,6 @@ def _get_machine_executor_direct_startup_command(executor_name):
     os.chdir(cmd.rsplit(os.sep, 1)[0])
     if sys.platform == 'win32':
         cmd = 'C:\\Python27\\python ' + cmd
-    else:
-        cmd = os.path.join(os.sep, 'usr', 'bin', 'python2') + ' ' + cmd
     return cmd + ' ' + _get_verbosity_arg()
 
 
