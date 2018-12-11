@@ -366,10 +366,12 @@ class MachineExecutor(object):
         util.printDetail("End of the script '%s'" % (_name,))
 
         stderr_last_line = ''
-        try:
-            stderr_last_line = result.get(timeout=60)
-        except Empty:
-            pass
+
+        if process.returncode != self.SCRIPT_EXIT_SUCCESS:
+            try:
+                stderr_last_line = result.get(timeout=60)
+            except Empty:
+                pass
         return process.returncode, stderr_last_line
 
     def _write_target_script_to_file(self, target_script, name=None):
